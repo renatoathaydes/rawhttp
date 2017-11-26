@@ -1,0 +1,6 @@
+rootProject.name = 'rawhttp'
+
+include 'rawhttp-core',
+        'rawhttp-httpcomponents',
+        'samples'
+

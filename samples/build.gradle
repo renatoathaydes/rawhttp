@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':rawhttp-core')
+    compile project(':rawhttp-httpcomponents')
+    compile 'com.sparkjava:spark-core:2.7.1'
+}
