@@ -12,4 +12,12 @@ public class InvalidHttpRequest extends RuntimeException {
     public int getLineNumber() {
         return lineNumber;
     }
+
+    @Override
+    public String toString() {
+        return "InvalidHttpRequest{" +
+                "message='" + getMessage() + "', " +
+                "lineNumber=" + lineNumber +
+                '}';
+    }
 }
