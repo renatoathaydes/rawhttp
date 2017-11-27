@@ -1,10 +1,24 @@
 package com.athaydes.rawhttp.core;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -45,6 +59,101 @@ public class RawHttp {
         } else {
             throw new InvalidHttpRequest("No content", 0);
         }
+    }
+
+
+    public final RawHttpResponse<Void> parseResponse(String response) {
+        try {
+            return parseResponse(new ByteArrayInputStream(response.getBytes(UTF_8)));
+        } catch (IOException e) {
+            // IOException should be impossible
+            throw new RuntimeException(e);
+        }
+    }
+
+    public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
+        try (FileInputStream stream = new FileInputStream(file)) {
+            return parseResponse(stream).eagerly();
+        }
+    }
+
+    public RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
+        List<String> metadataLines = new ArrayList<>();
+        StringBuilder metadataBuilder = new StringBuilder();
+        int lineNumber = 1;
+        int b;
+        while ((b = inputStream.read()) >= 0) {
+            if (b == '\r') {
+                // expect new-line
+                int next = inputStream.read();
+                if (next < 0 || next == '\n') {
+                    lineNumber++;
+                    metadataLines.add(metadataBuilder.toString());
+                    if (next < 0) break;
+                    else metadataBuilder = new StringBuilder();
+                } else {
+                    inputStream.close();
+                    throw new InvalidHttpResponse("Illegal character after return", lineNumber);
+                }
+            } else if (b == '\n') {
+                // unexpected, but let's accept new-line without returns
+                metadataLines.add(metadataBuilder.toString());
+                metadataBuilder = new StringBuilder();
+                lineNumber++;
+            } else {
+                metadataBuilder.append((char) b);
+            }
+        }
+
+        if (metadataBuilder.length() > 0) {
+            metadataLines.add(metadataBuilder.toString());
+        }
+
+        if (metadataLines.isEmpty()) {
+            throw new InvalidHttpResponse("No content", 0);
+        }
+
+        StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
+        Map<String, Collection<String>> headers = parseHeaders(new ListReadsLines(metadataLines));
+
+        return new RawHttpResponse<>(null, null, headers, new LazyBodyReader(inputStream, null), statusCodeLine);
+    }
+
+    private StatusCodeLine parseStatusCodeLine(String line) {
+        if (line.trim().isEmpty()) {
+            throw new InvalidHttpResponse("Empty status line", 1);
+        }
+        String[] parts = line.split("\\s+", 3);
+
+        String httpVersion = "HTTP/1.1";
+        String statusCode;
+        String reason = "";
+
+        switch (parts.length) {
+            // accept just a status code
+            case 1:
+                statusCode = parts[0];
+                break;
+            case 2:
+                httpVersion = parts[0];
+                statusCode = parts[1];
+                break;
+            case 3:
+                httpVersion = parts[0];
+                statusCode = parts[1];
+                reason = parts[2];
+                break;
+            default:
+                // should never happen, we limit the split to 3 parts
+                throw new IllegalStateException();
+        }
+
+        try {
+            return new StatusCodeLine(httpVersion, Integer.parseInt(statusCode), reason);
+        } catch (NumberFormatException e) {
+            throw new InvalidHttpResponse("Invalid status", 1);
+        }
+
     }
 
     private MethodLine verifyHost(MethodLine methodLine, Collection<String> host) {
@@ -90,10 +199,14 @@ public class RawHttp {
     }
 
     private Map<String, Collection<String>> parseHeaders(BufferedReader reader) throws IOException {
+        return parseHeaders(new BufferedReaderReadsLines(reader));
+    }
+
+    private Map<String, Collection<String>> parseHeaders(ReadsLines reader) throws IOException {
         Map<String, Collection<String>> result = new HashMap<>();
         int lineNumber = 2;
         String line;
-        while ((line = reader.readLine()) != null) {
+        while ((line = reader.nextLine()) != null) {
             line = line.trim();
             if (line.isEmpty()) {
                 break;
@@ -121,6 +234,36 @@ public class RawHttp {
             return null;
         } else {
             return new EagerBodyReader(resultBuilder.toString().getBytes(UTF_8));
+        }
+    }
+
+    private interface ReadsLines {
+        String nextLine() throws IOException;
+    }
+
+    private static class BufferedReaderReadsLines implements ReadsLines {
+        private final BufferedReader reader;
+
+        public BufferedReaderReadsLines(BufferedReader reader) {
+            this.reader = reader;
+        }
+
+        @Override
+        public String nextLine() throws IOException {
+            return reader.readLine();
+        }
+    }
+
+    private static class ListReadsLines implements ReadsLines {
+        private final Iterator<String> reader;
+
+        public ListReadsLines(List<String> reader) {
+            this.reader = reader.iterator();
+        }
+
+        @Override
+        public String nextLine() {
+            return reader.hasNext() ? reader.next() : null;
         }
     }
 

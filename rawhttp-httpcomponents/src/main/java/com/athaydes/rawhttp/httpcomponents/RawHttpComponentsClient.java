@@ -4,9 +4,11 @@ import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttpClient;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
+import com.athaydes.rawhttp.core.StatusCodeLine;
 import org.apache.http.Header;
 import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.BufferedHttpEntity;
@@ -54,7 +56,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
             LazyBodyReader bodyReader = new LazyBodyReader(
                     new BufferedHttpEntity(response.getEntity()).getContent(),
                     parseContentLength(headers.getOrDefault(CONTENT_LENGTH, emptyList())));
-            return new RawHttpResponse<>(response, request, headers, bodyReader, response.getStatusLine().getStatusCode());
+            return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
         } finally {
             if (response != null) try {
                 response.close();
@@ -62,6 +64,11 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
                 e.printStackTrace();
             }
         }
+    }
+
+    private StatusCodeLine adaptStatus(StatusLine statusLine) {
+        return new StatusCodeLine(statusLine.getProtocolVersion().toString(),
+                statusLine.getStatusCode(), statusLine.getReasonPhrase());
     }
 
     private Long parseContentLength(Collection<String> contentLength) {

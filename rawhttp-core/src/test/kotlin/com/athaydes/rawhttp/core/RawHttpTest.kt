@@ -60,3 +60,49 @@ class SimpleHttpRequestTests : StringSpec({
     }
 
 })
+
+class SimpleHttpResponseTests : StringSpec({
+
+    "Should be able to parse simplest HTTP Response" {
+        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").run {
+            statusCodeLine.httpVersion shouldBe "HTTP/1.0"
+            statusCodeLine.statusCode shouldBe 404
+            statusCodeLine.reason shouldEqual "NOT FOUND"
+            headers.keys should beEmpty()
+            bodyReader.isPresent shouldBe false
+        }
+    }
+
+    "Should be able to parse simplest HTTP Response" {
+        RawHttp().parseResponse("""
+             HTTP/1.1 200 OK
+             Date: Mon, 27 Jul 2009 12:28:53 GMT
+             Server: Apache
+             Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
+             ETag: "34aa387-d-1568eb00"
+             Accept-Ranges: bytes
+             Content-Length: 51
+             Vary: Accept-Encoding
+             Content-Type: text/plain
+
+             Hello World! My payload includes a trailing CRLF.
+        """.trimIndent()).run {
+            statusCodeLine.httpVersion shouldBe "HTTP/1.1"
+            statusCodeLine.statusCode shouldBe 200
+            statusCodeLine.reason shouldEqual "OK"
+            headers shouldEqual mapOf(
+                    "Date" to listOf("Mon, 27 Jul 2009 12:28:53 GMT"),
+                    "Server" to listOf("Apache"),
+                    "Last-Modified" to listOf("Wed, 22 Jul 2009 19:15:56 GMT"),
+                    "ETag" to listOf("\"34aa387-d-1568eb00\""),
+                    "Accept-Ranges" to listOf("bytes"),
+                    "Content-Length" to listOf("51"),
+                    "Vary" to listOf("Accept-Encoding"),
+                    "Content-Type" to listOf("text/plain")
+            )
+            bodyReader.isPresent shouldBe true
+            String(bodyReader.get().asBytes()) shouldEqual "Hello World! My payload includes a trailing CRLF."
+        }
+    }
+
+})
