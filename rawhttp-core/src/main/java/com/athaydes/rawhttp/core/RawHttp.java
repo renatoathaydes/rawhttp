@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class RawHttp {
 
     public final RawHttpRequest parseRequest(String request) {
@@ -92,6 +94,10 @@ public class RawHttp {
         int lineNumber = 2;
         String line;
         while ((line = reader.readLine()) != null) {
+            line = line.trim();
+            if (line.isEmpty()) {
+                break;
+            }
             String[] parts = line.split(":", 2);
             if (parts.length != 2) {
                 throw new InvalidHttpRequest("Invalid header", lineNumber);
@@ -103,15 +109,18 @@ public class RawHttp {
     }
 
     private BodyReader parseBody(BufferedReader reader) throws IOException {
-        StringBuilder builder = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            builder.append(line).append('\n');
+        char[] buffer = new char[2048];
+        StringBuilder resultBuilder = new StringBuilder();
+
+        int charsRead;
+        while ((charsRead = reader.read(buffer)) >= 0) {
+            resultBuilder.append(buffer, 0, charsRead);
         }
-        if (builder.length() == 0) {
+
+        if (resultBuilder.length() == 0) {
             return null;
         } else {
-            return new EagerBodyReader(builder.toString().getBytes());
+            return new EagerBodyReader(resultBuilder.toString().getBytes(UTF_8));
         }
     }
 

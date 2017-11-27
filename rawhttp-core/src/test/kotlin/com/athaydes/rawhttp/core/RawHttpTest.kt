@@ -13,7 +13,7 @@ class SimpleHttpRequestTests : StringSpec({
         RawHttp().parseRequest("GET localhost:8080").run {
             method shouldBe "GET"
             httpVersion shouldBe "HTTP/1.1" // the default
-            uri shouldEqual URI.create("localhost:8080")
+            uri shouldEqual URI.create("http://localhost:8080")
             headers.keys should beEmpty()
             body.isPresent shouldBe false
         }
@@ -36,6 +36,26 @@ class SimpleHttpRequestTests : StringSpec({
             uri shouldEqual URI.create("http://www.example.com/hello")
             headers shouldEqual mapOf("Host" to listOf("www.example.com"))
             body.isPresent shouldBe false
+        }
+    }
+
+    "Request can have a body" {
+        RawHttp().parseRequest("""
+            POST http://host.com/myresource/123456
+            Content-Type: application/json
+            Accept: text/html
+
+            {
+                "hello": true,
+                "from": "kotlin-test"
+            }
+            """.trimIndent()).run {
+            method shouldBe "POST"
+            httpVersion shouldBe "HTTP/1.1"
+            uri shouldEqual URI.create("http://host.com/myresource/123456")
+            headers shouldEqual mapOf("Content-Type" to listOf("application/json"), "Accept" to listOf("text/html"))
+            body.isPresent shouldBe true
+            String(body.get().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
         }
     }
 
