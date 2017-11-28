@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.httpcomponents;
 
 import com.athaydes.rawhttp.core.LazyBodyReader;
+import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpClient;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
@@ -21,10 +22,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
 
 public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpResponse> {
 
@@ -53,9 +53,10 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         try {
             response = httpClient.execute(builder.build());
             Map<String, Collection<String>> headers = readHeaders(response);
+            OptionalInt headerLength = RawHttp.parseContentLength(headers);
+            Integer length = headerLength.isPresent() ? headerLength.getAsInt() : null;
             LazyBodyReader bodyReader = new LazyBodyReader(
-                    new BufferedHttpEntity(response.getEntity()).getContent(),
-                    parseContentLength(headers.getOrDefault(CONTENT_LENGTH, emptyList())));
+                    new BufferedHttpEntity(response.getEntity()).getContent(), length);
             return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
         } finally {
             if (response != null) try {
@@ -69,14 +70,6 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
     private StatusCodeLine adaptStatus(StatusLine statusLine) {
         return new StatusCodeLine(statusLine.getProtocolVersion().toString(),
                 statusLine.getStatusCode(), statusLine.getReasonPhrase());
-    }
-
-    private Long parseContentLength(Collection<String> contentLength) {
-        if (contentLength.size() == 1) {
-            return Long.parseLong(contentLength.iterator().next());
-        } else {
-            return null;
-        }
     }
 
     private Map<String, Collection<String>> readHeaders(CloseableHttpResponse response) {

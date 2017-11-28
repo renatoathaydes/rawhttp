@@ -54,10 +54,10 @@ public class RawHttpRequest {
 
     @Override
     public String toString() {
-        String body = bodyReader == null ? "" : "\n\n" + bodyReader;
-        return String.join("\n", methodLine.toString(),
+        String body = bodyReader == null ? "" : "\r\n\r\n" + bodyReader;
+        return String.join("\r\n", methodLine.toString(),
                 headers.entrySet().stream()
                         .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                        .collect(joining("\n"))) + body;
+                        .collect(joining("\r\n"))) + body;
     }
 }

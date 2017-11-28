@@ -14,13 +14,16 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableMap;
 
 public class RawHttp {
 
@@ -51,9 +54,7 @@ public class RawHttp {
         if (line != null) {
             MethodLine methodLine = parseMethodLine(line);
             Map<String, Collection<String>> headers = parseHeaders(bufferedReader);
-            if (headers.containsKey("Host")) {
-                methodLine = verifyHost(methodLine, headers.get("Host"));
-            }
+            methodLine = verifyHost(methodLine, headers);
             BodyReader bodyReader = parseBody(bufferedReader);
             return new RawHttpRequest(methodLine, headers, bodyReader);
         } else {
@@ -64,7 +65,7 @@ public class RawHttp {
 
     public final RawHttpResponse<Void> parseResponse(String response) {
         try {
-            return parseResponse(new ByteArrayInputStream(response.getBytes(UTF_8)));
+            return parseResponse(new ByteArrayInputStream(response.getBytes(UTF_8)), response.getBytes(UTF_8).length);
         } catch (IOException e) {
             // IOException should be impossible
             throw new RuntimeException(e);
@@ -73,20 +74,29 @@ public class RawHttp {
 
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return parseResponse(stream).eagerly();
+            return parseResponse(stream, Math.toIntExact(file.length())).eagerly();
         }
     }
 
-    public RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
+    public final RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
+        return parseResponse(inputStream, null);
+    }
+
+    public RawHttpResponse<Void> parseResponse(InputStream inputStream, Integer length) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = false;
         int lineNumber = 1;
+        int totalBytes = 0;
         int b;
         while ((b = inputStream.read()) >= 0) {
+            totalBytes++;
             if (b == '\r') {
                 // expect new-line
                 int next = inputStream.read();
+                if (next >= 0) {
+                    totalBytes++;
+                }
                 if (next < 0 || next == '\n') {
                     lineNumber++;
                     metadataLines.add(metadataBuilder.toString());
@@ -119,9 +129,22 @@ public class RawHttp {
         }
 
         StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = parseHeaders(new ListReadsLines(metadataLines));
+        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(new ListReadsLines(metadataLines)));
 
-        return new RawHttpResponse<>(null, null, headers, new LazyBodyReader(inputStream, null), statusCodeLine);
+        Integer bodyLength = null;
+        if (length == null) {
+            OptionalInt headerLength = parseContentLength(headers);
+            if (headerLength.isPresent()) {
+                bodyLength = headerLength.getAsInt();
+            }
+        } else {
+            bodyLength = length - totalBytes;
+            if (bodyLength < 0) {
+                throw new InvalidHttpResponse("Provided length is smaller than header length", lineNumber);
+            }
+        }
+
+        return new RawHttpResponse<>(null, null, headers, new LazyBodyReader(inputStream, bodyLength), statusCodeLine);
     }
 
     private StatusCodeLine parseStatusCodeLine(String line) {
@@ -161,10 +184,14 @@ public class RawHttp {
 
     }
 
-    private MethodLine verifyHost(MethodLine methodLine, Collection<String> host) {
-        if (host.isEmpty()) {
+    private MethodLine verifyHost(MethodLine methodLine, Map<String, Collection<String>> headers) {
+        Collection<String> host = headers.get("Host");
+        if (host == null || host.isEmpty()) {
             if (methodLine.getUri().getHost() == null) {
                 throw new InvalidHttpRequest("Host not given neither in method line nor Host header", 1);
+            } else if (methodLine.getHttpVersion().equals("HTTP/1.1")) {
+                // add the Host header to make sure the request is legal
+                headers.put("Host", singletonList(methodLine.getUri().toString()));
             }
             return methodLine;
         } else if (host.size() == 1) {
@@ -187,6 +214,15 @@ public class RawHttp {
             } else {
                 throw new InvalidHttpRequest("Invalid method line", 1);
             }
+        }
+    }
+
+    public static OptionalInt parseContentLength(Map<String, Collection<String>> headers) {
+        Collection<String> contentLength = headers.getOrDefault("Content-Length", emptyList());
+        if (contentLength.size() == 1) {
+            return OptionalInt.of(Integer.parseInt(contentLength.iterator().next()));
+        } else {
+            return OptionalInt.empty();
         }
     }
 
@@ -223,7 +259,7 @@ public class RawHttp {
             result.computeIfAbsent(parts[0].trim(), (ignore) -> new ArrayList<>(3)).add(parts[1].trim());
         }
 
-        return Collections.unmodifiableMap(result);
+        return result;
     }
 
     private BodyReader parseBody(BufferedReader reader) throws IOException {

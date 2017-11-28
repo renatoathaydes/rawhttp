@@ -64,10 +64,10 @@ public class RawHttpResponse<Response> {
 
     @Override
     public String toString() {
-        String body = bodyReader == null ? "" : "\n\n" + bodyReader;
-        return String.join("\n", statusCodeLine.toString(),
+        String body = bodyReader == null ? "" : "\r\n\r\n" + bodyReader;
+        return String.join("\r\n", statusCodeLine.toString(),
                 headers.entrySet().stream()
                         .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                        .collect(joining("\n"))) + body;
+                        .collect(joining("\r\n"))) + body;
     }
 }

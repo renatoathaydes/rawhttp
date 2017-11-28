@@ -6,25 +6,17 @@ import java.io.InputStream;
 public class LazyBodyReader implements BodyReader {
 
     private final InputStream inputStream;
-    private final Long streamLength;
+    private final Integer streamLength;
 
     public LazyBodyReader(InputStream inputStream,
-                          Long streamLength) {
+                          Integer streamLength) {
         this.inputStream = inputStream;
         this.streamLength = streamLength;
     }
 
     @Override
     public EagerBodyReader eager() throws IOException {
-        return new EagerBodyReader(inputStream, intLength());
-    }
-
-    private Integer intLength() {
-        if (streamLength == null) {
-            return null;
-        } else {
-            return Math.toIntExact(streamLength);
-        }
+        return new EagerBodyReader(inputStream, streamLength);
     }
 
     @Override
