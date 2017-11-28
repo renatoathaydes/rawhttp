@@ -80,6 +80,7 @@ public class RawHttp {
     public RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
+        boolean wasNewLine = false;
         int lineNumber = 1;
         int b;
         while ((b = inputStream.read()) >= 0) {
@@ -89,19 +90,23 @@ public class RawHttp {
                 if (next < 0 || next == '\n') {
                     lineNumber++;
                     metadataLines.add(metadataBuilder.toString());
-                    if (next < 0) break;
-                    else metadataBuilder = new StringBuilder();
+                    if (next < 0 || wasNewLine) break;
+                    metadataBuilder = new StringBuilder();
+                    wasNewLine = true;
                 } else {
                     inputStream.close();
                     throw new InvalidHttpResponse("Illegal character after return", lineNumber);
                 }
             } else if (b == '\n') {
                 // unexpected, but let's accept new-line without returns
-                metadataLines.add(metadataBuilder.toString());
-                metadataBuilder = new StringBuilder();
                 lineNumber++;
+                metadataLines.add(metadataBuilder.toString());
+                if (wasNewLine) break;
+                metadataBuilder = new StringBuilder();
+                wasNewLine = true;
             } else {
                 metadataBuilder.append((char) b);
+                wasNewLine = false;
             }
         }
 

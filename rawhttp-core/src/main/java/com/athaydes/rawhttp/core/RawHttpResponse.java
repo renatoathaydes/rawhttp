@@ -42,8 +42,8 @@ public class RawHttpResponse<Response> {
         return headers;
     }
 
-    public Optional<BodyReader> getBodyReader() {
-        return Optional.ofNullable(bodyReader);
+    public BodyReader getBodyReader() {
+        return bodyReader;
     }
 
     public int getStatusCode() {

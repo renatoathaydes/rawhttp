@@ -15,7 +15,7 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080")
             headers.keys should beEmpty()
-            body.isPresent shouldBe false
+            body should notBePresent()
         }
     }
 
@@ -25,7 +25,7 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.0"
             uri shouldEqual URI.create("https://localhost:8080/my/resource/234")
             headers.keys should beEmpty()
-            body.isPresent shouldBe false
+            body should notBePresent()
         }
     }
 
@@ -35,7 +35,7 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://www.example.com/hello")
             headers shouldEqual mapOf("Host" to listOf("www.example.com"))
-            body.isPresent shouldBe false
+            body should notBePresent()
         }
     }
 
@@ -54,8 +54,9 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("http://host.com/myresource/123456")
             headers shouldEqual mapOf("Content-Type" to listOf("application/json"), "Accept" to listOf("text/html"))
-            body.isPresent shouldBe true
-            String(body.get().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+            body should bePresent { contents ->
+                String(contents.asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+            }
         }
     }
 
@@ -64,16 +65,26 @@ class SimpleHttpRequestTests : StringSpec({
 class SimpleHttpResponseTests : StringSpec({
 
     "Should be able to parse simplest HTTP Response" {
-        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").run {
+        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").eagerly().run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.0"
             statusCodeLine.statusCode shouldBe 404
             statusCodeLine.reason shouldEqual "NOT FOUND"
             headers.keys should beEmpty()
-            bodyReader.isPresent shouldBe false
+            bodyReader.asBytes().toList() should beEmpty()
         }
     }
 
-    "Should be able to parse simplest HTTP Response" {
+    "Should be able to parse simple HTTP Response with body" {
+        RawHttp().parseResponse("HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!".trimIndent()).eagerly().run {
+            statusCodeLine.httpVersion shouldBe "HTTP/1.1"
+            statusCodeLine.statusCode shouldBe 200
+            statusCodeLine.reason shouldEqual "OK"
+            headers shouldEqual mapOf("Server" to listOf("Apache"))
+            String(bodyReader.asBytes()) shouldEqual "Hello World!"
+        }
+    }
+
+    "Should be able to parse longer HTTP Response with invalid line-endings" {
         RawHttp().parseResponse("""
              HTTP/1.1 200 OK
              Date: Mon, 27 Jul 2009 12:28:53 GMT
@@ -83,10 +94,13 @@ class SimpleHttpResponseTests : StringSpec({
              Accept-Ranges: bytes
              Content-Length: 51
              Vary: Accept-Encoding
-             Content-Type: text/plain
+             Content-Type: application/json
 
-             Hello World! My payload includes a trailing CRLF.
-        """.trimIndent()).run {
+             {
+               "hello": "world",
+               "number": 123
+             }
+        """.trimIndent()).eagerly().run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.1"
             statusCodeLine.statusCode shouldBe 200
             statusCodeLine.reason shouldEqual "OK"
@@ -98,10 +112,9 @@ class SimpleHttpResponseTests : StringSpec({
                     "Accept-Ranges" to listOf("bytes"),
                     "Content-Length" to listOf("51"),
                     "Vary" to listOf("Accept-Encoding"),
-                    "Content-Type" to listOf("text/plain")
+                    "Content-Type" to listOf("application/json")
             )
-            bodyReader.isPresent shouldBe true
-            String(bodyReader.get().asBytes()) shouldEqual "Hello World! My payload includes a trailing CRLF."
+            String(bodyReader.asBytes()) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
         }
     }
 
