@@ -3,12 +3,26 @@ package com.athaydes.rawhttp.core;
 import java.io.IOException;
 import java.io.InputStream;
 
-public interface BodyReader {
+public abstract class BodyReader {
 
-    BodyReader eager() throws IOException;
+    public enum BodyType {
+        CONTENT_LENGTH,
+        CHUNKED,
+        CLOSE_TERMINATED
+    }
 
-    byte[] asBytes() throws IOException;
+    private final BodyType bodyType;
 
-    InputStream asStream();
+    public BodyReader(BodyType bodyType) {
+        this.bodyType = bodyType;
+    }
+
+    public BodyType getBodyType() {
+        return bodyType;
+    }
+
+    public abstract EagerBodyReader eager() throws IOException;
+
+    public abstract InputStream asStream();
 
 }

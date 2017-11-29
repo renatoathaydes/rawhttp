@@ -82,7 +82,7 @@ public class JavaSample {
         RawHttpClient<?> client = new RawHttpComponentsClient();
 
         RawHttpRequest request = new RawHttp().parseRequest(
-                "GET / HTTP/1.1\n" +
+                "GET / HTTP/1.0\n" +
                         "User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3\n" +
                         "Host: www.example.com\n" +
                         "Accept-Language: en, mi");
@@ -91,7 +91,7 @@ public class JavaSample {
             RawHttpResponse<?> rawResponse = client.send(request).eagerly();
             rawHttpStatusCode = rawResponse.getStatusCode();
             rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE).iterator().next();
-            rawHttpResponseBody = new String(rawResponse.getBodyReader().asBytes(), StandardCharsets.UTF_8);
+            rawHttpResponseBody = new String(rawResponse.getBodyReader().eager().asBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -104,11 +104,11 @@ public class JavaSample {
     @Test
     public void usingRawHttpWithHttpComponents() throws IOException {
         RawHttpClient<?> client = new RawHttpComponentsClient();
-        RawHttpRequest request = new RawHttp().parseRequest("GET localhost:8082/hello");
+        RawHttpRequest request = new RawHttp().parseRequest("GET localhost:8082/hello HTTP/1.0");
         RawHttpResponse<?> response = client.send(request).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
-        assertThat(new String(response.getBodyReader().asBytes()), equalTo("Hello"));
+        assertThat(new String(response.getBodyReader().eager().asBytes()), equalTo("Hello"));
     }
 
 }

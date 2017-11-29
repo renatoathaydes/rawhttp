@@ -29,7 +29,7 @@ class RawHttpClientTest : StringSpec() {
             Socket("localhost", 8083).use { socket ->
                 TcpRawHttpClient(socket).send(RawHttp().parseRequest(
                         "GET http://localhost:8083/say-hi HTTP/1.0\r\n\r\r\n")).run {
-                    String(bodyReader.asBytes()) shouldBe "Hi there"
+                    String(bodyReader.eager().asBytes()) shouldBe "Hi there"
                 }
             }
         }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
@@ -36,25 +35,25 @@ public class RawHttpRequest {
         return methodLine.getHttpVersion();
     }
 
+    public MethodLine getMethodLine() {
+        return methodLine;
+    }
+
     public Map<String, Collection<String>> getHeaders() {
         return headers;
     }
 
-    public Optional<BodyReader> getBody() {
-        return Optional.ofNullable(bodyReader);
+    public BodyReader getBody() {
+        return bodyReader;
     }
 
-    public RawHttpRequest eagerly() throws IOException {
-        if (bodyReader == null || bodyReader instanceof EagerBodyReader) {
-            return this;
-        } else {
-            return new RawHttpRequest(methodLine, headers, bodyReader.eager());
-        }
+    public EagerHttpRequest eagerly() throws IOException {
+        return new EagerHttpRequest(this);
     }
 
     @Override
     public String toString() {
-        String body = bodyReader == null ? "" : "\r\n\r\n" + bodyReader;
+        String body = "\r\n\r\n" + bodyReader;
         return String.join("\r\n", methodLine.toString(),
                 headers.entrySet().stream()
                         .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))

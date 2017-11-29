@@ -54,12 +54,8 @@ public class RawHttpResponse<Response> {
         return statusCodeLine;
     }
 
-    public RawHttpResponse<Response> eagerly() throws IOException {
-        if (bodyReader instanceof EagerBodyReader) {
-            return this;
-        } else {
-            return new RawHttpResponse<>(libResponse, request, headers, bodyReader.eager(), statusCodeLine);
-        }
+    public EagerHttpResponse<Response> eagerly() throws IOException {
+        return new EagerHttpResponse<>(this);
     }
 
     @Override

@@ -6,27 +6,40 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-public class EagerBodyReader implements BodyReader {
+public class EagerBodyReader extends BodyReader {
 
     private final byte[] bytes;
 
-    public EagerBodyReader(InputStream inputStream, Integer bodyLength) throws IOException {
-        if (bodyLength != null && bodyLength < 0) {
-            throw new IllegalArgumentException("Invalid length (< 0)");
+    public EagerBodyReader(BodyType bodyType,
+                           InputStream inputStream,
+                           Integer bodyLength) throws IOException {
+        super(bodyType);
+        if (bodyType == BodyType.CONTENT_LENGTH) {
+            if (bodyLength == null || bodyLength < 0) {
+                throw new IllegalArgumentException("Invalid length (null OR < 0)");
+            }
         }
-        this.bytes = read(inputStream, bodyLength);
+        this.bytes = read(bodyType, inputStream, bodyLength);
         inputStream.close();
     }
 
     public EagerBodyReader(byte[] bytes) {
+        super(BodyType.CONTENT_LENGTH);
         this.bytes = bytes;
     }
 
-    private static byte[] read(InputStream inputStream, Integer bodyLength) throws IOException {
-        if (bodyLength != null) {
-            return readBytesUpToLength(inputStream, bodyLength);
-        } else {
-            return readBytesWhileAvailable(inputStream);
+    public static byte[] read(BodyType bodyType,
+                              InputStream inputStream,
+                              Integer bodyLength) throws IOException {
+        switch (bodyType) {
+            case CONTENT_LENGTH:
+                return readBytesUpToLength(inputStream, bodyLength);
+            case CHUNKED:
+                throw new UnsupportedOperationException("Chunked response body not supported yet");
+            case CLOSE_TERMINATED:
+                return readBytesWhileAvailable(inputStream);
+            default:
+                throw new IllegalStateException("Unknown body type: " + bodyType);
         }
     }
 
@@ -61,11 +74,10 @@ public class EagerBodyReader implements BodyReader {
     }
 
     @Override
-    public BodyReader eager() {
+    public EagerBodyReader eager() {
         return this;
     }
 
-    @Override
     public byte[] asBytes() {
         return bytes;
     }

@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.httpcomponents;
 
+import com.athaydes.rawhttp.core.BodyReader.BodyType;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpClient;
@@ -12,7 +13,6 @@ import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -47,16 +47,17 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
                 values.forEach(value ->
                         builder.addHeader(new BasicHeader(name, value))));
 
-        request.getBody().ifPresent(body ->
-                builder.setEntity(new InputStreamEntity(body.asStream())));
+        // FIXME do not set if empty body
+        builder.setEntity(new InputStreamEntity(request.getBody().asStream()));
 
         try {
             response = httpClient.execute(builder.build());
             Map<String, Collection<String>> headers = readHeaders(response);
             OptionalInt headerLength = RawHttp.parseContentLength(headers);
             Integer length = headerLength.isPresent() ? headerLength.getAsInt() : null;
-            LazyBodyReader bodyReader = new LazyBodyReader(
-                    new BufferedHttpEntity(response.getEntity()).getContent(), length);
+            BodyType bodyType = RawHttp.getBodyType(headers, length);
+
+            LazyBodyReader bodyReader = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
             return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
         } finally {
             if (response != null) try {

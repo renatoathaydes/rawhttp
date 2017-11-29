@@ -1,5 +1,7 @@
 package com.athaydes.rawhttp.core;
 
+import com.athaydes.rawhttp.core.BodyReader.BodyType;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -74,7 +77,7 @@ public class RawHttp {
 
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return parseResponse(stream, Math.toIntExact(file.length())).eagerly();
+            return parseResponse(stream, Math.toIntExact(file.length()));
         }
     }
 
@@ -144,7 +147,38 @@ public class RawHttp {
             }
         }
 
-        return new RawHttpResponse<>(null, null, headers, new LazyBodyReader(inputStream, bodyLength), statusCodeLine);
+        BodyType bodyType = getBodyType(headers, bodyLength);
+
+        return new RawHttpResponse<>(null, null, headers,
+                new LazyBodyReader(bodyType, inputStream, bodyLength),
+                statusCodeLine);
+    }
+
+    public static BodyType getBodyType(Map<String, Collection<String>> headers, Integer bodyLength) {
+        return bodyLength == null ?
+                parseContentEncoding(headers).orElse(BodyType.CLOSE_TERMINATED) :
+                BodyType.CONTENT_LENGTH;
+    }
+
+    private static Optional<BodyType> parseContentEncoding(Map<String, Collection<String>> headers) {
+        Optional<String> encoding = last(headers.getOrDefault("Transfer-Encoding", emptyList()));
+        if (encoding.isPresent()) {
+            if (encoding.get().equalsIgnoreCase("chunked")) {
+                return Optional.of(BodyType.CHUNKED);
+            } else {
+                throw new IllegalArgumentException("Transfer-Encoding is not supported: " + encoding);
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<String> last(Collection<String> items) {
+        String result = null;
+        for (String item : items) {
+            result = item;
+        }
+        return Optional.ofNullable(result);
     }
 
     private StatusCodeLine parseStatusCodeLine(String line) {
@@ -191,7 +225,7 @@ public class RawHttp {
                 throw new InvalidHttpRequest("Host not given neither in method line nor Host header", 1);
             } else if (methodLine.getHttpVersion().equals("HTTP/1.1")) {
                 // add the Host header to make sure the request is legal
-                headers.put("Host", singletonList(methodLine.getUri().toString()));
+                headers.put("Host", singletonList(methodLine.getUri().getHost()));
             }
             return methodLine;
         } else if (host.size() == 1) {
@@ -272,7 +306,7 @@ public class RawHttp {
         }
 
         if (resultBuilder.length() == 0) {
-            return null;
+            return new EagerBodyReader(new byte[0]);
         } else {
             return new EagerBodyReader(resultBuilder.toString().getBytes(UTF_8));
         }

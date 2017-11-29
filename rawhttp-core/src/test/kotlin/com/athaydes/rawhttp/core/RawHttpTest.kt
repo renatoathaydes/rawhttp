@@ -14,8 +14,8 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080")
-            headers.keys should beEmpty()
-            body should notBePresent()
+            headers shouldEqual mapOf("Host" to listOf("localhost"))
+            body.eager().asBytes().toList() should beEmpty()
         }
     }
 
@@ -25,7 +25,7 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.0"
             uri shouldEqual URI.create("https://localhost:8080/my/resource/234")
             headers.keys should beEmpty()
-            body should notBePresent()
+            body.eager().asBytes().toList()
         }
     }
 
@@ -35,7 +35,7 @@ class SimpleHttpRequestTests : StringSpec({
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://www.example.com/hello")
             headers shouldEqual mapOf("Host" to listOf("www.example.com"))
-            body should notBePresent()
+            body.eager().asBytes().toList()
         }
     }
 
@@ -53,10 +53,11 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "POST"
             httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("http://host.com/myresource/123456")
-            headers shouldEqual mapOf("Content-Type" to listOf("application/json"), "Accept" to listOf("text/html"))
-            body should bePresent { contents ->
-                String(contents.asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
-            }
+            headers shouldEqual mapOf(
+                    "Host" to listOf("host.com"),
+                    "Content-Type" to listOf("application/json"),
+                    "Accept" to listOf("text/html"))
+            String(body.eager().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
         }
     }
 
@@ -65,22 +66,22 @@ class SimpleHttpRequestTests : StringSpec({
 class SimpleHttpResponseTests : StringSpec({
 
     "Should be able to parse simplest HTTP Response" {
-        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").eagerly().run {
+        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.0"
             statusCodeLine.statusCode shouldBe 404
             statusCodeLine.reason shouldEqual "NOT FOUND"
             headers.keys should beEmpty()
-            bodyReader.asBytes().toList() should beEmpty()
+            bodyReader.eager().asBytes().toList() should beEmpty()
         }
     }
 
     "Should be able to parse simple HTTP Response with body" {
-        RawHttp().parseResponse("HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!".trimIndent()).eagerly().run {
+        RawHttp().parseResponse("HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!".trimIndent()).run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.1"
             statusCodeLine.statusCode shouldBe 200
             statusCodeLine.reason shouldEqual "OK"
             headers shouldEqual mapOf("Server" to listOf("Apache"))
-            String(bodyReader.asBytes()) shouldEqual "Hello World!"
+            String(bodyReader.eager().asBytes()) shouldEqual "Hello World!"
         }
     }
 
@@ -100,7 +101,7 @@ class SimpleHttpResponseTests : StringSpec({
                "hello": "world",
                "number": 123
              }
-        """.trimIndent()).eagerly().run {
+        """.trimIndent()).run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.1"
             statusCodeLine.statusCode shouldBe 200
             statusCodeLine.reason shouldEqual "OK"
@@ -114,7 +115,7 @@ class SimpleHttpResponseTests : StringSpec({
                     "Vary" to listOf("Accept-Encoding"),
                     "Content-Type" to listOf("application/json")
             )
-            String(bodyReader.asBytes()) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
+            String(bodyReader.eager().asBytes()) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
         }
     }
 
