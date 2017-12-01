@@ -22,3 +22,8 @@ class OptionalMatcher<T>(private val expectPresent: Boolean,
 fun <T> bePresent(valueMatcher: ((T) -> Any?)? = null) = OptionalMatcher(true, valueMatcher)
 fun <T> notBePresent() = OptionalMatcher<T>(false)
 
+infix fun <T> T.shouldBeOneOf(options: Set<T>) {
+    if (this !in options) {
+        throw AssertionError("Value '$this' is not in '$options'")
+    }
+}
