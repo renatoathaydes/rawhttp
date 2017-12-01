@@ -10,32 +10,32 @@ import java.net.URI
 class SimpleHttpRequestTests : StringSpec({
 
     "Should be able to parse simplest HTTP Request" {
-        RawHttp().parseRequest("GET localhost:8080").run {
+        RawHttp().parseRequest("GET localhost:8080").eagerly().run {
             method shouldBe "GET"
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080")
             headers shouldEqual mapOf("Host" to listOf("localhost"))
-            body.eager().asBytes().toList() should beEmpty()
+            body should notBePresent()
         }
     }
 
     "Should be able to parse HTTP Request with path and HTTP version" {
-        RawHttp().parseRequest("GET https://localhost:8080/my/resource/234 HTTP/1.0").run {
+        RawHttp().parseRequest("GET https://localhost:8080/my/resource/234 HTTP/1.0").eagerly().run {
             method shouldBe "GET"
             httpVersion shouldBe "HTTP/1.0"
             uri shouldEqual URI.create("https://localhost:8080/my/resource/234")
             headers.keys should beEmpty()
-            body.eager().asBytes().toList()
+            body should notBePresent()
         }
     }
 
     "Uses Host header to identify target server if missing from method line" {
-        RawHttp().parseRequest("GET /hello\nHost: www.example.com").run {
+        RawHttp().parseRequest("GET /hello\nHost: www.example.com").eagerly().run {
             method shouldBe "GET"
             httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://www.example.com/hello")
             headers shouldEqual mapOf("Host" to listOf("www.example.com"))
-            body.eager().asBytes().toList()
+            body should notBePresent()
         }
     }
 
@@ -49,7 +49,7 @@ class SimpleHttpRequestTests : StringSpec({
                 "hello": true,
                 "from": "kotlin-test"
             }
-            """.trimIndent()).run {
+            """.trimIndent()).eagerly().run {
             method shouldBe "POST"
             httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("http://host.com/myresource/123456")
@@ -57,7 +57,9 @@ class SimpleHttpRequestTests : StringSpec({
                     "Host" to listOf("host.com"),
                     "Content-Type" to listOf("application/json"),
                     "Accept" to listOf("text/html"))
-            String(body.eager().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+            body should bePresent {
+                String(it.eager().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
@@ -43,8 +44,8 @@ public class RawHttpRequest {
         return headers;
     }
 
-    public BodyReader getBody() {
-        return bodyReader;
+    public Optional<? extends BodyReader> getBody() {
+        return Optional.ofNullable(bodyReader);
     }
 
     public EagerHttpRequest eagerly() throws IOException {
@@ -53,7 +54,7 @@ public class RawHttpRequest {
 
     @Override
     public String toString() {
-        String body = "\r\n\r\n" + bodyReader;
+        String body = bodyReader == null ? "" : "\r\n\r\n" + bodyReader;
         return String.join("\r\n", methodLine.toString(),
                 headers.entrySet().stream()
                         .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))

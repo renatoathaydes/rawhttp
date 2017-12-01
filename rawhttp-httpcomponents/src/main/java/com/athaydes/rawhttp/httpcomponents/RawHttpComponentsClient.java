@@ -39,7 +39,6 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
     }
 
     public RawHttpResponse<CloseableHttpResponse> send(RawHttpRequest request) throws IOException {
-        CloseableHttpResponse response = null;
         RequestBuilder builder = RequestBuilder.create(request.getMethod());
         builder.setUri(request.getUri());
         builder.setVersion(toProtocolVersion(request.getHttpVersion()));
@@ -47,25 +46,17 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
                 values.forEach(value ->
                         builder.addHeader(new BasicHeader(name, value))));
 
-        // FIXME do not set if empty body
-        builder.setEntity(new InputStreamEntity(request.getBody().asStream()));
+        request.getBody().ifPresent(b -> builder.setEntity(new InputStreamEntity(b.asStream())));
 
-        try {
-            response = httpClient.execute(builder.build());
-            Map<String, Collection<String>> headers = readHeaders(response);
-            OptionalInt headerLength = RawHttp.parseContentLength(headers);
-            Integer length = headerLength.isPresent() ? headerLength.getAsInt() : null;
-            BodyType bodyType = RawHttp.getBodyType(headers, length);
+        CloseableHttpResponse response = httpClient.execute(builder.build());
 
-            LazyBodyReader bodyReader = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
-            return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
-        } finally {
-            if (response != null) try {
-                response.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        Map<String, Collection<String>> headers = readHeaders(response);
+        OptionalInt headerLength = RawHttp.parseContentLength(headers);
+        Integer length = headerLength.isPresent() ? headerLength.getAsInt() : null;
+        BodyType bodyType = RawHttp.getBodyType(headers, length);
+        LazyBodyReader bodyReader = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
+
+        return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
     }
 
     private StatusCodeLine adaptStatus(StatusLine statusLine) {

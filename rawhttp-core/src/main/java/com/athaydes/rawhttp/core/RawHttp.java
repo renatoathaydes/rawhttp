@@ -306,7 +306,7 @@ public class RawHttp {
         }
 
         if (resultBuilder.length() == 0) {
-            return new EagerBodyReader(new byte[0]);
+            return null;
         } else {
             return new EagerBodyReader(resultBuilder.toString().getBytes(UTF_8));
         }
