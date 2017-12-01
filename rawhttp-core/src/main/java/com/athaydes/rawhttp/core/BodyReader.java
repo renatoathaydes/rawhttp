@@ -1,9 +1,10 @@
 package com.athaydes.rawhttp.core;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
-public abstract class BodyReader {
+public abstract class BodyReader implements Closeable {
 
     public enum BodyType {
         CONTENT_LENGTH,

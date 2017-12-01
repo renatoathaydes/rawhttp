@@ -9,23 +9,32 @@ import java.nio.charset.StandardCharsets;
 public class EagerBodyReader extends BodyReader {
 
     private final byte[] bytes;
+    private final InputStream rawInputStream;
 
     public EagerBodyReader(BodyType bodyType,
                            InputStream inputStream,
                            Integer bodyLength) throws IOException {
         super(bodyType);
+        this.rawInputStream = inputStream;
         if (bodyType == BodyType.CONTENT_LENGTH) {
             if (bodyLength == null || bodyLength < 0) {
                 throw new IllegalArgumentException("Invalid length (null OR < 0)");
             }
         }
         this.bytes = read(bodyType, inputStream, bodyLength);
-        inputStream.close();
     }
 
     public EagerBodyReader(byte[] bytes) {
         super(BodyType.CONTENT_LENGTH);
         this.bytes = bytes;
+        this.rawInputStream = null;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (rawInputStream != null) {
+            rawInputStream.close();
+        }
     }
 
     public static byte[] read(BodyType bodyType,

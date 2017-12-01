@@ -55,7 +55,17 @@ public class RawHttpResponse<Response> {
     }
 
     public EagerHttpResponse<Response> eagerly() throws IOException {
-        return new EagerHttpResponse<>(this);
+        return eagerly(false);
+    }
+
+    public EagerHttpResponse<Response> eagerly(boolean keepAlive) throws IOException {
+        try {
+            return new EagerHttpResponse<>(this);
+        } finally {
+            if (!keepAlive) {
+                bodyReader.close();   ;
+            }
+        }
     }
 
     @Override

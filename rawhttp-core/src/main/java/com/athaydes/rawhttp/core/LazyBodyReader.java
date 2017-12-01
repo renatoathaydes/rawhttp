@@ -18,12 +18,28 @@ public class LazyBodyReader extends BodyReader {
 
     @Override
     public EagerBodyReader eager() throws IOException {
-        return new EagerBodyReader(getBodyType(), inputStream, streamLength);
+        try {
+            return new EagerBodyReader(getBodyType(), inputStream, streamLength);
+        } catch (IOException e) {
+            // error while trying to read message body, we cannot keep the connection alive
+            try {
+                inputStream.close();
+            } catch (IOException e2) {
+                // ignore
+            }
+
+            throw e;
+        }
     }
 
     @Override
     public InputStream asStream() {
         return inputStream;
+    }
+
+    @Override
+    public void close() throws IOException {
+        inputStream.close();
     }
 
     @Override
