@@ -5,8 +5,15 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
+import java.io.File
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
+
+fun fileFromResource(resource: String): File {
+    val file = File.createTempFile("raw-http", "txt")
+    file.writeBytes(SimpleHttpRequestTests::class.java.getResource(resource).readBytes())
+    return file
+}
 
 class SimpleHttpRequestTests : StringSpec({
 
@@ -62,6 +69,48 @@ class SimpleHttpRequestTests : StringSpec({
                     "Accept" to listOf("text/html"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+            }
+        }
+    }
+
+    "Should be able to parse HTTP Request with path and HTTP version from a file" {
+        val requestFile = fileFromResource("simple.request")
+
+        RawHttp().parseRequest(requestFile).eagerly().run {
+            method shouldBe "GET"
+            startLine.httpVersion shouldBe "HTTP/1.1"
+            uri shouldEqual URI.create("http://example.com/resources/abcde")
+            headers shouldEqual mapOf(
+                    "Accept" to listOf("application/json"),
+                    "Host" to listOf("example.com"))
+            body should notBePresent()
+        }
+    }
+
+    "Should be able to parse HTTP Request with body from a file" {
+        val requestFile = fileFromResource("post.request")
+
+        RawHttp().parseRequest(requestFile).eagerly().run {
+            method shouldBe "POST"
+            startLine.httpVersion shouldBe "HTTP/1.1"
+            uri shouldEqual URI.create("https://example.com/my-resource/SDFKJWEKLKLKWERLWKEGJGJE")
+            headers shouldEqual mapOf(
+                    "Accept" to listOf("text/plain", "*/*"),
+                    "Content-Type" to listOf("text/encrypted"),
+                    "Content-Length" to listOf("766"),
+                    "User-Agent" to listOf("rawhttp"),
+                    "Host" to listOf("example.com"))
+            body should bePresent {
+                it.asString(UTF_8) shouldEqual "BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. " +
+                        "kiOUtMhcc4NXXRb XMxIeCbf5rCmoNO Z9cuk3vFu4WUHGE FbP7OCGjWcildtW gRRS2oOGl0tDgNc " +
+                        "yZBlB9lxbNQs77O RLN5mMqTNWbKrwQ mSZolwGEonepkkk seiN0mXd8vwWM9S 7ssjvDZGbGjAfdO " +
+                        "AUJmEHLdsRKrmUX yGqKzFKkG9XuiX9 8odcxJUhBMuUAUT dPpaL3sntmQTWal FfD5rj2o0ysBE92 " +
+                        "lQjYk9Sok2Ofjod ytMjCDOF0eowY67 TgdmD9xmjC9kt0N v3XJB8FQA6mntYY QvTGvMyEInxfyd0 " +
+                        "4GnXi1PgbwwH9O4 Ntyrt73xVko2RdV 7yaEPrSxveTEQMh P5RxWbTqXsNNagf UfgvsZlpJFxKlPs " +
+                        "DxovufvUTamC5G8 Hq5XtAT811RZlro rXjZmgoS2uUinRO 0BCq3LujBBrEzQS vV4ZV6DroIjJ6kz " +
+                        "fm0sr8nIZ4pdUVS qNi5LhWIgGwPlg1 KKIOuv6aCFLUFtO pYzmPXilv7ntnES 88EnMhI1wPLDiih " +
+                        "Cy1LQyPzT7gUM3A josP5Nne89rWCD9 QrKxhczapyUSch4 E4qqihxkujRPqEu toCyI5eKEnvVbfn " +
+                        "ldCLQWSoA7RLYRZ E8x3TY7EqFJpmLP iulp9YqVZj. END KEYBASE SALTPACK ENCRYPTED MESSAGE."
             }
         }
     }
@@ -134,6 +183,23 @@ class SimpleHttpResponseTests : StringSpec({
             )
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
+            }
+        }
+    }
+
+    "Should be able to parse HTTP Response with body from file" {
+        val responseFile = fileFromResource("simple.response")
+
+        RawHttp().parseResponse(responseFile).eagerly().run {
+            startLine.httpVersion shouldBe "HTTP/1.1"
+            startLine.statusCode shouldBe 200
+            startLine.reason shouldEqual "OK"
+            headers shouldEqual mapOf(
+                    "Server" to listOf("super-server"),
+                    "Content-Type" to listOf("application/json"),
+                    "Content-Length" to listOf("50"))
+            body should bePresent {
+                it.asString(UTF_8) shouldEqual "{\n  \"message\": \"Hello World\",\n  \"language\": \"EN\"\n}"
             }
         }
     }

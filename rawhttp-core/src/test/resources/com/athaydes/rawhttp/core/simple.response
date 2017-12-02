@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 50
+Server: super-server
+
+{
+  "message": "Hello World",
+  "language": "EN"
+}

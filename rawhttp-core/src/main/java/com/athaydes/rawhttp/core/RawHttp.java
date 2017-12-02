@@ -78,7 +78,7 @@ public class RawHttp {
 
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return parseResponse(stream, null);
+            return parseResponse(stream, null).eagerly();
         }
     }
 
