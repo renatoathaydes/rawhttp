@@ -1,6 +1,8 @@
 package com.athaydes.rawhttp.core;
 
 import com.athaydes.rawhttp.core.BodyReader.BodyType;
+import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
+import com.athaydes.rawhttp.core.errors.InvalidHttpResponse;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;

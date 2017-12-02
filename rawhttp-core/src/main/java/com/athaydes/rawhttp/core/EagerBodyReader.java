@@ -72,7 +72,7 @@ public class EagerBodyReader extends BodyReader {
 
     private static byte[] readBytesWhileAvailable(InputStream inputStream) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024 * 16];
+        byte[] buffer = new byte[4096];
         while (true) {
             int actuallyRead = inputStream.read(buffer);
             if (actuallyRead < 0) {

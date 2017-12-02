@@ -1,4 +1,9 @@
-package com.athaydes.rawhttp.core;
+package com.athaydes.rawhttp.core.client;
+
+import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpClient;
+import com.athaydes.rawhttp.core.RawHttpRequest;
+import com.athaydes.rawhttp.core.RawHttpResponse;
 
 import java.io.IOException;
 import java.net.Socket;

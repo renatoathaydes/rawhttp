@@ -1,10 +1,10 @@
-package com.athaydes.rawhttp.core;
+package com.athaydes.rawhttp.core.errors;
 
-public class InvalidHttpResponse extends RuntimeException {
+public class InvalidHttpRequest extends RuntimeException {
 
     private final int lineNumber;
 
-    public InvalidHttpResponse(String message, int lineNumber) {
+    public InvalidHttpRequest(String message, int lineNumber) {
         super(message);
         this.lineNumber = lineNumber;
     }
@@ -15,7 +15,7 @@ public class InvalidHttpResponse extends RuntimeException {
 
     @Override
     public String toString() {
-        return "InvalidHttpResponse{" +
+        return "InvalidHttpRequest{" +
                 "message='" + getMessage() + "', " +
                 "lineNumber=" + lineNumber +
                 '}';

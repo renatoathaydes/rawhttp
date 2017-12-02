@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.core
 
+import com.athaydes.rawhttp.core.client.TcpRawHttpClient
 import io.kotlintest.Spec
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
