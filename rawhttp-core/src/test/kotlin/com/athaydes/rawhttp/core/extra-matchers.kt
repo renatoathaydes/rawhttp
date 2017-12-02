@@ -23,7 +23,10 @@ fun <T> bePresent(valueMatcher: ((T) -> Any?)? = null) = OptionalMatcher(true, v
 fun <T> notBePresent() = OptionalMatcher<T>(false)
 
 infix fun <T> T.shouldBeOneOf(options: Set<T>) {
+    if (options.isEmpty()) {
+        throw IllegalStateException("Assertion will never succeed as no options were provided")
+    }
     if (this !in options) {
-        throw AssertionError("Value '$this' is not in '$options'")
+        throw AssertionError("Value '$this' is not one of:\n${options.map { "  * '$it'" }.joinToString("\n")}")
     }
 }

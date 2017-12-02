@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class EagerBodyReader extends BodyReader {
@@ -44,7 +45,7 @@ public class EagerBodyReader extends BodyReader {
             case CONTENT_LENGTH:
                 return readBytesUpToLength(inputStream, bodyLength);
             case CHUNKED:
-                throw new UnsupportedOperationException("Chunked response body not supported yet");
+                return readChunkedBody(inputStream);
             case CLOSE_TERMINATED:
                 return readBytesWhileAvailable(inputStream);
             default:
@@ -82,6 +83,10 @@ public class EagerBodyReader extends BodyReader {
         return out.toByteArray();
     }
 
+    private static byte[] readChunkedBody(InputStream inputStream) throws IOException {
+        throw new UnsupportedOperationException("Chunked body not supported yet");
+    }
+
     @Override
     public EagerBodyReader eager() {
         return this;
@@ -96,9 +101,13 @@ public class EagerBodyReader extends BodyReader {
         return new ByteArrayInputStream(bytes);
     }
 
+    public String asString(Charset charset) {
+        return new String(bytes, charset);
+    }
+
     @Override
     public String toString() {
-        return new String(bytes, StandardCharsets.UTF_8);
+        return asString(StandardCharsets.UTF_8);
     }
 
 }

@@ -56,7 +56,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         BodyType bodyType = RawHttp.getBodyType(headers, length);
         LazyBodyReader bodyReader = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
 
-        return new RawHttpResponse<>(response, request, headers, bodyReader, adaptStatus(response.getStatusLine()));
+        return new RawHttpResponse<>(response, request, adaptStatus(response.getStatusLine()), headers, bodyReader);
     }
 
     private StatusCodeLine adaptStatus(StatusLine statusLine) {

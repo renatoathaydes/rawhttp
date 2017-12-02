@@ -43,7 +43,7 @@ public class JavaSample {
      * then compares the results, which should be exactly the same.
      */
     @Test
-    public void rawHttpExampleFromHttpRFC() {
+    public void httpExampleFromHttpRFC() {
         int httpComponentStatusCode;
         String httpComponentsContentType;
         String httpComponentsResponseBody;
@@ -91,7 +91,13 @@ public class JavaSample {
             RawHttpResponse<?> rawResponse = client.send(request).eagerly();
             rawHttpStatusCode = rawResponse.getStatusCode();
             rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE).iterator().next();
-            rawHttpResponseBody = new String(rawResponse.getBodyReader().eager().asBytes(), StandardCharsets.UTF_8);
+            rawHttpResponseBody = new String(rawResponse.getBody().map(b -> {
+                try {
+                    return b.eager().asBytes();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).orElseThrow(() -> new RuntimeException("No body")), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -108,7 +114,13 @@ public class JavaSample {
         RawHttpResponse<?> response = client.send(request).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
-        assertThat(new String(response.getBodyReader().eager().asBytes()), equalTo("Hello"));
+        assertThat(new String(response.getBody().map(b -> {
+            try {
+                return b.eager().asBytes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).orElseThrow(() -> new RuntimeException("No body")), StandardCharsets.UTF_8), equalTo("Hello"));
     }
 
 }

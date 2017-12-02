@@ -6,6 +6,7 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
 import java.net.URI
+import java.nio.charset.StandardCharsets.UTF_8
 
 class SimpleHttpRequestTests : StringSpec({
 
@@ -58,7 +59,7 @@ class SimpleHttpRequestTests : StringSpec({
                     "Content-Type" to listOf("application/json"),
                     "Accept" to listOf("text/html"))
             body should bePresent {
-                String(it.eager().asBytes()) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
+                it.asString(UTF_8) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
             }
         }
     }
@@ -68,22 +69,34 @@ class SimpleHttpRequestTests : StringSpec({
 class SimpleHttpResponseTests : StringSpec({
 
     "Should be able to parse simplest HTTP Response" {
-        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").run {
+        RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").eagerly().run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.0"
             statusCodeLine.statusCode shouldBe 404
             statusCodeLine.reason shouldEqual "NOT FOUND"
             headers.keys should beEmpty()
-            bodyReader.eager().asBytes().toList() should beEmpty()
+            body should bePresent { it.toString() shouldEqual "" }
+        }
+    }
+
+    "Should be able to parse HTTP Response that may not have a body" {
+        RawHttp().parseResponse("HTTP/1.1 100 CONTINUE").eagerly().run {
+            statusCodeLine.httpVersion shouldBe "HTTP/1.1"
+            statusCodeLine.statusCode shouldBe 100
+            statusCodeLine.reason shouldEqual "CONTINUE"
+            headers.keys should beEmpty()
+            body should notBePresent()
         }
     }
 
     "Should be able to parse simple HTTP Response with body" {
-        RawHttp().parseResponse("HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!".trimIndent()).run {
+        RawHttp().parseResponse("HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!".trimIndent()).eagerly().run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.1"
             statusCodeLine.statusCode shouldBe 200
             statusCodeLine.reason shouldEqual "OK"
             headers shouldEqual mapOf("Server" to listOf("Apache"))
-            String(bodyReader.eager().asBytes()) shouldEqual "Hello World!"
+            body should bePresent {
+                it.asString(UTF_8) shouldEqual "Hello World!"
+            }
         }
     }
 
@@ -103,7 +116,7 @@ class SimpleHttpResponseTests : StringSpec({
                "hello": "world",
                "number": 123
              }
-        """.trimIndent()).run {
+        """.trimIndent()).eagerly().run {
             statusCodeLine.httpVersion shouldBe "HTTP/1.1"
             statusCodeLine.statusCode shouldBe 200
             statusCodeLine.reason shouldEqual "OK"
@@ -117,8 +130,25 @@ class SimpleHttpResponseTests : StringSpec({
                     "Vary" to listOf("Accept-Encoding"),
                     "Content-Type" to listOf("application/json")
             )
-            String(bodyReader.eager().asBytes()) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
+            body should bePresent {
+                it.asString(UTF_8) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
+            }
         }
+    }
+
+    "Should ignore body of HTTP Response that may not have a body" {
+        val stream = "HTTP/1.1 304 Not Modified\r\nETag: 12345\r\n\r\nBODY".byteInputStream()
+
+        RawHttp().parseResponse(stream).eagerly().run {
+            statusCodeLine.httpVersion shouldBe "HTTP/1.1"
+            statusCodeLine.statusCode shouldBe 304
+            statusCodeLine.reason shouldEqual "Not Modified"
+            headers shouldEqual mapOf("ETag" to listOf("12345"))
+            body should notBePresent()
+        }
+
+        // verify that the stream was only consumed until the empty-line after the last header
+        String(stream.readBytes(4)) shouldEqual "BODY"
     }
 
 })
