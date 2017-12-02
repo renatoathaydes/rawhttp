@@ -93,16 +93,11 @@ public class RawHttp {
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = false;
         int lineNumber = 1;
-        int totalBytes = 0;
         int b;
         while ((b = inputStream.read()) >= 0) {
-            totalBytes++;
             if (b == '\r') {
                 // expect new-line
                 int next = inputStream.read();
-                if (next >= 0) {
-                    totalBytes++;
-                }
                 if (next < 0 || next == '\n') {
                     lineNumber++;
                     metadataLines.add(metadataBuilder.toString());
