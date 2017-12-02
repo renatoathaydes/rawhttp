@@ -54,8 +54,7 @@ RawHttpRequest request = new RawHttp().parseRequest(
         "Host: www.example.com\n" +
         "Accept-Language: en, mi");
 
-try {
-    RawHttpClient<?> client = new TcpRawHttpClient();
+try (TcpRawHttpClient client = new TcpRawHttpClient()) {
     RawHttpResponse<?> rawResponse = client.send(request).eagerly();
 
     // use response

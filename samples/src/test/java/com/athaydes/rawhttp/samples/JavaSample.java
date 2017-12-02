@@ -89,9 +89,7 @@ public class JavaSample {
                         "Host: www.example.com\n" +
                         "Accept-Language: en, mi");
 
-        try {
-            RawHttpClient<?> client = new TcpRawHttpClient();
-
+        try (TcpRawHttpClient client = new TcpRawHttpClient()) {
             EagerHttpResponse<?> rawResponse = client.send(request).eagerly();
             rawHttpStatusCode = rawResponse.getStatusCode();
             rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE)
