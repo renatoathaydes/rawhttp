@@ -30,3 +30,12 @@ infix fun <T> T.shouldBeOneOf(options: Set<T>) {
         throw AssertionError("Value '$this' is not one of:\n${options.map { "  * '$it'" }.joinToString("\n")}")
     }
 }
+
+infix fun ByteArray.shouldBe(other: ByteArray) {
+    val expected = other.toList()
+    val actual = this.toList()
+    if (actual != expected) {
+        throw AssertionError("expected: $expected but was $actual")
+    }
+}
+

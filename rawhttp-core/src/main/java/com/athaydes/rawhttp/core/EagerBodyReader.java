@@ -1,5 +1,7 @@
 package com.athaydes.rawhttp.core;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,18 +12,15 @@ import java.nio.charset.StandardCharsets;
 public class EagerBodyReader extends BodyReader {
 
     private final byte[] bytes;
+
+    @Nullable
     private final InputStream rawInputStream;
 
     public EagerBodyReader(BodyType bodyType,
-                           InputStream inputStream,
-                           Integer bodyLength) throws IOException {
+                           @Nonnull InputStream inputStream,
+                           @Nullable Long bodyLength) throws IOException {
         super(bodyType);
         this.rawInputStream = inputStream;
-        if (bodyType == BodyType.CONTENT_LENGTH) {
-            if (bodyLength == null || bodyLength < 0) {
-                throw new IllegalArgumentException("Invalid length (null OR < 0)");
-            }
-        }
         this.bytes = read(bodyType, inputStream, bodyLength);
     }
 
@@ -40,10 +39,13 @@ public class EagerBodyReader extends BodyReader {
 
     public static byte[] read(BodyType bodyType,
                               InputStream inputStream,
-                              Integer bodyLength) throws IOException {
+                              @Nullable Long bodyLength) throws IOException {
         switch (bodyType) {
             case CONTENT_LENGTH:
-                return readBytesUpToLength(inputStream, bodyLength);
+                if (bodyLength == null || bodyLength < 0) {
+                    throw new IllegalArgumentException("Invalid length (null OR < 0)");
+                }
+                return readBytesUpToLength(inputStream, Math.toIntExact(bodyLength));
             case CHUNKED:
                 return readChunkedBody(inputStream);
             case CLOSE_TERMINATED:

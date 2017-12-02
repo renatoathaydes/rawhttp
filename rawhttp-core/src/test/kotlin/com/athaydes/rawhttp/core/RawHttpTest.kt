@@ -9,9 +9,9 @@ import java.io.File
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-fun fileFromResource(resource: String): File {
+fun Any.fileFromResource(resource: String): File {
     val file = File.createTempFile("raw-http", "txt")
-    file.writeBytes(SimpleHttpRequestTests::class.java.getResource(resource).readBytes())
+    file.writeBytes(this.javaClass.getResource(resource).readBytes())
     return file
 }
 
@@ -187,7 +187,7 @@ class SimpleHttpResponseTests : StringSpec({
         }
     }
 
-    "Should be able to parse HTTP Response with body from file" {
+    "Should be able to parse HTTP Response from file" {
         val responseFile = fileFromResource("simple.response")
 
         RawHttp().parseResponse(responseFile).eagerly().run {

@@ -6,11 +6,11 @@ import java.io.InputStream;
 public class LazyBodyReader extends BodyReader {
 
     private final InputStream inputStream;
-    private final Integer streamLength;
+    private final Long streamLength;
 
     public LazyBodyReader(BodyType bodyType,
                           InputStream inputStream,
-                          Integer streamLength) {
+                          Long streamLength) {
         super(bodyType);
         this.inputStream = inputStream;
         this.streamLength = streamLength;

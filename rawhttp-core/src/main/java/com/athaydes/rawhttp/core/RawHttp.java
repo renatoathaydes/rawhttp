@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -108,10 +108,10 @@ public class RawHttp {
         @Nullable BodyReader bodyReader;
 
         if (hasBody) {
-            Integer bodyLength = null;
-            OptionalInt headerLength = parseContentLength(headers);
+            @Nullable Long bodyLength = null;
+            OptionalLong headerLength = parseContentLength(headers);
             if (headerLength.isPresent()) {
-                bodyLength = headerLength.getAsInt();
+                bodyLength = headerLength.getAsLong();
             }
             BodyType bodyType = getBodyType(headers, bodyLength);
             bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength);
@@ -163,7 +163,7 @@ public class RawHttp {
     }
 
     public static BodyType getBodyType(Map<String, Collection<String>> headers,
-                                       @Nullable Integer bodyLength) {
+                                       @Nullable Long bodyLength) {
         return bodyLength == null ?
                 parseContentEncoding(headers).orElse(BodyType.CLOSE_TERMINATED) :
                 BodyType.CONTENT_LENGTH;
@@ -300,12 +300,12 @@ public class RawHttp {
         }
     }
 
-    public static OptionalInt parseContentLength(Map<String, Collection<String>> headers) {
+    public static OptionalLong parseContentLength(Map<String, Collection<String>> headers) {
         Collection<String> contentLength = headers.getOrDefault("Content-Length", emptyList());
         if (contentLength.size() == 1) {
-            return OptionalInt.of(Integer.parseInt(contentLength.iterator().next()));
+            return OptionalLong.of(Long.parseLong(contentLength.iterator().next()));
         } else {
-            return OptionalInt.empty();
+            return OptionalLong.empty();
         }
     }
 
