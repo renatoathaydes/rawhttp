@@ -9,12 +9,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
@@ -33,37 +30,37 @@ public class RawHttp {
 
     public final RawHttpRequest parseRequest(String request) {
         try {
-            return parseRequest(new StringReader(request));
+            return parseRequest(new ByteArrayInputStream(request.getBytes(UTF_8)));
         } catch (IOException e) {
             // IOException should be impossible
             throw new RuntimeException(e);
         }
     }
 
-    public final RawHttpRequest parseRequest(File file, Charset charset) throws IOException {
+    public final RawHttpRequest parseRequest(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return parseRequest(stream, charset).eagerly();
+            return parseRequest(stream).eagerly();
         }
     }
 
-    public final RawHttpRequest parseRequest(InputStream inputStream, Charset charset) throws IOException {
-        return parseRequest(new InputStreamReader(inputStream, charset));
-    }
+    public RawHttpRequest parseRequest(InputStream inputStream) throws IOException {
+        List<String> metadataLines = parseMetadataLines(inputStream, InvalidHttpRequest::new);
 
-    public RawHttpRequest parseRequest(Reader reader) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(reader);
-
-        String line = bufferedReader.readLine();
-
-        if (line != null) {
-            MethodLine methodLine = parseMethodLine(line);
-            Map<String, Collection<String>> headers = parseHeaders(bufferedReader);
-            methodLine = verifyHost(methodLine, headers);
-            BodyReader bodyReader = parseBody(bufferedReader);
-            return new RawHttpRequest(methodLine, headers, bodyReader);
-        } else {
+        if (metadataLines.isEmpty()) {
             throw new InvalidHttpRequest("No content", 0);
         }
+
+        MethodLine methodLine = parseMethodLine(metadataLines.remove(0));
+        Map<String, Collection<String>> headers = parseHeaders(new ListReadsLines(metadataLines));
+
+        // do a little cleanup to make sure the request is actually valid
+        methodLine = verifyHost(methodLine, headers);
+        headers = unmodifiableMap(headers);
+
+        boolean hasBody = requestHasBody(headers);
+        @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
+
+        return new RawHttpRequest(methodLine, headers, bodyReader);
     }
 
     public final RawHttpResponse<Void> parseResponse(String response) {
@@ -89,6 +86,41 @@ public class RawHttp {
 
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
                                                @Nullable MethodLine methodLine) throws IOException {
+        List<String> metadataLines = parseMetadataLines(inputStream, InvalidHttpResponse::new);
+
+        if (metadataLines.isEmpty()) {
+            throw new InvalidHttpResponse("No content", 0);
+        }
+
+        StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
+        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(new ListReadsLines(metadataLines)));
+
+        boolean hasBody = responseHasBody(statusCodeLine, methodLine);
+        @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
+
+        return new RawHttpResponse<>(null, null, statusCodeLine, headers, bodyReader);
+    }
+
+    @Nullable
+    private BodyReader createBodyReader(InputStream inputStream, Map<String, Collection<String>> headers, boolean hasBody) {
+        @Nullable BodyReader bodyReader;
+
+        if (hasBody) {
+            Integer bodyLength = null;
+            OptionalInt headerLength = parseContentLength(headers);
+            if (headerLength.isPresent()) {
+                bodyLength = headerLength.getAsInt();
+            }
+            BodyType bodyType = getBodyType(headers, bodyLength);
+            bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength);
+        } else {
+            bodyReader = null;
+        }
+        return bodyReader;
+    }
+
+    private static List<String> parseMetadataLines(InputStream inputStream,
+                                                   BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = false;
@@ -106,7 +138,7 @@ public class RawHttp {
                     wasNewLine = true;
                 } else {
                     inputStream.close();
-                    throw new InvalidHttpResponse("Illegal character after return", lineNumber);
+                    throw createError.apply("Illegal character after return", lineNumber);
                 }
             } else if (b == '\n') {
                 // unexpected, but let's accept new-line without returns
@@ -125,29 +157,7 @@ public class RawHttp {
             metadataLines.add(metadataBuilder.toString());
         }
 
-        if (metadataLines.isEmpty()) {
-            throw new InvalidHttpResponse("No content", 0);
-        }
-
-        StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(new ListReadsLines(metadataLines)));
-
-        boolean hasBody = responseHasBody(statusCodeLine, methodLine);
-        @Nullable BodyReader bodyReader;
-
-        if (hasBody) {
-            Integer bodyLength = null;
-            OptionalInt headerLength = parseContentLength(headers);
-            if (headerLength.isPresent()) {
-                bodyLength = headerLength.getAsInt();
-            }
-            BodyType bodyType = getBodyType(headers, bodyLength);
-            bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength);
-        } else {
-            bodyReader = null;
-        }
-
-        return new RawHttpResponse<>(null, null, statusCodeLine, headers, bodyReader);
+        return metadataLines;
     }
 
     public static BodyType getBodyType(Map<String, Collection<String>> headers,
@@ -155,6 +165,14 @@ public class RawHttp {
         return bodyLength == null ?
                 parseContentEncoding(headers).orElse(BodyType.CLOSE_TERMINATED) :
                 BodyType.CONTENT_LENGTH;
+    }
+
+    public static boolean requestHasBody(Map<String, Collection<String>> headers) {
+        // The presence of a message body in a request is signaled by a
+        // Content-Length or Transfer-Encoding header field.  Request message
+        // framing is independent of method semantics, even if the method does
+        // not define any use for a message body.
+        return headers.containsKey("Content-Length") || headers.containsKey("Transfer-Encoding");
     }
 
     public static boolean responseHasBody(StatusCodeLine statusCodeLine) {

@@ -44,6 +44,7 @@ class SimpleHttpRequestTests : StringSpec({
         RawHttp().parseRequest("""
             POST http://host.com/myresource/123456
             Content-Type: application/json
+            Content-Length: 49
             Accept: text/html
 
             {
@@ -57,6 +58,7 @@ class SimpleHttpRequestTests : StringSpec({
             headers shouldEqual mapOf(
                     "Host" to listOf("host.com"),
                     "Content-Type" to listOf("application/json"),
+                    "Content-Length" to listOf("49"),
                     "Accept" to listOf("text/html"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
