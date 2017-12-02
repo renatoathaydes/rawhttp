@@ -66,12 +66,10 @@ public class RawHttp {
         }
     }
 
-
     public final RawHttpResponse<Void> parseResponse(String response) {
         try {
             return parseResponse(
                     new ByteArrayInputStream(response.getBytes(UTF_8)),
-                    response.getBytes(UTF_8).length,
                     null);
         } catch (IOException e) {
             // IOException should be impossible
@@ -81,16 +79,15 @@ public class RawHttp {
 
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return parseResponse(stream, Math.toIntExact(file.length()), null);
+            return parseResponse(stream, null);
         }
     }
 
     public final RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
-        return parseResponse(inputStream, null, null);
+        return parseResponse(inputStream, null);
     }
 
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
-                                               @Nullable Integer length,
                                                @Nullable MethodLine methodLine) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
@@ -145,18 +142,10 @@ public class RawHttp {
 
         if (hasBody) {
             Integer bodyLength = null;
-            if (length == null) {
-                OptionalInt headerLength = parseContentLength(headers);
-                if (headerLength.isPresent()) {
-                    bodyLength = headerLength.getAsInt();
-                }
-            } else {
-                bodyLength = length - totalBytes;
-                if (bodyLength < 0) {
-                    throw new InvalidHttpResponse("Provided length is smaller than header length", lineNumber);
-                }
+            OptionalInt headerLength = parseContentLength(headers);
+            if (headerLength.isPresent()) {
+                bodyLength = headerLength.getAsInt();
             }
-
             BodyType bodyType = getBodyType(headers, bodyLength);
             bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength);
         } else {
