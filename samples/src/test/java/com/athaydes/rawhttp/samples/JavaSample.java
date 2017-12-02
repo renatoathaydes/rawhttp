@@ -1,9 +1,10 @@
 package com.athaydes.rawhttp.samples;
 
+import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpClient;
 import com.athaydes.rawhttp.core.RawHttpRequest;
-import com.athaydes.rawhttp.core.RawHttpResponse;
+import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
 import com.athaydes.rawhttp.httpcomponents.RawHttpComponentsClient;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -18,9 +19,11 @@ import org.junit.Test;
 import spark.Spark;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -28,9 +31,10 @@ import static org.junit.Assert.assertThat;
 public class JavaSample {
 
     @BeforeClass
-    public static void startServer() {
+    public static void startServer() throws Exception {
         Spark.port(8082);
         Spark.get("/hello", "text/plain", (req, res) -> "Hello");
+        Thread.sleep(150L);
     }
 
     @AfterClass
@@ -79,8 +83,6 @@ public class JavaSample {
         String rawHttpResponseBody;
 
         // now, using RawHTTP
-        RawHttpClient<?> client = new RawHttpComponentsClient();
-
         RawHttpRequest request = new RawHttp().parseRequest(
                 "GET / HTTP/1.0\n" +
                         "User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3\n" +
@@ -88,16 +90,14 @@ public class JavaSample {
                         "Accept-Language: en, mi");
 
         try {
-            RawHttpResponse<?> rawResponse = client.send(request).eagerly();
+            RawHttpClient<?> client = new TcpRawHttpClient();
+
+            EagerHttpResponse<?> rawResponse = client.send(request).eagerly();
             rawHttpStatusCode = rawResponse.getStatusCode();
-            rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE).iterator().next();
-            rawHttpResponseBody = new String(rawResponse.getBody().map(b -> {
-                try {
-                    return b.eager().asBytes();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).orElseThrow(() -> new RuntimeException("No body")), StandardCharsets.UTF_8);
+            rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE)
+                    .iterator().next().split(";")[0];
+            rawHttpResponseBody = rawResponse.getBody().map(b -> b.asString(UTF_8))
+                    .orElseThrow(() -> new RuntimeException("No body"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -111,16 +111,75 @@ public class JavaSample {
     public void usingRawHttpWithHttpComponents() throws IOException {
         RawHttpClient<?> client = new RawHttpComponentsClient();
         RawHttpRequest request = new RawHttp().parseRequest("GET localhost:8082/hello HTTP/1.0");
-        RawHttpResponse<?> response = client.send(request).eagerly();
+        EagerHttpResponse<?> response = client.send(request).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
-        assertThat(new String(response.getBody().map(b -> {
+        assertThat(response.getBody().map(b -> b.asString(UTF_8))
+                .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
+    }
+
+    @Test
+    public void goingRawWithoutFancyClient() throws IOException {
+        RawHttp rawHttp = new RawHttp();
+
+        RawHttpRequest request = rawHttp.parseRequest("GET localhost:8082/hello HTTP/1.0");
+        Socket socket = new Socket("localhost", 8082);
+        request.writeTo(socket.getOutputStream());
+
+        EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
+
+        assertThat(response.getStatusCode(), is(200));
+        assertThat(response.getBody().map(b -> b.asString(UTF_8))
+                .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
+    }
+
+    @Test
+    public void rudimentaryHttpServerCalledFromHttpComponentsClient() throws Exception {
+        RawHttp http = new RawHttp();
+        ServerSocket server = new ServerSocket(8083);
+
+        new Thread(() -> {
             try {
-                return b.eager().asBytes();
+                Socket client = server.accept();
+                RawHttpRequest request = http.parseRequest(client.getInputStream());
+                System.out.println("REQUEST:\n" + request);
+                if (request.getUri().getPath().equals("/saysomething")) {
+                    http.parseResponse("HTTP/1.1 200 OK\n" +
+                            "Content-Type: text/plain\n" +
+                            "Content-Length: 9\n" +
+                            "\n" +
+                            "something").writeTo(client.getOutputStream());
+                } else {
+                    http.parseResponse("HTTP/1.1 404 Not Found\n" +
+                            "Content-Type: text/plain\n" +
+                            "Content-Length: 0\n" +
+                            "\n").writeTo(client.getOutputStream());
+                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
-        }).orElseThrow(() -> new RuntimeException("No body")), StandardCharsets.UTF_8), equalTo("Hello"));
+        }).start();
+
+        // let the server start
+        Thread.sleep(150L);
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        HttpUriRequest httpRequest = RequestBuilder.get()
+                .setUri(URI.create("http://localhost:8083/saysomething"))
+                .build();
+
+        try {
+            CloseableHttpResponse response = httpClient.execute(httpRequest);
+            System.out.println("RESPONSE:\n" + response);
+
+            assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+            assertThat(response.getEntity().getContentLength(), equalTo(9L));
+            assertThat(EntityUtils.toString(response.getEntity()), equalTo("something"));
+        } finally {
+            httpClient.close();
+            server.close();
+        }
     }
 
 }
