@@ -36,7 +36,7 @@ class TcpRawHttp10ClientTest : StringSpec() {
         "Must be able to perform a simple HTTP 1.0 request against a real HTTP server" {
             Socket("localhost", 8083).use { socket ->
                 TcpRawHttpClient(socket).send(RawHttp().parseRequest(
-                        "GET http://localhost:8083/say-hi HTTP/1.0\r\n\r\n\r\n")).eagerly().run {
+                        "GET http://localhost:8083/say-hi HTTP/1.0")).eagerly().run {
                     body should bePresent {
                         it.asString(UTF_8) shouldBeOneOf setOf("Hi there", "{ \"message\": \"Hi there\" }")
                     }
@@ -49,7 +49,7 @@ class TcpRawHttp10ClientTest : StringSpec() {
                 TcpRawHttpClient(socket).send(RawHttp().parseRequest(
                         "GET http://localhost:8083/say-hi HTTP/1.0\r\n" +
                                 "Host: localhost\r\n" +
-                                "Accept: text/plain\r\n\r\n\r\n")).eagerly().run {
+                                "Accept: text/plain")).eagerly().run {
                     body should bePresent {
                         it.asString(UTF_8) shouldBe "Hi there"
                     }
@@ -87,7 +87,7 @@ class TcpRawHttp11ClientTest : StringSpec() {
         "Must be able to perform a simple HTTP 1.1 request against a real HTTP server" {
             Socket("localhost", 8083).use { socket ->
                 TcpRawHttpClient(socket).send(RawHttp().parseRequest(
-                        "GET http://localhost:8083/say-hi HTTP/1.1\r\n\r\n\r\n")).eagerly().run {
+                        "GET http://localhost:8083/say-hi HTTP/1.1")).eagerly().run {
                     body should bePresent {
                         it.asString(UTF_8) shouldBeOneOf setOf("Hi there", "{ \"message\": \"Hi there\" }")
                     }
@@ -100,7 +100,7 @@ class TcpRawHttp11ClientTest : StringSpec() {
                 TcpRawHttpClient(socket).send(RawHttp().parseRequest(
                         "GET http://localhost:8083/say-hi HTTP/1.1\r\n" +
                                 "Host: localhost\r\n" +
-                                "Accept: text/plain\r\n\r\n\r\n")).eagerly().run {
+                                "Accept: text/plain")).eagerly().run {
                     body should bePresent {
                         it.asString(UTF_8) shouldBe "Hi there"
                     }

@@ -2,7 +2,6 @@ package com.athaydes.rawhttp.core;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class TcpRawHttpClient implements RawHttpClient<Void> {
 
@@ -14,7 +13,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void> {
 
     @Override
     public RawHttpResponse<Void> send(RawHttpRequest request) throws IOException {
-        socket.getOutputStream().write(request.toString().getBytes(StandardCharsets.UTF_8));
+        request.writeTo(socket.getOutputStream());
         return new RawHttp().parseResponse(socket.getInputStream());
     }
 
