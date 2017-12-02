@@ -41,7 +41,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
     public RawHttpResponse<CloseableHttpResponse> send(RawHttpRequest request) throws IOException {
         RequestBuilder builder = RequestBuilder.create(request.getMethod());
         builder.setUri(request.getUri());
-        builder.setVersion(toProtocolVersion(request.getHttpVersion()));
+        builder.setVersion(toProtocolVersion(request.getStartLine().getHttpVersion()));
         request.getHeaders().forEach((name, values) ->
                 values.forEach(value ->
                         builder.addHeader(new BasicHeader(name, value))));

@@ -6,7 +6,7 @@ import java.util.Optional;
 public class EagerHttpRequest extends RawHttpRequest {
 
     public EagerHttpRequest(RawHttpRequest request) throws IOException {
-        super(request.getMethodLine(), request.getHeaders(),
+        super(request.getStartLine(), request.getHeaders(),
                 request.getBody().isPresent() ? request.getBody().get().eager() : null);
     }
 

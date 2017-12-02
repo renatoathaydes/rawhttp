@@ -3,7 +3,7 @@ package com.athaydes.rawhttp.core;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class MethodLine {
+public class MethodLine implements StartLine {
 
     private final String method;
     private final URI uri;
@@ -23,6 +23,7 @@ public class MethodLine {
         return uri;
     }
 
+    @Override
     public String getHttpVersion() {
         return httpVersion;
     }

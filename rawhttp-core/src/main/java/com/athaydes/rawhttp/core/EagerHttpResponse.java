@@ -8,7 +8,7 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
     public EagerHttpResponse(RawHttpResponse<Response> response) throws IOException {
         super(response.getLibResponse().orElse(null),
                 response.getRequest().orElse(null),
-                response.getStatusCodeLine(), response.getHeaders(),
+                response.getStartLine(), response.getHeaders(),
                 response.getBody().isPresent() ? response.getBody().get().eager() : null
         );
     }

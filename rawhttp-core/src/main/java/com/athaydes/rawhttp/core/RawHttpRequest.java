@@ -6,8 +6,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
 
-import static java.util.stream.Collectors.joining;
-
 public class RawHttpRequest extends HttpMessage {
 
     private final MethodLine methodLine;
@@ -27,11 +25,8 @@ public class RawHttpRequest extends HttpMessage {
         return methodLine.getUri();
     }
 
-    public String getHttpVersion() {
-        return methodLine.getHttpVersion();
-    }
-
-    public MethodLine getMethodLine() {
+    @Override
+    public MethodLine getStartLine() {
         return methodLine;
     }
 
@@ -39,12 +34,4 @@ public class RawHttpRequest extends HttpMessage {
         return new EagerHttpRequest(this);
     }
 
-    @Override
-    public String toString() {
-        String body = getBody().map(b -> "\r\n\r\n" + b).orElse("");
-        return String.join("\r\n", methodLine.toString(),
-                getHeaders().entrySet().stream()
-                        .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                        .collect(joining("\r\n"))) + body;
-    }
 }

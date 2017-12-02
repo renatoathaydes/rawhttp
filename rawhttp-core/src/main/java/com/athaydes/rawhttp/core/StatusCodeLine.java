@@ -1,6 +1,6 @@
 package com.athaydes.rawhttp.core;
 
-public class StatusCodeLine {
+public class StatusCodeLine implements StartLine {
 
     private final String httpVersion;
     private final int statusCode;
@@ -12,6 +12,7 @@ public class StatusCodeLine {
         this.reason = reason;
     }
 
+    @Override
     public String getHttpVersion() {
         return httpVersion;
     }

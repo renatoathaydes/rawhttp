@@ -6,8 +6,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.stream.Collectors.joining;
-
 public class RawHttpResponse<Response> extends HttpMessage {
 
     @Nullable
@@ -39,12 +37,13 @@ public class RawHttpResponse<Response> extends HttpMessage {
         return Optional.ofNullable(request);
     }
 
-    public int getStatusCode() {
-        return statusCodeLine.getStatusCode();
+    @Override
+    public StatusCodeLine getStartLine() {
+        return statusCodeLine;
     }
 
-    public StatusCodeLine getStatusCodeLine() {
-        return statusCodeLine;
+    public int getStatusCode() {
+        return statusCodeLine.getStatusCode();
     }
 
     public EagerHttpResponse<Response> eagerly() throws IOException {
@@ -67,12 +66,4 @@ public class RawHttpResponse<Response> extends HttpMessage {
         }
     }
 
-    @Override
-    public String toString() {
-        String body = getBody().map(b -> "\r\n\r\n" + b).orElse("");
-        return String.join("\r\n", statusCodeLine.toString(),
-                getHeaders().entrySet().stream()
-                        .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                        .collect(joining("\r\n"))) + body;
-    }
 }
