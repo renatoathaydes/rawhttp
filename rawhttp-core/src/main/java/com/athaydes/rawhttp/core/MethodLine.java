@@ -29,8 +29,11 @@ public class MethodLine implements StartLine {
     }
 
     public MethodLine withHost(String host) {
+        String[] parts = host.split(":");
+        host = parts[0];
+        int port = parts.length > 1 ? Integer.parseInt(parts[1]) : uri.getPort();
         try {
-            URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), host, uri.getPort(),
+            URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), host, port,
                     uri.getPath(), uri.getQuery(), uri.getFragment());
             return new MethodLine(method, newURI, httpVersion);
         } catch (URISyntaxException e) {
