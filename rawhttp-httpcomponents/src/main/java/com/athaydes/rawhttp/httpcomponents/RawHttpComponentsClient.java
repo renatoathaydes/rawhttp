@@ -7,6 +7,7 @@ import com.athaydes.rawhttp.core.RawHttpClient;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.StatusCodeLine;
+import com.sun.istack.internal.Nullable;
 import org.apache.http.Header;
 import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
@@ -22,7 +23,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 import static java.util.Collections.singletonList;
 
@@ -51,12 +52,18 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         CloseableHttpResponse response = httpClient.execute(builder.build());
 
         Map<String, Collection<String>> headers = readHeaders(response);
-        OptionalInt headerLength = RawHttp.parseContentLength(headers);
-        Integer length = headerLength.isPresent() ? headerLength.getAsInt() : null;
-        BodyType bodyType = RawHttp.getBodyType(headers, length);
-        LazyBodyReader bodyReader = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
 
-        return new RawHttpResponse<>(response, request, adaptStatus(response.getStatusLine()), headers, bodyReader);
+        @Nullable LazyBodyReader body;
+        if (response.getEntity() != null) {
+            OptionalLong headerLength = RawHttp.parseContentLength(headers);
+            @Nullable Long length = headerLength.isPresent() ? headerLength.getAsLong() : null;
+            BodyType bodyType = RawHttp.getBodyType(headers, length);
+            body = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
+        } else {
+            body = null;
+        }
+
+        return new RawHttpResponse<>(response, request, adaptStatus(response.getStatusLine()), headers, body);
     }
 
     private StatusCodeLine adaptStatus(StatusLine statusLine) {
