@@ -3,7 +3,7 @@ package com.athaydes.rawhttp.core.file
 import com.athaydes.rawhttp.core.RawHttp
 import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.fileFromResource
-import com.athaydes.rawhttp.core.shouldBe
+import com.athaydes.rawhttp.core.shouldHaveSameElementsAs
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
@@ -25,7 +25,7 @@ class FileBodyTest : StringSpec({
                     "Content-Length" to listOf(fileBody.file.length().toString()),
                     "Host" to listOf("localhost"),
                     "Content-Type" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldBe fileBody.file.readBytes() }
+            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -44,7 +44,7 @@ class FileBodyTest : StringSpec({
                     "Content-Length" to listOf(fileBody.file.length().toString()),
                     "Host" to listOf("localhost"),
                     "Content-Type" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldBe fileBody.file.readBytes() }
+            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -61,7 +61,7 @@ class FileBodyTest : StringSpec({
                     "Content-Length" to listOf(fileBody.file.length().toString()),
                     "Server" to listOf("Apache"),
                     "Content-Type" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldBe fileBody.file.readBytes() }
+            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -79,7 +79,7 @@ class FileBodyTest : StringSpec({
             headers.toMap() shouldEqual mapOf(
                     "Content-Length" to listOf(fileBody.file.length().toString()),
                     "Content-Type" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldBe fileBody.file.readBytes() }
+            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 

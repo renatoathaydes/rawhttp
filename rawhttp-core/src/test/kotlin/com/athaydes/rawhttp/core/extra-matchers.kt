@@ -31,11 +31,17 @@ infix fun <T> T.shouldBeOneOf(options: Set<T>) {
     }
 }
 
-infix fun ByteArray.shouldBe(other: ByteArray) {
+infix fun ByteArray.shouldHaveSameElementsAs(other: ByteArray) {
     val expected = other.toList()
     val actual = this.toList()
-    if (actual != expected) {
-        throw AssertionError("expected: $expected but was $actual")
+    if (expected.size != actual.size) {
+        throw AssertionError("expected array of size ${expected.size} but got array of size ${actual.size}")
+    }
+    for ((index, values) in expected.zip(actual).withIndex()) {
+        val (e, a) = values
+        if (e != a) {
+            throw AssertionError("expected $e but got $a at index $index")
+        }
     }
 }
 
