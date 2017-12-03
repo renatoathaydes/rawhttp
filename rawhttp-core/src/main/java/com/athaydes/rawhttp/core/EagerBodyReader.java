@@ -16,7 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
+
+import static java.util.Collections.emptyMap;
 
 public class EagerBodyReader extends BodyReader {
 
@@ -103,11 +106,12 @@ public class EagerBodyReader extends BodyReader {
         List<Chunk> chunks = new ArrayList<>();
         int chunkSize = 1;
         while (chunkSize > 0) {
-            chunkSize = inputStream.read();
+            AtomicBoolean hasExtensions = new AtomicBoolean(false);
+            chunkSize = readChunkSize(inputStream, hasExtensions);
             if (chunkSize < 0) {
                 throw new IllegalStateException("unexpected EOF, could not read chunked body");
             }
-            Chunk chunk = readChunk(inputStream, chunkSize);
+            Chunk chunk = readChunk(inputStream, chunkSize, hasExtensions);
             chunks.add(chunk);
         }
 
@@ -120,7 +124,86 @@ public class EagerBodyReader extends BodyReader {
         return new ChunkedBody(chunks, trailerHeaders);
     }
 
-    private static Chunk readChunk(InputStream inputStream, int chunkSize) throws IOException {
+    private static int readChunkSize(InputStream inputStream,
+                                     AtomicBoolean hasExtensions) throws IOException {
+        char[] chars = new char[4];
+        int b;
+        int i = 0;
+        while ((b = inputStream.read()) >= 0 && i < 4) {
+            if (b == '\r') {
+                int next = inputStream.read();
+                if (next == '\n') {
+                    break;
+                } else {
+                    throw new IllegalStateException("Illegal character after return (parsing chunk-size)");
+                }
+            }
+            if (b == '\n') {
+                // unexpected, but allow it
+                break;
+            }
+            if (b == ';') {
+                hasExtensions.set(true);
+                break;
+            }
+            chars[i++] = (char) b;
+        }
+        if (i == 4) {
+            // ensure end of chunk-size or new-line
+            if (b == '\r') {
+                int next = inputStream.read();
+                if (next != '\n') {
+                    throw new IllegalStateException("Illegal character after return (parsing chunk-size)");
+                }
+            } else if (b != '\n' && b != ';') {
+                throw new IllegalStateException("Invalid chunk-size: too big");
+            } else if (b == ';') {
+                hasExtensions.set(true);
+            }
+        }
+
+        return Integer.parseInt(new String(chars, 0, i), 16);
+    }
+
+    private static Chunk readChunk(InputStream inputStream,
+                                   int chunkSize,
+                                   AtomicBoolean hasExtensions) throws IOException {
+        Map<String, Collection<String>> extensions = hasExtensions.get() ?
+                parseExtensions(inputStream) :
+                emptyMap();
+
+        byte[] data = new byte[chunkSize];
+
+        if (chunkSize > 0) {
+            int bytesRead;
+            int totalBytesRead = 0;
+            while ((bytesRead = inputStream.read(data, totalBytesRead, chunkSize - totalBytesRead)) >= 0) {
+                totalBytesRead += bytesRead;
+                if (totalBytesRead == chunkSize) {
+                    break;
+                }
+            }
+
+            if (totalBytesRead < chunkSize) {
+                throw new IllegalStateException("Unexpected EOF while reading chunk data");
+            }
+
+            // consume CRLF
+            int b = inputStream.read();
+            if (b == '\r') {
+                int next = inputStream.read();
+                if (next != '\n') {
+                    throw new IllegalStateException("Illegal character after return (parsing chunk-size)");
+                }
+            } else if (b != '\n') {
+                throw new IllegalStateException("Illegal character after chunk-data (missing CRLF)");
+            }
+        }
+
+        return new Chunk(extensions, data);
+    }
+
+    private static Map<String, Collection<String>> parseExtensions(InputStream inputStream) throws IOException {
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;
@@ -164,25 +247,7 @@ public class EagerBodyReader extends BodyReader {
             extensions.computeIfAbsent(currentName.toString().trim(),
                     (ignore) -> new ArrayList<>(3)).add(currentValue.toString().trim());
         }
-
-        byte[] data = new byte[chunkSize];
-
-        if (chunkSize > 0) {
-            int bytesRead;
-            int totalBytesRead = 0;
-            while ((bytesRead = inputStream.read(data, totalBytesRead, chunkSize - totalBytesRead)) >= 0) {
-                totalBytesRead += bytesRead;
-                if (totalBytesRead == chunkSize) {
-                    break;
-                }
-            }
-
-            if (totalBytesRead < chunkSize) {
-                throw new IllegalStateException("Unexpected EOF while reading chunk data");
-            }
-        }
-
-        return new Chunk(extensions, data);
+        return extensions;
     }
 
     @Override

@@ -50,24 +50,35 @@ class EagerBodyReaderTest : StringSpec({
         }
     }
 
-    "Can read chunked body" {
-        val body = arrayOf<Byte>(
-                // chunk size = 5
-                5,
-                // abc=123
-                97, 98, 99, 61, 49, 50, 51,
-                // \r\n
-                13, 10,
-                // 12345
-                49, 50, 51, 52, 53,
-                // chunk size = 2
-                2,
-                // \r\n
-                13, 10,
-                // 98
-                57, 56,
-                // chunk size = 0 + \r\n\r\n
-                0, 13, 10, 13, 10)
+    "Can read simple chunked body" {
+        val body = byteArrayOf(56, 13, 10, 72, 105, 32, 116, 104, 101, 114, 101, 13, 10, 48, 13, 10, 13, 10)
+
+        val stream = body.inputStream()
+        val reader = EagerBodyReader(CHUNKED, stream, null)
+
+        reader.run {
+            bodyType shouldBe CHUNKED
+            asString(Charsets.UTF_8) shouldBe "Hi there"
+            asChunkedBody() should bePresent {
+                it.data shouldHaveSameElementsAs "Hi there".toByteArray()
+                it.chunks.size shouldBe 2
+
+                it.chunks[0].data shouldHaveSameElementsAs "Hi there".toByteArray()
+                it.chunks[0].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[0].size() shouldBe 8
+
+                it.chunks[1].data.size shouldBe 0
+                it.chunks[1].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[1].size() shouldBe 0
+
+                it.trailerHeaders shouldEqual emptyMap<String, Collection<String>>()
+            }
+            asBytes() shouldHaveSameElementsAs "Hi there".toByteArray()
+        }
+    }
+
+    "Can read chunked body containing metadata" {
+        val body = "5;abc=123\r\n12345\r\n2\r\n98\r\n0\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
         val reader = EagerBodyReader(CHUNKED, stream, null)
@@ -98,9 +109,7 @@ class EagerBodyReaderTest : StringSpec({
     }
 
     "Can read empty chunked body with only extensions in last chunk" {
-        val body = arrayOf(
-                // chunk size = 0 + METADATA + \r\n\r\n
-                0, *("hi=true;bye=false,maybe;hi=22;cool").toByteArray().toTypedArray(), 13, 10, 13, 10)
+        val body = "0;hi=true;bye=false,maybe;hi=22;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
         val reader = EagerBodyReader(CHUNKED, stream, null)
@@ -126,18 +135,7 @@ class EagerBodyReaderTest : StringSpec({
     }
 
     "Can read chunked body with trailer" {
-        val body = arrayOf(
-                // chunk size = 2
-                2,
-                // \r\n
-                13, 10,
-                // 98
-                57, 56,
-                // chunk size = 0 + \r\n
-                0, 13, 10,
-                // trailer
-                *("Hello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED".toByteArray()).toTypedArray()
-        )
+        val body = "2\r\n98\r\n0\r\nHello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED"
 
         val stream = body.toByteArray().inputStream()
         val reader = EagerBodyReader(CHUNKED, stream, null)
