@@ -5,7 +5,6 @@ import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
 import com.athaydes.rawhttp.core.errors.InvalidHttpResponse;
 
 import javax.annotation.Nullable;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +15,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,7 +51,7 @@ public class RawHttp {
         }
 
         MethodLine methodLine = parseMethodLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = parseHeaders(new ListReadsLines(metadataLines));
+        Map<String, Collection<String>> headers = parseHeaders(metadataLines, InvalidHttpRequest::new);
 
         // do a little cleanup to make sure the request is actually valid
         methodLine = verifyHost(methodLine, headers);
@@ -95,7 +93,7 @@ public class RawHttp {
         }
 
         StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(new ListReadsLines(metadataLines)));
+        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(metadataLines, InvalidHttpResponse::new));
 
         boolean hasBody = responseHasBody(statusCodeLine, methodLine);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
@@ -121,8 +119,8 @@ public class RawHttp {
         return bodyReader;
     }
 
-    private static List<String> parseMetadataLines(InputStream inputStream,
-                                                   BiFunction<String, Integer, RuntimeException> createError) throws IOException {
+    static List<String> parseMetadataLines(InputStream inputStream,
+                                           BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = false;
@@ -230,7 +228,7 @@ public class RawHttp {
         return Optional.ofNullable(result);
     }
 
-    private static StatusCodeLine parseStatusCodeLine(String line) {
+    public static StatusCodeLine parseStatusCodeLine(String line) {
         if (line.trim().isEmpty()) {
             throw new InvalidHttpResponse("Empty status line", 1);
         }
@@ -322,73 +320,24 @@ public class RawHttp {
         return uri;
     }
 
-    private static Map<String, Collection<String>> parseHeaders(BufferedReader reader) throws IOException {
-        return parseHeaders(new BufferedReaderReadsLines(reader));
-    }
-
-    private static Map<String, Collection<String>> parseHeaders(ReadsLines reader) throws IOException {
+    public static Map<String, Collection<String>> parseHeaders(
+            List<String> lines,
+            BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         Map<String, Collection<String>> result = new HashMap<>();
         int lineNumber = 2;
-        String line;
-        while ((line = reader.nextLine()) != null) {
+        for (String line : lines) {
             line = line.trim();
             if (line.isEmpty()) {
                 break;
             }
             String[] parts = line.split(":", 2);
             if (parts.length != 2) {
-                throw new InvalidHttpRequest("Invalid header", lineNumber);
+                throw createError.apply("Invalid header", lineNumber);
             }
             result.computeIfAbsent(parts[0].trim(), (ignore) -> new ArrayList<>(3)).add(parts[1].trim());
         }
 
         return result;
-    }
-
-    private static BodyReader parseBody(BufferedReader reader) throws IOException {
-        char[] buffer = new char[2048];
-        StringBuilder resultBuilder = new StringBuilder();
-
-        int charsRead;
-        while ((charsRead = reader.read(buffer)) >= 0) {
-            resultBuilder.append(buffer, 0, charsRead);
-        }
-
-        if (resultBuilder.length() == 0) {
-            return null;
-        } else {
-            return new EagerBodyReader(resultBuilder.toString().getBytes(UTF_8));
-        }
-    }
-
-    private interface ReadsLines {
-        String nextLine() throws IOException;
-    }
-
-    private static class BufferedReaderReadsLines implements ReadsLines {
-        private final BufferedReader reader;
-
-        BufferedReaderReadsLines(BufferedReader reader) {
-            this.reader = reader;
-        }
-
-        @Override
-        public String nextLine() throws IOException {
-            return reader.readLine();
-        }
-    }
-
-    private static class ListReadsLines implements ReadsLines {
-        private final Iterator<String> reader;
-
-        ListReadsLines(List<String> reader) {
-            this.reader = reader.iterator();
-        }
-
-        @Override
-        public String nextLine() {
-            return reader.hasNext() ? reader.next() : null;
-        }
     }
 
 }
