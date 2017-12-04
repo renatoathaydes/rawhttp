@@ -5,7 +5,6 @@ import io.kotlintest.Spec
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
-import org.junit.Ignore
 import spark.Spark.get
 import spark.Spark.port
 import spark.Spark.post
@@ -71,7 +70,6 @@ class TcpRawHttp10ClientTest : StringSpec() {
 
 }
 
-@Ignore("HTTP/1.1 not implemented fully yet")
 class TcpRawHttp11ClientTest : StringSpec() {
 
     override val specInterceptors: List<(Spec, () -> Unit) -> Unit>
