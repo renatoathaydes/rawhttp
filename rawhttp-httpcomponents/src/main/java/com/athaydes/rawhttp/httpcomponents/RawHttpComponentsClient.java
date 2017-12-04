@@ -4,6 +4,7 @@ import com.athaydes.rawhttp.core.BodyReader.BodyType;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpClient;
+import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.StatusCodeLine;
@@ -20,12 +21,10 @@ import org.apache.http.message.BasicHeader;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.OptionalLong;
 
-import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
 
 public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpResponse> {
 
@@ -43,15 +42,15 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         RequestBuilder builder = RequestBuilder.create(request.getMethod());
         builder.setUri(request.getUri());
         builder.setVersion(toProtocolVersion(request.getStartLine().getHttpVersion()));
-        request.getHeaders().forEach((name, values) ->
-                values.forEach(value ->
+        request.getHeaders().getHeaderNames().forEach((name) ->
+                request.getHeaders().get(name).forEach(value ->
                         builder.addHeader(new BasicHeader(name, value))));
 
         request.getBody().ifPresent(b -> builder.setEntity(new InputStreamEntity(b.asStream())));
 
         CloseableHttpResponse response = httpClient.execute(builder.build());
 
-        Map<String, Collection<String>> headers = readHeaders(response);
+        RawHttpHeaders headers = readHeaders(response);
 
         @Nullable LazyBodyReader body;
         if (response.getEntity() != null) {
@@ -71,16 +70,18 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
                 statusLine.getStatusCode(), statusLine.getReasonPhrase());
     }
 
-    private Map<String, Collection<String>> readHeaders(CloseableHttpResponse response) {
+    private RawHttpHeaders readHeaders(CloseableHttpResponse response) {
         Header[] allHeaders = response.getAllHeaders();
-        Map<String, Collection<String>> headers = new HashMap<>(allHeaders.length);
+        RawHttpHeaders.Builder headers = RawHttpHeaders.Builder.newBuilder();
         for (Header header : allHeaders) {
-            headers.merge(header.getName(), singletonList(header.getValue()), (a, b) -> {
-                a.addAll(b);
-                return a;
-            });
+            String meta = header.getElements().length > 0 ?
+                    ";" + Arrays.stream(header.getElements())
+                            .flatMap(it -> Arrays.stream(it.getParameters()).map(v -> v.getName() + "=" + v.getValue()))
+                            .collect(joining(";")) :
+                    "";
+            headers.with(header.getName(), header.getValue() + meta);
         }
-        return headers;
+        return headers.build();
     }
 
     private ProtocolVersion toProtocolVersion(String httpVersion) {

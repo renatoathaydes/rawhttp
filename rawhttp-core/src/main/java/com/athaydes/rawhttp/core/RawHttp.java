@@ -14,17 +14,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableMap;
 
 public class RawHttp {
 
@@ -51,11 +46,12 @@ public class RawHttp {
         }
 
         MethodLine methodLine = parseMethodLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = parseHeaders(metadataLines, InvalidHttpRequest::new);
+        RawHttpHeaders.Builder headersBuilder = parseHeaders(metadataLines, InvalidHttpRequest::new);
 
         // do a little cleanup to make sure the request is actually valid
-        methodLine = verifyHost(methodLine, headers);
-        headers = unmodifiableMap(headers);
+        methodLine = verifyHost(methodLine, headersBuilder);
+
+        RawHttpHeaders headers = headersBuilder.build();
 
         boolean hasBody = requestHasBody(headers);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
@@ -93,7 +89,7 @@ public class RawHttp {
         }
 
         StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
-        Map<String, Collection<String>> headers = unmodifiableMap(parseHeaders(metadataLines, InvalidHttpResponse::new));
+        RawHttpHeaders headers = parseHeaders(metadataLines, InvalidHttpResponse::new).build();
 
         boolean hasBody = responseHasBody(statusCodeLine, methodLine);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
@@ -102,7 +98,7 @@ public class RawHttp {
     }
 
     @Nullable
-    private BodyReader createBodyReader(InputStream inputStream, Map<String, Collection<String>> headers, boolean hasBody) {
+    private BodyReader createBodyReader(InputStream inputStream, RawHttpHeaders headers, boolean hasBody) {
         @Nullable BodyReader bodyReader;
 
         if (hasBody) {
@@ -160,19 +156,19 @@ public class RawHttp {
         return metadataLines;
     }
 
-    public static BodyType getBodyType(Map<String, Collection<String>> headers,
+    public static BodyType getBodyType(RawHttpHeaders headers,
                                        @Nullable Long bodyLength) {
         return bodyLength == null ?
                 parseContentEncoding(headers).orElse(BodyType.CLOSE_TERMINATED) :
                 BodyType.CONTENT_LENGTH;
     }
 
-    public static boolean requestHasBody(Map<String, Collection<String>> headers) {
+    public static boolean requestHasBody(RawHttpHeaders headers) {
         // The presence of a message body in a request is signaled by a
         // Content-Length or Transfer-Encoding header field.  Request message
         // framing is independent of method semantics, even if the method does
         // not define any use for a message body.
-        return headers.containsKey("Content-Length") || headers.containsKey("Transfer-Encoding");
+        return headers.contains("Content-Length") || headers.contains("Transfer-Encoding");
     }
 
     public static boolean responseHasBody(StatusCodeLine statusCodeLine) {
@@ -207,8 +203,8 @@ public class RawHttp {
         return minCode <= statusCode && statusCode <= maxCode;
     }
 
-    private static Optional<BodyType> parseContentEncoding(Map<String, Collection<String>> headers) {
-        Optional<String> encoding = last(headers.getOrDefault("Transfer-Encoding", emptyList()));
+    private static Optional<BodyType> parseContentEncoding(RawHttpHeaders headers) {
+        Optional<String> encoding = last(headers.get("Transfer-Encoding"));
         if (encoding.isPresent()) {
             if (encoding.get().equalsIgnoreCase("chunked")) {
                 return Optional.of(BodyType.CHUNKED);
@@ -265,14 +261,14 @@ public class RawHttp {
 
     }
 
-    private static MethodLine verifyHost(MethodLine methodLine, Map<String, Collection<String>> headers) {
-        Collection<String> host = headers.get("Host");
-        if (host == null || host.isEmpty()) {
+    private static MethodLine verifyHost(MethodLine methodLine, RawHttpHeaders.Builder headers) {
+        List<String> host = headers.build().get("Host");
+        if (host.isEmpty()) {
             if (methodLine.getUri().getHost() == null) {
                 throw new InvalidHttpRequest("Host not given neither in method line nor Host header", 1);
             } else if (methodLine.getHttpVersion().equals("HTTP/1.1")) {
                 // add the Host header to make sure the request is legal
-                headers.put("Host", singletonList(methodLine.getUri().getHost()));
+                headers.with("Host", methodLine.getUri().getHost());
             }
             return methodLine;
         } else if (host.size() == 1) {
@@ -298,13 +294,9 @@ public class RawHttp {
         }
     }
 
-    public static OptionalLong parseContentLength(Map<String, Collection<String>> headers) {
-        Collection<String> contentLength = headers.getOrDefault("Content-Length", emptyList());
-        if (contentLength.size() == 1) {
-            return OptionalLong.of(Long.parseLong(contentLength.iterator().next()));
-        } else {
-            return OptionalLong.empty();
-        }
+    public static OptionalLong parseContentLength(RawHttpHeaders headers) {
+        Optional<String> contentLength = headers.getFirst("Content-Length");
+        return contentLength.map(s -> OptionalLong.of(Long.parseLong(s))).orElseGet(OptionalLong::empty);
     }
 
     private static URI createUri(String part) {
@@ -320,24 +312,24 @@ public class RawHttp {
         return uri;
     }
 
-    public static Map<String, Collection<String>> parseHeaders(
+    public static RawHttpHeaders.Builder parseHeaders(
             List<String> lines,
             BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        Map<String, Collection<String>> result = new HashMap<>();
+        RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder();
         int lineNumber = 2;
         for (String line : lines) {
             line = line.trim();
             if (line.isEmpty()) {
                 break;
             }
-            String[] parts = line.split(":", 2);
+            String[] parts = line.split(":\\s?", 2);
             if (parts.length != 2) {
                 throw createError.apply("Invalid header", lineNumber);
             }
-            result.computeIfAbsent(parts[0].trim(), (ignore) -> new ArrayList<>(3)).add(parts[1].trim());
+            builder.with(parts[0], parts[1]);
         }
 
-        return result;
+        return builder;
     }
 
 }

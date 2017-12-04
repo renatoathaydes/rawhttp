@@ -22,7 +22,7 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080")
-            headers shouldEqual mapOf("Host" to listOf("localhost"))
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("localhost"))
             body should notBePresent()
         }
     }
@@ -32,7 +32,7 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             startLine.httpVersion shouldBe "HTTP/1.0"
             uri shouldEqual URI.create("https://localhost:8080/my/resource/234")
-            headers.keys should beEmpty()
+            headers.headerNames should beEmpty()
             body should notBePresent()
         }
     }
@@ -42,7 +42,7 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://www.example.com/hello")
-            headers shouldEqual mapOf("Host" to listOf("www.example.com"))
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("www.example.com"))
             body should notBePresent()
         }
     }
@@ -62,11 +62,11 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "POST"
             startLine.httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("http://host.com/myresource/123456")
-            headers shouldEqual mapOf(
-                    "Host" to listOf("host.com"),
-                    "Content-Type" to listOf("application/json"),
-                    "Content-Length" to listOf("49"),
-                    "Accept" to listOf("text/html"))
+            headers.asMap() shouldEqual mapOf(
+                    "HOST" to listOf("host.com"),
+                    "CONTENT-TYPE" to listOf("application/json"),
+                    "CONTENT-LENGTH" to listOf("49"),
+                    "ACCEPT" to listOf("text/html"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n    \"hello\": true,\n    \"from\": \"kotlin-test\"\n}"
             }
@@ -80,9 +80,9 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             startLine.httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("http://example.com/resources/abcde")
-            headers shouldEqual mapOf(
-                    "Accept" to listOf("application/json"),
-                    "Host" to listOf("example.com"))
+            headers.asMap() shouldEqual mapOf(
+                    "ACCEPT" to listOf("application/json"),
+                    "HOST" to listOf("example.com"))
             body should notBePresent()
         }
     }
@@ -94,12 +94,12 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "POST"
             startLine.httpVersion shouldBe "HTTP/1.1"
             uri shouldEqual URI.create("https://example.com/my-resource/SDFKJWEKLKLKWERLWKEGJGJE")
-            headers shouldEqual mapOf(
-                    "Accept" to listOf("text/plain", "*/*"),
-                    "Content-Type" to listOf("text/encrypted"),
-                    "Content-Length" to listOf("766"),
-                    "User-Agent" to listOf("rawhttp"),
-                    "Host" to listOf("example.com"))
+            headers.asMap() shouldEqual mapOf(
+                    "ACCEPT" to listOf("text/plain", "*/*"),
+                    "CONTENT-TYPE" to listOf("text/encrypted"),
+                    "CONTENT-LENGTH" to listOf("766"),
+                    "USER-AGENT" to listOf("rawhttp"),
+                    "HOST" to listOf("example.com"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. " +
                         "kiOUtMhcc4NXXRb XMxIeCbf5rCmoNO Z9cuk3vFu4WUHGE FbP7OCGjWcildtW gRRS2oOGl0tDgNc " +
@@ -124,7 +124,7 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.0"
             startLine.statusCode shouldBe 404
             startLine.reason shouldEqual "NOT FOUND"
-            headers.keys should beEmpty()
+            headers.headerNames should beEmpty()
             body should bePresent { it.toString() shouldEqual "" }
         }
     }
@@ -134,7 +134,7 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.statusCode shouldBe 100
             startLine.reason shouldEqual "CONTINUE"
-            headers.keys should beEmpty()
+            headers.headerNames should beEmpty()
             body should notBePresent()
         }
     }
@@ -144,7 +144,7 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.statusCode shouldBe 200
             startLine.reason shouldEqual "OK"
-            headers shouldEqual mapOf("Server" to listOf("Apache"))
+            headers.asMap() shouldEqual mapOf("SERVER" to listOf("Apache"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "Hello World!"
             }
@@ -171,15 +171,15 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.statusCode shouldBe 200
             startLine.reason shouldEqual "OK"
-            headers shouldEqual mapOf(
-                    "Date" to listOf("Mon, 27 Jul 2009 12:28:53 GMT"),
-                    "Server" to listOf("Apache"),
-                    "Last-Modified" to listOf("Wed, 22 Jul 2009 19:15:56 GMT"),
-                    "ETag" to listOf("\"34aa387-d-1568eb00\""),
-                    "Accept-Ranges" to listOf("bytes"),
-                    "Content-Length" to listOf("51"),
-                    "Vary" to listOf("Accept-Encoding"),
-                    "Content-Type" to listOf("application/json")
+            headers.asMap() shouldEqual mapOf(
+                    "DATE" to listOf("Mon, 27 Jul 2009 12:28:53 GMT"),
+                    "SERVER" to listOf("Apache"),
+                    "LAST-MODIFIED" to listOf("Wed, 22 Jul 2009 19:15:56 GMT"),
+                    "ETAG" to listOf("\"34aa387-d-1568eb00\""),
+                    "ACCEPT-RANGES" to listOf("bytes"),
+                    "CONTENT-LENGTH" to listOf("51"),
+                    "VARY" to listOf("Accept-Encoding"),
+                    "CONTENT-TYPE" to listOf("application/json")
             )
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
@@ -194,10 +194,10 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.statusCode shouldBe 200
             startLine.reason shouldEqual "OK"
-            headers shouldEqual mapOf(
-                    "Server" to listOf("super-server"),
-                    "Content-Type" to listOf("application/json"),
-                    "Content-Length" to listOf("50"))
+            headers.asMap() shouldEqual mapOf(
+                    "SERVER" to listOf("super-server"),
+                    "CONTENT-TYPE" to listOf("application/json"),
+                    "CONTENT-LENGTH" to listOf("50"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual "{\n  \"message\": \"Hello World\",\n  \"language\": \"EN\"\n}"
             }
@@ -211,7 +211,7 @@ class SimpleHttpResponseTests : StringSpec({
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.statusCode shouldBe 304
             startLine.reason shouldEqual "Not Modified"
-            headers shouldEqual mapOf("ETag" to listOf("12345"))
+            headers.asMap() shouldEqual mapOf("ETAG" to listOf("12345"))
             body should notBePresent()
         }
 

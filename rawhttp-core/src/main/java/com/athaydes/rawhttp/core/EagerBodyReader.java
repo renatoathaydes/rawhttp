@@ -11,15 +11,12 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
-import static java.util.Collections.emptyMap;
+import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
 public class EagerBodyReader extends BodyReader {
 
@@ -119,7 +116,7 @@ public class EagerBodyReader extends BodyReader {
                 (msg, lineNumber) -> new IllegalStateException(msg);
 
         List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator);
-        Map<String, Collection<String>> trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator);
+        RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
 
         return new ChunkedBody(chunks, trailerHeaders);
     }
@@ -168,9 +165,9 @@ public class EagerBodyReader extends BodyReader {
     private static Chunk readChunk(InputStream inputStream,
                                    int chunkSize,
                                    AtomicBoolean hasExtensions) throws IOException {
-        Map<String, Collection<String>> extensions = hasExtensions.get() ?
+        RawHttpHeaders extensions = hasExtensions.get() ?
                 parseExtensions(inputStream) :
-                emptyMap();
+                emptyRawHttpHeaders();
 
         byte[] data = new byte[chunkSize];
 
@@ -203,11 +200,11 @@ public class EagerBodyReader extends BodyReader {
         return new Chunk(extensions, data);
     }
 
-    private static Map<String, Collection<String>> parseExtensions(InputStream inputStream) throws IOException {
+    private static RawHttpHeaders parseExtensions(InputStream inputStream) throws IOException {
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;
-        Map<String, Collection<String>> extensions = new HashMap<>(2);
+        RawHttpHeaders.Builder extensions = RawHttpHeaders.Builder.newBuilder();
         int b;
         while ((b = inputStream.read()) >= 0) {
             if (b == '\r') {
@@ -229,8 +226,7 @@ public class EagerBodyReader extends BodyReader {
                     currentValue.append((char) b);
                 }
             } else if (b == ';') {
-                extensions.computeIfAbsent(currentName.toString().trim(),
-                        (ignore) -> new ArrayList<>(3)).add(currentValue.toString().trim());
+                extensions.with(currentName.toString().trim(), currentValue.toString().trim());
                 currentName = new StringBuilder();
                 currentValue = new StringBuilder();
                 parsingValue = false;
@@ -244,10 +240,10 @@ public class EagerBodyReader extends BodyReader {
         }
 
         if (currentName.length() > 0 || currentValue.length() > 0) {
-            extensions.computeIfAbsent(currentName.toString().trim(),
-                    (ignore) -> new ArrayList<>(3)).add(currentValue.toString().trim());
+            extensions.with(currentName.toString().trim(), currentValue.toString().trim());
         }
-        return extensions;
+
+        return extensions.build();
     }
 
     @Override

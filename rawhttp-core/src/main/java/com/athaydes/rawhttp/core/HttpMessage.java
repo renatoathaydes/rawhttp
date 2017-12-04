@@ -5,20 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
-
-import static java.util.stream.Collectors.joining;
 
 public abstract class HttpMessage {
 
-    private final Map<String, Collection<String>> headers;
+    private final RawHttpHeaders headers;
 
     @Nullable
     private final BodyReader bodyReader;
 
-    public HttpMessage(Map<String, Collection<String>> headers,
+    public HttpMessage(RawHttpHeaders headers,
                        @Nullable BodyReader bodyReader) {
         this.headers = headers;
         this.bodyReader = bodyReader;
@@ -26,7 +22,7 @@ public abstract class HttpMessage {
 
     public abstract StartLine getStartLine();
 
-    public Map<String, Collection<String>> getHeaders() {
+    public RawHttpHeaders getHeaders() {
         return headers;
     }
 
@@ -35,10 +31,7 @@ public abstract class HttpMessage {
     }
 
     public String messageWithoutBody() {
-        return String.join("\r\n", getStartLine().toString(),
-                getHeaders().entrySet().stream()
-                        .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                        .collect(joining("\r\n"))) + "\r\n\r\n";
+        return String.join("\r\n", getStartLine().toString(), getHeaders().toString()) + "\r\n";
     }
 
     @Override

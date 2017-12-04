@@ -2,8 +2,6 @@ package com.athaydes.rawhttp.core;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 
 public class RawHttpResponse<Response> extends HttpMessage {
@@ -18,7 +16,7 @@ public class RawHttpResponse<Response> extends HttpMessage {
     public RawHttpResponse(@Nullable Response libResponse,
                            @Nullable RawHttpRequest request,
                            StatusCodeLine statusCodeLine,
-                           Map<String, Collection<String>> headers,
+                           RawHttpHeaders headers,
                            @Nullable BodyReader bodyReader) {
         super(headers, bodyReader);
         this.libResponse = libResponse;

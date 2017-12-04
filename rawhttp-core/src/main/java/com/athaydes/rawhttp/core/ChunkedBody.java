@@ -1,22 +1,20 @@
 package com.athaydes.rawhttp.core;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class ChunkedBody {
 
     public static class Chunk {
 
-        private final Map<String, Collection<String>> extensions;
+        private final RawHttpHeaders extensions;
         private final byte[] data;
 
-        public Chunk(Map<String, Collection<String>> extensions, byte[] data) {
+        public Chunk(RawHttpHeaders extensions, byte[] data) {
             this.extensions = extensions;
             this.data = data;
         }
 
-        public Map<String, Collection<String>> getExtensions() {
+        public RawHttpHeaders getExtensions() {
             return extensions;
         }
 
@@ -30,9 +28,9 @@ public class ChunkedBody {
     }
 
     private final List<Chunk> chunks;
-    private final Map<String, Collection<String>> trailerHeaders;
+    private final RawHttpHeaders trailerHeaders;
 
-    public ChunkedBody(List<Chunk> chunks, Map<String, Collection<String>> trailerHeaders) {
+    public ChunkedBody(List<Chunk> chunks, RawHttpHeaders trailerHeaders) {
         this.chunks = chunks;
         this.trailerHeaders = trailerHeaders;
     }
@@ -41,7 +39,7 @@ public class ChunkedBody {
         return chunks;
     }
 
-    public Map<String, Collection<String>> getTrailerHeaders() {
+    public RawHttpHeaders getTrailerHeaders() {
         return trailerHeaders;
     }
 

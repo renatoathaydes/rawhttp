@@ -21,10 +21,10 @@ class FileBodyTest : StringSpec({
             method shouldBe "PUT"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
-            headers.toMap() shouldEqual mapOf(
-                    "Content-Length" to listOf(fileBody.file.length().toString()),
-                    "Host" to listOf("localhost"),
-                    "Content-Type" to listOf("image/png"))
+            headers.asMap() shouldEqual mapOf(
+                    "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
+                    "HOST" to listOf("localhost"),
+                    "CONTENT-TYPE" to listOf("image/png"))
             body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
@@ -40,10 +40,10 @@ class FileBodyTest : StringSpec({
             method shouldBe "PUT"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
-            headers.toMap() shouldEqual mapOf(
-                    "Content-Length" to listOf(fileBody.file.length().toString()),
-                    "Host" to listOf("localhost"),
-                    "Content-Type" to listOf("image/png"))
+            headers.asMap() shouldEqual mapOf(
+                    "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
+                    "HOST" to listOf("localhost"),
+                    "CONTENT-TYPE" to listOf("image/png"))
             body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
@@ -57,10 +57,10 @@ class FileBodyTest : StringSpec({
             statusCode shouldBe 200
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.reason shouldEqual "OK"
-            headers.toMap() shouldEqual mapOf(
-                    "Content-Length" to listOf(fileBody.file.length().toString()),
-                    "Server" to listOf("Apache"),
-                    "Content-Type" to listOf("image/png"))
+            headers.asMap() shouldEqual mapOf(
+                    "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
+                    "SERVER" to listOf("Apache"),
+                    "CONTENT-TYPE" to listOf("image/png"))
             body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
@@ -76,9 +76,9 @@ class FileBodyTest : StringSpec({
             statusCode shouldBe 201
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.reason shouldEqual "CREATED"
-            headers.toMap() shouldEqual mapOf(
-                    "Content-Length" to listOf(fileBody.file.length().toString()),
-                    "Content-Type" to listOf("image/png"))
+            headers.asMap() shouldEqual mapOf(
+                    "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
+                    "CONTENT-TYPE" to listOf("image/png"))
             body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }

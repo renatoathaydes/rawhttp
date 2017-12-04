@@ -2,6 +2,7 @@ package com.athaydes.rawhttp.core.file;
 
 import com.athaydes.rawhttp.core.BodyReader;
 import com.athaydes.rawhttp.core.LazyBodyReader;
+import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 
@@ -10,13 +11,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableMap;
 
 public class FileBody {
 
@@ -63,13 +58,13 @@ public class FileBody {
                 file.length());
     }
 
-    private Map<String, Collection<String>> headersFrom(Map<String, Collection<String>> headers) {
-        Map<String, Collection<String>> result = new HashMap<>(headers);
+    private RawHttpHeaders headersFrom(RawHttpHeaders headers) {
+        RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder(headers);
         if (contentType != null) {
-            result.put("Content-Type", singletonList(contentType));
+            builder.overwrite("Content-Type", contentType);
         }
-        result.put("Content-Length", singletonList(Long.toString(file.length())));
-        return unmodifiableMap(result);
+        return builder.overwrite("Content-Length", Long.toString(file.length())).build();
+
     }
 
 }

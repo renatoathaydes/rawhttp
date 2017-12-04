@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.core
 import com.athaydes.rawhttp.core.BodyReader.BodyType.CHUNKED
 import com.athaydes.rawhttp.core.BodyReader.BodyType.CLOSE_TERMINATED
 import com.athaydes.rawhttp.core.BodyReader.BodyType.CONTENT_LENGTH
+import com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
@@ -64,14 +65,14 @@ class EagerBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 2
 
                 it.chunks[0].data shouldHaveSameElementsAs "Hi there".toByteArray()
-                it.chunks[0].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[0].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[0].size() shouldBe 8
 
                 it.chunks[1].data.size shouldBe 0
-                it.chunks[1].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyMap<String, Collection<String>>()
+                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
             asBytes() shouldHaveSameElementsAs "Hi there".toByteArray()
         }
@@ -91,18 +92,20 @@ class EagerBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 3
 
                 it.chunks[0].data shouldHaveSameElementsAs "12345".toByteArray()
-                it.chunks[0].extensions shouldEqual mapOf("abc" to listOf("123"))
+                it.chunks[0].extensions shouldEqual RawHttpHeaders.Builder
+                        .newBuilder()
+                        .with("abc", "123").build()
                 it.chunks[0].size() shouldBe 5
 
                 it.chunks[1].data shouldHaveSameElementsAs "98".toByteArray()
-                it.chunks[1].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 2
 
                 it.chunks[2].data.size shouldBe 0
-                it.chunks[2].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[2].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[2].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyMap<String, Collection<String>>()
+                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
             asBytes() shouldHaveSameElementsAs "1234598".toByteArray()
         }
@@ -122,13 +125,15 @@ class EagerBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 1
 
                 it.chunks[0].data.size shouldBe 0
-                it.chunks[0].extensions shouldEqual mapOf(
-                        "hi" to listOf("true", "22"),
-                        "bye" to listOf("false,maybe"),
-                        "cool" to listOf(""))
+                it.chunks[0].extensions shouldEqual RawHttpHeaders.Builder.newBuilder()
+                        .with("hi", "true")
+                        .with("hi", "22")
+                        .with("bye", "false,maybe")
+                        .with("cool", "")
+                        .build()
                 it.chunks[0].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyMap<String, Collection<String>>()
+                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
             asBytes() shouldHaveSameElementsAs "".toByteArray()
         }
@@ -148,16 +153,18 @@ class EagerBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 2
 
                 it.chunks[0].data shouldHaveSameElementsAs "98".toByteArray()
-                it.chunks[0].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[0].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[0].size() shouldBe 2
 
                 it.chunks[1].data.size shouldBe 0
-                it.chunks[1].extensions shouldEqual emptyMap<String, Collection<String>>()
+                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual mapOf(
-                        "Hello" to listOf("hi there", "wow"),
-                        "Bye" to listOf("true"))
+                it.trailerHeaders shouldEqual RawHttpHeaders.Builder.newBuilder()
+                        .with("Hello", "hi there")
+                        .with("Bye", "true")
+                        .with("Hello", "wow")
+                        .build()
             }
             asBytes() shouldHaveSameElementsAs "98".toByteArray()
         }
