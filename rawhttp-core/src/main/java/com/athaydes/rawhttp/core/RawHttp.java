@@ -123,7 +123,7 @@ public class RawHttp {
                                            BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
-        boolean wasNewLine = false;
+        boolean wasNewLine = true;
         int lineNumber = 1;
         int b;
         while ((b = inputStream.read()) >= 0) {
