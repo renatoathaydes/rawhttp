@@ -11,7 +11,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
-import static java.util.stream.Collectors.joining;
 
 public class RawHttpHeaders {
 
@@ -70,9 +69,15 @@ public class RawHttpHeaders {
 
     @Override
     public String toString() {
-        return valuesByCapitalizedName.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + ": " + v))
-                .collect(joining("\r\n")) + "\r\n";
+        Map<String, Integer> currentIndex = new HashMap<>(valuesByCapitalizedName.size());
+        StringBuilder builder = new StringBuilder();
+        for (String name : headerNames) {
+            String key = name.toUpperCase();
+            currentIndex.merge(key, 0, (a, b) -> a + 1);
+            String value = valuesByCapitalizedName.get(key).get(currentIndex.get(key));
+            builder.append(name).append(": ").append(value).append("\r\n");
+        }
+        return builder.append("\r\n").toString();
     }
 
     public static class Builder {
@@ -107,10 +112,12 @@ public class RawHttpHeaders {
         }
 
         public RawHttpHeaders build() {
+
             return new RawHttpHeaders(headerNames, valuesByCapitalizedName);
         }
 
         public Builder overwrite(String headerName, String value) {
+            headerNames.add(headerName);
             valuesByCapitalizedName.put(headerName.toUpperCase(), singletonList(value));
             return this;
         }
