@@ -18,15 +18,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.Spark;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
+import java.nio.file.Files;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class JavaSample {
 
@@ -114,6 +118,35 @@ public class JavaSample {
         assertThat(response.getStatusCode(), is(200));
         assertThat(response.getBody().map(b -> b.asString(UTF_8))
                 .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
+    }
+
+    @Test
+    public void frontPageExample() throws IOException {
+        RawHttp rawHttp = new RawHttp();
+
+        RawHttpRequest request = rawHttp.parseRequest(
+                "GET /hello.txt HTTP/1.1\r\n" +
+                        "User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3\r\n" +
+                        "Host: www.example.com\r\n" +
+                        "Accept-Language: en, mi");
+        Socket socket = new Socket("www.example.com", 80);
+        request.writeTo(socket.getOutputStream());
+
+        EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
+
+        // call "eagerly()" in order to download the body
+        System.out.println(response.eagerly());
+
+        assertThat(response.getStatusCode(), equalTo(404));
+        assertTrue(response.getBody().isPresent());
+
+        File responseFile = Files.createTempFile("rawhttp", ".http").toFile();
+        try (FileOutputStream out = new FileOutputStream(responseFile)) {
+            response.writeTo(out);
+        }
+
+        System.out.printf("Response parsed from file (%s):", responseFile);
+        System.out.println(rawHttp.parseResponse(responseFile).eagerly());
     }
 
     @Test
