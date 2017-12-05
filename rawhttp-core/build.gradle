@@ -13,6 +13,7 @@ plugins {
 }
 
 description = 'RawHTTP core module'
+version '1.0'
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
