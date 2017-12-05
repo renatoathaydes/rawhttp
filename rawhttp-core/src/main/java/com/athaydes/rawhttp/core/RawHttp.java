@@ -347,6 +347,7 @@ public class RawHttp {
                 throw createError.apply("Invalid header", lineNumber);
             }
             builder.with(parts[0], parts[1]);
+            lineNumber++;
         }
 
         return builder;

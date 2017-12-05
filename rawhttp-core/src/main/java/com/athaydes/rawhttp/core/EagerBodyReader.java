@@ -115,7 +115,7 @@ public class EagerBodyReader extends BodyReader {
         }
 
         BiFunction<String, Integer, RuntimeException> errorCreator =
-                (msg, lineNumber) -> new IllegalStateException(msg);
+                (msg, lineNumber) -> new IllegalStateException(msg + " (parsing chunked body headers)");
 
         List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn);
         RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
@@ -171,7 +171,15 @@ public class EagerBodyReader extends BodyReader {
             }
         }
 
-        return Integer.parseInt(new String(chars, 0, i), 16);
+        if (i == 0) {
+            throw new IllegalStateException("Missing chunk-size");
+        }
+
+        try {
+            return Integer.parseInt(new String(chars, 0, i), 16);
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("Invalid chunk-size (" + e.getMessage() + ")");
+        }
     }
 
     private static Chunk readChunk(InputStream inputStream,
