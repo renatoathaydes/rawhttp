@@ -15,7 +15,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read content-length body" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong())
+        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -28,7 +28,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read empty content-length body" {
         val body = ""
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong())
+        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -41,7 +41,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CLOSE_TERMINATED, stream, null)
+        val reader = EagerBodyReader(CLOSE_TERMINATED, stream, null, true)
 
         reader.run {
             bodyType shouldBe CLOSE_TERMINATED
@@ -55,7 +55,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = byteArrayOf(56, 13, 10, 72, 105, 32, 116, 104, 101, 114, 101, 13, 10, 48, 13, 10, 13, 10)
 
         val stream = body.inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null)
+        val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -82,7 +82,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = "5;abc=123\r\n12345\r\n2\r\n98\r\n0\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null)
+        val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -115,7 +115,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = "0;hi=true;bye=false,maybe;hi=22;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null)
+        val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -143,7 +143,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = "2\r\n98\r\n0\r\nHello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null)
+        val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED

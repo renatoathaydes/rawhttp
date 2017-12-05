@@ -30,7 +30,8 @@ public class EagerBodyReader extends BodyReader {
 
     public EagerBodyReader(BodyType bodyType,
                            @Nonnull InputStream inputStream,
-                           @Nullable Long bodyLength) throws IOException {
+                           @Nullable Long bodyLength,
+                           boolean allowNewLineWithoutReturn) throws IOException {
         super(bodyType);
         this.rawInputStream = inputStream;
 
@@ -43,7 +44,7 @@ public class EagerBodyReader extends BodyReader {
                 this.chunkedBody = null;
                 break;
             case CHUNKED:
-                this.chunkedBody = readChunkedBody(inputStream);
+                this.chunkedBody = readChunkedBody(inputStream, allowNewLineWithoutReturn);
                 this.bytes = chunkedBody.getData();
                 break;
             case CLOSE_TERMINATED:
@@ -99,29 +100,31 @@ public class EagerBodyReader extends BodyReader {
         return out.toByteArray();
     }
 
-    private static ChunkedBody readChunkedBody(InputStream inputStream) throws IOException {
+    private static ChunkedBody readChunkedBody(InputStream inputStream,
+                                               boolean allowNewLineWithoutReturn) throws IOException {
         List<Chunk> chunks = new ArrayList<>();
         int chunkSize = 1;
         while (chunkSize > 0) {
             AtomicBoolean hasExtensions = new AtomicBoolean(false);
-            chunkSize = readChunkSize(inputStream, hasExtensions);
+            chunkSize = readChunkSize(inputStream, allowNewLineWithoutReturn, hasExtensions);
             if (chunkSize < 0) {
                 throw new IllegalStateException("unexpected EOF, could not read chunked body");
             }
-            Chunk chunk = readChunk(inputStream, chunkSize, hasExtensions);
+            Chunk chunk = readChunk(inputStream, chunkSize, allowNewLineWithoutReturn, hasExtensions);
             chunks.add(chunk);
         }
 
         BiFunction<String, Integer, RuntimeException> errorCreator =
                 (msg, lineNumber) -> new IllegalStateException(msg);
 
-        List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator);
+        List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn);
         RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
 
         return new ChunkedBody(chunks, trailerHeaders);
     }
 
     private static int readChunkSize(InputStream inputStream,
+                                     boolean allowNewLineWithoutReturn,
                                      AtomicBoolean hasExtensions) throws IOException {
         char[] chars = new char[4];
         int b;
@@ -136,6 +139,10 @@ public class EagerBodyReader extends BodyReader {
                 }
             }
             if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    throw new IllegalStateException("Illegal character after chunk-size " +
+                            "(new-line character without preceding return)");
+                }
                 // unexpected, but allow it
                 break;
             }
@@ -152,10 +159,15 @@ public class EagerBodyReader extends BodyReader {
                 if (next != '\n') {
                     throw new IllegalStateException("Illegal character after return (parsing chunk-size)");
                 }
-            } else if (b != '\n' && b != ';') {
-                throw new IllegalStateException("Invalid chunk-size: too big");
+            } else if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    throw new IllegalStateException("Illegal character after chunk-size " +
+                            "(new-line character without preceding return)");
+                }
             } else if (b == ';') {
                 hasExtensions.set(true);
+            } else {
+                throw new IllegalStateException("Invalid chunk-size (too big, more than 4 hex-digits)");
             }
         }
 
@@ -164,9 +176,10 @@ public class EagerBodyReader extends BodyReader {
 
     private static Chunk readChunk(InputStream inputStream,
                                    int chunkSize,
+                                   boolean allowNewLineWithoutReturn,
                                    AtomicBoolean hasExtensions) throws IOException {
         RawHttpHeaders extensions = hasExtensions.get() ?
-                parseExtensions(inputStream) :
+                parseExtensions(inputStream, allowNewLineWithoutReturn) :
                 emptyRawHttpHeaders();
 
         byte[] data = new byte[chunkSize];
@@ -192,7 +205,12 @@ public class EagerBodyReader extends BodyReader {
                 if (next != '\n') {
                     throw new IllegalStateException("Illegal character after return (parsing chunk-size)");
                 }
-            } else if (b != '\n') {
+            } else if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    throw new IllegalStateException("Illegal character after chunk-data " +
+                            "(new-line character without preceding return)");
+                }
+            } else {
                 throw new IllegalStateException("Illegal character after chunk-data (missing CRLF)");
             }
         }
@@ -200,7 +218,8 @@ public class EagerBodyReader extends BodyReader {
         return new Chunk(extensions, data);
     }
 
-    private static RawHttpHeaders parseExtensions(InputStream inputStream) throws IOException {
+    private static RawHttpHeaders parseExtensions(InputStream inputStream,
+                                                  boolean allowNewLineWithoutReturn) throws IOException {
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;
@@ -217,6 +236,9 @@ public class EagerBodyReader extends BodyReader {
                     throw new IllegalStateException("Illegal character after return in chunked body");
                 }
             } else if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    throw new IllegalStateException("Illegal new-line character without preceding return");
+                }
                 // unexpected, but let's accept new-line without returns
                 break;
             } else if (b == '=') {

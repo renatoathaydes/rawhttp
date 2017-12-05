@@ -31,7 +31,7 @@ public abstract class HttpMessage {
     }
 
     public String messageWithoutBody() {
-        return String.join("\r\n", getStartLine().toString(), getHeaders().toString()) + "\r\n";
+        return String.join("\r\n", getStartLine().toString(), getHeaders().toString());
     }
 
     @Override

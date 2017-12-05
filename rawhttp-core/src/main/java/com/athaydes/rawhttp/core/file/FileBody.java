@@ -20,13 +20,18 @@ public class FileBody {
     @Nullable
     private final String contentType;
 
+    private final boolean allowNewLineWithoutReturn;
+
     public FileBody(File file) {
-        this(file, null);
+        this(file, null, false);
     }
 
-    public FileBody(File file, @Nullable String contentType) {
+    public FileBody(File file,
+                    @Nullable String contentType,
+                    boolean allowNewLineWithoutReturn) {
         this.file = file;
         this.contentType = contentType;
+        this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
     }
 
     public File getFile() {
@@ -55,7 +60,8 @@ public class FileBody {
     public LazyBodyReader toBodyReader() throws FileNotFoundException {
         return new LazyBodyReader(BodyReader.BodyType.CONTENT_LENGTH,
                 new BufferedInputStream(new FileInputStream(file)),
-                file.length());
+                file.length(),
+                allowNewLineWithoutReturn);
     }
 
     private RawHttpHeaders headersFrom(RawHttpHeaders headers) {

@@ -23,6 +23,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RawHttp {
 
+    private final RawHttpOptions options;
+
+    public RawHttp() {
+        this(RawHttpOptions.defaultInstance());
+    }
+
+    public RawHttp(RawHttpOptions options) {
+        this.options = options;
+    }
+
     public final RawHttpRequest parseRequest(String request) {
         try {
             return parseRequest(new ByteArrayInputStream(request.getBytes(UTF_8)));
@@ -39,7 +49,9 @@ public class RawHttp {
     }
 
     public RawHttpRequest parseRequest(InputStream inputStream) throws IOException {
-        List<String> metadataLines = parseMetadataLines(inputStream, InvalidHttpRequest::new);
+        List<String> metadataLines = parseMetadataLines(inputStream,
+                InvalidHttpRequest::new,
+                options.allowNewLineWithoutReturn());
 
         if (metadataLines.isEmpty()) {
             throw new InvalidHttpRequest("No content", 0);
@@ -82,7 +94,9 @@ public class RawHttp {
 
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
                                                @Nullable MethodLine methodLine) throws IOException {
-        List<String> metadataLines = parseMetadataLines(inputStream, InvalidHttpResponse::new);
+        List<String> metadataLines = parseMetadataLines(inputStream,
+                InvalidHttpResponse::new,
+                options.allowNewLineWithoutReturn());
 
         if (metadataLines.isEmpty()) {
             throw new InvalidHttpResponse("No content", 0);
@@ -108,7 +122,7 @@ public class RawHttp {
                 bodyLength = headerLength.getAsLong();
             }
             BodyType bodyType = getBodyType(headers, bodyLength);
-            bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength);
+            bodyReader = new LazyBodyReader(bodyType, inputStream, bodyLength, options.allowNewLineWithoutReturn());
         } else {
             bodyReader = null;
         }
@@ -116,7 +130,8 @@ public class RawHttp {
     }
 
     static List<String> parseMetadataLines(InputStream inputStream,
-                                           BiFunction<String, Integer, RuntimeException> createError) throws IOException {
+                                           BiFunction<String, Integer, RuntimeException> createError,
+                                           boolean allowNewLineWithoutReturn) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = true;
@@ -128,8 +143,9 @@ public class RawHttp {
                 int next = inputStream.read();
                 if (next < 0 || next == '\n') {
                     lineNumber++;
+                    if (wasNewLine) break;
                     metadataLines.add(metadataBuilder.toString());
-                    if (next < 0 || wasNewLine) break;
+                    if (next < 0) break;
                     metadataBuilder = new StringBuilder();
                     wasNewLine = true;
                 } else {
@@ -137,10 +153,14 @@ public class RawHttp {
                     throw createError.apply("Illegal character after return", lineNumber);
                 }
             } else if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    throw createError.apply("Illegal new-line character without preceding return", lineNumber);
+                }
+
                 // unexpected, but let's accept new-line without returns
                 lineNumber++;
-                metadataLines.add(metadataBuilder.toString());
                 if (wasNewLine) break;
+                metadataLines.add(metadataBuilder.toString());
                 metadataBuilder = new StringBuilder();
                 wasNewLine = true;
             } else {
@@ -261,7 +281,7 @@ public class RawHttp {
 
     }
 
-    private static MethodLine verifyHost(MethodLine methodLine, RawHttpHeaders.Builder headers) {
+    private MethodLine verifyHost(MethodLine methodLine, RawHttpHeaders.Builder headers) {
         List<String> host = headers.build().get("Host");
         if (host.isEmpty()) {
             if (methodLine.getUri().getHost() == null) {
@@ -271,7 +291,7 @@ public class RawHttp {
                 headers.with("Host", methodLine.getUri().getHost());
             }
             return methodLine;
-        } else if (host.size() == 1) {
+        } else if (host.size() == 1 && options.insertHostHeaderIfMissing()) {
             return methodLine.withHost(host.iterator().next());
         } else {
             throw new InvalidHttpRequest("More than one Host header specified", 2);

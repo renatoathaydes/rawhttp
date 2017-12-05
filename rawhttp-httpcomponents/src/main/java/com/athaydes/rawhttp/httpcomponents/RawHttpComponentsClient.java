@@ -57,7 +57,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
             OptionalLong headerLength = RawHttp.parseContentLength(headers);
             @Nullable Long length = headerLength.isPresent() ? headerLength.getAsLong() : null;
             BodyType bodyType = RawHttp.getBodyType(headers, length);
-            body = new LazyBodyReader(bodyType, response.getEntity().getContent(), length);
+            body = new LazyBodyReader(bodyType, response.getEntity().getContent(), length, false);
         } else {
             body = null;
         }
