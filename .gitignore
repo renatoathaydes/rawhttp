@@ -5,5 +5,8 @@ out/
 
 *.class
 *.jar
+*.iml
+*.ipr
+*.iws
 
 !gradle/wrapper/gradle-wrapper.jar
