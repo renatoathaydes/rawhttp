@@ -1,6 +1,8 @@
-package com.athaydes.rawhttp.core
+package com.athaydes.rawhttp.core.client
 
-import com.athaydes.rawhttp.core.client.TcpRawHttpClient
+import com.athaydes.rawhttp.core.RawHttp
+import com.athaydes.rawhttp.core.bePresent
+import com.athaydes.rawhttp.core.shouldBeOneOf
 import io.kotlintest.Spec
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe

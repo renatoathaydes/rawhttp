@@ -1,4 +1,4 @@
-package com.athaydes.rawhttp.core.file
+package com.athaydes.rawhttp.core.body
 
 import com.athaydes.rawhttp.core.RawHttp
 import com.athaydes.rawhttp.core.bePresent
@@ -17,7 +17,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", true)
 
-        fileBody.setFileAsBodyOf(request).eagerly().run {
+        request.replaceBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
@@ -36,7 +36,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        fileBody.setFileAsBodyOf(request).eagerly().run {
+        request.replaceBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe "HTTP/1.1" // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
@@ -53,7 +53,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        fileBody.setFileAsBodyOf(response).eagerly().run {
+        response.replaceBody(fileBody).eagerly().run {
             statusCode shouldBe 200
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.reason shouldEqual "OK"
@@ -72,7 +72,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        fileBody.setFileAsBodyOf(response).eagerly().run {
+        response.replaceBody(fileBody).eagerly().run {
             statusCode shouldBe 201
             startLine.httpVersion shouldBe "HTTP/1.1"
             startLine.reason shouldEqual "CREATED"

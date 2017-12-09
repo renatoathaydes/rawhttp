@@ -1,5 +1,7 @@
 package com.athaydes.rawhttp.core;
 
+import com.athaydes.rawhttp.core.body.HttpMessageBody;
+
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +23,8 @@ public abstract class HttpMessage {
     }
 
     public abstract StartLine getStartLine();
+
+    public abstract HttpMessage replaceBody(HttpMessageBody body);
 
     public RawHttpHeaders getHeaders() {
         return headers;
