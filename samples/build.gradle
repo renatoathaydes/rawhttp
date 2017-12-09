@@ -7,6 +7,6 @@ dependencies {
     compile project(':rawhttp-httpcomponents')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.61"
     compile 'com.sparkjava:spark-core:2.7.1'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.1.61"
     testCompile "io.kotlintest:kotlintest:2.0.7"
+
 }
