@@ -12,6 +12,7 @@ plugins {
     id "maven"
 }
 
+group = 'com.athaydes.rawhttp'
 description = 'RawHTTP core module'
 version '1.0'
 
