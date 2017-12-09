@@ -31,7 +31,12 @@ public class MethodLine implements StartLine {
     public MethodLine withHost(String host) {
         String[] parts = host.split(":");
         host = parts[0];
-        int port = parts.length > 1 ? Integer.parseInt(parts[1]) : uri.getPort();
+        int port;
+        try {
+            port = parts.length > 1 ? Integer.parseInt(parts[1]) : uri.getPort();
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid host format");
+        }
         try {
             URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), host, port,
                     uri.getPath(), uri.getQuery(), uri.getFragment());

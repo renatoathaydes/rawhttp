@@ -20,6 +20,7 @@ import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 
 public class RawHttp {
 
@@ -284,17 +285,34 @@ public class RawHttp {
     private MethodLine verifyHost(MethodLine methodLine, RawHttpHeaders.Builder headers) {
         List<String> host = headers.build().get("Host");
         if (host.isEmpty()) {
-            if (methodLine.getUri().getHost() == null) {
-                throw new InvalidHttpRequest("Host not given neither in method line nor Host header", 1);
-            } else if (methodLine.getHttpVersion().equals("HTTP/1.1")) {
+            if (!options.insertHostHeaderIfMissing()) {
+                throw new InvalidHttpRequest("Host header is missing", 1);
+            } else if (methodLine.getUri().getHost() == null) {
+                throw new InvalidHttpRequest("Host not given either in method line or Host header", 1);
+            } else {
                 // add the Host header to make sure the request is legal
                 headers.with("Host", methodLine.getUri().getHost());
             }
             return methodLine;
-        } else if (host.size() == 1 && options.insertHostHeaderIfMissing()) {
-            return methodLine.withHost(host.iterator().next());
+        } else if (host.size() == 1) {
+            if (methodLine.getUri().getHost() != null) {
+                throw new InvalidHttpRequest("Host specified both in Host header and in method line", 1);
+            }
+            try {
+                return methodLine.withHost(host.iterator().next());
+            } catch (IllegalArgumentException e) {
+                int lineNumber = headers.getHeaderNames().stream()
+                        .map(String::toUpperCase)
+                        .collect(toList())
+                        .indexOf("HOST") + 2;
+                throw new InvalidHttpRequest("Invalid host header: " + e.getMessage(), lineNumber);
+            }
         } else {
-            throw new InvalidHttpRequest("More than one Host header specified", 2);
+            int lineNumber = headers.getHeaderNames().stream()
+                    .map(String::toUpperCase)
+                    .collect(toList())
+                    .lastIndexOf("HOST") + 2;
+            throw new InvalidHttpRequest("More than one Host header specified", lineNumber);
         }
     }
 

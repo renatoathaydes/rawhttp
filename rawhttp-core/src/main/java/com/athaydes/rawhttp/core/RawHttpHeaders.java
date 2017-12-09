@@ -134,6 +134,10 @@ public class RawHttpHeaders {
             headers.forEach(this::with);
             return this;
         }
+
+        public List<String> getHeaderNames() {
+            return unmodifiableList(headerNames);
+        }
     }
 
 }

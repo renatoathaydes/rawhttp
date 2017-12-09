@@ -1,9 +1,11 @@
 package com.athaydes.rawhttp.core
 
+import com.athaydes.rawhttp.core.errors.InvalidHttpRequest
 import io.kotlintest.matchers.beEmpty
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.StringSpec
 import java.io.File
 import java.net.URI
@@ -217,6 +219,58 @@ class SimpleHttpResponseTests : StringSpec({
 
         // verify that the stream was only consumed until the empty-line after the last header
         String(stream.readBytes(4)) shouldEqual "BODY"
+    }
+
+})
+
+class ErrorConditionsHttpRequestTests : StringSpec({
+
+    "Should not be able to parse empty HTTP Request" {
+        val error = shouldThrow<InvalidHttpRequest> { RawHttp().parseRequest("") }
+        error.lineNumber shouldBe 0
+        error.message shouldBe "No content"
+    }
+
+    "Should not be able to parse blank HTTP Request" {
+        val error = shouldThrow<InvalidHttpRequest> { RawHttp().parseRequest("   ") }
+        error.lineNumber shouldBe 1
+        error.message shouldBe "Invalid method line"
+    }
+
+    "Should not be able to parse HTTP Request missing a host" {
+        val error = shouldThrow<InvalidHttpRequest> { RawHttp().parseRequest("GET /path HTTP/1.1") }
+        error.lineNumber shouldBe 1
+        error.message shouldBe "Host not given either in method line or Host header"
+    }
+
+    "Should not be able to parse HTTP Request without path and HTTP version" {
+        val error = shouldThrow<InvalidHttpRequest> { RawHttp().parseRequest("GET") }
+        error.lineNumber shouldBe 1
+        error.message shouldBe "Invalid method line"
+    }
+
+    "Cannot specify both Host header and host in method line" {
+        val error = shouldThrow<InvalidHttpRequest> {
+            RawHttp().parseRequest("GET http://hi.com\r\nHost: hi.com")
+        }
+        error.lineNumber shouldBe 1
+        error.message shouldBe "Host specified both in Host header and in method line"
+    }
+
+    "Cannot specify multiple Host headers" {
+        val error = shouldThrow<InvalidHttpRequest> {
+            RawHttp().parseRequest("GET /\r\nHost: hi.com\r\nAccept: */*\r\nHost: hi.com")
+        }
+        error.lineNumber shouldBe 4
+        error.message shouldBe "More than one Host header specified"
+    }
+
+    "Cannot specify Host header with a scheme" {
+        val error = shouldThrow<InvalidHttpRequest> {
+            RawHttp().parseRequest("GET /\r\nHost: https://hi.com")
+        }
+        error.lineNumber shouldBe 2
+        error.message shouldBe "Invalid host header: Invalid host format"
     }
 
 })
