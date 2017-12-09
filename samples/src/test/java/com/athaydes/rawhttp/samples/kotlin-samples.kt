@@ -29,7 +29,7 @@ class KotlinSamples : StringSpec() {
             val req = RawHttp().parseRequest("GET /hello\r\nHost: localhost:8082").eagerly().run {
                 assertThat(method, equalTo("GET"))
                 assertThat(uri, equalTo(URI.create("http://localhost:8082/hello")))
-                assertThat(headers["Host"], equalTo(listOf("localhost:8082")))
+                assertThat(headers["Host"], equalTo(listOf("localhost")))
                 this
             }
 

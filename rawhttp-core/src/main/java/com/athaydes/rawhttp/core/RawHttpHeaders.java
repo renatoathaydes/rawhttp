@@ -82,9 +82,8 @@ public class RawHttpHeaders {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        forEach((name, value) -> {
-            builder.append(name).append(": ").append(value).append("\r\n");
-        });
+        forEach((name, value) ->
+                builder.append(name).append(": ").append(value).append("\r\n"));
         return builder.append("\r\n").toString();
     }
 
@@ -125,8 +124,11 @@ public class RawHttpHeaders {
         }
 
         public Builder overwrite(String headerName, String value) {
-            headerNames.add(headerName);
-            valuesByCapitalizedName.put(headerName.toUpperCase(), singletonList(value));
+            String key = headerName.toUpperCase();
+            if (!valuesByCapitalizedName.containsKey(key)) {
+                headerNames.add(headerName);
+            }
+            valuesByCapitalizedName.put(key, singletonList(value));
             return this;
         }
 

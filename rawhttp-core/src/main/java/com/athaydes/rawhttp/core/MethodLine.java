@@ -1,7 +1,7 @@
 package com.athaydes.rawhttp.core;
 
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Optional;
 
 public class MethodLine implements StartLine {
 
@@ -29,20 +29,20 @@ public class MethodLine implements StartLine {
     }
 
     public MethodLine withHost(String host) {
-        String[] parts = host.split(":");
-        host = parts[0];
-        int port;
         try {
-            port = parts.length > 1 ? Integer.parseInt(parts[1]) : uri.getPort();
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid host format");
-        }
-        try {
-            URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), host, port,
+            if (!host.matches("[a-z]{1,6}://.*")) {
+                host = "http://" + host;
+            }
+            URI hostURI = URI.create(host);
+            URI newURI = new URI(hostURI.getScheme(),
+                    hostURI.getUserInfo(),
+                    hostURI.getHost(),
+                    hostURI.getPort(),
                     uri.getPath(), uri.getQuery(), uri.getFragment());
             return new MethodLine(method, newURI, httpVersion);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Cannot create new URI with host: " + host, e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
+                    e.getMessage()).map(s -> ": " + s).orElse(""));
         }
     }
 

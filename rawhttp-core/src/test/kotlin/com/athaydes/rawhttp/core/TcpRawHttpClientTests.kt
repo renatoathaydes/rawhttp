@@ -43,8 +43,8 @@ class TcpRawHttp10ClientTest : StringSpec() {
 
         "Must be able to perform a HTTP 1.0 request with headers against a real HTTP server" {
             TcpRawHttpClient().send(RawHttp().parseRequest(
-                    "GET http://localhost:8083/say-hi HTTP/1.0\r\n" +
-                            "Host: localhost\r\n" +
+                    "GET /say-hi HTTP/1.0\r\n" +
+                            "Host: localhost:8083\r\n" +
                             "Accept: text/plain")).eagerly().run {
                 body should bePresent {
                     it.asString(UTF_8) shouldBe "Hi there"
@@ -54,8 +54,8 @@ class TcpRawHttp10ClientTest : StringSpec() {
 
         "Must be able to perform a HTTP 1.0 request with headers and a body against a real HTTP server" {
             TcpRawHttpClient().send(RawHttp().parseRequest(
-                    "POST http://localhost:8083/echo HTTP/1.0\r\n" +
-                            "Host: localhost\r\n" +
+                    "POST /echo HTTP/1.0\r\n" +
+                            "Host: localhost:8083\r\n" +
                             "Accept: text/plain\r\n" +
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 11\r\n" +
@@ -88,8 +88,8 @@ class TcpRawHttp11ClientTest : StringSpec() {
 
         "Must be able to perform a HTTP 1.1 request with headers against a real HTTP server" {
             TcpRawHttpClient().send(RawHttp().parseRequest(
-                    "GET http://localhost:8083/say-hi HTTP/1.1\r\n" +
-                            "Host: localhost\r\n" +
+                    "GET /say-hi HTTP/1.1\r\n" +
+                            "Host: localhost:8083\r\n" +
                             "Accept: text/plain")).eagerly().run {
                 body should bePresent {
                     it.asString(UTF_8) shouldBe "Hi there"
@@ -99,8 +99,8 @@ class TcpRawHttp11ClientTest : StringSpec() {
 
         "Must be able to perform a HTTP 1.1 request with headers and a body against a real HTTP server" {
             TcpRawHttpClient().send(RawHttp().parseRequest(
-                    "POST http://localhost:8083/echo HTTP/1.1\r\n" +
-                            "Host: localhost\r\n" +
+                    "POST /echo HTTP/1.1\r\n" +
+                            "Host: localhost:8083\r\n" +
                             "Accept: text/plain\r\n" +
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 11\r\n" +

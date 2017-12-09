@@ -299,7 +299,10 @@ public class RawHttp {
                 throw new InvalidHttpRequest("Host specified both in Host header and in method line", 1);
             }
             try {
-                return methodLine.withHost(host.iterator().next());
+                MethodLine newMethodLine = methodLine.withHost(host.iterator().next());
+                // cleanup the host header
+                headers.overwrite("Host", newMethodLine.getUri().getHost());
+                return newMethodLine;
             } catch (IllegalArgumentException e) {
                 int lineNumber = headers.getHeaderNames().stream()
                         .map(String::toUpperCase)

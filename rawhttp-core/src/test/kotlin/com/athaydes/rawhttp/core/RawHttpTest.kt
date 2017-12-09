@@ -32,7 +32,7 @@ class SimpleHttpRequestTests : StringSpec({
             method shouldBe "GET"
             startLine.httpVersion shouldBe "HTTP/1.0"
             uri shouldEqual URI.create("https://localhost:8080/my/resource/234")
-            headers.headerNames should beEmpty()
+            headers.asMap() shouldBe mapOf("HOST" to listOf("localhost"))
             body should notBePresent()
         }
     }
