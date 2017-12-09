@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 
 public class RawHttpHeaders {
@@ -19,8 +21,8 @@ public class RawHttpHeaders {
 
     private RawHttpHeaders(List<String> headerNames,
                            Map<String, List<String>> valuesByCapitalizedName) {
-        this.headerNames = headerNames;
-        this.valuesByCapitalizedName = valuesByCapitalizedName;
+        this.headerNames = unmodifiableList(headerNames);
+        this.valuesByCapitalizedName = unmodifiableMap(valuesByCapitalizedName);
     }
 
     public List<String> get(String headerName) {
@@ -62,6 +64,16 @@ public class RawHttpHeaders {
         return valuesByCapitalizedName.equals(that.valuesByCapitalizedName);
     }
 
+    public void forEach(BiConsumer<String, String> consumer) {
+        Map<String, Integer> currentIndex = new HashMap<>(valuesByCapitalizedName.size());
+        for (String name : headerNames) {
+            String key = name.toUpperCase();
+            currentIndex.merge(key, 0, (a, b) -> a + 1);
+            String value = valuesByCapitalizedName.get(key).get(currentIndex.get(key));
+            consumer.accept(name, value);
+        }
+    }
+
     @Override
     public int hashCode() {
         return valuesByCapitalizedName.hashCode();
@@ -69,14 +81,10 @@ public class RawHttpHeaders {
 
     @Override
     public String toString() {
-        Map<String, Integer> currentIndex = new HashMap<>(valuesByCapitalizedName.size());
         StringBuilder builder = new StringBuilder();
-        for (String name : headerNames) {
-            String key = name.toUpperCase();
-            currentIndex.merge(key, 0, (a, b) -> a + 1);
-            String value = valuesByCapitalizedName.get(key).get(currentIndex.get(key));
+        forEach((name, value) -> {
             builder.append(name).append(": ").append(value).append("\r\n");
-        }
+        });
         return builder.append("\r\n").toString();
     }
 
@@ -119,6 +127,11 @@ public class RawHttpHeaders {
         public Builder overwrite(String headerName, String value) {
             headerNames.add(headerName);
             valuesByCapitalizedName.put(headerName.toUpperCase(), singletonList(value));
+            return this;
+        }
+
+        public Builder merge(RawHttpHeaders headers) {
+            headers.forEach(this::with);
             return this;
         }
     }

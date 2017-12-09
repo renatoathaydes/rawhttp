@@ -50,7 +50,7 @@ public class RawHttpResponse<Response> extends HttpMessage {
 
     public EagerHttpResponse<Response> eagerly(boolean keepAlive) throws IOException {
         try {
-            return new EagerHttpResponse<>(this);
+            return EagerHttpResponse.from(this);
         } finally {
             if (!keepAlive) {
                 getBody().ifPresent(b -> {
