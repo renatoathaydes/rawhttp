@@ -40,7 +40,7 @@ public abstract class HttpMessage {
 
     @Override
     public String toString() {
-        String body = getBody().map(Object::toString).orElse("<no body>");
+        String body = getBody().map(Object::toString).orElse("");
         return messageWithoutBody() + body;
     }
 
