@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.core;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 public class MethodLine implements StartLine {
@@ -48,6 +49,16 @@ public class MethodLine implements StartLine {
 
     @Override
     public String toString() {
-        return method + " " + uri + " " + httpVersion;
+        URI pathURI;
+        String path = (uri.getPath() == null || uri.getPath().trim().isEmpty())
+                ? "/" : uri.getPath();
+        try {
+            // only path and query are sent to the server
+            pathURI = new URI(null, null, null, -1, path, uri.getQuery(), null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        return method + " " + pathURI + " " + httpVersion;
     }
 }
