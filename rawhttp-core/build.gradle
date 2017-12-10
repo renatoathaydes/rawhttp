@@ -14,7 +14,7 @@ plugins {
 
 group = 'com.athaydes.rawhttp'
 description = 'RawHTTP core module'
-version '1.0'
+version '1.1.0'
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
