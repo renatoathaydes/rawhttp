@@ -3,6 +3,9 @@
 A library to make it easy to deal with raw HTTP 1.1, as defined by [RFC-7230](https://tools.ietf.org/html/rfc7230),
 and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
 
+> For details using RawHTTP, see the [blog post](https://sites.google.com/a/athaydes.com/renato-athaydes/posts/announcingrawhttp-ajvmlibraryforhandlingrawhttp)
+ I wrote about it!
+
 Raw HTTP is really simple in 99.9% of cases.
 
 For example, the raw HTTP request you would make to fetch a resource from a web server looks like this:
