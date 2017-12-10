@@ -26,6 +26,7 @@ fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
 
     println("Stopping Spark")
     stop()
+    Thread.sleep(150)
 }
 
 class TcpRawHttp10ClientTest : StringSpec() {
