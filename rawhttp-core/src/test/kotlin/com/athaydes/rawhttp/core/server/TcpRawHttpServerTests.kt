@@ -4,13 +4,11 @@ import com.athaydes.rawhttp.core.RawHttp
 import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.body.StringBody
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient
+import com.athaydes.rawhttp.core.client.waitForPortToBeTaken
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
-import java.io.IOException
-import java.lang.Thread.sleep
 import java.net.ServerSocket
-import java.net.Socket
 import java.util.concurrent.Executors
 
 class TcpRawHttpServerTests : StringSpec({
@@ -51,16 +49,7 @@ class TcpRawHttpServerTests : StringSpec({
             }
         }
 
-        for (it in 1..5) {
-            try {
-                val socket = Socket("localhost", 8092)
-                socket.close()
-                break
-            } catch (e: IOException) {
-                println("Port 8092 not taken yet, waiting...")
-                sleep(100L)
-            }
-        }
+        waitForPortToBeTaken(8092)
 
         val httpClient = TcpRawHttpClient()
 

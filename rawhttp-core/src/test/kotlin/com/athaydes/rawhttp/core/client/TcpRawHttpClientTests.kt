@@ -11,7 +11,23 @@ import spark.Spark.get
 import spark.Spark.port
 import spark.Spark.post
 import spark.Spark.stop
+import java.io.IOException
+import java.net.Socket
 import java.nio.charset.StandardCharsets.UTF_8
+
+fun waitForPortToBeTaken(port: Int) {
+    for (it in 1..5) {
+        try {
+            val socket = Socket("localhost", port)
+            socket.close()
+            return
+        } catch (e: IOException) {
+            println("Port 8092 not taken yet, waiting...")
+            Thread.sleep(100L)
+        }
+    }
+    throw AssertionError("Port $port was not taken within the timeout")
+}
 
 fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     println("Starting Spark for spec: $spec")
@@ -20,8 +36,8 @@ fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     get("/say-hi", "application/json") { _, _ -> "{ \"message\": \"Hi there\" }" }
     post("/echo", "text/plain") { req, _ -> req.body() }
 
+    waitForPortToBeTaken(8083)
     println("Spark is on")
-    Thread.sleep(150)
     runTest()
 
     println("Stopping Spark")
