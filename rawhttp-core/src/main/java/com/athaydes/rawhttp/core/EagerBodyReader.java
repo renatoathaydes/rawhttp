@@ -18,6 +18,12 @@ import java.util.function.BiFunction;
 
 import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
+/**
+ * An eager implementation of {@link BodyReader}.
+ * <p>
+ * Because this implementation eagerly consumes the HTTP message, it is not considered "live"
+ * (i.e. it can be stored after the HTTP connection is closed).
+ */
 public class EagerBodyReader extends BodyReader {
 
     private final byte[] bytes;
@@ -281,10 +287,20 @@ public class EagerBodyReader extends BodyReader {
         return this;
     }
 
+    /**
+     * @return the HTTP message's body as bytes.
+     * Notice that this method does not decode the body, so if the body is chunked, for example,
+     * the bytes will represent the chunked body, not the decoded body.
+     * Use {@link #asChunkedBody()} then {@link ChunkedBody#getData()} to decode the body in such cases.
+     */
     public byte[] asBytes() {
         return bytes;
     }
 
+    /**
+     * @return the body of the HTTP message as a {@link ChunkedBody} if the body indeed used
+     * the chunked transfer coding. If the body was not chunked, this method returns an empty value.
+     */
     public Optional<ChunkedBody> asChunkedBody() {
         return Optional.ofNullable(chunkedBody);
     }
@@ -294,6 +310,12 @@ public class EagerBodyReader extends BodyReader {
         return new ByteArrayInputStream(bytes);
     }
 
+    /**
+     * Convert the HTTP message's body into a String.
+     *
+     * @param charset text message's charset
+     * @return String representing the HTTP message's body.
+     */
     public String asString(Charset charset) {
         return new String(bytes, charset);
     }
