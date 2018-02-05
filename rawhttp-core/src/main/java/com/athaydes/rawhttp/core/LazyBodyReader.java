@@ -4,6 +4,13 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Lazy implementation of {@link BodyReader}.
+ * <p>
+ * Instances of this class are "live", i.e. they should only be used while the HTTP connection is live.
+ *
+ * @see #eager()
+ */
 public class LazyBodyReader extends BodyReader {
 
     private final InputStream inputStream;

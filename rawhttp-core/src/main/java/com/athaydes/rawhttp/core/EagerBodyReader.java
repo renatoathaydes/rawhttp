@@ -62,6 +62,13 @@ public class EagerBodyReader extends BodyReader {
         }
     }
 
+    /**
+     * Create an instance of this class from the given bytes.
+     * <p>
+     * The bytes are assumed to be the decoded HTTP message's body.
+     *
+     * @param bytes plain HTTP message's body
+     */
     public EagerBodyReader(byte[] bytes) {
         super(BodyType.CONTENT_LENGTH);
         this.bytes = bytes;
