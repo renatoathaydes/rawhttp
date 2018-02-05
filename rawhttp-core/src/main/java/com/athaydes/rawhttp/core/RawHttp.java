@@ -22,6 +22,20 @@ import java.util.function.BiFunction;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * The main class of the raw-http library.
+ * <p>
+ * Instances of this class can parse HTTP requests and responses, as well as their subsets such as
+ * the start-line and headers.
+ * <p>
+ * To use a default instance, which is not 100% raw (it fixes up new-lines and request's Host headers, for example)
+ * use the default constructor, otherwise, call {@link #RawHttp(RawHttpOptions)} with the appropriate options.
+ *
+ * @see RawHttpOptions
+ * @see RawHttpRequest
+ * @see RawHttpResponse
+ * @see RawHttpHeaders
+ */
 public class RawHttp {
 
     private final RawHttpOptions options;
@@ -34,6 +48,13 @@ public class RawHttp {
         this.options = options;
     }
 
+    /**
+     * Parses the given HTTP request.
+     *
+     * @param request in text form
+     * @return a parsed HTTP request object
+     * @throws InvalidHttpRequest if the request is invalid
+     */
     public final RawHttpRequest parseRequest(String request) {
         try {
             return parseRequest(new ByteArrayInputStream(request.getBytes(UTF_8)));
@@ -43,12 +64,28 @@ public class RawHttp {
         }
     }
 
+    /**
+     * Parses the HTTP request contained in the given file.
+     *
+     * @param file containing a HTTP request
+     * @return a parsed HTTP request object
+     * @throws InvalidHttpRequest if the request is invalid
+     * @throws IOException        if a problem occurs reading the file
+     */
     public final RawHttpRequest parseRequest(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
             return parseRequest(stream).eagerly();
         }
     }
 
+    /**
+     * Parses the HTTP request produced by the given stream.
+     *
+     * @param inputStream producing a HTTP request
+     * @return a parsed HTTP request object
+     * @throws InvalidHttpRequest if the request is invalid
+     * @throws IOException        if a problem occurs accessing the stream
+     */
     public RawHttpRequest parseRequest(InputStream inputStream) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpRequest::new,
@@ -72,6 +109,13 @@ public class RawHttp {
         return new RawHttpRequest(methodLine, headers, bodyReader);
     }
 
+    /**
+     * Parses the given HTTP response.
+     *
+     * @param response in text form
+     * @return a parsed HTTP response object
+     * @throws InvalidHttpResponse if the response is invalid
+     */
     public final RawHttpResponse<Void> parseResponse(String response) {
         try {
             return parseResponse(
@@ -83,16 +127,44 @@ public class RawHttp {
         }
     }
 
+    /**
+     * Parses the HTTP response contained in the given file.
+     *
+     * @param file containing a HTTP response
+     * @return a parsed HTTP response object
+     * @throws InvalidHttpResponse if the response is invalid
+     * @throws IOException         if a problem occurs reading the file
+     */
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
             return parseResponse(stream, null).eagerly();
         }
     }
 
+    /**
+     * Parses the HTTP response produced by the given stream.
+     *
+     * @param inputStream producing a HTTP response
+     * @return a parsed HTTP response object
+     * @throws InvalidHttpResponse if the response is invalid
+     * @throws IOException         if a problem occurs accessing the stream
+     */
     public final RawHttpResponse<Void> parseResponse(InputStream inputStream) throws IOException {
         return parseResponse(inputStream, null);
     }
 
+    /**
+     * Parses the HTTP response produced by the given stream.
+     *
+     * @param inputStream producing a HTTP response
+     * @param methodLine  optional {@link MethodLine} of the request which results in this response.
+     *                    If provided, it is taken into consideration when deciding whether the response contains
+     *                    a body. See <a href="https://tools.ietf.org/html/rfc7230#section-3.3">Section 3.3</a>
+     *                    of RFC-7230 for details.
+     * @return a parsed HTTP response object
+     * @throws InvalidHttpResponse if the response is invalid
+     * @throws IOException         if a problem occurs accessing the stream
+     */
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
                                                @Nullable MethodLine methodLine) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
@@ -177,6 +249,16 @@ public class RawHttp {
         return metadataLines;
     }
 
+    /**
+     * Get the body type of a HTTP message with the given headers.
+     * <p>
+     * If the value of the Content-Length header is known, it should be passed as the {@code bodyLength}
+     * argument, as it is not extracted otherwise.
+     *
+     * @param headers    HTTP message's headers
+     * @param bodyLength body length if known
+     * @return the body type of the HTTP message
+     */
     public static BodyType getBodyType(RawHttpHeaders headers,
                                        @Nullable Long bodyLength) {
         return bodyLength == null ?
@@ -184,6 +266,12 @@ public class RawHttp {
                 BodyType.CONTENT_LENGTH;
     }
 
+    /**
+     * Determines whether a request with the given headers should have a body.
+     *
+     * @param headers HTTP request's headers
+     * @return true if the headers indicate the request should have a body, false otherwise
+     */
     public static boolean requestHasBody(RawHttpHeaders headers) {
         // The presence of a message body in a request is signaled by a
         // Content-Length or Transfer-Encoding header field.  Request message
@@ -192,10 +280,30 @@ public class RawHttp {
         return headers.contains("Content-Length") || headers.contains("Transfer-Encoding");
     }
 
+    /**
+     * Determines whether a response with the given status code should have a body.
+     * <p>
+     * This method ignores the method line of the request which produced such response. If the request
+     * is known, use the {@link #responseHasBody(StatusCodeLine, MethodLine)} method instead.
+     *
+     * @param statusCodeLine status code of response
+     * @return true if such response has a body, false otherwise
+     */
     public static boolean responseHasBody(StatusCodeLine statusCodeLine) {
         return responseHasBody(statusCodeLine, null);
     }
 
+    /**
+     * Determines whether a response with the given status code should have a body.
+     * <p>
+     * If provided, the method line of the request which produced such response is taken into
+     * consideration. See <a href="https://tools.ietf.org/html/rfc7230#section-3.3">Section 3.3</a>
+     * of RFC-7230 for details.
+     *
+     * @param statusCodeLine status code of response
+     * @param methodLine     method line of request, if any
+     * @return true if such response has a body, false otherwise
+     */
     public static boolean responseHasBody(StatusCodeLine statusCodeLine,
                                           @Nullable MethodLine methodLine) {
         if (methodLine != null) {
@@ -245,6 +353,13 @@ public class RawHttp {
         return Optional.ofNullable(result);
     }
 
+    /**
+     * Parses a HTTP response's status code line.
+     *
+     * @param line status code line
+     * @return the status code line
+     * @throws InvalidHttpResponse if the status code line is invalid
+     */
     public static StatusCodeLine parseStatusCodeLine(String line) {
         if (line.trim().isEmpty()) {
             throw new InvalidHttpResponse("Empty status line", 1);
@@ -319,6 +434,13 @@ public class RawHttp {
         }
     }
 
+    /**
+     * Parses a HTTP request's method line.
+     *
+     * @param methodLine method line
+     * @return the method line
+     * @throws InvalidHttpRequest if the method line is invalid
+     */
     public static MethodLine parseMethodLine(String methodLine) {
         if (methodLine.isEmpty()) {
             throw new InvalidHttpRequest("Empty method line", 1);
@@ -335,6 +457,14 @@ public class RawHttp {
         }
     }
 
+    /**
+     * Extracts the Content-Length header's value from the given headers, if available.
+     * <p>
+     * If more than one value is available, returns the first one.
+     *
+     * @param headers HTTP message's headers
+     * @return the value of the Content-Length header, if any, or empty otherwise.
+     */
     public static OptionalLong parseContentLength(RawHttpHeaders headers) {
         Optional<String> contentLength = headers.getFirst("Content-Length");
         return contentLength.map(s -> OptionalLong.of(Long.parseLong(s))).orElseGet(OptionalLong::empty);
@@ -353,9 +483,16 @@ public class RawHttp {
         return uri;
     }
 
+    /**
+     * Parses the HTTP messages' headers from the given lines.
+     *
+     * @param lines       header lines
+     * @param createError error factory - used in case an error is encountered
+     * @return modifiable {@link RawHttpHeaders.Builder}
+     */
     public static RawHttpHeaders.Builder parseHeaders(
             List<String> lines,
-            BiFunction<String, Integer, RuntimeException> createError) throws IOException {
+            BiFunction<String, Integer, RuntimeException> createError) {
         RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder();
         int lineNumber = 2;
         for (String line : lines) {
