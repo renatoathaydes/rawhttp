@@ -11,9 +11,9 @@ public class MethodLine implements StartLine {
 
     private final String method;
     private final URI uri;
-    private final String httpVersion;
+    private final HttpVersion httpVersion;
 
-    public MethodLine(String method, URI uri, String httpVersion) {
+    public MethodLine(String method, URI uri, HttpVersion httpVersion) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
@@ -34,7 +34,7 @@ public class MethodLine implements StartLine {
     }
 
     @Override
-    public String getHttpVersion() {
+    public HttpVersion getHttpVersion() {
         return httpVersion;
     }
 

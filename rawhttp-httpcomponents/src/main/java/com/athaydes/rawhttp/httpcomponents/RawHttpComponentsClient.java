@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.httpcomponents;
 
 import com.athaydes.rawhttp.core.BodyReader.BodyType;
+import com.athaydes.rawhttp.core.HttpVersion;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
@@ -9,7 +10,6 @@ import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.StatusCodeLine;
 import com.athaydes.rawhttp.core.client.RawHttpClient;
 import org.apache.http.Header;
-import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -66,8 +66,10 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
     }
 
     private StatusCodeLine adaptStatus(StatusLine statusLine) {
-        return new StatusCodeLine(statusLine.getProtocolVersion().toString(),
-                statusLine.getStatusCode(), statusLine.getReasonPhrase());
+        return new StatusCodeLine(
+                HttpVersion.parse(statusLine.getProtocolVersion().toString()),
+                statusLine.getStatusCode(),
+                statusLine.getReasonPhrase());
     }
 
     private RawHttpHeaders readHeaders(CloseableHttpResponse response) {
@@ -84,17 +86,14 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         return headers.build();
     }
 
-    private ProtocolVersion toProtocolVersion(String httpVersion) {
+    private static ProtocolVersion toProtocolVersion(HttpVersion httpVersion) {
         switch (httpVersion) {
-            case "HTTP/0.9":
-            case "0.9":
-                return HttpVersion.HTTP_0_9;
-            case "HTTP/1.0":
-            case "1.0":
-                return HttpVersion.HTTP_1_0;
-            case "HTTP/1.1":
-            case "1.1":
-                return HttpVersion.HTTP_1_1;
+            case HTTP_0_9:
+                return org.apache.http.HttpVersion.HTTP_0_9;
+            case HTTP_1_0:
+                return org.apache.http.HttpVersion.HTTP_1_0;
+            case HTTP_1_1:
+                return org.apache.http.HttpVersion.HTTP_1_1;
             default:
                 throw new IllegalArgumentException("Invalid HTTP version: " + httpVersion);
 

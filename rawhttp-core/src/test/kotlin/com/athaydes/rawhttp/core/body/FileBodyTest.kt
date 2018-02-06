@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.core.body
 
+import com.athaydes.rawhttp.core.HttpVersion
 import com.athaydes.rawhttp.core.RawHttp
 import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.fileFromResource
@@ -19,7 +20,7 @@ class FileBodyTest : StringSpec({
 
         request.replaceBody(fileBody).eagerly().run {
             method shouldBe "PUT"
-            startLine.httpVersion shouldBe "HTTP/1.1" // the default
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
             headers.asMap() shouldEqual mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
@@ -38,7 +39,7 @@ class FileBodyTest : StringSpec({
 
         request.replaceBody(fileBody).eagerly().run {
             method shouldBe "PUT"
-            startLine.httpVersion shouldBe "HTTP/1.1" // the default
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
             headers.asMap() shouldEqual mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
@@ -55,7 +56,7 @@ class FileBodyTest : StringSpec({
 
         response.replaceBody(fileBody).eagerly().run {
             statusCode shouldBe 200
-            startLine.httpVersion shouldBe "HTTP/1.1"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
             startLine.reason shouldEqual "OK"
             headers.asMap() shouldEqual mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
@@ -74,7 +75,7 @@ class FileBodyTest : StringSpec({
 
         response.replaceBody(fileBody).eagerly().run {
             statusCode shouldBe 201
-            startLine.httpVersion shouldBe "HTTP/1.1"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
             startLine.reason shouldEqual "CREATED"
             headers.asMap() shouldEqual mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),

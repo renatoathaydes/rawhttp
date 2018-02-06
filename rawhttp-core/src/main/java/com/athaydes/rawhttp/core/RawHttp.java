@@ -397,8 +397,15 @@ public class RawHttp {
                 throw new IllegalStateException();
         }
 
+        HttpVersion version;
         try {
-            return new StatusCodeLine(httpVersion, Integer.parseInt(statusCode), reason);
+            version = HttpVersion.parse(httpVersion);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidHttpResponse("Invalid HTTP version", 1);
+        }
+
+        try {
+            return new StatusCodeLine(version, Integer.parseInt(statusCode), reason);
         } catch (NumberFormatException e) {
             throw new InvalidHttpResponse("Invalid status", 1);
         }
@@ -458,7 +465,13 @@ public class RawHttp {
                 String method = parts[0];
                 URI uri = createUri(parts[1]);
                 String version = parts.length == 3 ? parts[2] : "HTTP/1.1";
-                return new MethodLine(method, uri, version);
+                HttpVersion httpVersion;
+                try {
+                    httpVersion = HttpVersion.parse(version);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidHttpRequest("Invalid HTTP version", 1);
+                }
+                return new MethodLine(method, uri, httpVersion);
             } else {
                 throw new InvalidHttpRequest("Invalid method line", 1);
             }
