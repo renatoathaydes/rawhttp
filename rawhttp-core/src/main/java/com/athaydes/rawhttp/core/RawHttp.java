@@ -40,10 +40,18 @@ public class RawHttp {
 
     private final RawHttpOptions options;
 
+    /**
+     * Create a new instance of {@link RawHttp} using the default {@link RawHttpOptions} instance.
+     */
     public RawHttp() {
         this(RawHttpOptions.defaultInstance());
     }
 
+    /**
+     * Create a configured instance of {@link RawHttp}.
+     *
+     * @param options configuration options
+     */
     public RawHttp(RawHttpOptions options) {
         this.options = options;
     }
