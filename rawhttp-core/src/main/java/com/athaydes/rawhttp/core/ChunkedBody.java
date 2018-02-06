@@ -2,6 +2,12 @@ package com.athaydes.rawhttp.core;
 
 import java.util.List;
 
+/**
+ * Container of a HTTP message body which has the "chunked" transfer-coding.
+ * <p>
+ * See <a href="https://tools.ietf.org/html/rfc7230#section-4.1">Section 4.1</a>
+ * of RFC-7230 for details.
+ */
 public class ChunkedBody {
 
     public static class Chunk {
@@ -35,14 +41,23 @@ public class ChunkedBody {
         this.trailerHeaders = trailerHeaders;
     }
 
+    /**
+     * @return the chunks that make up the chunked body.
+     */
     public List<Chunk> getChunks() {
         return chunks;
     }
 
+    /**
+     * @return the trailing headers included in the chunked body.
+     */
     public RawHttpHeaders getTrailerHeaders() {
         return trailerHeaders;
     }
 
+    /**
+     * @return the message body (after decoding).
+     */
     public byte[] getData() {
         int totalSize = chunks.stream().mapToInt(Chunk::size).sum();
         byte[] result = new byte[totalSize];
