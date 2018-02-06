@@ -4,6 +4,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
+/**
+ * A {@link RawHttpRequest}'s start-line.
+ */
 public class MethodLine implements StartLine {
 
     private final String method;
@@ -16,10 +19,16 @@ public class MethodLine implements StartLine {
         this.httpVersion = httpVersion;
     }
 
+    /**
+     * @return HTTP request's method name.
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * @return the URI associated with this method line.
+     */
     public URI getUri() {
         return uri;
     }
@@ -29,6 +38,10 @@ public class MethodLine implements StartLine {
         return httpVersion;
     }
 
+    /**
+     * @param host the host to be used in the method line's URI.
+     * @return a copy of this method line, but with the given host
+     */
     public MethodLine withHost(String host) {
         try {
             if (!host.matches("[a-z]{1,6}://.*")) {
@@ -47,6 +60,9 @@ public class MethodLine implements StartLine {
         }
     }
 
+    /**
+     * @return the start-line for this method line.
+     */
     @Override
     public String toString() {
         URI pathURI;

@@ -1,5 +1,8 @@
 package com.athaydes.rawhttp.core;
 
+/**
+ * A {@link RawHttpResponse}'s start-line.
+ */
 public class StatusCodeLine implements StartLine {
 
     private final String httpVersion;
@@ -17,14 +20,23 @@ public class StatusCodeLine implements StartLine {
         return httpVersion;
     }
 
+    /**
+     * @return the status code in this status-code line.
+     */
     public int getStatusCode() {
         return statusCode;
     }
 
+    /**
+     * @return the reason phrase in this status-code line.
+     */
     public String getReason() {
         return reason;
     }
 
+    /**
+     * @return the start-line for this status-code line.
+     */
     @Override
     public String toString() {
         return String.join(" ", httpVersion, Integer.toString(statusCode), reason);
