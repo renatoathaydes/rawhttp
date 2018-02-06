@@ -10,6 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.Optional;
 
+/**
+ * A {@link HttpMessageBody} containing the contents of a {@link File}.
+ */
 public class FileBody extends HttpMessageBody {
 
     private final File file;
@@ -31,6 +34,9 @@ public class FileBody extends HttpMessageBody {
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
     }
 
+    /**
+     * @return the file associated with this instance.
+     */
     public File getFile() {
         return file;
     }

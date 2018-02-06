@@ -9,6 +9,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+/**
+ * A simple {@link HttpMessageBody} whose contents are given by a String.
+ */
 public class StringBody extends HttpMessageBody {
 
     private final byte[] body;
@@ -44,6 +47,9 @@ public class StringBody extends HttpMessageBody {
         return body.length;
     }
 
+    /**
+     * @return the charset of this HTTP message's body.
+     */
     public Charset getCharset() {
         return charset;
     }
