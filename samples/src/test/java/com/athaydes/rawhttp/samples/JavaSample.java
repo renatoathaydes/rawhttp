@@ -2,8 +2,8 @@ package com.athaydes.rawhttp.samples;
 
 import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.RawHttp;
-import com.athaydes.rawhttp.core.RawHttpClient;
 import com.athaydes.rawhttp.core.RawHttpRequest;
+import com.athaydes.rawhttp.core.client.RawHttpClient;
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
 import com.athaydes.rawhttp.httpcomponents.RawHttpComponentsClient;
 import org.apache.http.HttpHeaders;
