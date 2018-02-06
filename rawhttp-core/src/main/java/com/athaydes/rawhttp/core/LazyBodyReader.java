@@ -56,6 +56,11 @@ public class LazyBodyReader extends BodyReader {
         inputStream.close();
     }
 
+    /**
+     * @return the {@literal "<lazy body reader>"} String.
+     * To obtain the String representation of a HTTP message's body, first call
+     * {@link #eager()}, then {@link EagerBodyReader#toString()}.
+     */
     @Override
     public String toString() {
         return "<lazy body reader>";

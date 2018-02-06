@@ -6,6 +6,15 @@ import java.util.Optional;
 
 import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
+/**
+ * An eager specialization of {@link RawHttpResponse}.
+ * <p>
+ * Normally, an instance of this class is obtained by calling {@link RawHttpResponse#eagerly()}.
+ * Doing that guarantees that the response is fully downloaded or read from its source, so that
+ * it can be passed around even after the connection or stream it originates from has been closed.
+ *
+ * @param <Response> library response type
+ */
 public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
     private EagerHttpResponse(RawHttpResponse<Response> response,
@@ -19,6 +28,12 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
         );
     }
 
+    /**
+     * @param response   raw HTTP response
+     * @param <Response> library response type
+     * @return an eager HTTP response from the given HTTP response.
+     * @throws IOException if an error occurs while reading the response.
+     */
     public static <Response> EagerHttpResponse<Response> from(RawHttpResponse<Response> response)
             throws IOException {
         if (response instanceof EagerHttpResponse) {
@@ -44,6 +59,9 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
         return new EagerHttpResponse<>(response, headers, bodyReader);
     }
 
+    /**
+     * @return this eager response.
+     */
     @Override
     public EagerHttpResponse<Response> eagerly() {
         return this;

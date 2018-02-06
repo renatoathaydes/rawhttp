@@ -327,6 +327,10 @@ public class EagerBodyReader extends BodyReader {
         return new String(bytes, charset);
     }
 
+    /**
+     * @return the body of the HTTP message in String format, using the {@link StandardCharsets#UTF_8} encoding.
+     * @see #asString(Charset)
+     */
     @Override
     public String toString() {
         return asString(StandardCharsets.UTF_8);
