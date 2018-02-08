@@ -7,7 +7,7 @@ and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
  [blog post](https://sites.google.com/a/athaydes.com/renato-athaydes/posts/announcingrawhttp-ajvmlibraryforhandlingrawhttp)
  I wrote about it!
 
-Raw HTTP is really simple in 99.9% of cases.
+HTTP is really simple in 99.9% of cases.
 
 For example, the raw HTTP request you would make to fetch a resource from a web server looks like this:
 
@@ -20,7 +20,10 @@ Host: www.example.com
 Accept-Language: en, mi
 ```
 
-To send that request to a HTTP server using RawHTTP, you just parse the Request and stream it out via a `Socket`:
+To send that request out to a HTTP server using RawHTTP, you can parse the Request and stream it out via a 
+`Socket`.
+
+Here's the whole code to do that:
 
 ```java
 RawHttp rawHttp = new RawHttp();
@@ -74,7 +77,10 @@ try (FileOutputStream out = new FileOutputStream(responseFile)) {
 
 That simple!
 
-You could even write your own rudimentary HTTP server quite easily using that:
+Notice that just with the above, you have everything you need to send and receive HTTP messages. 
+
+To illustrate that, here is a simple implementation of a HTTP server that waits for a single request,
+then responds with a valid response:
 
 ```java
 RawHttp http = new RawHttp();
@@ -103,11 +109,23 @@ new Thread(() -> {
 }).start();
 ```
 
-## Using a client
+## HTTP client
 
-RawHTTP has the following clients so far:
+Even though it's quite simple to implement your own HTTP client by using the `RawHttp` class to parse 
+requests and responses (which can then be transmitted via Sockets), RawHTTP offers a simple HTTP client definition
+(and implementation) that makes it a little bit more convenient to consume HTTP APIs.
 
-* `TcpRawHttpClient` - manages `java.net.Socket` instances to send requests to the correct host.
+Here's the [`RawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/RawHttpClient.java) interface:
+
+```java
+public interface RawHttpClient<Response> {
+    RawHttpResponse<Response> send(RawHttpRequest request) throws IOException;
+}
+```   
+
+The `Response` type parameter allows implementations to expose their own type for HTTP Responses, if needed.
+
+In the core module, a simple implementation is provided: [`TcpRawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/TcpRawHttpClient.java).
 
 Example usage:
 
@@ -116,7 +134,14 @@ RawHttpClient<?> client = new TcpRawHttpClient();
 EagerHttpResponse<?> response = client.send(request).eagerly();
 ```
 
+> Unless you want to take care of streaming the response body later, always call `eagerly()`
+  as shown above to consume the full response body (allowing the connection to be re-used).
+
+Other implementations are available in separate modules:
+
 * `RawHttpComponentsClient` - based on HttpComponents's HttpClient.
+
+> Requires the `com.athaydes.rawhttp:rawhttp-httpcomponents` module.
 
 You can use this if you need support for external specifications, such as
 cookies ([RFC-6265](https://tools.ietf.org/html/rfc6265)), or basic-auth, for example.
@@ -132,13 +157,45 @@ CloseableHttpClient httpClient = HttpClients.createDefault();
 RawHttpClient<?> client = new RawHttpComponentsClient(httpClient);
 ```
 
-> Notice that `RawHttpClient` instances are generic because depending on the actual implementation used,
- the client may return responses containing a `libResponse`. In the case of the `RawHttpComponentsClient`,
- the full type of the client is `RawHttpClient<CloseableHttpResponse>`.
- Because `TcpRawHttpClient` does not have a `libResponse`, its full type is `RawHttpClient<Void>`.
+## HTTP server
 
-Unless you want to take care of streaming the response body later, always call `eagerly()`
-as shown above to consume the full response body (allowing the connection to be re-used).
+RawHTTP also contains a [package](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/server) defining a few types
+that describe a simple HTTP server.
+
+The main type is the interface `RawHttpServer`, which uses a `Router` to route requests via a `RequestHandler`. Both
+`Router` and `RequestHandler` are functional interfaces (can be implemented with Java lambdas), so implementing a full
+server and router is very simple.
+
+A default implementation of `TcpRawHttpServer` is provided... it spans a `Thread` (but re-uses it when possible) for 
+each connected client.
+
+Here's an example, written in Kotlin, of how to use `RawHttpServer`:
+
+```kotlin
+val server = TcpRawHttpServer(8093)
+
+server.start { path: String ->
+    when (path) {
+        "/hello", "/" -> RequestHandler { req ->
+            when (req.method) {
+                "GET" ->
+                    http.parseResponse("HTTP/1.1 200 OK\n" +
+                            "Content-Type: text/plain"
+                    ).replaceBody(StringBody("Hello RawHTTP!"))
+                else ->
+                    http.parseResponse("HTTP/1.1 405 Method Not Allowed\n" +
+                            "Content-Type: text/plain"
+                    ).replaceBody(StringBody("Sorry, can't handle this method"))
+            }
+        }
+        else -> RequestHandler {
+            http.parseResponse("HTTP/1.1 404 Not Found\n" +
+                    "Content-Type: text/plain"
+            ).replaceBody(StringBody("Content was not found"))
+        }
+    }
+}
+```
 
 ## Samples
 
