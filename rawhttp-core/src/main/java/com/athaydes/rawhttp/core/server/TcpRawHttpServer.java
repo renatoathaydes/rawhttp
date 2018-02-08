@@ -15,6 +15,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Simple implementation of {@link RawHttpServer}.
+ * <p>
+ * This implementation, by default, spans a Thread for each client that connects, re-using Threads as possible.
+ * Notice that this does not scale to a large number of clients, so this server is not recommended for production use.
+ * <p>
+ * It is possible to configure this server by passing an instance of {@link TcpRawHttpServerOptions} to its
+ * constructor.
+ */
 public class TcpRawHttpServer implements RawHttpServer {
 
     private final AtomicReference<RouterAndSocket> routerRef = new AtomicReference<>();
@@ -56,18 +65,38 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
     }
 
+    /**
+     * Configuration options for {@link TcpRawHttpServer}.
+     */
     public interface TcpRawHttpServerOptions {
 
+        /**
+         * Create a server socket for the server to use.
+         *
+         * @return a server socket
+         * @throws IOException if an error occurs when binding the socket
+         */
         ServerSocket getServerSocket() throws IOException;
 
+        /**
+         * @return the {@link RawHttp} instance to use to parse requests and responses
+         */
         default RawHttp getRawHttp() {
             return new RawHttp();
         }
 
+        /**
+         * @return executor service to use to run client-serving {@link Runnable}s. Each {@link Runnable} runs until
+         * the connection with the client is closed or lost.
+         */
         default ExecutorService getExecutorService() {
             return Executors.newCachedThreadPool();
         }
 
+        /**
+         * @return the default error response to send out when an Exception occurs in the {@link Router} or a
+         * {@link RequestHandler}.
+         */
         default EagerHttpResponse<Void> serverErrorResponse() {
             return null;
         }

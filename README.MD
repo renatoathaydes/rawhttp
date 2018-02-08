@@ -39,7 +39,7 @@ request.writeTo(socket.getOutputStream());
 
 To read the response, it's just as easy:
 
-```
+```java
 RawHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream());
 
 // call "eagerly()" in order to download the body
