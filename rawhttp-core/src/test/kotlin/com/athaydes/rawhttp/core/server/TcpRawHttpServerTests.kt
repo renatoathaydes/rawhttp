@@ -34,7 +34,7 @@ class TcpRawHttpServerTests : StringSpec() {
                     }
                 }
                 "/throw" -> throw Exception("Not doing it!")
-                else -> RequestHandler { req ->
+                else -> RequestHandler {
                     http.parseResponse("HTTP/1.1 404 Not Found\n" +
                             "Content-Type: text/plain"
                     ).replaceBody(StringBody("Content was not found"))
