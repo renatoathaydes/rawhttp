@@ -26,6 +26,10 @@ import java.util.OptionalLong;
 
 import static java.util.stream.Collectors.joining;
 
+/**
+ * An implementation of {@link RawHttpClient} based on the http-components library's
+ * {@link CloseableHttpClient}.
+ */
 public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpResponse> {
 
     private final CloseableHttpClient httpClient;
