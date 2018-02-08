@@ -38,6 +38,15 @@ task javadocJar(type: Jar) {
     from javadoc
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.athaydes.rawhttp.core.cli.RawHttpCli',
+                'Implementation-Version': version,
+                'Implementation-Name': 'RawHTTP Core',
+                'Implementation-Vendor': 'Renato Athaydes'
+    }
+}
+
 /* Publishing config */
 
 artifacts {
