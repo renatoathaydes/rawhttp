@@ -93,6 +93,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 28\r\n" +
                             "Cache-Control: no-cache\r\n" +
+                            "Pragma: no-cache\r\n" +
                             "\r\n" +
                             "A Server Error has occurred.")).eagerly();
 
