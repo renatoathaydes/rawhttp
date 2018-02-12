@@ -1,6 +1,6 @@
 package com.athaydes.rawhttp.core;
 
-import com.athaydes.rawhttp.core.ChunkedBody.Chunk;
+import com.athaydes.rawhttp.core.ChunkedBodyContents.Chunk;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,7 +32,7 @@ public class EagerBodyReader extends BodyReader {
     private final InputStream rawInputStream;
 
     @Nullable
-    private final ChunkedBody chunkedBody;
+    private final ChunkedBodyContents chunkedBody;
 
     public EagerBodyReader(BodyType bodyType,
                            @Nonnull InputStream inputStream,
@@ -113,8 +113,8 @@ public class EagerBodyReader extends BodyReader {
         return out.toByteArray();
     }
 
-    private static ChunkedBody readChunkedBody(InputStream inputStream,
-                                               boolean allowNewLineWithoutReturn) throws IOException {
+    private static ChunkedBodyContents readChunkedBody(InputStream inputStream,
+                                                       boolean allowNewLineWithoutReturn) throws IOException {
         List<Chunk> chunks = new ArrayList<>();
         int chunkSize = 1;
         while (chunkSize > 0) {
@@ -133,7 +133,7 @@ public class EagerBodyReader extends BodyReader {
         List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn);
         RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
 
-        return new ChunkedBody(chunks, trailerHeaders);
+        return new ChunkedBodyContents(chunks, trailerHeaders);
     }
 
     private static int readChunkSize(InputStream inputStream,
@@ -298,17 +298,17 @@ public class EagerBodyReader extends BodyReader {
      * @return the HTTP message's body as bytes.
      * Notice that this method does not decode the body, so if the body is chunked, for example,
      * the bytes will represent the chunked body, not the decoded body.
-     * Use {@link #asChunkedBody()} then {@link ChunkedBody#getData()} to decode the body in such cases.
+     * Use {@link #asChunkedBodyContents()} then {@link ChunkedBodyContents#getData()} to decode the body in such cases.
      */
     public byte[] asBytes() {
         return bytes;
     }
 
     /**
-     * @return the body of the HTTP message as a {@link ChunkedBody} if the body indeed used
+     * @return the body of the HTTP message as a {@link ChunkedBodyContents} if the body indeed used
      * the chunked transfer coding. If the body was not chunked, this method returns an empty value.
      */
-    public Optional<ChunkedBody> asChunkedBody() {
+    public Optional<ChunkedBodyContents> asChunkedBodyContents() {
         return Optional.ofNullable(chunkedBody);
     }
 

@@ -20,7 +20,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
             asString(Charsets.UTF_8) shouldBe body
-            asChunkedBody() should notBePresent()
+            asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
@@ -33,7 +33,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
             asString(Charsets.UTF_8) shouldBe body
-            asChunkedBody() should notBePresent()
+            asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
@@ -46,7 +46,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CLOSE_TERMINATED
             asString(Charsets.UTF_8) shouldBe body
-            asChunkedBody() should notBePresent()
+            asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
@@ -60,7 +60,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CHUNKED
             asString(Charsets.UTF_8) shouldBe "Hi there"
-            asChunkedBody() should bePresent {
+            asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
                 it.chunks.size shouldBe 2
 
@@ -87,7 +87,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CHUNKED
             asString(Charsets.UTF_8) shouldBe "1234598"
-            asChunkedBody() should bePresent {
+            asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
                 it.chunks.size shouldBe 3
 
@@ -120,7 +120,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CHUNKED
             asString(Charsets.UTF_8) shouldBe ""
-            asChunkedBody() should bePresent {
+            asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
                 it.chunks.size shouldBe 1
 
@@ -148,7 +148,7 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             bodyType shouldBe CHUNKED
             asString(Charsets.UTF_8) shouldBe "98"
-            asChunkedBody() should bePresent {
+            asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()
                 it.chunks.size shouldBe 2
 

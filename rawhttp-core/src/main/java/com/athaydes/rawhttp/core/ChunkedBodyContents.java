@@ -8,7 +8,7 @@ import java.util.List;
  * See <a href="https://tools.ietf.org/html/rfc7230#section-4.1">Section 4.1</a>
  * of RFC-7230 for details.
  */
-public class ChunkedBody {
+public class ChunkedBodyContents {
 
     public static class Chunk {
 
@@ -36,7 +36,7 @@ public class ChunkedBody {
     private final List<Chunk> chunks;
     private final RawHttpHeaders trailerHeaders;
 
-    public ChunkedBody(List<Chunk> chunks, RawHttpHeaders trailerHeaders) {
+    public ChunkedBodyContents(List<Chunk> chunks, RawHttpHeaders trailerHeaders) {
         this.chunks = chunks;
         this.trailerHeaders = trailerHeaders;
     }
