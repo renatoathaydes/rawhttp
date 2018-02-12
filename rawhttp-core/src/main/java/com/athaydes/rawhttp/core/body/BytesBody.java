@@ -5,7 +5,6 @@ import com.athaydes.rawhttp.core.LazyBodyReader;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 
 /**
  * A simple {@link HttpMessageBody} whose contents are given by a byte array.
@@ -13,7 +12,6 @@ import java.util.Optional;
 public class BytesBody extends HttpMessageBody {
 
     private final byte[] bytes;
-    private final String contentType;
 
     public BytesBody(byte[] bytes) {
         this(bytes, null);
@@ -21,13 +19,8 @@ public class BytesBody extends HttpMessageBody {
 
     public BytesBody(byte[] bytes,
                      @Nullable String contentType) {
+        super(contentType);
         this.bytes = bytes;
-        this.contentType = contentType;
-    }
-
-    @Override
-    protected Optional<String> getContentType() {
-        return Optional.ofNullable(contentType);
     }
 
     @Override

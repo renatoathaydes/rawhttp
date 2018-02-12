@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.core.body;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 
 /**
@@ -12,10 +13,19 @@ import java.util.Optional;
  */
 public abstract class HttpMessageBody {
 
+    @Nullable
+    private final String contentType;
+
+    protected HttpMessageBody(@Nullable String contentType) {
+        this.contentType = contentType;
+    }
+
     /**
      * @return the Content-Type header associated with this message, if available.
      */
-    protected abstract Optional<String> getContentType();
+    protected Optional<String> getContentType() {
+        return Optional.ofNullable(contentType);
+    }
 
     protected abstract long getContentLength();
 

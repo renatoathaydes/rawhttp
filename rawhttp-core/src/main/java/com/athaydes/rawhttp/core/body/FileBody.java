@@ -8,7 +8,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.Optional;
 
 /**
  * A {@link HttpMessageBody} containing the contents of a {@link File}.
@@ -16,10 +15,6 @@ import java.util.Optional;
 public class FileBody extends HttpMessageBody {
 
     private final File file;
-
-    @Nullable
-    private final String contentType;
-
     private final boolean allowNewLineWithoutReturn;
 
     public FileBody(File file) {
@@ -29,8 +24,8 @@ public class FileBody extends HttpMessageBody {
     public FileBody(File file,
                     @Nullable String contentType,
                     boolean allowNewLineWithoutReturn) {
+        super(contentType);
         this.file = file;
-        this.contentType = contentType;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
     }
 
@@ -39,11 +34,6 @@ public class FileBody extends HttpMessageBody {
      */
     public File getFile() {
         return file;
-    }
-
-    @Override
-    public Optional<String> getContentType() {
-        return Optional.ofNullable(contentType);
     }
 
     @Override
