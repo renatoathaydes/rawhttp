@@ -53,8 +53,8 @@ class HttpHeadersTest : StringSpec({
                 "Content-Type: 33\r\n" +
                 "Accept: application/json\r\n" +
                 "Accept: text/html\r\n" +
+                "Accept: text/plain\r\n" + // headers are grouped together, so the order may change
                 "Server: nginx\r\n" +
-                "Accept: text/plain\r\n" +
                 "Date: 22 March 2012\r\n" +
                 "\r\n"
     }

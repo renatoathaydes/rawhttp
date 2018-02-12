@@ -12,6 +12,7 @@ import java.util.Optional;
 /**
  * A HTTP message, which can be either a request or a response.
  * <p>
+ * HTTP messages consist of a start-line, a set of headers and an optional body.
  * See <a href="https://tools.ietf.org/html/rfc7230#section-3">Section 3</a>
  * of RFC-7230 for details.
  *
