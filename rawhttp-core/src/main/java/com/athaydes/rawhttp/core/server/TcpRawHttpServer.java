@@ -94,10 +94,16 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         /**
-         * @return the default error response to send out when an Exception occurs in the {@link Router} or a
-         * {@link RequestHandler}.
+         * @return the default ServerError (500) response to send out when an Exception occurs in the {@link Router}.
          */
         default EagerHttpResponse<Void> serverErrorResponse() {
+            return null;
+        }
+
+        /**
+         * @return the default NotFound (404) response to send out when an Exception occurs in the {@link Router}.
+         */
+        default EagerHttpResponse<Void> notFoundResponse() {
             return null;
         }
 
@@ -110,6 +116,7 @@ public class TcpRawHttpServer implements RawHttpServer {
         private final ExecutorService executorService;
         private final RawHttp http;
         private final EagerHttpResponse<Void> serverErrorResponse;
+        private final EagerHttpResponse<Void> notFoundResponse;
 
         public RouterAndSocket(Router router, TcpRawHttpServerOptions options) throws IOException {
             this.router = router;
@@ -125,6 +132,16 @@ public class TcpRawHttpServer implements RawHttpServer {
                             "Pragma: no-cache\r\n" +
                             "\r\n" +
                             "A Server Error has occurred.")).eagerly();
+
+            this.notFoundResponse = Optional.<RawHttpResponse<Void>>ofNullable(
+                    options.notFoundResponse()).orElseGet(() ->
+                    http.parseResponse("HTTP/1.1 404 Not Found\r\n" +
+                            "Content-Type: text/plain\r\n" +
+                            "Content-Length: 23\r\n" +
+                            "Cache-Control: no-cache\r\n" +
+                            "Pragma: no-cache\r\n" +
+                            "\r\n" +
+                            "Resource was not found.")).eagerly();
 
             start();
         }
@@ -156,14 +173,15 @@ public class TcpRawHttpServer implements RawHttpServer {
             while (true) {
                 try {
                     RawHttpRequest request = http.parseRequest(client.getInputStream());
-                    RawHttpResponse<Void> response = route(request);
+                    RawHttpResponse<?> response = route(request);
                     response.writeTo(client.getOutputStream());
                 } catch (Exception e) {
                     if (!(e instanceof SocketException)) {
-                        if (e instanceof InvalidHttpRequest &&
-                                ((InvalidHttpRequest) e).getLineNumber() == 0) {
-                            // client was probably closed as we received no bytes
-                        } else {
+                        // only print stack trace if this is not due to a client closing the connection
+                        boolean clientClosedConnection = e instanceof InvalidHttpRequest &&
+                                ((InvalidHttpRequest) e).getLineNumber() == 0;
+
+                        if (!clientClosedConnection) {
                             e.printStackTrace();
                         }
                         try {
@@ -178,23 +196,16 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
-        private RawHttpResponse<Void> route(RawHttpRequest request) {
-            RequestHandler handler;
+        private RawHttpResponse<?> route(RawHttpRequest request) {
             try {
-                handler = router.route(request.getStartLine().getUri().getPath());
+                RawHttpResponse<?> response = router.route(request);
+                if (response == null) {
+                    return notFoundResponse;
+                } else {
+                    return response;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-
-                // bad router
-                return serverErrorResponse;
-            }
-
-            try {
-                return handler.accept(request);
-            } catch (Exception e) {
-                e.printStackTrace();
-
-                // bad handler
                 return serverErrorResponse;
             }
         }

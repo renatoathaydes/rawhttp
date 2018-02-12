@@ -162,9 +162,9 @@ RawHttpClient<?> client = new RawHttpComponentsClient(httpClient);
 RawHTTP also contains a [package](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/server) defining a few types
 that describe a simple HTTP server.
 
-The main type is the interface `RawHttpServer`, which uses a `Router` to route requests via a `RequestHandler`. Both
-`Router` and `RequestHandler` are functional interfaces (can be implemented with Java lambdas), so implementing a full
-server and router is very simple.
+The main type is the interface `RawHttpServer`, which uses a `Router` to route HTTP requests, returning a HTTP response.
+`Router` is a functional interface (i.e. it can be implemented with a Java lambda), so implementing a full
+server is very simple.
 
 A default implementation of `TcpRawHttpServer` is provided... it spans a `Thread` (but re-uses it when possible) for 
 each connected client.
@@ -174,9 +174,9 @@ Here's an example, written in Kotlin, of how to use `RawHttpServer`:
 ```kotlin
 val server = TcpRawHttpServer(8093)
 
-server.start { path: String ->
-    when (path) {
-        "/hello", "/" -> RequestHandler { req ->
+server.start { req ->
+    when (req.uri.path) {
+        "/hello", "/" ->
             when (req.method) {
                 "GET" ->
                     http.parseResponse("HTTP/1.1 200 OK\n" +
@@ -187,12 +187,10 @@ server.start { path: String ->
                             "Content-Type: text/plain"
                     ).replaceBody(StringBody("Sorry, can't handle this method"))
             }
-        }
-        else -> RequestHandler {
+        else ->
             http.parseResponse("HTTP/1.1 404 Not Found\n" +
                     "Content-Type: text/plain"
             ).replaceBody(StringBody("Content was not found"))
-        }
     }
 }
 ```

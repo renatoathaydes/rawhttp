@@ -17,9 +17,9 @@ class TcpRawHttpServerTests : StringSpec() {
     private val httpClient = TcpRawHttpClient()
 
     private fun startServer() {
-        server.start { path: String ->
-            when (path) {
-                "/hello", "/" -> RequestHandler { req ->
+        server.start { req ->
+            when (req.uri.path) {
+                "/hello", "/" ->
                     when (req.method) {
                         "GET" ->
                             http.parseResponse("HTTP/1.1 200 OK\n" +
@@ -32,13 +32,11 @@ class TcpRawHttpServerTests : StringSpec() {
                                     "Content-Type: text/plain"
                             ).replaceBody(StringBody("Sorry, can't handle this method"))
                     }
-                }
                 "/throw" -> throw Exception("Not doing it!")
-                else -> RequestHandler {
+                else ->
                     http.parseResponse("HTTP/1.1 404 Not Found\n" +
                             "Content-Type: text/plain"
                     ).replaceBody(StringBody("Content was not found"))
-                }
             }
         }
     }

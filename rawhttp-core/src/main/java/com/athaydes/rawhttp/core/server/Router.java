@@ -1,20 +1,23 @@
 package com.athaydes.rawhttp.core.server;
 
+import com.athaydes.rawhttp.core.RawHttpRequest;
+import com.athaydes.rawhttp.core.RawHttpResponse;
+
 /**
  * HTTP Server router.
  * <p>
- * A Router maps a request path to a {@link RequestHandler}. It must always return a handler, even if
- * the requested path is unknown (in which case it should return a handler that serves an error response).
+ * A Router routes a HTTP request, producing a HTTP response that the server can send to the client.
  */
 @FunctionalInterface
 public interface Router {
 
     /**
-     * Maps the given path to a {@link RequestHandler}.
+     * Route an incoming HTTP request.
      *
-     * @param path request path
-     * @return handler for the given path. Must not return null.
+     * @param request HTTP request
+     * @return a HTTP response to send to the client.
+     * If null, a default 404 response is returned. If an Exception happens, a default 500 response is returned.
      */
-    RequestHandler route(String path);
+    RawHttpResponse<?> route(RawHttpRequest request);
 
 }
