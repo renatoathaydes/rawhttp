@@ -5,6 +5,7 @@ import com.athaydes.rawhttp.core.LazyBodyReader;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
+import java.util.OptionalLong;
 
 /**
  * A simple {@link HttpMessageBody} whose contents are given by a byte array.
@@ -24,8 +25,8 @@ public class BytesBody extends HttpMessageBody {
     }
 
     @Override
-    protected long getContentLength() {
-        return bytes.length;
+    protected OptionalLong getContentLength() {
+        return OptionalLong.of(bytes.length);
     }
 
     @Override

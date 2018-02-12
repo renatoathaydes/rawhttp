@@ -8,6 +8,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.OptionalLong;
 
 /**
  * A {@link HttpMessageBody} containing the contents of a {@link File}.
@@ -49,8 +50,8 @@ public class FileBody extends HttpMessageBody {
     }
 
     @Override
-    protected long getContentLength() {
-        return file.length();
+    protected OptionalLong getContentLength() {
+        return OptionalLong.of(file.length());
     }
 
 }
