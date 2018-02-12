@@ -79,6 +79,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
     public interface TcpRawHttpClientOptions extends Closeable {
 
         /**
+         * @param uri the URI to connect the Socket to
          * @return socket provider function that, given a request's {@link URI},
          * provides a {@link Socket} that can be used to send out the request.
          */
@@ -86,11 +87,16 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
         /**
          * Callback that will be called every time a socket is used to receive a response.
+         * <p>
+         * This callback may be used to perform maintenance (such as closing the connection), or transform
+         * the provided HTTP response, returning a modified one.
          *
          * @param socket       the socket used to send out a HTTP request. This socket is always
          *                     the same as provided by a previous call to {@link #getSocket(URI)}.
          * @param uri          used to make the HTTP request
          * @param httpResponse the HTTP response received from the server
+         * @return a possibly transformed httpResponse
+         * @throws IOException if any communication problem occurs
          */
         RawHttpResponse<Void> onResponse(
                 Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException;
