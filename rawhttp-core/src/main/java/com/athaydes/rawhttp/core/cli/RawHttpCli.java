@@ -1,5 +1,13 @@
 package com.athaydes.rawhttp.core.cli;
 
+import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import static java.util.stream.Collectors.joining;
+
 public class RawHttpCli {
 
     public static final int DEFAULT_SERVER_PORT = 8080;
@@ -43,7 +51,7 @@ public class RawHttpCli {
                     }
                     break;
                 default:
-                    readRequest(arg);
+                    readRequest(Arrays.stream(args).collect(joining(" ")));
             }
         }
 
@@ -68,7 +76,7 @@ public class RawHttpCli {
                 "serve the contents of a local directory via HTTP.\n" +
                 "\n" +
                 "Usage:\n" +
-                "  java -jar rawhttp.jar [option [args]]\n" +
+                "  java -jar rawhttp.jar [option [args]] | request\n" +
                 "Options:\n" +
                 "  --help, -h          show this help message.\n" +
                 "  --file, -f <file>   send request from file.\n" +
@@ -81,7 +89,13 @@ public class RawHttpCli {
     }
 
     private static void readRequest(String request) {
-        System.out.println("TODO Reading request: " + request);
+        RawHttp http = new RawHttp();
+        TcpRawHttpClient client = new TcpRawHttpClient();
+        try {
+            System.out.println(client.send(http.parseRequest(request)).eagerly());
+        } catch (IOException e) {
+            System.err.println(e.toString());
+        }
     }
 
     private static void readRequestFromFile(String file) {
