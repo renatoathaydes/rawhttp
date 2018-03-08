@@ -20,7 +20,6 @@ import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toList;
 
 /**
  * The main class of the raw-http library.
@@ -434,17 +433,11 @@ public class RawHttp {
                 headers.overwrite("Host", newMethodLine.getUri().getHost());
                 return newMethodLine;
             } catch (IllegalArgumentException e) {
-                int lineNumber = headers.getHeaderNames().stream()
-                        .map(String::toUpperCase)
-                        .collect(toList())
-                        .indexOf("HOST") + 2;
+                int lineNumber = headers.getLineNumbers("Host").get(0);
                 throw new InvalidHttpRequest("Invalid host header: " + e.getMessage(), lineNumber);
             }
         } else {
-            int lineNumber = headers.getHeaderNames().stream()
-                    .map(String::toUpperCase)
-                    .collect(toList())
-                    .lastIndexOf("HOST") + 2;
+            int lineNumber = headers.getLineNumbers("Host").get(1);
             throw new InvalidHttpRequest("More than one Host header specified", lineNumber);
         }
     }
@@ -525,7 +518,7 @@ public class RawHttp {
             if (parts.length != 2) {
                 throw createError.apply("Invalid header", lineNumber);
             }
-            builder.with(parts[0], parts[1]);
+            builder.with(parts[0], parts[1], lineNumber);
             lineNumber++;
         }
 

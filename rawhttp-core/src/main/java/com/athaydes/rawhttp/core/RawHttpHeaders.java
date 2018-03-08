@@ -1,6 +1,8 @@
 package com.athaydes.rawhttp.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +151,8 @@ public class RawHttpHeaders {
      */
     public static class Builder {
 
+        private final Map<String, List<Integer>> linesPerHeader = new HashMap<>(8);
+
         /**
          * Create a new builder containing all values of the given headers.
          *
@@ -200,6 +204,24 @@ public class RawHttpHeaders {
         }
 
         /**
+         * Include the given header in this builder.
+         * <p>
+         * This method takes a line number so that a HTTP message parser may query in which lines a
+         * certain header appeared later.
+         *
+         * @param headerName header name
+         * @param value      header value
+         * @param lineNumber the line number this header appeared in the HTTP message
+         * @return this
+         */
+        public Builder with(String headerName, String value, int lineNumber) {
+            with(headerName, value);
+            linesPerHeader.computeIfAbsent(headerName.toUpperCase(),
+                    (ignore) -> new ArrayList<>(2)).add(lineNumber);
+            return this;
+        }
+
+        /**
          * Overwrite the given header with the single value provided.
          *
          * @param headerName header name
@@ -245,6 +267,14 @@ public class RawHttpHeaders {
         public List<String> getHeaderNames() {
             return unmodifiableList(headersByCapitalizedName.values().stream()
                     .map(h -> h.originalHeaderName).collect(Collectors.toList()));
+        }
+
+        /**
+         * @param headerName name of the header (case-insensitive)
+         * @return all the line number where the header with the given name appeared in
+         */
+        public List<Integer> getLineNumbers(String headerName) {
+            return linesPerHeader.getOrDefault(headerName.toUpperCase(), Collections.emptyList());
         }
 
     }
