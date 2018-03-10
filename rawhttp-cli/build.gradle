@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+}
+
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
+
+description = 'RawHTTP CLI Tool'
+
+dependencies {
+    compile project(':rawhttp-core')
+}

@@ -9,19 +9,22 @@ buildscript {
 
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.1.61"
-    id "maven"
+    id 'java-library'
+    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
 }
 
-group = 'com.athaydes.rawhttp'
 description = 'RawHTTP core module'
-version '1.1.0'
+version '2.0-SNAPSHOT'
+
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
 
 dependencies {
-    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+    compile project(':java9-nullable')
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.61"
     testCompile "io.kotlintest:kotlintest:2.0.7"
     testCompile 'com.sparkjava:spark-core:2.7.1'
