@@ -1,4 +1,4 @@
-package com.athaydes.rawhttp.core.cli;
+package com.athaydes.rawhttp.cli;
 
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import static java.util.stream.Collectors.joining;
 
-public class RawHttpCli {
+public class Main {
 
     public static final int DEFAULT_SERVER_PORT = 8080;
 
