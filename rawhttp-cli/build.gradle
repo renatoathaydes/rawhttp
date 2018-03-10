@@ -11,3 +11,23 @@ description = 'RawHTTP CLI Tool'
 dependencies {
     compile project(':rawhttp-core')
 }
+
+task jlink(type: Exec) {
+    dependsOn(rootProject.subprojects.collect { it.tasks.getByName('jar') })
+    outputs.dir('dist')
+    def javaHome = System.properties['java.home']
+    def libs = configurations.runtime.collect { it.absolutePath }
+    libs += "$javaHome/jmods"
+    libs += jar.archivePath.absolutePath
+
+    commandLine 'jlink', '-p', libs.join(File.pathSeparator),
+            '--add-modules', 'com.athaydes.rawhttp.cli',
+            '--launcher', 'rawhttp=com.athaydes.rawhttp.cli/com.athaydes.rawhttp.cli.Main',
+            '--strip-debug', '--compress=2',
+            '--no-header-files', '--no-man-pages',
+            '--output', 'dist'
+
+    doFirst {
+        delete file('dist')
+    }
+}
