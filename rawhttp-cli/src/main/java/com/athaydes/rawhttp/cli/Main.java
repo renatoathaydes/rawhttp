@@ -1,8 +1,14 @@
 package com.athaydes.rawhttp.cli;
 
 import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpResponse;
+import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
+import com.athaydes.rawhttp.core.server.RawHttpServer;
+import com.athaydes.rawhttp.core.server.Router;
+import com.athaydes.rawhttp.core.server.TcpRawHttpServer;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -103,7 +109,55 @@ public class Main {
     }
 
     private static void serve(String directory, int port) {
-        System.out.println("TODO Serving directory " + directory + " at port " + port);
+        File rootDir = new File(directory);
+        if (!rootDir.isDirectory()) {
+            System.err.println("Error: not a directory - " + directory);
+            return;
+        }
+
+        System.out.println("Serving directory " + rootDir.getAbsolutePath() + " on port " + port);
+        System.out.println("Press Enter key to stop the server.");
+
+        RawHttpServer server = new TcpRawHttpServer(port);
+        server.start(createRouter(rootDir));
+
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        server.stop();
+    }
+
+    private static Router createRouter(File rootDir) {
+        final RawHttp http = new RawHttp();
+        return request -> {
+            if (request.getMethod().equals("GET")) {
+                String path = request.getStartLine().getUri().getPath();
+                File resource = new File(rootDir, path);
+                if (resource.isFile()) {
+                    RawHttpResponse<Void> response = http.parseResponse(request.getStartLine().getHttpVersion() +
+                            " 200 OK\n" +
+                            "Content-Type: application/octet-stream\n" +
+                            "Server: RawHTTP");
+                    return response.replaceBody(new FileBody(resource));
+                }
+                return http.parseResponse(request.getStartLine().getHttpVersion() +
+                        " 404 Not Found\n" +
+                        "Content-Length: 24\n" +
+                        "Content-Type: plain/text\n" +
+                        "Server: RawHTTP\n\n" +
+                        "Resource does not exist.");
+            } else {
+                return http.parseResponse(request.getStartLine().getHttpVersion() +
+                        " 405 Method Not Allowed\n" +
+                        "Content-Length: 19\n" +
+                        "Content-Type: plain/text\n" +
+                        "Server: RawHTTP\n\n" +
+                        "Method not allowed.");
+            }
+        };
     }
 
 }
