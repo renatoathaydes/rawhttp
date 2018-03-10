@@ -2,6 +2,7 @@
 .idea/
 build/
 out/
+dist/
 
 *.class
 *.jar
