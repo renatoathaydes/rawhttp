@@ -56,11 +56,20 @@ public class ChunkedBodyContents {
     }
 
     /**
+     * @return the total size of the body, including all chunks.
+     */
+    public long size() {
+        return chunks.stream().mapToLong(Chunk::size).sum();
+    }
+
+    /**
      * @return the message body (after decoding).
      */
     public byte[] getData() {
-        int totalSize = chunks.stream().mapToInt(Chunk::size).sum();
-        byte[] result = new byte[totalSize];
+        long totalSize = size();
+
+        // this will result in an ArithmeticException if the totalSize does not fit into an int
+        byte[] result = new byte[Math.toIntExact(totalSize)];
         int offset = 0;
         for (Chunk chunk : chunks) {
             System.arraycopy(chunk.data, 0, result, offset, chunk.size());

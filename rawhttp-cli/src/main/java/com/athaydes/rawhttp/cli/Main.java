@@ -98,7 +98,8 @@ public class Main {
         RawHttp http = new RawHttp();
         TcpRawHttpClient client = new TcpRawHttpClient();
         try {
-            System.out.println(client.send(http.parseRequest(request)).eagerly());
+            RawHttpResponse<Void> response = client.send(http.parseRequest(request));
+            response.writeTo(System.out);
         } catch (IOException e) {
             System.err.println(e.toString());
         }

@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.core;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.OptionalLong;
 
 /**
  * Lazy implementation of {@link BodyReader}.
@@ -28,6 +29,11 @@ public class LazyBodyReader extends BodyReader {
         this.inputStream = inputStream;
         this.streamLength = streamLength;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
+    }
+
+    @Override
+    protected OptionalLong getLengthIfKnown() {
+        return streamLength == null ? OptionalLong.empty() : OptionalLong.of(streamLength);
     }
 
     @Override

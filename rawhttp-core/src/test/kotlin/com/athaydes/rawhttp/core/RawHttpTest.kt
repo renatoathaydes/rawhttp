@@ -65,7 +65,7 @@ class SimpleHttpRequestTests : StringSpec({
         RawHttp().parseRequest("""
             POST http://host.com/myresource/123456
             Content-Type: application/json
-            Content-Length: 49
+            Content-Length: 48
             Accept: text/html
 
             {
@@ -80,17 +80,18 @@ class SimpleHttpRequestTests : StringSpec({
             uri shouldEqual URI.create("http://host.com/myresource/123456")
             toString() shouldEqual "POST /myresource/123456 HTTP/1.1\r\n" +
                     "Content-Type: application/json\r\n" +
-                    "Content-Length: 49\r\n" +
+                    "Content-Length: 48\r\n" +
                     "Accept: text/html\r\n" +
                     "Host: host.com\r\n\r\n" +
                     expectedBody
             headers.asMap() shouldEqual mapOf(
                     "HOST" to listOf("host.com"),
                     "CONTENT-TYPE" to listOf("application/json"),
-                    "CONTENT-LENGTH" to listOf("49"),
+                    "CONTENT-LENGTH" to listOf("48"),
                     "ACCEPT" to listOf("text/html"))
             body should bePresent {
                 it.asString(UTF_8) shouldEqual expectedBody
+                it.asBytes().size shouldEqual 48
             }
         }
     }
@@ -122,11 +123,11 @@ class SimpleHttpRequestTests : StringSpec({
             headers.asMap() shouldEqual mapOf(
                     "ACCEPT" to listOf("text/plain", "*/*"),
                     "CONTENT-TYPE" to listOf("text/encrypted"),
-                    "CONTENT-LENGTH" to listOf("766"),
+                    "CONTENT-LENGTH" to listOf("765"),
                     "USER-AGENT" to listOf("rawhttp"),
                     "HOST" to listOf("example.com"))
             body should bePresent {
-                it.asString(UTF_8) shouldEqual "BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. " +
+                val expectedBody = "BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. " +
                         "kiOUtMhcc4NXXRb XMxIeCbf5rCmoNO Z9cuk3vFu4WUHGE FbP7OCGjWcildtW gRRS2oOGl0tDgNc " +
                         "yZBlB9lxbNQs77O RLN5mMqTNWbKrwQ mSZolwGEonepkkk seiN0mXd8vwWM9S 7ssjvDZGbGjAfdO " +
                         "AUJmEHLdsRKrmUX yGqKzFKkG9XuiX9 8odcxJUhBMuUAUT dPpaL3sntmQTWal FfD5rj2o0ysBE92 " +
@@ -136,6 +137,9 @@ class SimpleHttpRequestTests : StringSpec({
                         "fm0sr8nIZ4pdUVS qNi5LhWIgGwPlg1 KKIOuv6aCFLUFtO pYzmPXilv7ntnES 88EnMhI1wPLDiih " +
                         "Cy1LQyPzT7gUM3A josP5Nne89rWCD9 QrKxhczapyUSch4 E4qqihxkujRPqEu toCyI5eKEnvVbfn " +
                         "ldCLQWSoA7RLYRZ E8x3TY7EqFJpmLP iulp9YqVZj. END KEYBASE SALTPACK ENCRYPTED MESSAGE."
+
+                it.asString(UTF_8) shouldEqual expectedBody
+                it.asBytes().size shouldEqual 765
             }
         }
     }
@@ -187,7 +191,7 @@ class SimpleHttpResponseTests : StringSpec({
              Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
              ETag: "34aa387-d-1568eb00"
              Accept-Ranges: bytes
-             Content-Length: 51
+             Content-Length: 39
              Vary: Accept-Encoding
              Content-Type: application/json
 
@@ -205,7 +209,7 @@ class SimpleHttpResponseTests : StringSpec({
                     "Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\n" +
                     "ETag: \"34aa387-d-1568eb00\"\r\n" +
                     "Accept-Ranges: bytes\r\n" +
-                    "Content-Length: 51\r\n" +
+                    "Content-Length: 39\r\n" +
                     "Vary: Accept-Encoding\r\n" +
                     "Content-Type: application/json\r\n\r\n" +
                     "{\n" +
@@ -218,7 +222,7 @@ class SimpleHttpResponseTests : StringSpec({
                     "LAST-MODIFIED" to listOf("Wed, 22 Jul 2009 19:15:56 GMT"),
                     "ETAG" to listOf("\"34aa387-d-1568eb00\""),
                     "ACCEPT-RANGES" to listOf("bytes"),
-                    "CONTENT-LENGTH" to listOf("51"),
+                    "CONTENT-LENGTH" to listOf("39"),
                     "VARY" to listOf("Accept-Encoding"),
                     "CONTENT-TYPE" to listOf("application/json")
             )

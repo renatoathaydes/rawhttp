@@ -4,7 +4,6 @@ import com.athaydes.rawhttp.core.body.HttpMessageBody;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -85,7 +84,6 @@ public abstract class HttpMessage {
         writeTo(out, 4096);
     }
 
-
     /**
      * Write this HTTP message to the given output.
      *
@@ -97,15 +95,8 @@ public abstract class HttpMessage {
         out.write(messageWithoutBody().getBytes(StandardCharsets.US_ASCII));
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
-            InputStream in = body.get().asStream();
-            byte[] buffer = new byte[bufferSize];
-            while (true) {
-                int actuallyRead = in.read(buffer);
-                if (actuallyRead < 0) {
-                    break;
-                }
-                out.write(buffer, 0, actuallyRead);
-            }
+            BodyReader bodyReader = body.get();
+            bodyReader.writeTo(out, bufferSize);
         }
     }
 
