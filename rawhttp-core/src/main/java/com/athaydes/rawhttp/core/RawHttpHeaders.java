@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -131,6 +132,23 @@ public class RawHttpHeaders {
         headersByCapitalizedName.forEach((k, v) ->
                 v.values.forEach(value ->
                         consumer.accept(v.originalHeaderName, value)));
+    }
+
+    void forEachIO(IOBiConsumer<String, String> consumer) throws IOException {
+        try {
+            forEach((name, value) -> {
+                try {
+                    consumer.accept(name, value);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException) {
+                throw (IOException) e.getCause();
+            }
+            throw e;
+        }
     }
 
     @Override

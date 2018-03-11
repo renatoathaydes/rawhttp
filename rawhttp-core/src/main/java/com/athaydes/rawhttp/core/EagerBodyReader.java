@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.Function;
 
 /**
  * An eager implementation of {@link BodyReader}.
@@ -17,7 +15,7 @@ import java.util.function.Function;
  * Because this implementation eagerly consumes the HTTP message, it is not considered "live"
  * (i.e. it can be stored after the HTTP connection is closed).
  */
-public class EagerBodyReader extends BodyReader {
+public final class EagerBodyReader extends BodyReader {
 
     @Nullable
     private final InputStream rawInputStream;
@@ -47,6 +45,11 @@ public class EagerBodyReader extends BodyReader {
     }
 
     @Override
+    protected ConsumedBody getConsumedBody() {
+        return consumedBody;
+    }
+
+    @Override
     protected OptionalLong getLengthIfKnown() {
         // the eager body reader consumes the whole body, so we know it must fit into an array (of int size)
         return OptionalLong.of(consumedBody.use(
@@ -66,37 +69,9 @@ public class EagerBodyReader extends BodyReader {
         return this;
     }
 
-    /**
-     * @return the HTTP message's body as bytes.
-     * Notice that this method does not decode the body, so if the body is chunked, for example,
-     * the bytes will represent the chunked body, not the decoded body.
-     * Use {@link #asChunkedBodyContents()} then {@link ChunkedBodyContents#getData()} to decode the body in such cases.
-     */
-    public byte[] asBytes() {
-        return consumedBody.use(Function.identity(), ChunkedBodyContents::getData);
-    }
-
-    /**
-     * @return the body of the HTTP message as a {@link ChunkedBodyContents} if the body indeed used
-     * the chunked transfer coding. If the body was not chunked, this method returns an empty value.
-     */
-    public Optional<ChunkedBodyContents> asChunkedBodyContents() {
-        return consumedBody.use(b -> Optional.empty(), Optional::of);
-    }
-
     @Override
     public InputStream asStream() {
         return new ByteArrayInputStream(asBytes());
-    }
-
-    /**
-     * Convert the HTTP message's body into a String.
-     *
-     * @param charset text message's charset
-     * @return String representing the HTTP message's body.
-     */
-    public String asString(Charset charset) {
-        return new String(asBytes(), charset);
     }
 
     /**

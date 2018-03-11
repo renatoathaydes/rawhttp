@@ -1,6 +1,12 @@
 package com.athaydes.rawhttp.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Container of a HTTP message body which has the "chunked" transfer-coding.
@@ -30,6 +36,25 @@ public class ChunkedBodyContents {
 
         public int size() {
             return data.length;
+        }
+
+        public void writeTo(OutputStream out) throws IOException {
+            out.write(Integer.toString(size(), 16).getBytes());
+            getExtensions().forEachIO((name, value) -> {
+                out.write(';');
+                out.write(name.getBytes(US_ASCII));
+                if (!value.isEmpty()) {
+                    out.write('=');
+                    out.write(value.getBytes(US_ASCII));
+                }
+            });
+            out.write('\r');
+            out.write('\n');
+            if (size() > 0) {
+                out.write(getData());
+                out.write('\r');
+                out.write('\n');
+            }
         }
     }
 
@@ -76,5 +101,20 @@ public class ChunkedBodyContents {
             offset += chunk.size();
         }
         return result;
+    }
+
+    /**
+     * Convert the decoded body to a String using the provided charset.
+     *
+     * @param charset body's charset
+     * @return decoded body as a String
+     */
+    public String asString(Charset charset) {
+        return new String(getData(), charset);
+    }
+
+    @Override
+    public String toString() {
+        return asString(UTF_8);
     }
 }

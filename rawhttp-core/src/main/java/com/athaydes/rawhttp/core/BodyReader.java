@@ -7,14 +7,18 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -64,6 +68,9 @@ public abstract class BodyReader implements Closeable {
 
     /**
      * Read the HTTP message body, simultaneously writing it to the given output.
+     * <p>
+     * This method may not validate the full HTTP message before it starts writing it out.
+     * To perform a full validation first, call {@link #eager()} to get an eager reader.
      *
      * @param out to write the HTTP body to
      * @throws IOException if an error occurs while writing the message
@@ -74,6 +81,9 @@ public abstract class BodyReader implements Closeable {
 
     /**
      * Read the HTTP message body, simultaneously writing it to the given output.
+     * <p>
+     * This method may not validate the full HTTP message before it starts writing it out.
+     * To perform a full validation first, call {@link #eager()} to get an eager reader.
      *
      * @param out        to write the HTTP body to
      * @param bufferSize size of the buffer to use for writing
@@ -90,14 +100,77 @@ public abstract class BodyReader implements Closeable {
                 readAndWriteBytesUpToLength(inputStream, bodyLength.getAsLong(), out, bufferSize);
                 break;
             case CHUNKED:
-                readChunkedBody(inputStream, true);
+                readAndWriteChunkedBody(inputStream, true,
+                        chunk -> chunk.writeTo(out),
+                        headers -> out.write(headers.toString().getBytes(US_ASCII)));
                 break;
             case CLOSE_TERMINATED:
-                readBytesWhileAvailable(inputStream);
+                readAndWriteBytesWhileAvailable(inputStream, out, bufferSize);
                 break;
             default:
                 throw new IllegalStateException("Unknown body type: " + bodyType);
         }
+    }
+
+    /**
+     * @return the consumed body.
+     */
+    protected abstract ConsumedBody getConsumedBody();
+
+    /**
+     * @return the HTTP message's body as bytes.
+     * Notice that this method does not decode the body, so if the body is chunked, for example,
+     * the bytes will represent the chunked body, not the decoded body.
+     * Use {@link #asChunkedBodyContents()} then {@link ChunkedBodyContents#getData()} to decode the body in such cases.
+     */
+    public byte[] asBytes() {
+        List<byte[]> bytesParts = new ArrayList<>();
+        getConsumedBody().use(bytesParts::add, bodyContents -> {
+            for (ChunkedBodyContents.Chunk chunk : bodyContents.getChunks()) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream(chunk.size() + 124);
+                try {
+                    chunk.writeTo(out);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                bytesParts.add(out.toByteArray());
+            }
+            bytesParts.add(bodyContents.getTrailerHeaders().toString().getBytes(US_ASCII));
+            //bytesParts.add(new byte[]{'\r', '\n'});
+            return true;
+        });
+        byte[] result = new byte[Math.toIntExact(bytesParts.stream().mapToLong(b -> b.length).sum())];
+        int offset = 0;
+        for (byte[] part : bytesParts) {
+            System.arraycopy(part, 0, result, offset, part.length);
+            offset += part.length;
+        }
+        return result;
+    }
+
+    /**
+     * @return true if the body is chunked, false otherwise.
+     */
+    public boolean isChunked() {
+        return bodyType == BodyType.CHUNKED;
+    }
+
+    /**
+     * @return the body of the HTTP message as a {@link ChunkedBodyContents} if the body indeed used
+     * the chunked transfer coding. If the body was not chunked, this method returns an empty value.
+     */
+    public Optional<ChunkedBodyContents> asChunkedBodyContents() {
+        return getConsumedBody().use(b -> Optional.empty(), Optional::of);
+    }
+
+    /**
+     * Convert the HTTP message's body into a String.
+     *
+     * @param charset text message's charset
+     * @return String representing the HTTP message's body.
+     */
+    public String asString(Charset charset) {
+        return new String(asBytes(), charset);
     }
 
     protected static class ConsumedBody {
@@ -176,6 +249,15 @@ public abstract class BodyReader implements Closeable {
     private static ChunkedBodyContents readChunkedBody(InputStream inputStream,
                                                        boolean allowNewLineWithoutReturn) throws IOException {
         List<ChunkedBodyContents.Chunk> chunks = new ArrayList<>();
+        AtomicReference<RawHttpHeaders> headersRef = new AtomicReference<>();
+        readAndWriteChunkedBody(inputStream, allowNewLineWithoutReturn, chunks::add, headersRef::set);
+        return new ChunkedBodyContents(chunks, headersRef.get());
+    }
+
+    private static void readAndWriteChunkedBody(InputStream inputStream,
+                                                boolean allowNewLineWithoutReturn,
+                                                IOConsumer<ChunkedBodyContents.Chunk> chunkConsumer,
+                                                IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
         int chunkSize = 1;
         while (chunkSize > 0) {
             AtomicBoolean hasExtensions = new AtomicBoolean(false);
@@ -183,8 +265,9 @@ public abstract class BodyReader implements Closeable {
             if (chunkSize < 0) {
                 throw new IllegalStateException("unexpected EOF, could not read chunked body");
             }
-            ChunkedBodyContents.Chunk chunk = readChunk(inputStream, chunkSize, allowNewLineWithoutReturn, hasExtensions);
-            chunks.add(chunk);
+            ChunkedBodyContents.Chunk chunk = readChunk(inputStream, chunkSize,
+                    allowNewLineWithoutReturn, hasExtensions.get());
+            chunkConsumer.accept(chunk);
         }
 
         BiFunction<String, Integer, RuntimeException> errorCreator =
@@ -192,28 +275,33 @@ public abstract class BodyReader implements Closeable {
 
         List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn);
         RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
-
-        return new ChunkedBodyContents(chunks, trailerHeaders);
+        trailerConsumer.accept(trailerHeaders);
     }
 
     private static byte[] readBytesWhileAvailable(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[4096];
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        readAndWriteBytesWhileAvailable(inputStream, outputStream, 4096);
+        return outputStream.toByteArray();
+    }
+
+    private static void readAndWriteBytesWhileAvailable(InputStream inputStream,
+                                                        OutputStream outputStream,
+                                                        int bufferSize) throws IOException {
+        byte[] buffer = new byte[bufferSize];
         while (true) {
             int actuallyRead = inputStream.read(buffer);
             if (actuallyRead < 0) {
                 break;
             }
-            out.write(buffer, 0, actuallyRead);
+            outputStream.write(buffer, 0, actuallyRead);
         }
-        return out.toByteArray();
     }
 
     private static ChunkedBodyContents.Chunk readChunk(InputStream inputStream,
                                                        int chunkSize,
                                                        boolean allowNewLineWithoutReturn,
-                                                       AtomicBoolean hasExtensions) throws IOException {
-        RawHttpHeaders extensions = hasExtensions.get() ?
+                                                       boolean hasExtensions) throws IOException {
+        RawHttpHeaders extensions = hasExtensions ?
                 parseExtensions(inputStream, allowNewLineWithoutReturn) :
                 emptyRawHttpHeaders();
 
