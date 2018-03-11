@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+    id 'maven'
 }
 
 sourceCompatibility = 1.9
@@ -13,8 +14,7 @@ dependencies {
 }
 
 task jlink(type: Exec) {
-    dependsOn(rootProject.subprojects.collect { it.tasks.getByName('jar') })
-    outputs.dir('dist')
+    dependsOn(':rawhttp-core:jar', ':java9-nullable:jar')
     def javaHome = System.properties['java.home']
     def libs = configurations.runtime.collect { it.absolutePath }
     libs += "$javaHome/jmods"

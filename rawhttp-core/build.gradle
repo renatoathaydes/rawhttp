@@ -11,6 +11,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.1.61"
     id 'java-library'
     id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+    id 'maven'
 }
 
 description = 'RawHTTP core module'
@@ -28,6 +29,13 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.61"
     testCompile "io.kotlintest:kotlintest:2.0.7"
     testCompile 'com.sparkjava:spark-core:2.7.1'
+}
+
+javadoc {
+    inputs.property("moduleName", 'com.athaydes.rawhttp.core')
+    doFirst {
+        options.addStringOption('-module-path', classpath.asPath)
+    }
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

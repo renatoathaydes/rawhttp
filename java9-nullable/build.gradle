@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+    id 'maven'
 }
 
 sourceCompatibility = 1.9
