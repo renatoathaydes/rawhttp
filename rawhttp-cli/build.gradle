@@ -11,6 +11,7 @@ description = 'RawHTTP CLI Tool'
 
 dependencies {
     compile project(':rawhttp-core')
+    testCompile 'junit:junit:4.12'
 }
 
 task jlink(type: Exec) {
