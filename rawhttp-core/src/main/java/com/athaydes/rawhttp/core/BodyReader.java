@@ -136,7 +136,6 @@ public abstract class BodyReader implements Closeable {
                 bytesParts.add(out.toByteArray());
             }
             bytesParts.add(bodyContents.getTrailerHeaders().toString().getBytes(US_ASCII));
-            //bytesParts.add(new byte[]{'\r', '\n'});
             return true;
         });
         byte[] result = new byte[Math.toIntExact(bytesParts.stream().mapToLong(b -> b.length).sum())];
