@@ -25,7 +25,7 @@ test {
 }
 
 task jlink(type: Exec) {
-    dependsOn(':rawhttp-core:jar', ':java9-nullable:jar')
+    dependsOn('jar', ':rawhttp-core:jar', ':java9-nullable:jar')
     def javaHome = System.properties['java.home']
     def libs = configurations.runtime.collect { it.absolutePath }
     libs += "$javaHome/jmods"
