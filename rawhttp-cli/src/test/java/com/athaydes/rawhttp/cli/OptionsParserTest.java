@@ -19,6 +19,7 @@ public class OptionsParserTest {
         assertFalse(options.requestFile.isPresent());
         assertFalse(options.serverOptions.isPresent());
         assertFalse(options.showHelp);
+        assertFalse(options.requestText.isPresent());
     }
 
     @Test
@@ -32,6 +33,7 @@ public class OptionsParserTest {
 
             assertFalse(options.requestFile.isPresent());
             assertFalse(options.serverOptions.isPresent());
+            assertFalse(options.requestText.isPresent());
             assertTrue(options.showHelp);
         }
     }
@@ -50,6 +52,7 @@ public class OptionsParserTest {
             assertEquals(expectedFileName, options.requestFile.get().getName());
             assertFalse(options.serverOptions.isPresent());
             assertFalse(options.showHelp);
+            assertFalse(options.requestText.isPresent());
         }
     }
 
@@ -101,6 +104,7 @@ public class OptionsParserTest {
 
             assertFalse(options.requestFile.isPresent());
             assertFalse(options.showHelp);
+            assertFalse(options.requestText.isPresent());
 
             assertTrue(options.serverOptions.isPresent());
 
@@ -123,6 +127,7 @@ public class OptionsParserTest {
 
             assertFalse(options.requestFile.isPresent());
             assertFalse(options.showHelp);
+            assertFalse(options.requestText.isPresent());
 
             assertTrue(options.serverOptions.isPresent());
 
@@ -149,6 +154,7 @@ public class OptionsParserTest {
 
             assertFalse(options.requestFile.isPresent());
             assertFalse(options.showHelp);
+            assertFalse(options.requestText.isPresent());
 
             assertTrue(options.serverOptions.isPresent());
 
@@ -176,6 +182,25 @@ public class OptionsParserTest {
 
             ServerOptions serverOptions = options.serverOptions.get();
             assertTrue(serverOptions.logRequests);
+        }
+    }
+
+    @Test
+    public void canParseRequest() throws OptionsException {
+        String[][] examples = new String[][]{
+                {"GET something"},
+                {"POST https://domain.com/hello?q=x&p=q\nAccept: application/json\n\nmy data"},
+        };
+
+        for (String[] example : examples) {
+            final String expectedRequestText = example[0];
+            Options options = OptionsParser.parse(example);
+
+            assertFalse(options.requestFile.isPresent());
+            assertFalse(options.showHelp);
+            assertFalse(options.serverOptions.isPresent());
+            assertTrue(options.requestText.isPresent());
+            assertEquals(expectedRequestText, options.requestText.get());
         }
     }
 
@@ -210,8 +235,9 @@ public class OptionsParserTest {
 
         for (String[] example : examples) {
             try {
-                OptionsParser.parse(example);
-                fail("Did not fail to parse example: " + Arrays.toString(example));
+                String exampleText = Arrays.toString(example);
+                Options options = OptionsParser.parse(example);
+                fail("Did not fail to parse example: " + exampleText + ": Result = " + options);
             } catch (OptionsException e) {
                 String invalidOption = "?";
                 for (String ex : example) {

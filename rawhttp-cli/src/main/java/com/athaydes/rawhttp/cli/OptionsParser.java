@@ -28,20 +28,36 @@ final class Options {
     final Optional<File> requestFile;
     final boolean showHelp;
     final Optional<ServerOptions> serverOptions;
+    final Optional<String> requestText;
 
-    Options(Optional<File> requestFile, boolean showHelp, Optional<ServerOptions> serverOptions) {
+    Options(Optional<File> requestFile,
+            boolean showHelp,
+            Optional<ServerOptions> serverOptions,
+            Optional<String> requestText) {
         this.requestFile = requestFile;
         this.showHelp = showHelp;
         this.serverOptions = serverOptions;
+        this.requestText = requestText;
+    }
+
+    @Override
+    public String toString() {
+        return "Options{" +
+                "requestFile=" + requestFile +
+                ", showHelp=" + showHelp +
+                ", serverOptions=" + serverOptions +
+                ", requestText=" + requestText +
+                '}';
     }
 }
 
 final class OptionsParser {
 
     static Options parse(String[] args) throws OptionsException {
-        boolean help = showHelp(args);
+        boolean help = getShowHelp(args);
         Optional<File> requestFile = getRequestFile(args);
         Optional<ServerOptions> serverOptions = getServerOptions(args);
+        Optional<String> requestText = getRequestText(args);
 
         for (String arg : args) {
             if (!arg.isEmpty()) {
@@ -49,10 +65,10 @@ final class OptionsParser {
             }
         }
 
-        return new Options(requestFile, help, serverOptions);
+        return new Options(requestFile, help, serverOptions, requestText);
     }
 
-    private static boolean showHelp(String[] args) {
+    private static boolean getShowHelp(String[] args) {
         int index = 0;
         boolean result = false;
         while (index < args.length) {
@@ -139,6 +155,17 @@ final class OptionsParser {
         } else {
             return Optional.empty();
         }
+    }
+
+    private static Optional<String> getRequestText(String[] args) {
+        if (args.length != 1 || args[0].isEmpty() || args[0].startsWith("-")) {
+            return Optional.empty();
+        }
+
+        String requestText = args[0];
+        args[0] = "";
+
+        return Optional.of(requestText);
     }
 
 }
