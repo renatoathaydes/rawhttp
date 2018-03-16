@@ -9,9 +9,19 @@ targetCompatibility = 1.9
 
 description = 'RawHTTP CLI Tool'
 
+javaModule.name = 'com.athaydes.rawhttp.cli'
+
 dependencies {
     compile project(':rawhttp-core')
     testCompile 'junit:junit:4.12'
+}
+
+test {
+    doFirst {
+        jvmArgs += [
+                '--add-exports', "com.athaydes.rawhttp.cli/com.athaydes.rawhttp.cli=junit",
+        ]
+    }
 }
 
 task jlink(type: Exec) {
