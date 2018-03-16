@@ -14,6 +14,13 @@ import java.io.IOException;
 
 public class Main {
 
+    private enum ErrorCode {
+        BAD_USAGE,
+        INVALID_HTTP_REQUEST,
+        UNEXPECTED_ERROR,
+        IO_EXCEPTION
+    }
+
     public static void main(String[] args) {
         if (args.length == 0) {
             readRequestFromSysIn();
@@ -26,15 +33,12 @@ public class Main {
                 options.serverOptions.ifPresent(Main::serve);
             }
         } catch (OptionsException e) {
-            System.err.println(e.getMessage());
-            System.err.println("For usage, run with the --help option.");
-            System.exit(3);
+            error(ErrorCode.BAD_USAGE,
+                    e.getMessage() + "\nFor usage, run with the --help option.");
         } catch (InvalidHttpRequest e) {
-            System.err.println(e.toString());
-            System.exit(2);
+            error(ErrorCode.INVALID_HTTP_REQUEST, e.toString());
         } catch (Exception e) {
-            System.err.println(e.toString());
-            System.exit(1);
+            error(ErrorCode.UNEXPECTED_ERROR, e.toString());
         }
     }
 
@@ -68,7 +72,7 @@ public class Main {
             RawHttpResponse<Void> response = client.send(http.parseRequest(request));
             response.writeTo(System.out);
         } catch (IOException e) {
-            System.err.println(e.toString());
+            error(ErrorCode.IO_EXCEPTION, e.toString());
         }
     }
 
@@ -78,7 +82,7 @@ public class Main {
 
     private static void serve(ServerOptions options) {
         if (!options.dir.isDirectory()) {
-            System.err.println("Error: not a directory - " + options.dir);
+            error(ErrorCode.BAD_USAGE, "Error: not a directory - " + options.dir);
             return;
         }
 
@@ -92,7 +96,7 @@ public class Main {
             //noinspection ResultOfMethodCallIgnored
             System.in.read();
         } catch (IOException e) {
-            e.printStackTrace();
+            error(ErrorCode.IO_EXCEPTION, e.toString());
         }
         server.stop();
     }
@@ -125,6 +129,11 @@ public class Main {
                         "Method not allowed.");
             }
         };
+    }
+
+    private static void error(ErrorCode code, String message) {
+        System.err.println(message);
+        System.exit(1 + code.ordinal());
     }
 
 }
