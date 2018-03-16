@@ -28,6 +28,8 @@ public class Main {
             Options options = OptionsParser.parse(args);
             if (options.showHelp) {
                 showUsage();
+            } else if (options.requestText.isPresent()) {
+                readRequest(options.requestText.get());
             } else {
                 options.requestFile.ifPresent(Main::readRequestFromFile);
                 options.serverOptions.ifPresent(Main::serve);
