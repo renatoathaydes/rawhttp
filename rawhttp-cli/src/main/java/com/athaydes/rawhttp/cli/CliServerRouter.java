@@ -78,7 +78,7 @@ final class NoopRequestLogger implements RequestLogger {
 final class AsyncSysoutRequestLogger implements RequestLogger {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter
-            .ofPattern("d/MMM/Y:HH:mm:ss z")
+            .ofPattern("d/MMM/yyyy:HH:mm:ss z")
             .withLocale(Locale.getDefault())
             .withZone(ZoneId.systemDefault());
 
