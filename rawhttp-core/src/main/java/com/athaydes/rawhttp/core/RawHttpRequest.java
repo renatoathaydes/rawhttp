@@ -4,7 +4,7 @@ import com.athaydes.rawhttp.core.body.HttpMessageBody;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.SocketAddress;
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.Optional;
 
@@ -16,12 +16,12 @@ public class RawHttpRequest extends HttpMessage {
     private final MethodLine methodLine;
 
     @Nullable
-    private final SocketAddress senderAddress;
+    private final InetAddress senderAddress;
 
     public RawHttpRequest(MethodLine methodLine,
                           RawHttpHeaders headers,
                           @Nullable BodyReader bodyReader,
-                          @Nullable SocketAddress senderAddress) {
+                          @Nullable InetAddress senderAddress) {
         super(headers, bodyReader);
         this.methodLine = methodLine;
         this.senderAddress = senderAddress;
@@ -49,7 +49,7 @@ public class RawHttpRequest extends HttpMessage {
     /**
      * @return the address of the message sender, if known.
      */
-    public Optional<SocketAddress> getSenderAddress() {
+    public Optional<InetAddress> getSenderAddress() {
         return Optional.ofNullable(senderAddress);
     }
 

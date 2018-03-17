@@ -7,6 +7,7 @@ import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -174,7 +175,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                 try {
                     RawHttpRequest request = http.parseRequest(
                             client.getInputStream(),
-                            client.getRemoteSocketAddress());
+                            ((InetSocketAddress) client.getRemoteSocketAddress()).getAddress());
                     RawHttpResponse<?> response = route(request);
                     response.writeTo(client.getOutputStream());
                 } catch (Exception e) {

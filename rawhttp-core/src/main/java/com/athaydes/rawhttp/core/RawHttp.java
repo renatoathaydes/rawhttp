@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -108,7 +108,7 @@ public class RawHttp {
      * @throws IOException        if a problem occurs accessing the stream
      */
     public RawHttpRequest parseRequest(InputStream inputStream,
-                                       @Nullable SocketAddress senderAddress) throws IOException {
+                                       @Nullable InetAddress senderAddress) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpRequest::new,
                 options.allowNewLineWithoutReturn());

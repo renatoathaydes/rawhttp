@@ -92,7 +92,7 @@ final class AsyncSysoutRequestLogger implements RequestLogger {
     public void logRequest(RawHttpRequest request, RawHttpResponse<?> response) {
         executor.submit(() -> {
             if (request.getSenderAddress().isPresent()) {
-                System.out.print(request.getSenderAddress().get() + " ");
+                System.out.print(request.getSenderAddress().get().getHostAddress() + " ");
             }
             Long bytes = response.getBody()
                     .map(b -> b.getLengthIfKnown().orElse(-1L))
