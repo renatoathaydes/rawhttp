@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.cli;
 
 import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
@@ -10,28 +11,31 @@ import com.athaydes.rawhttp.core.server.Router;
 import com.athaydes.rawhttp.core.server.TcpRawHttpServer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class Main {
 
     private enum ErrorCode {
-        BAD_USAGE,
-        INVALID_HTTP_REQUEST,
-        UNEXPECTED_ERROR,
-        IO_EXCEPTION
+        BAD_USAGE, // 1
+        INVALID_HTTP_REQUEST, // 2
+        UNEXPECTED_ERROR, // 3
+        IO_EXCEPTION // 4
     }
+
+    private static final RawHttp HTTP = new RawHttp();
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            readRequestFromSysIn();
+            sendRequestFromSysIn();
         } else try {
             Options options = OptionsParser.parse(args);
             if (options.showHelp) {
                 showUsage();
             } else if (options.requestText.isPresent()) {
-                readRequest(options.requestText.get());
+                sendRequest(options.requestText.get());
             } else {
-                options.requestFile.ifPresent(Main::readRequestFromFile);
+                options.requestFile.ifPresent(Main::sendRequestFromFile);
                 options.serverOptions.ifPresent(Main::serve);
             }
         } catch (OptionsException e) {
@@ -63,23 +67,34 @@ public class Main {
                 "If no arguments are given, RawHTTP reads a HTTP request from sysin.");
     }
 
-    private static void readRequestFromSysIn() {
-        System.out.println("TODO read from sysin");
+    private static void sendRequest(String request) {
+        sendRequest(HTTP.parseRequest(request));
     }
 
-    private static void readRequest(String request) {
-        RawHttp http = new RawHttp();
-        TcpRawHttpClient client = new TcpRawHttpClient();
+    private static void sendRequestFromSysIn() {
         try {
-            RawHttpResponse<Void> response = client.send(http.parseRequest(request));
-            response.writeTo(System.out);
+            sendRequest(HTTP.parseRequest(System.in));
         } catch (IOException e) {
             error(ErrorCode.IO_EXCEPTION, e.toString());
         }
     }
 
-    private static void readRequestFromFile(File file) {
-        System.out.println("TODO Reading from file: " + file);
+    private static void sendRequestFromFile(File file) {
+        try (FileInputStream fileStream = new FileInputStream(file)) {
+            sendRequest(HTTP.parseRequest(fileStream));
+        } catch (IOException e) {
+            error(ErrorCode.IO_EXCEPTION, e.toString());
+        }
+    }
+
+    private static void sendRequest(RawHttpRequest request) {
+        TcpRawHttpClient client = new TcpRawHttpClient();
+        try {
+            RawHttpResponse<Void> response = client.send(request);
+            response.writeTo(System.out);
+        } catch (IOException e) {
+            error(ErrorCode.IO_EXCEPTION, e.toString());
+        }
     }
 
     private static void serve(ServerOptions options) {
