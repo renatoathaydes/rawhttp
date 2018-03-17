@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -94,6 +95,20 @@ public class RawHttp {
      * @throws IOException        if a problem occurs accessing the stream
      */
     public RawHttpRequest parseRequest(InputStream inputStream) throws IOException {
+        return parseRequest(inputStream, null);
+    }
+
+    /**
+     * Parses the HTTP request produced by the given stream.
+     *
+     * @param inputStream   producing a HTTP request
+     * @param senderAddress the address of the request sender, if known
+     * @return a parsed HTTP request object
+     * @throws InvalidHttpRequest if the request is invalid
+     * @throws IOException        if a problem occurs accessing the stream
+     */
+    public RawHttpRequest parseRequest(InputStream inputStream,
+                                       @Nullable SocketAddress senderAddress) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpRequest::new,
                 options.allowNewLineWithoutReturn());
@@ -113,7 +128,7 @@ public class RawHttp {
         boolean hasBody = requestHasBody(headers);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
 
-        return new RawHttpRequest(methodLine, headers, bodyReader);
+        return new RawHttpRequest(methodLine, headers, bodyReader, senderAddress);
     }
 
     /**

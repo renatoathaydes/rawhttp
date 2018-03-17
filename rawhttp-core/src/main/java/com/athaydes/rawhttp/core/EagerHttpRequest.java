@@ -14,7 +14,8 @@ public class EagerHttpRequest extends RawHttpRequest {
 
     public EagerHttpRequest(RawHttpRequest request) throws IOException {
         super(request.getStartLine(), request.getHeaders(),
-                request.getBody().isPresent() ? request.getBody().get().eager() : null);
+                request.getBody().isPresent() ? request.getBody().get().eager() : null,
+                request.getSenderAddress().orElse(null));
     }
 
     @Override

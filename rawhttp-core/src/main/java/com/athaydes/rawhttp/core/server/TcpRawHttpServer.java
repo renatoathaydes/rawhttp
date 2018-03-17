@@ -172,7 +172,9 @@ public class TcpRawHttpServer implements RawHttpServer {
         private void handle(Socket client) {
             while (true) {
                 try {
-                    RawHttpRequest request = http.parseRequest(client.getInputStream());
+                    RawHttpRequest request = http.parseRequest(
+                            client.getInputStream(),
+                            client.getRemoteSocketAddress());
                     RawHttpResponse<?> response = route(request);
                     response.writeTo(client.getOutputStream());
                 } catch (Exception e) {
