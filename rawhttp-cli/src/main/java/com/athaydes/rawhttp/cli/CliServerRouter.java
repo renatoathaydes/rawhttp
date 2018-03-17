@@ -7,6 +7,7 @@ import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.server.Router;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -92,7 +93,8 @@ final class AsyncSysoutRequestLogger implements RequestLogger {
     public void logRequest(RawHttpRequest request, RawHttpResponse<?> response) {
         executor.submit(() -> {
             if (request.getSenderAddress().isPresent()) {
-                System.out.print(request.getSenderAddress().get().getHostAddress() + " ");
+                InetAddress senderAddress = request.getSenderAddress().get();
+                System.out.print(senderAddress.getHostAddress() + " ");
             }
             Long bytes = response.getBody()
                     .map(b -> b.getLengthIfKnown().orElse(-1L))
