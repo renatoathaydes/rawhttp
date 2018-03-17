@@ -4,5 +4,6 @@ include 'rawhttp-core',
         'rawhttp-httpcomponents',
         'samples',
         'rawhttp-cli',
-        'java9-nullable'
+        'java9-nullable',
+        'rawhttp-cli-tests'
 
