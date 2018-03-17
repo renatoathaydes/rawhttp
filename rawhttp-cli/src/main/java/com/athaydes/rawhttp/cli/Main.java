@@ -3,11 +3,9 @@ package com.athaydes.rawhttp.cli;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
-import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
 import com.athaydes.rawhttp.core.server.RawHttpServer;
-import com.athaydes.rawhttp.core.server.Router;
 import com.athaydes.rawhttp.core.server.TcpRawHttpServer;
 
 import java.io.File;
@@ -107,7 +105,7 @@ public class Main {
         System.out.println("Press Enter key to stop the server.");
 
         RawHttpServer server = new TcpRawHttpServer(options.port);
-        server.start(createRouter(options.dir));
+        server.start(new CliServerRouter(options.dir, options.logRequests));
 
         try {
             //noinspection ResultOfMethodCallIgnored
@@ -116,36 +114,6 @@ public class Main {
             error(ErrorCode.IO_EXCEPTION, e.toString());
         }
         server.stop();
-    }
-
-    private static Router createRouter(File rootDir) {
-        final RawHttp http = new RawHttp();
-        return request -> {
-            if (request.getMethod().equals("GET")) {
-                String path = request.getStartLine().getUri().getPath();
-                File resource = new File(rootDir, path);
-                if (resource.isFile()) {
-                    RawHttpResponse<Void> response = http.parseResponse(request.getStartLine().getHttpVersion() +
-                            " 200 OK\n" +
-                            "Content-Type: application/octet-stream\n" +
-                            "Server: RawHTTP");
-                    return response.replaceBody(new FileBody(resource));
-                }
-                return http.parseResponse(request.getStartLine().getHttpVersion() +
-                        " 404 Not Found\n" +
-                        "Content-Length: 24\n" +
-                        "Content-Type: plain/text\n" +
-                        "Server: RawHTTP\n\n" +
-                        "Resource does not exist.");
-            } else {
-                return http.parseResponse(request.getStartLine().getHttpVersion() +
-                        " 405 Method Not Allowed\n" +
-                        "Content-Length: 19\n" +
-                        "Content-Type: plain/text\n" +
-                        "Server: RawHTTP\n\n" +
-                        "Method not allowed.");
-            }
-        };
     }
 
     private static void error(ErrorCode code, String message) {

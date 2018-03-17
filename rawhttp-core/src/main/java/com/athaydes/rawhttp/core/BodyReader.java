@@ -64,7 +64,7 @@ public abstract class BodyReader implements Closeable {
     /**
      * @return the length of this body if known without consuming it first.
      */
-    protected abstract OptionalLong getLengthIfKnown();
+    public abstract OptionalLong getLengthIfKnown();
 
     /**
      * Read the HTTP message body, simultaneously writing it to the given output.

@@ -50,7 +50,7 @@ public final class EagerBodyReader extends BodyReader {
     }
 
     @Override
-    protected OptionalLong getLengthIfKnown() {
+    public OptionalLong getLengthIfKnown() {
         // the eager body reader consumes the whole body, so we know it must fit into an array (of int size)
         return OptionalLong.of(consumedBody.use(
                 b -> (long) b.length,

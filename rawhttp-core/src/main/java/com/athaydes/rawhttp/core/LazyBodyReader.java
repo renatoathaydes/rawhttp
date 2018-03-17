@@ -51,7 +51,7 @@ public final class LazyBodyReader extends BodyReader {
     }
 
     @Override
-    protected OptionalLong getLengthIfKnown() {
+    public OptionalLong getLengthIfKnown() {
         return streamLength == null ? OptionalLong.empty() : OptionalLong.of(streamLength);
     }
 
