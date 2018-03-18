@@ -57,7 +57,7 @@ final class CliServerRouter implements Router {
     public RawHttpResponse<?> route(RawHttpRequest request) {
         final RawHttpResponse<Void> response;
         if (request.getMethod().equals("GET")) {
-            String path = request.getStartLine().getUri().getPath();
+            String path = request.getStartLine().getUri().normalize().getPath();
 
             // provide the index.html file at the root path
             if (path.isEmpty() || path.equals("/")) {
