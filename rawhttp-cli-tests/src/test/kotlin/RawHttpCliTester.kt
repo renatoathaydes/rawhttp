@@ -174,8 +174,7 @@ abstract class RawHttpCliTester {
             // process output may be missing
             sleep(250L)
             try {
-                process.outputStream.write('\n'.toInt())
-                process.outputStream.flush()
+                process.destroy()
             } catch (e: IOException) {
                 // server probably died early
             }

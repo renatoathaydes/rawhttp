@@ -74,7 +74,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(0)
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
 
         assertThat(response.statusCode, equalTo(200))
         assertTrue(response.body.isPresent)
@@ -98,7 +98,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(0)
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
 
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(200))
