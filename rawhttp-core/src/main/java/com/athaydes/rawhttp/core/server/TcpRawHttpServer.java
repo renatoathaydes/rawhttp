@@ -14,6 +14,7 @@ import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -91,7 +92,13 @@ public class TcpRawHttpServer implements RawHttpServer {
          * the connection with the client is closed or lost.
          */
         default ExecutorService getExecutorService() {
-            return Executors.newCachedThreadPool();
+            final AtomicInteger threadCount = new AtomicInteger(1);
+            return Executors.newCachedThreadPool(runnable -> {
+                Thread t = new Thread(runnable);
+                t.setDaemon(true);
+                t.setName("tcp-rawhttp-server-client-" + threadCount.incrementAndGet());
+                return t;
+            });
         }
 
         /**

@@ -102,18 +102,9 @@ public class Main {
         }
 
         System.out.println("Serving directory " + options.dir.getAbsolutePath() + " on port " + options.port);
-        System.out.println("Press Enter key to stop the server.");
 
         RawHttpServer server = new TcpRawHttpServer(options.port);
         server.start(new CliServerRouter(options.dir, options.logRequests));
-
-        try {
-            //noinspection ResultOfMethodCallIgnored
-            System.in.read();
-        } catch (IOException e) {
-            error(ErrorCode.IO_EXCEPTION, e.toString());
-        }
-        server.stop();
     }
 
     private static void error(ErrorCode code, String message) {
