@@ -134,4 +134,31 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat(handle.err, equalTo(""))
     }
 
+
+    @Test
+    fun dostNotExposeParentDirectoryWhenServingDirectory() {
+        val tempDir = createTempDir(javaClass.name)
+        val parentDirFile = File(tempDir.parentFile, tempDir.name + ".test")
+        parentDirFile.writeText("not visible")
+        parentDirFile.deleteOnExit()
+
+        val handle = runCli("--server", tempDir.absolutePath)
+
+        val response = try {
+            sendHttpRequest("""
+            GET http://localhost:8080/../${parentDirFile.name}
+            Accept: */*
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat("Server returned unexpected status code\n$handle",
+                response.statusCode, equalTo(404))
+        assertTrue(response.body.isPresent)
+        assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Resource does not exist."))
+    }
+
 }
