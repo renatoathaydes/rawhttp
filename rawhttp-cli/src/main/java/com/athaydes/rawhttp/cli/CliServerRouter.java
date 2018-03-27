@@ -8,8 +8,10 @@ import com.athaydes.rawhttp.core.server.Router;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
@@ -43,6 +45,11 @@ final class CliServerRouter implements Router {
 
     private static final RawHttp http = new RawHttp();
 
+    private static final ThreadLocal<String> currentDateInSecondsResolution = ThreadLocal.withInitial(() ->
+            DateTimeFormatter.RFC_1123_DATE_TIME.format(Instant.ofEpochMilli(0L).atOffset(ZoneOffset.UTC)));
+
+    private static final ThreadLocal<Long> lastDateAccess = ThreadLocal.withInitial(() -> 0L);
+
     private final File rootDir;
     private final RequestLogger requestLogger;
 
@@ -51,6 +58,20 @@ final class CliServerRouter implements Router {
         this.requestLogger = logRequests ?
                 new AsyncSysoutRequestLogger() :
                 new NoopRequestLogger();
+    }
+
+    private static String dateValue() {
+        final long now = System.currentTimeMillis();
+        final String currentDate;
+        if (lastDateAccess.get() < now - 1000L) {
+            currentDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+                    Instant.ofEpochMilli(now).atOffset(ZoneOffset.UTC));
+            currentDateInSecondsResolution.set(currentDate);
+        } else {
+            currentDate = currentDateInSecondsResolution.get();
+        }
+        lastDateAccess.set(now);
+        return currentDate;
     }
 
     @Override
@@ -69,14 +90,16 @@ final class CliServerRouter implements Router {
                 response = http.parseResponse(request.getStartLine().getHttpVersion() +
                         " 200 OK\n" +
                         "Content-Type: " + mimeTypeOf(resource.getName()) + "\n" +
-                        "Server: RawHTTP")
+                        "Server: RawHTTP\n" +
+                        "Date: " + dateValue())
                         .replaceBody(new FileBody(resource));
             } else {
                 response = http.parseResponse(request.getStartLine().getHttpVersion() +
                         " 404 Not Found\n" +
                         "Content-Length: 24\n" +
                         "Content-Type: plain/text\n" +
-                        "Server: RawHTTP\n\n" +
+                        "Server: RawHTTP\n" +
+                        "Date: " + dateValue() + "\n\n" +
                         "Resource does not exist.");
             }
         } else {
@@ -84,7 +107,8 @@ final class CliServerRouter implements Router {
                     " 405 Method Not Allowed\n" +
                     "Content-Length: 19\n" +
                     "Content-Type: plain/text\n" +
-                    "Server: RawHTTP\n\n" +
+                    "Server: RawHTTP\n" +
+                    "Date: " + dateValue() + "\n\n" +
                     "Method not allowed.");
         }
         requestLogger.logRequest(request, response);
