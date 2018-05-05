@@ -5,7 +5,6 @@ import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -131,25 +130,10 @@ public class TcpRawHttpServer implements RawHttpServer {
             this.socket = options.getServerSocket();
             this.http = options.getRawHttp();
             this.executorService = options.getExecutorService();
-            this.serverErrorResponse = Optional.<RawHttpResponse<Void>>ofNullable(
-                    options.serverErrorResponse()).orElseGet(() ->
-                    http.parseResponse("HTTP/1.1 500 Server Error\r\n" +
-                            "Content-Type: text/plain\r\n" +
-                            "Content-Length: 28\r\n" +
-                            "Cache-Control: no-cache\r\n" +
-                            "Pragma: no-cache\r\n" +
-                            "\r\n" +
-                            "A Server Error has occurred.")).eagerly();
-
-            this.notFoundResponse = Optional.<RawHttpResponse<Void>>ofNullable(
-                    options.notFoundResponse()).orElseGet(() ->
-                    http.parseResponse("HTTP/1.1 404 Not Found\r\n" +
-                            "Content-Type: text/plain\r\n" +
-                            "Content-Length: 23\r\n" +
-                            "Cache-Control: no-cache\r\n" +
-                            "Pragma: no-cache\r\n" +
-                            "\r\n" +
-                            "Resource was not found.")).eagerly();
+            this.serverErrorResponse = Optional.ofNullable(options.serverErrorResponse())
+                    .orElse(HttpResponses.SERVER_ERROR_500);
+            this.notFoundResponse = Optional.ofNullable(options.notFoundResponse())
+                    .orElse(HttpResponses.NOT_FOUND_404);
 
             start();
         }
