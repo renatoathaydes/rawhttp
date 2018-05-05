@@ -1,11 +1,11 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.61"
+    id "org.jetbrains.kotlin.jvm"
 }
 
 dependencies {
     compile project(':rawhttp-core')
     compile project(':rawhttp-httpcomponents')
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.61"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile 'com.sparkjava:spark-core:2.7.1'
     testCompile "io.kotlintest:kotlintest:2.0.7"
 

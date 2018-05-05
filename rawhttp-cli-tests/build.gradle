@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.61"
+    id "org.jetbrains.kotlin.jvm"
     id 'java'
 }
 
@@ -19,7 +19,7 @@ test {
 }
 
 dependencies {
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib:1.1.61"
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     testCompile 'junit:junit:4.12'
     testCompile 'com.athaydes.rawhttp:rawhttp-core:1.1.0'
 }
