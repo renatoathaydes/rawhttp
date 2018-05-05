@@ -72,6 +72,15 @@ public class TcpRawHttpServer implements RawHttpServer {
     }
 
     /**
+     * @return headers containing a single "Date" header with the current date.
+     */
+    public static RawHttpHeaders createDateHeader() {
+        return RawHttpHeaders.Builder.newBuilder()
+                .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
+                .build();
+    }
+
+    /**
      * Configuration options for {@link TcpRawHttpServer}.
      */
     public interface TcpRawHttpServerOptions {
@@ -219,11 +228,6 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
-        private static RawHttpHeaders createDateHeader() {
-            return RawHttpHeaders.Builder.newBuilder()
-                    .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
-                    .build();
-        }
     }
 
 }
