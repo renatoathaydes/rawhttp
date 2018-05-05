@@ -2,6 +2,7 @@ package com.athaydes.rawhttp.core.server;
 
 import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
@@ -10,11 +11,15 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -194,13 +199,13 @@ public class TcpRawHttpServer implements RawHttpServer {
             try {
                 RawHttpResponse<?> response = router.route(request);
                 if (response == null) {
-                    return notFoundResponse;
+                    return notFoundResponse.withHeaders(createDateHeader());
                 } else {
                     return response;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return serverErrorResponse;
+                return serverErrorResponse.withHeaders(createDateHeader());
             }
         }
 
@@ -212,6 +217,12 @@ public class TcpRawHttpServer implements RawHttpServer {
             } finally {
                 executorService.shutdown();
             }
+        }
+
+        private static RawHttpHeaders createDateHeader() {
+            return RawHttpHeaders.Builder.newBuilder()
+                    .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
+                    .build();
         }
     }
 

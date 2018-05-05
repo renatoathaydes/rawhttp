@@ -7,6 +7,7 @@ import com.athaydes.rawhttp.core.client.waitForPortToBeTaken
 import io.kotlintest.Spec
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldNotBe
 import io.kotlintest.specs.StringSpec
 
 class TcpRawHttpServerTests : StringSpec() {
@@ -33,6 +34,7 @@ class TcpRawHttpServerTests : StringSpec() {
                             ).replaceBody(StringBody("Sorry, can't handle this method"))
                     }
                 "/throw" -> throw Exception("Not doing it!")
+                "/null" -> null
                 else ->
                     http.parseResponse("HTTP/1.1 404 Not Found\n" +
                             "Content-Type: text/plain"
@@ -92,6 +94,8 @@ class TcpRawHttpServerTests : StringSpec() {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 500
+            response.headers["Date"] shouldNotBe null
+            response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
             }
@@ -102,8 +106,22 @@ class TcpRawHttpServerTests : StringSpec() {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 500
+            response.headers["Date"] shouldNotBe null
+            response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
+            }
+        }
+
+        "Server returns default error response when request handler returns null" {
+            val request = http.parseRequest("Get http://localhost:8093/null")
+            val response = httpClient.send(request).eagerly()
+
+            response.statusCode shouldBe 404
+            response.headers["Date"] shouldNotBe null
+            response.headers["Content-Type"] shouldBe listOf("text/plain")
+            response.body should bePresent {
+                it.asString(Charsets.UTF_8) shouldBe "Resource was not found."
             }
         }
     }
