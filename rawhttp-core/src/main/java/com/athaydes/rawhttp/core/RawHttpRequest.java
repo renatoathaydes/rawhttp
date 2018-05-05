@@ -1,12 +1,11 @@
 package com.athaydes.rawhttp.core;
 
 import com.athaydes.rawhttp.core.body.HttpMessageBody;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * A HTTP Request.
@@ -63,7 +62,7 @@ public class RawHttpRequest extends HttpMessage {
      * @throws IOException if an error occurs while reading this request
      */
     public EagerHttpRequest eagerly() throws IOException {
-        return new EagerHttpRequest(this);
+        return EagerHttpRequest.from(this);
     }
 
     @Override
@@ -71,6 +70,14 @@ public class RawHttpRequest extends HttpMessage {
         return new RawHttpRequest(methodLine,
                 body.headersFrom(getHeaders()),
                 body.toBodyReader(),
+                getSenderAddress().orElse(null));
+    }
+
+    @Override
+    public RawHttpRequest withHeaders(RawHttpHeaders headers) {
+        return new RawHttpRequest(methodLine,
+                getHeaders().with(headers),
+                getBody().orElse(null),
                 getSenderAddress().orElse(null));
     }
 

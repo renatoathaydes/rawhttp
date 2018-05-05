@@ -1,10 +1,9 @@
 package com.athaydes.rawhttp.core;
 
 import com.athaydes.rawhttp.core.body.HttpMessageBody;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * A HTTP Response.
@@ -111,4 +110,9 @@ public class RawHttpResponse<Response> extends HttpMessage {
                 body.headersFrom(getHeaders()), body.toBodyReader());
     }
 
+    @Override
+    public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
+        return new RawHttpResponse<>(libResponse, request, statusCodeLine,
+                getHeaders().with(headers), getBody().orElse(null));
+    }
 }

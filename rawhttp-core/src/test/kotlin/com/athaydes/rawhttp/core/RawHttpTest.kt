@@ -272,3 +272,50 @@ class SimpleHttpResponseTests : StringSpec({
     }
 
 })
+
+class CopyHttpRequestTests : StringSpec({
+
+    "Can make a copy of a HTTP Request with added headers" {
+        val addedHeaders = RawHttpHeaders.Builder.newBuilder()
+                .with("Accept", "any/thing")
+                .with("User-Agent", "raw-http")
+                .build()
+
+        RawHttp().parseRequest("GET /hello\nHost: www.example.com")
+                .withHeaders(addedHeaders).run {
+                    method shouldEqual "GET"
+                    uri.path shouldEqual "/hello"
+                    headers["Host"] shouldEqual listOf("www.example.com")
+                    headers["Accept"] shouldEqual listOf("any/thing")
+                    headers["User-Agent"] shouldEqual listOf("raw-http")
+                    headers.asMap().size shouldEqual 3
+                    senderAddress should notBePresent()
+                }
+
+    }
+
+})
+
+class CopyHttpResponseTests : StringSpec({
+
+    "Can make a copy of a HTTP Response with added headers" {
+        val addedHeaders = RawHttpHeaders.Builder.newBuilder()
+                .with("Accept", "any/thing")
+                .with("User-Agent", "raw-http")
+                .build()
+
+        RawHttp().parseResponse("HTTP/1.1 200 OK\nHost: www.example.com")
+                .withHeaders(addedHeaders).run {
+                    startLine.httpVersion shouldEqual HttpVersion.HTTP_1_1
+                    statusCode shouldEqual 200
+                    startLine.reason shouldEqual "OK"
+                    libResponse should notBePresent()
+                    headers["Host"] shouldEqual listOf("www.example.com")
+                    headers["Accept"] shouldEqual listOf("any/thing")
+                    headers["User-Agent"] shouldEqual listOf("raw-http")
+                    headers.asMap().size shouldEqual 3
+                }
+
+    }
+
+})

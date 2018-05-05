@@ -1,8 +1,8 @@
 package com.athaydes.rawhttp.core;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
@@ -17,18 +17,22 @@ import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeade
  */
 public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
-    private EagerHttpResponse(RawHttpResponse<Response> response,
+    private EagerHttpResponse(@Nullable Response libResponse,
+                              @Nullable RawHttpRequest request,
+                              StatusCodeLine startLine,
                               RawHttpHeaders headers,
-                              @Nullable EagerBodyReader bodyReader) throws IOException {
-        super(response.getLibResponse().orElse(null),
-                response.getRequest().orElse(null),
-                response.getStartLine(),
+                              @Nullable EagerBodyReader bodyReader) {
+        super(libResponse,
+                request,
+                startLine,
                 headers,
                 bodyReader
         );
     }
 
     /**
+     * Create a new {@link EagerHttpResponse} from the provided response.
+     *
      * @param response   raw HTTP response
      * @param <Response> library response type
      * @return an eager HTTP response from the given HTTP response.
@@ -44,6 +48,7 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
                 response.getBody().get().eager() :
                 null;
 
+        // headers might come from the trailing part of the HTTP message, in which case we merge them together
         RawHttpHeaders headers;
         if (bodyReader != null) {
             RawHttpHeaders trailingHeaders = bodyReader.asChunkedBodyContents()
@@ -56,7 +61,10 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
             headers = response.getHeaders();
         }
 
-        return new EagerHttpResponse<>(response, headers, bodyReader);
+        return new EagerHttpResponse<>(response.getLibResponse().orElse(null),
+                response.getRequest().orElse(null),
+                response.getStartLine(),
+                headers, bodyReader);
     }
 
     /**
@@ -71,6 +79,15 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
     public Optional<EagerBodyReader> getBody() {
         Optional<? extends BodyReader> body = super.getBody();
         return body.map(b -> (EagerBodyReader) b);
+    }
+
+    @Override
+    public EagerHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
+        return new EagerHttpResponse<>(getLibResponse().orElse(null),
+                getRequest().orElse(null),
+                getStartLine(),
+                getHeaders().with(headers),
+                getBody().orElse(null));
     }
 
 }

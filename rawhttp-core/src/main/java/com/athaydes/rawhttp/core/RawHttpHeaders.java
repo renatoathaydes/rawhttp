@@ -34,10 +34,24 @@ public class RawHttpHeaders {
 
     private static final Header NULL_HEADER = new Header("").freeze();
 
-    private RawHttpHeaders(Map<String, Header> headersByCapitalizedName) {
-        Map<String, Header> headers = new LinkedHashMap<>(headersByCapitalizedName);
-        headers.entrySet().forEach(entry -> entry.setValue(entry.getValue().freeze()));
-        this.headersByCapitalizedName = unmodifiableMap(headers);
+    private RawHttpHeaders(Map<String, Header> headersByCapitalizedName, boolean isModifiableMap) {
+        if (isModifiableMap) {
+            Map<String, Header> headers = new LinkedHashMap<>(headersByCapitalizedName);
+            headers.entrySet().forEach(entry -> entry.setValue(entry.getValue().freeze()));
+            this.headersByCapitalizedName = unmodifiableMap(headers);
+        } else {
+            this.headersByCapitalizedName = headersByCapitalizedName;
+        }
+    }
+
+    private RawHttpHeaders(RawHttpHeaders first, RawHttpHeaders second) {
+        this(concatenate(first.headersByCapitalizedName, second.headersByCapitalizedName), false);
+    }
+
+    private static Map<String, Header> concatenate(Map<String, Header> first, Map<String, Header> second) {
+        Map<String, Header> headers = new LinkedHashMap<>(first);
+        headers.putAll(second);
+        return unmodifiableMap(headers);
     }
 
     /**
@@ -165,6 +179,19 @@ public class RawHttpHeaders {
     }
 
     /**
+     * Create a new set of headers, adding/replacing the provided headers into this instance.
+     * <p>
+     * Multi-valued headers present in both this and the provided headers are not merged. The provided headers
+     * are guaranteed to be present and have the same values in the returned instance.
+     *
+     * @param headers to add or replace on this.
+     * @return new set of headers containing both this instance's values as well as the provided values
+     */
+    public RawHttpHeaders with(RawHttpHeaders headers) {
+        return new RawHttpHeaders(this, headers);
+    }
+
+    /**
      * Builder of {@link RawHttpHeaders}.
      */
     public static class Builder {
@@ -199,7 +226,7 @@ public class RawHttpHeaders {
          * @return empty headers
          */
         public static RawHttpHeaders emptyRawHttpHeaders() {
-            return new RawHttpHeaders(emptyMap());
+            return new RawHttpHeaders(emptyMap(), false);
         }
 
         private Builder() {
@@ -276,7 +303,7 @@ public class RawHttpHeaders {
          * @return new instance of {@link RawHttpHeaders} with all headers added to this builder.
          */
         public RawHttpHeaders build() {
-            return new RawHttpHeaders(headersByCapitalizedName);
+            return new RawHttpHeaders(headersByCapitalizedName, true);
         }
 
         /**

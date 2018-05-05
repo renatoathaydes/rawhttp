@@ -1,12 +1,11 @@
 package com.athaydes.rawhttp.core;
 
 import com.athaydes.rawhttp.core.body.HttpMessageBody;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * A HTTP message, which can be either a request or a response.
@@ -52,6 +51,15 @@ public abstract class HttpMessage {
     public RawHttpHeaders getHeaders() {
         return headers;
     }
+
+
+    /**
+     * Create a copy of this HTTP message, adding/replacing the provided headers.
+     *
+     * @param headers to add/replace
+     * @return copy of this HTTP message with the provided headers
+     */
+    public abstract HttpMessage withHeaders(RawHttpHeaders headers);
 
     /**
      * @return the body of this HTTP message, if any.

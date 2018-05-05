@@ -14,31 +14,31 @@ class HttpHeadersTest : StringSpec({
                 .with("hi", "bbb")
                 .with("ho", "ccc")
                 .build().run {
-            get("hi") shouldEqual listOf("aaa", "bbb")
-            get("ho") shouldEqual listOf("ccc")
-            get("Hi") shouldEqual get("hi")
-            get("Hi") shouldEqual get("HI")
-            get("Ho") shouldEqual get("ho")
-            get("Ho") shouldEqual get("hO")
-            getFirst("hi") should bePresent { it shouldEqual "aaa" }
-            getFirst("HI") should bePresent { it shouldEqual "aaa" }
-            getFirst("ho") should bePresent { it shouldEqual "ccc" }
-            getFirst("Ho") should bePresent { it shouldEqual "ccc" }
-            getFirst("HI") shouldEqual getFirst("hi")
-            getFirst("HO") shouldEqual getFirst("ho")
-            get("blah") should beEmpty()
-            getFirst("blah") should notBePresent()
+                    get("hi") shouldEqual listOf("aaa", "bbb")
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Hi") shouldEqual get("hi")
+                    get("Hi") shouldEqual get("HI")
+                    get("Ho") shouldEqual get("ho")
+                    get("Ho") shouldEqual get("hO")
+                    getFirst("hi") should bePresent { it shouldEqual "aaa" }
+                    getFirst("HI") should bePresent { it shouldEqual "aaa" }
+                    getFirst("ho") should bePresent { it shouldEqual "ccc" }
+                    getFirst("Ho") should bePresent { it shouldEqual "ccc" }
+                    getFirst("HI") shouldEqual getFirst("hi")
+                    getFirst("HO") shouldEqual getFirst("ho")
+                    get("blah") should beEmpty()
+                    getFirst("blah") should notBePresent()
 
-            contains("hi") shouldBe true
-            contains("Hi") shouldBe true
-            contains("hI") shouldBe true
-            contains("HI") shouldBe true
-            contains("Ho") shouldBe true
-            contains("Blah") shouldBe false
+                    contains("hi") shouldBe true
+                    contains("Hi") shouldBe true
+                    contains("hI") shouldBe true
+                    contains("HI") shouldBe true
+                    contains("Ho") shouldBe true
+                    contains("Blah") shouldBe false
 
-            headerNames shouldEqual listOf("hi", "hi", "ho")
-            uniqueHeaderNames shouldEqual setOf("HI", "HO")
-        }
+                    headerNames shouldEqual listOf("hi", "hi", "ho")
+                    uniqueHeaderNames shouldEqual setOf("HI", "HO")
+                }
     }
 
     "Headers can be re-constructed exactly" {
@@ -57,6 +57,26 @@ class HttpHeadersTest : StringSpec({
                 "Server: nginx\r\n" +
                 "Date: 22 March 2012\r\n" +
                 "\r\n"
+    }
+
+    "Headers may be added to other headers" {
+        val otherHeaders = RawHttpHeaders.Builder.newBuilder()
+                .with("hi", "bye")
+                .with("Accept", "text/xml")
+                .with("Accept", "text/plain")
+                .with("New", "True").build()
+
+        RawHttpHeaders.Builder.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Accept", "application/json")
+                .build().with(otherHeaders).run {
+                    get("hi") shouldEqual listOf("bye")
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("text/xml", "text/plain")
+                    get("New") shouldEqual listOf("True")
+                }
     }
 
 })
