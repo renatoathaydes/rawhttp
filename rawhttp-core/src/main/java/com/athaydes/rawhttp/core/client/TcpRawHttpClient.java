@@ -5,8 +5,6 @@ import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpOptions;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
-
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
@@ -14,6 +12,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Simple implementation of {@link RawHttpClient} based on TCP {@link Socket}s.
@@ -62,7 +61,16 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
     @Override
     public RawHttpResponse<Void> send(RawHttpRequest request) throws IOException {
-        Socket socket = options.getSocket(request.getUri());
+        Socket socket;
+        try {
+            socket = options.getSocket(request.getUri());
+        } catch (RuntimeException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            }
+            throw e;
+        }
         request.writeTo(socket.getOutputStream());
         return options.onResponse(socket, request.getUri(),
                 rawHttp.parseResponse(socket.getInputStream()));
