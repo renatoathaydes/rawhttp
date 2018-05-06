@@ -71,7 +71,7 @@ class HttpHeadersTest : StringSpec({
                 .with("hi", "bbb")
                 .with("ho", "ccc")
                 .with("Accept", "application/json")
-                .build().with(otherHeaders).run {
+                .build().and(otherHeaders).run {
                     get("hi") shouldEqual listOf("bye")
                     get("ho") shouldEqual listOf("ccc")
                     get("Accept") shouldEqual listOf("text/xml", "text/plain")

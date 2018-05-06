@@ -73,7 +73,7 @@ public class EagerHttpRequest extends RawHttpRequest {
 
     @Override
     public EagerHttpRequest withHeaders(RawHttpHeaders headers) {
-        return new EagerHttpRequest(getStartLine(), getHeaders().with(headers),
+        return new EagerHttpRequest(getStartLine(), getHeaders().and(headers),
                 getBody().orElse(null), getSenderAddress().orElse(null));
     }
 

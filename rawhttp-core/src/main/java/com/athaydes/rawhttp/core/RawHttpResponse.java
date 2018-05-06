@@ -113,6 +113,6 @@ public class RawHttpResponse<Response> extends HttpMessage {
     @Override
     public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
         return new RawHttpResponse<>(libResponse, request, statusCodeLine,
-                getHeaders().with(headers), getBody().orElse(null));
+                getHeaders().and(headers), getBody().orElse(null));
     }
 }

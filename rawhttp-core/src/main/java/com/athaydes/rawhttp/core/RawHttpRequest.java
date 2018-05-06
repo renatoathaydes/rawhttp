@@ -76,7 +76,7 @@ public class RawHttpRequest extends HttpMessage {
     @Override
     public RawHttpRequest withHeaders(RawHttpHeaders headers) {
         return new RawHttpRequest(methodLine,
-                getHeaders().with(headers),
+                getHeaders().and(headers),
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));
     }

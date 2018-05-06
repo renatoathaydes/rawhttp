@@ -49,7 +49,8 @@ public class RawHttpHeaders {
     }
 
     private static Map<String, Header> concatenate(Map<String, Header> first, Map<String, Header> second) {
-        Map<String, Header> headers = new LinkedHashMap<>(first);
+        Map<String, Header> headers = new LinkedHashMap<>(first.size() + second.size());
+        headers.putAll(first);
         headers.putAll(second);
         return unmodifiableMap(headers);
     }
@@ -187,7 +188,7 @@ public class RawHttpHeaders {
      * @param headers to add or replace on this.
      * @return new set of headers containing both this instance's values as well as the provided values
      */
-    public RawHttpHeaders with(RawHttpHeaders headers) {
+    public RawHttpHeaders and(RawHttpHeaders headers) {
         return new RawHttpHeaders(this, headers);
     }
 

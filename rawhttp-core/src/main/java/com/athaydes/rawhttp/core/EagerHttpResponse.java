@@ -86,7 +86,7 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
         return new EagerHttpResponse<>(getLibResponse().orElse(null),
                 getRequest().orElse(null),
                 getStartLine(),
-                getHeaders().with(headers),
+                getHeaders().and(headers),
                 getBody().orElse(null));
     }
 
