@@ -151,7 +151,7 @@ abstract class RawHttpCliTester {
                     break
                 } catch (e: IOException) {
                     failedConnectionAttempts++
-                    Thread.sleep(100)
+                    sleep(100)
                 }
             }
 

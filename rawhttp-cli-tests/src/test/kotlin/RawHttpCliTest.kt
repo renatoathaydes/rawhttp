@@ -60,7 +60,7 @@ class RawHttpCliTest : RawHttpCliTester() {
     @Test
     fun canServeLocalDirectory() {
         val workDir = File(".")
-        val someFileInWorkDir = workDir.listFiles()?.firstOrNull()
+        val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
                 ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
 
         val handle = runCli("-s")
@@ -136,7 +136,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
 
     @Test
-    fun dostNotExposeParentDirectoryWhenServingDirectory() {
+    fun doesNotExposeParentDirectoryWhenServingDirectory() {
         val tempDir = createTempDir(javaClass.name)
         val parentDirFile = File(tempDir.parentFile, tempDir.name + ".test")
         parentDirFile.writeText("not visible")
@@ -158,7 +158,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(404))
         assertTrue(response.body.isPresent)
-        assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Resource does not exist."))
+        assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Resource was not found."))
     }
 
 }
