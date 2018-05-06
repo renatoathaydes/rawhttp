@@ -115,4 +115,16 @@ public class RawHttpResponse<Response> extends HttpMessage {
         return new RawHttpResponse<>(libResponse, request, statusCodeLine,
                 getHeaders().and(headers), getBody().orElse(null));
     }
+
+    /**
+     * Create a copy of this HTTP response, replacing its statusCodeLine with the provided one.
+     *
+     * @param statusCodeLine to replace
+     * @return copy of this HTTP message with the provided statusCodeLine
+     */
+    public RawHttpResponse<Response> withStatusCodeLine(StatusCodeLine statusCodeLine) {
+        return new RawHttpResponse<>(libResponse, request, statusCodeLine,
+                getHeaders(), getBody().orElse(null));
+    }
+
 }

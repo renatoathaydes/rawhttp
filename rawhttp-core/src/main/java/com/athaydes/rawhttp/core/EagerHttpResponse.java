@@ -90,4 +90,12 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
                 getBody().orElse(null));
     }
 
+    public EagerHttpResponse<Response> withStatusCodeLine(StatusCodeLine statusCodeLine) {
+        return new EagerHttpResponse<>(getLibResponse().orElse(null),
+                getRequest().orElse(null),
+                statusCodeLine,
+                getHeaders(),
+                getBody().orElse(null));
+    }
+
 }

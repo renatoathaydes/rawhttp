@@ -81,4 +81,17 @@ public class RawHttpRequest extends HttpMessage {
                 getSenderAddress().orElse(null));
     }
 
+    /**
+     * Create a copy of this HTTP request, replacing its methodLine with the provided one.
+     *
+     * @param methodLine to replace
+     * @return copy of this HTTP message with the provided startLine
+     */
+    public RawHttpRequest withMethodLine(MethodLine methodLine) {
+        return new RawHttpRequest(methodLine,
+                getHeaders(),
+                getBody().orElse(null),
+                getSenderAddress().orElse(null));
+    }
+
 }

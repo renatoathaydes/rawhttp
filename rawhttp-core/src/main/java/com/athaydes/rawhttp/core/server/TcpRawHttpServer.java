@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.core.server;
 import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
+import com.athaydes.rawhttp.core.RawHttpOptions;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
@@ -18,6 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
@@ -31,6 +35,15 @@ import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
  * constructor.
  */
 public class TcpRawHttpServer implements RawHttpServer {
+
+    private static final RawHttpHeaders SERVER_HEADER = RawHttpHeaders.Builder.newBuilder()
+            .with("Server", "RawHTTP")
+            .build();
+
+    public static final RawHttp STRICT_HTTP = new RawHttp(RawHttpOptions.Builder.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .doNotInsertHostHeaderIfMissing()
+            .build());
 
     private final AtomicReference<RouterAndSocket> routerRef = new AtomicReference<>();
     private final TcpRawHttpServerOptions options;
@@ -97,7 +110,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @return the {@link RawHttp} instance to use to parse requests and responses
          */
         default RawHttp getRawHttp() {
-            return new RawHttp();
+            return STRICT_HTTP;
         }
 
         /**
@@ -115,19 +128,33 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         /**
+         * @param request received by the server
          * @return the default ServerError (500) response to send out when an Exception occurs in the {@link Router}.
          */
-        default EagerHttpResponse<Void> serverErrorResponse() {
+        @Nullable
+        default EagerHttpResponse<Void> serverErrorResponse(RawHttpRequest request) {
             return null;
         }
 
         /**
+         * @param request received by the server
          * @return the default NotFound (404) response to send out when an Exception occurs in the {@link Router}.
          */
-        default EagerHttpResponse<Void> notFoundResponse() {
+        @Nullable
+        default EagerHttpResponse<Void> notFoundResponse(RawHttpRequest request) {
             return null;
         }
 
+        /**
+         * @return a supplier of HTTP headers for responses with the given status code.
+         * <p/>
+         * By default, the server inserts a "Server: RawHTTP" header and an appropriate "Date" header in all responses
+         * (notice that the HTTP specification recommends adding the "Date" header to all responses, but that's not
+         * mandatory).
+         */
+        default Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(@SuppressWarnings("unused") int statusCode) {
+            return Optional.of(() -> createDateHeader().and(SERVER_HEADER));
+        }
     }
 
     private static class RouterAndSocket {
@@ -136,18 +163,19 @@ public class TcpRawHttpServer implements RawHttpServer {
         private final ServerSocket socket;
         private final ExecutorService executorService;
         private final RawHttp http;
-        private final EagerHttpResponse<Void> serverErrorResponse;
-        private final EagerHttpResponse<Void> notFoundResponse;
+        private final Function<RawHttpRequest, EagerHttpResponse<Void>> serverErrorResponse;
+        private final Function<RawHttpRequest, EagerHttpResponse<Void>> notFoundResponse;
+        private final Function<Integer, Optional<Supplier<RawHttpHeaders>>> autoHeadersForStatusCode;
 
-        public RouterAndSocket(Router router, TcpRawHttpServerOptions options) throws IOException {
+        RouterAndSocket(Router router,
+                        TcpRawHttpServerOptions options) throws IOException {
             this.router = router;
             this.socket = options.getServerSocket();
             this.http = options.getRawHttp();
             this.executorService = options.getExecutorService();
-            this.serverErrorResponse = Optional.ofNullable(options.serverErrorResponse())
-                    .orElse(HttpResponses.SERVER_ERROR_500);
-            this.notFoundResponse = Optional.ofNullable(options.notFoundResponse())
-                    .orElse(HttpResponses.NOT_FOUND_404);
+            this.autoHeadersForStatusCode = options::autoHeadersSupplier;
+            this.serverErrorResponse = options::serverErrorResponse;
+            this.notFoundResponse = options::notFoundResponse;
 
             start();
         }
@@ -205,17 +233,23 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         private RawHttpResponse<?> route(RawHttpRequest request) {
+            RawHttpResponse<?> response;
             try {
-                RawHttpResponse<?> response = router.route(request);
+                response = router.route(request);
                 if (response == null) {
-                    return notFoundResponse.withHeaders(createDateHeader());
-                } else {
-                    return response;
+                    response = notFoundResponse.apply(request);
+                    if (response == null) {
+                        response = HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion());
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return serverErrorResponse.withHeaders(createDateHeader());
+                response = serverErrorResponse.apply(request);
+                if (response == null) {
+                    response = HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion());
+                }
             }
+            return withAutoHeaders(response);
         }
 
         void stop() {
@@ -226,6 +260,12 @@ public class TcpRawHttpServer implements RawHttpServer {
             } finally {
                 executorService.shutdown();
             }
+        }
+
+        private <R> RawHttpResponse<R> withAutoHeaders(RawHttpResponse<R> response) {
+            Integer statusCode = response.getStatusCode();
+            Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = autoHeadersForStatusCode.apply(statusCode);
+            return autoHeadersSupplier.map(s -> response.withHeaders(s.get())).orElse(response);
         }
 
     }

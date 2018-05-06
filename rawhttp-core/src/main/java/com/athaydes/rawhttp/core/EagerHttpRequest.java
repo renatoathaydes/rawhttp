@@ -77,4 +77,9 @@ public class EagerHttpRequest extends RawHttpRequest {
                 getBody().orElse(null), getSenderAddress().orElse(null));
     }
 
+    @Override
+    public EagerHttpRequest withMethodLine(MethodLine methodLine) {
+        return new EagerHttpRequest(methodLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
+    }
+
 }
