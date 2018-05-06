@@ -1,17 +1,14 @@
 package com.athaydes.rawhttp.cli;
 
-import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.server.Router;
-
 import java.io.File;
 import java.net.InetAddress;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
@@ -43,13 +40,6 @@ final class CliServerRouter implements Router {
         );
     }
 
-    private static final RawHttp http = new RawHttp();
-
-    private static final ThreadLocal<String> currentDateInSecondsResolution = ThreadLocal.withInitial(() ->
-            DateTimeFormatter.RFC_1123_DATE_TIME.format(Instant.ofEpochMilli(0L).atOffset(ZoneOffset.UTC)));
-
-    private static final ThreadLocal<Long> lastDateAccess = ThreadLocal.withInitial(() -> 0L);
-
     private final File rootDir;
     private final RequestLogger requestLogger;
 
@@ -58,20 +48,6 @@ final class CliServerRouter implements Router {
         this.requestLogger = logRequests ?
                 new AsyncSysoutRequestLogger() :
                 new NoopRequestLogger();
-    }
-
-    private static String dateValue() {
-        final long now = System.currentTimeMillis();
-        final String currentDate;
-        if (lastDateAccess.get() < now - 1000L) {
-            currentDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(
-                    Instant.ofEpochMilli(now).atOffset(ZoneOffset.UTC));
-            currentDateInSecondsResolution.set(currentDate);
-        } else {
-            currentDate = currentDateInSecondsResolution.get();
-        }
-        lastDateAccess.set(now);
-        return currentDate;
     }
 
     @Override
@@ -87,32 +63,23 @@ final class CliServerRouter implements Router {
 
             File resource = new File(rootDir, path);
             if (resource.isFile()) {
-                response = http.parseResponse(request.getStartLine().getHttpVersion() +
-                        " 200 OK\n" +
-                        "Content-Type: " + mimeTypeOf(resource.getName()) + "\n" +
-                        "Server: RawHTTP\n" +
-                        "Date: " + dateValue())
+                response = HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
+                        .withHeaders(contentTypeHeaderFor(resource.getName()))
                         .replaceBody(new FileBody(resource));
             } else {
-                response = http.parseResponse(request.getStartLine().getHttpVersion() +
-                        " 404 Not Found\n" +
-                        "Content-Length: 24\n" +
-                        "Content-Type: plain/text\n" +
-                        "Server: RawHTTP\n" +
-                        "Date: " + dateValue() + "\n\n" +
-                        "Resource does not exist.");
+                response = null; // 404 - NOT FOUND
             }
         } else {
-            response = http.parseResponse(request.getStartLine().getHttpVersion() +
-                    " 405 Method Not Allowed\n" +
-                    "Content-Length: 19\n" +
-                    "Content-Type: plain/text\n" +
-                    "Server: RawHTTP\n" +
-                    "Date: " + dateValue() + "\n\n" +
-                    "Method not allowed.");
+            response = HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion());
         }
         requestLogger.logRequest(request, response);
         return response;
+    }
+
+    private static RawHttpHeaders contentTypeHeaderFor(String resourceName) {
+        return RawHttpHeaders.Builder.newBuilder()
+                .with("Content-Type", mimeTypeOf(resourceName))
+                .build();
     }
 
     static String mimeTypeOf(String resourceName) {
