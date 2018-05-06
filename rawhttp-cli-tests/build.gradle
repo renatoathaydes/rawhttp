@@ -21,5 +21,5 @@ test {
 dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     testCompile 'junit:junit:4.12'
-    testCompile 'com.athaydes.rawhttp:rawhttp-core:1.1.0'
+    testCompile project(':rawhttp-cli')
 }
