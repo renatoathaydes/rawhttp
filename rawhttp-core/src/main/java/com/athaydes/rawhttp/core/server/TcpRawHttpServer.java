@@ -12,8 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,8 +21,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -44,6 +41,8 @@ public class TcpRawHttpServer implements RawHttpServer {
             .doNotAllowNewLineWithoutReturn()
             .doNotInsertHostHeaderIfMissing()
             .build());
+
+    private static final DateHeaderProvider DATE_HEADER_PROVIDER = new DateHeaderProvider(Duration.ofSeconds(1));
 
     private final AtomicReference<RouterAndSocket> routerRef = new AtomicReference<>();
     private final TcpRawHttpServerOptions options;
@@ -85,12 +84,11 @@ public class TcpRawHttpServer implements RawHttpServer {
     }
 
     /**
-     * @return headers containing a single "Date" header with the current date.
+     * @return headers containing a single "Date" header with the current date. A returned instance is cached for one
+     * second, so multiple calls in quick succession will return the same instance.
      */
-    public static RawHttpHeaders createDateHeader() {
-        return RawHttpHeaders.Builder.newBuilder()
-                .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
-                .build();
+    public static RawHttpHeaders getCurrentDateHeader() {
+        return DATE_HEADER_PROVIDER.get();
     }
 
     /**
@@ -153,7 +151,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * mandatory).
          */
         default Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(@SuppressWarnings("unused") int statusCode) {
-            return Optional.of(() -> createDateHeader().and(SERVER_HEADER));
+            return Optional.of(() -> getCurrentDateHeader().and(SERVER_HEADER));
         }
     }
 

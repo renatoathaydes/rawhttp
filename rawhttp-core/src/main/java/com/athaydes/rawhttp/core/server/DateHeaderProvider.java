@@ -2,12 +2,16 @@ package com.athaydes.rawhttp.core.server;
 
 import com.athaydes.rawhttp.core.RawHttpHeaders;
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.function.Supplier;
+
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 final class DateHeaderProvider implements Supplier<RawHttpHeaders> {
 
     private final ThreadLocal<RawHttpHeaders> currentDateHeaderInSecondsResolution =
-            ThreadLocal.withInitial(TcpRawHttpServer::createDateHeader);
+            ThreadLocal.withInitial(DateHeaderProvider::createDateHeader);
 
     private final ThreadLocal<Long> lastDateAccess = ThreadLocal.withInitial(() -> 0L);
 
@@ -15,12 +19,18 @@ final class DateHeaderProvider implements Supplier<RawHttpHeaders> {
     private final long maxCacheDuration;
 
     public DateHeaderProvider(Duration maxCacheDuration) {
-        this(maxCacheDuration, TcpRawHttpServer::createDateHeader);
+        this(maxCacheDuration, DateHeaderProvider::createDateHeader);
     }
 
     public DateHeaderProvider(Duration maxCacheDuration, Supplier<RawHttpHeaders> createHeader) {
         this.maxCacheDuration = maxCacheDuration.toMillis();
         this.createHeader = createHeader;
+    }
+
+    private static RawHttpHeaders createDateHeader() {
+        return RawHttpHeaders.Builder.newBuilder()
+                .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
+                .build();
     }
 
     @Override
