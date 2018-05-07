@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.core.server;
 
 import com.athaydes.rawhttp.core.EagerHttpResponse;
+import com.athaydes.rawhttp.core.HttpVersion;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpOptions;
@@ -202,11 +203,39 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         private void handle(Socket client) {
-            while (true) {
+            RawHttpRequest request = null;
+            boolean serverWillCloseConnection = false;
+
+            while (!serverWillCloseConnection) {
                 try {
-                    RawHttpRequest request = http.parseRequest(
+                    request = http.parseRequest(
                             client.getInputStream(),
                             ((InetSocketAddress) client.getRemoteSocketAddress()).getAddress());
+                    HttpVersion httpVersion = request.getStartLine().getHttpVersion();
+                    Optional<String> connectionOption = request.getHeaders().getFirst("Connection");
+
+                    // If the "close" connection option is present, the connection will
+                    // not persist after the current response
+                    serverWillCloseConnection = connectionOption
+                            .map(c -> "close".equalsIgnoreCase(c))
+                            .orElse(false);
+
+                    if (!serverWillCloseConnection) {
+                        // https://tools.ietf.org/html/rfc7230#section-6.3
+                        // If the received protocol is HTTP/1.1 (or later)
+                        // OR
+                        // If the received protocol is HTTP/1.0, the "keep-alive" connection
+                        // option is present
+                        // THEN the connection will persist
+                        // OTHERWISE close the connection
+                        boolean serverShouldPersistConnection =
+                                !httpVersion.isOlderThan(HttpVersion.HTTP_1_1)
+                                        || (httpVersion == HttpVersion.HTTP_1_0 && connectionOption
+                                        .map(c -> "keep-alive".equalsIgnoreCase(c))
+                                        .orElse(false));
+                        serverWillCloseConnection = !serverShouldPersistConnection;
+                    }
+
                     RawHttpResponse<?> response = route(request);
                     response.writeTo(client.getOutputStream());
                 } catch (Exception e) {
@@ -225,7 +254,15 @@ public class TcpRawHttpServer implements RawHttpServer {
                         }
                     }
 
-                    break; // cannot keep listening anymore
+                    serverWillCloseConnection = true; // cannot keep listening anymore
+                } finally {
+                    if (serverWillCloseConnection) {
+                        try {
+                            client.close();
+                        } catch (IOException e) {
+                            // not a problem
+                        }
+                    }
                 }
             }
         }

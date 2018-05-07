@@ -67,14 +67,14 @@ public class RawHttpResponse<Response> extends HttpMessage {
      * The returned object can be safely passed around after the connection used to receive
      * this response has been closed.
      * <p>
-     * The connection or stream used to download the response is not closed after a call to
+     * The connection or stream used to download the response is NOT closed after a call to
      * this method. Use {@link #eagerly(boolean)} if a different behaviour is required.
      *
      * @return this response, after eagerly downloading all of its contents.
      * @throws IOException if an error occurs while reading this response
      */
     public EagerHttpResponse<Response> eagerly() throws IOException {
-        return eagerly(false);
+        return eagerly(true);
     }
 
     /**
