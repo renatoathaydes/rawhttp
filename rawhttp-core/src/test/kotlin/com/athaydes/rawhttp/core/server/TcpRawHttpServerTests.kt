@@ -1,19 +1,21 @@
 package com.athaydes.rawhttp.core.server
 
+import com.athaydes.rawhttp.core.RawHttp
 import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.body.StringBody
 import com.athaydes.rawhttp.core.client.TcpRawHttpClient
 import com.athaydes.rawhttp.core.client.waitForPortToBeTaken
+import com.athaydes.rawhttp.core.validDateHeader
 import io.kotlintest.Spec
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldNotBe
+import io.kotlintest.matchers.shouldHave
 import io.kotlintest.specs.StringSpec
 
 class TcpRawHttpServerTests : StringSpec() {
 
     private val server = TcpRawHttpServer(8093)
-    private val http = server.options.rawHttp
+    private val http = RawHttp()
 
     private val httpClient = TcpRawHttpClient()
 
@@ -94,7 +96,7 @@ class TcpRawHttpServerTests : StringSpec() {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 500
-            response.headers["Date"] shouldNotBe null
+            response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
@@ -106,7 +108,7 @@ class TcpRawHttpServerTests : StringSpec() {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 500
-            response.headers["Date"] shouldNotBe null
+            response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
@@ -118,7 +120,7 @@ class TcpRawHttpServerTests : StringSpec() {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 404
-            response.headers["Date"] shouldNotBe null
+            response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "Resource was not found."
