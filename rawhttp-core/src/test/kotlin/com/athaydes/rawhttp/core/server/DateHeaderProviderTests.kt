@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.core.server
 import com.athaydes.rawhttp.core.RawHttpHeaders
 import io.kotlintest.matchers.beGreaterThan
 import io.kotlintest.matchers.beLessThan
+import io.kotlintest.matchers.between
 import io.kotlintest.matchers.haveSize
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
@@ -67,8 +68,8 @@ class DateHeaderProviderTests : StringSpec({
         for (t in 0 until threadCount) {
             Thread {
                 for (r in 0 until repeatRunsPerThread) {
+                    if (r > 0) sleep(sleepPerRun)
                     dateHeaderValues += dateHeaderProvider.get()["Date"]!!.first()
-                    sleep(sleepPerRun)
                 }
                 latch.countDown()
             }.apply { threadIds += id.toString() }.start()
@@ -85,7 +86,8 @@ class DateHeaderProviderTests : StringSpec({
         val totalTime = repeatRunsPerThread * sleepPerRun
         val expectedFactoryCalls = threadCount * (totalTime / cacheDurationMillis)
 
-        createDateHeaderCounter.get() shouldEqual expectedFactoryCalls.toInt()
+        // a few extra calls to the factory method are allowed because we don't synchronize
+        createDateHeaderCounter.get() shouldBe between(expectedFactoryCalls.toInt(), expectedFactoryCalls.toInt() + 5)
     }
 
 })

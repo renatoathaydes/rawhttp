@@ -6,10 +6,10 @@ import java.util.function.Supplier;
 
 final class DateHeaderProvider implements Supplier<RawHttpHeaders> {
 
-    private static final ThreadLocal<RawHttpHeaders> currentDateHeaderInSecondsResolution =
+    private final ThreadLocal<RawHttpHeaders> currentDateHeaderInSecondsResolution =
             ThreadLocal.withInitial(TcpRawHttpServer::createDateHeader);
 
-    private static final ThreadLocal<Long> lastDateAccess = ThreadLocal.withInitial(() -> 0L);
+    private final ThreadLocal<Long> lastDateAccess = ThreadLocal.withInitial(() -> 0L);
 
     private final Supplier<RawHttpHeaders> createHeader;
     private final long maxCacheDuration;
