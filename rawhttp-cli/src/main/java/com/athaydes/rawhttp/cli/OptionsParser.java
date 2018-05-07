@@ -2,6 +2,9 @@ package com.athaydes.rawhttp.cli;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
 
 final class ServerOptions {
     static final int DEFAULT_SERVER_PORT = 8080;
@@ -54,10 +57,14 @@ final class Options {
 final class OptionsParser {
 
     static Options parse(String[] args) throws OptionsException {
+        if (args.length > 0 && !args[0].startsWith("-")) {
+            // interpret args as request text because no option was given
+            String request = Stream.of(args).collect(joining(" "));
+            return new Options(Optional.empty(), false, Optional.empty(), Optional.of(request));
+        }
         boolean help = getShowHelp(args);
         Optional<File> requestFile = getRequestFile(args);
         Optional<ServerOptions> serverOptions = getServerOptions(args);
-        Optional<String> requestText = getRequestText(args);
 
         for (String arg : args) {
             if (!arg.isEmpty()) {
@@ -65,7 +72,7 @@ final class OptionsParser {
             }
         }
 
-        return new Options(requestFile, help, serverOptions, requestText);
+        return new Options(requestFile, help, serverOptions, Optional.empty());
     }
 
     private static boolean getShowHelp(String[] args) {
@@ -155,17 +162,6 @@ final class OptionsParser {
         } else {
             return Optional.empty();
         }
-    }
-
-    private static Optional<String> getRequestText(String[] args) {
-        if (args.length != 1 || args[0].isEmpty() || args[0].startsWith("-")) {
-            return Optional.empty();
-        }
-
-        String requestText = args[0];
-        args[0] = "";
-
-        return Optional.of(requestText);
     }
 
 }

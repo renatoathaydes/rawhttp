@@ -1,9 +1,8 @@
 package com.athaydes.rawhttp.cli;
 
-import org.junit.Test;
-
 import java.io.File;
 import java.util.Arrays;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -249,6 +248,19 @@ public class OptionsParserTest {
                 assertEquals("Unrecognized option: " + invalidOption, e.getMessage());
             }
         }
+    }
+
+    @Test
+    public void canProvideRequestAsSeveralOptions() throws OptionsException {
+        final String expectedRequestText = "GET http://localhost:8080/hello HTTP/1.0";
+        Options options = OptionsParser.parse(new String[]{"GET", "http://localhost:8080/hello", "HTTP/1.0"});
+
+        assertFalse(options.requestFile.isPresent());
+        assertFalse(options.serverOptions.isPresent());
+        assertFalse(options.showHelp);
+
+        assertTrue(options.requestText.isPresent());
+        assertEquals(expectedRequestText, options.requestText.get());
     }
 
 }
