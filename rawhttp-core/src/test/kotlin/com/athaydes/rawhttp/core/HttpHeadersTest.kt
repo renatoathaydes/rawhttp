@@ -1,9 +1,11 @@
 package com.athaydes.rawhttp.core
 
+import com.athaydes.rawhttp.core.errors.InvalidHttpHeader
 import io.kotlintest.matchers.beEmpty
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.StringSpec
 
 class HttpHeadersTest : StringSpec({
@@ -77,6 +79,22 @@ class HttpHeadersTest : StringSpec({
                     get("Accept") shouldEqual listOf("text/xml", "text/plain")
                     get("New") shouldEqual listOf("True")
                 }
+    }
+
+    "Header names must not contain invalid characters" {
+        val error = shouldThrow<InvalidHttpHeader> {
+            RawHttpHeaders.Builder.newBuilder()
+                    .with("ABC(D)", "aaa").build()
+        }
+        error.message shouldEqual "Invalid header name (contains illegal character at index 3): ABC(D)"
+    }
+
+    "Header values must not contain invalid characters" {
+        val error = shouldThrow<InvalidHttpHeader> {
+            RawHttpHeaders.Builder.newBuilder()
+                    .with("Hello", "hallå").build()
+        }
+        error.message shouldEqual "Invalid header value (contains illegal character at index 4): hallå"
     }
 
 })

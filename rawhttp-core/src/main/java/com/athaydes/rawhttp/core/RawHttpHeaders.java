@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.core;
 
+import com.athaydes.rawhttp.core.errors.InvalidHttpHeader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -244,9 +245,7 @@ public class RawHttpHeaders {
          * @return this
          */
         public Builder with(String headerName, String value) {
-            headersByCapitalizedName.computeIfAbsent(headerName.toUpperCase(),
-                    (ignore) -> new Header(headerName)).values.add(value);
-            return this;
+            return with(headerName, value, -1);
         }
 
         /**
@@ -261,8 +260,26 @@ public class RawHttpHeaders {
          * @return this
          */
         public Builder with(String headerName, String value, int lineNumber) {
-            with(headerName, value);
-            linesPerHeader.computeIfAbsent(headerName.toUpperCase(),
+            char[] upperCaseHeaderNameChars = new char[headerName.length()];
+            char[] headerNameChars = headerName.toCharArray();
+            for (int i = 0; i < headerNameChars.length; i++) {
+                char c = headerNameChars[i];
+                if (!FieldValues.isAllowedInTokens(c)) {
+                    throw new InvalidHttpHeader("Invalid header name (contains illegal character at index " +
+                            i + "): " + headerName, lineNumber);
+                }
+                // ASCII toUpperCase implementation
+                upperCaseHeaderNameChars[i] = ('a' <= c && c <= 'z') ? (char) (c - 32) : c;
+            }
+            final String upperCaseHeaderName = new String(upperCaseHeaderNameChars);
+            FieldValues.indexOfNotAllowedInVCHARs(value).ifPresent((index) -> {
+                throw new InvalidHttpHeader("Invalid header value (contains illegal character at index " +
+                        index + "): " + value,
+                        lineNumber);
+            });
+            headersByCapitalizedName.computeIfAbsent(upperCaseHeaderName,
+                    (ignore) -> new Header(headerName)).values.add(value);
+            linesPerHeader.computeIfAbsent(upperCaseHeaderName,
                     (ignore) -> new ArrayList<>(2)).add(lineNumber);
             return this;
         }
