@@ -1,21 +1,14 @@
 package com.athaydes.rawhttp.core.server
 
 import com.athaydes.rawhttp.core.RawHttpHeaders
-import io.kotlintest.matchers.beGreaterThan
-import io.kotlintest.matchers.beLessThan
+import com.athaydes.rawhttp.core.validDateHeader
 import io.kotlintest.matchers.between
-import io.kotlintest.matchers.haveSize
-import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.matchers.shouldNotBe
+import io.kotlintest.matchers.shouldHave
 import io.kotlintest.specs.StringSpec
 import java.lang.Thread.sleep
 import java.time.Duration
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -27,22 +20,7 @@ class DateHeaderProviderTests : StringSpec({
     "Should be able to get a header once" {
         val dateHeaderContainer = DateHeaderProvider(Duration.ofMillis(100)).get()
         dateHeaderContainer.asMap().size shouldBe 1
-        dateHeaderContainer["Date"] shouldNotBe null
-
-        val dateHeaderValues = dateHeaderContainer["Date"]!!
-        dateHeaderValues should haveSize(1)
-
-        val dateHeaderValue = dateHeaderValues.first()
-        val parsedDate = try {
-            LocalDateTime.parse(dateHeaderValue, DateTimeFormatter.RFC_1123_DATE_TIME)
-        } catch (e: DateTimeParseException) {
-            throw AssertionError("Date header value is invalid: $dateHeaderValue", e)
-        }
-
-        val now = LocalDateTime.now(ZoneOffset.UTC)
-
-        parsedDate should beLessThan(now)
-        parsedDate should beGreaterThan(now.minusSeconds(5))
+        dateHeaderContainer shouldHave validDateHeader()
     }
 
     "Should cache the Date Header for the requested Duration" {
