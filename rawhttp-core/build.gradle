@@ -8,35 +8,32 @@ buildscript {
 }
 
 plugins {
+    id 'java'
     id "org.jetbrains.kotlin.jvm"
-    id 'java-library'
-    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
     id 'maven'
 }
 
 description = 'RawHTTP core module'
 version '2.0-SNAPSHOT'
 
-sourceCompatibility = 1.9
-targetCompatibility = 1.9
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
-
-dependencies {
-    compile project(':java9-nullable')
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    testCompile "io.kotlintest:kotlintest:2.0.7"
-    testCompile 'com.sparkjava:spark-core:2.7.1'
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
 }
 
-javadoc {
-    inputs.property("moduleName", 'com.athaydes.rawhttp.core')
-    doFirst {
-        options.addStringOption('-module-path', classpath.asPath)
-    }
+dependencies {
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
+    testCompile "org.jetbrains.kotlin:kotlin-test"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
+    testCompile "io.kotlintest:kotlintest:2.0.7"
+    testCompile 'com.sparkjava:spark-core:2.7.1'
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -52,10 +49,10 @@ task javadocJar(type: Jar) {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.athaydes.rawhttp.core.cli.RawHttpCli',
-                'Implementation-Version': version,
+        attributes 'Implementation-Version': version,
                 'Implementation-Name': 'RawHTTP Core',
-                'Implementation-Vendor': 'Renato Athaydes'
+                'Implementation-Vendor': 'Renato Athaydes',
+                'Automatic-Module-Name': 'com.athaydes.rawhttp.core'
     }
 }
 

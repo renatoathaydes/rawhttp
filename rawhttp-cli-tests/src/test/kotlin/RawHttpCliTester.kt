@@ -65,16 +65,25 @@ abstract class RawHttpCliTester {
         var httpServerThread: Thread? = null
 
         init {
-            val rootDir = System.getProperty("RAWHTTP_CLI_ROOT_DIR")
-                    ?: throw IllegalStateException("RAWHTTP_CLI_ROOT_DIR system property must be set")
+            val rawhttpCliJar = System.getProperty("RAWHTTP_CLI_JAR")
+                    ?: throw IllegalStateException("RAWHTTP_CLI_JAR system property must be set")
 
-            val launcher = File(rootDir, "dist/bin/java")
-            if (!launcher.isFile) {
-                throw IllegalStateException("The CLI launcher does not exist: $launcher")
+            val javaHome = System.getProperty("JAVA_HOME")
+                    ?: throw IllegalStateException("JAVA_HOME system property must be set")
+
+            val cliJar = File(rawhttpCliJar)
+            if (!cliJar.isFile) {
+                throw IllegalStateException("The CLI launcher does not exist: $cliJar")
             }
 
-            CLI_EXECUTABLE = arrayOf(launcher.absolutePath,
-                    "-m", "com.athaydes.rawhttp.cli/com.athaydes.rawhttp.cli.Main")
+            val java = File(javaHome, "bin/java")
+            if (!java.canExecute()) {
+                throw IllegalStateException("Cannot execute java: $java")
+            }
+
+            CLI_EXECUTABLE = arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
+
+            println("Running tests with executable: ${CLI_EXECUTABLE.joinToString(" ")}")
         }
 
         @BeforeClass
@@ -125,10 +134,10 @@ abstract class RawHttpCliTester {
             val errStream = ByteArrayOutputStream(1024)
 
             Thread {
-                process.inputStream.transferTo(outputStream)
+                process.inputStream.copyTo(outputStream)
             }.start()
             Thread {
-                process.errorStream.transferTo(errStream)
+                process.errorStream.copyTo(errStream)
             }.start()
 
             return ProcessHandle(process, outputStream, errStream)

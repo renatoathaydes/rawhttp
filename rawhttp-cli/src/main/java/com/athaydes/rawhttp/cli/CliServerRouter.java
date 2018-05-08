@@ -10,34 +10,36 @@ import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static java.util.Map.entry;
 
 final class CliServerRouter implements Router {
 
     private static final Map<String, String> mimeMapping;
 
     static {
-        mimeMapping = Map.ofEntries(
-                entry("html", "text/html"),
-                entry("txt", "text/plain"),
-                entry("json", "application/json"),
-                entry("js", "application/javascript"),
-                entry("xml", "application/xml"),
-                entry("jpg", "image/jpeg"),
-                entry("jpeg", "image/jpeg"),
-                entry("gif", "image/gif"),
-                entry("png", "image/png"),
-                entry("tif", "image/tiff"),
-                entry("tiff", "image/tiff"),
-                entry("ico", "image/x-icon"),
-                entry("pdf", "application/pdf"),
-                entry("css", "text/css")
-        );
+        Map<String, String> _mimeMapping = new HashMap<>(13);
+
+        _mimeMapping.put("html", "text/html");
+        _mimeMapping.put("txt", "text/plain");
+        _mimeMapping.put("json", "application/json");
+        _mimeMapping.put("js", "application/javascript");
+        _mimeMapping.put("xml", "application/xml");
+        _mimeMapping.put("jpg", "image/jpeg");
+        _mimeMapping.put("jpeg", "image/jpeg");
+        _mimeMapping.put("gif", "image/gif");
+        _mimeMapping.put("png", "image/png");
+        _mimeMapping.put("tif", "image/tiff");
+        _mimeMapping.put("tiff", "image/tiff");
+        _mimeMapping.put("ico", "image/x-icon");
+        _mimeMapping.put("pdf", "application/pdf");
+        _mimeMapping.put("css", "text/css");
+
+        mimeMapping = Collections.unmodifiableMap(_mimeMapping);
     }
 
     private final File rootDir;

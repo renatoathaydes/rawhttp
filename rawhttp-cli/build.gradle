@@ -1,49 +1,33 @@
 plugins {
-    id 'java-library'
-    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+    id 'java'
     id 'maven'
+    id 'application'
 }
 
-sourceCompatibility = 1.9
-targetCompatibility = 1.9
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 description = 'RawHTTP CLI Tool'
 
-javaModule.name = 'com.athaydes.rawhttp.cli'
+mainClassName = 'com.athaydes.rawhttp.cli.Main'
+final runnableJarName = 'rawhttp.jar'
 
 dependencies {
     compile project(':rawhttp-core')
     testCompile 'junit:junit:4.12'
 }
 
-test {
-    doFirst {
-        jvmArgs += [
-                '--add-exports', "com.athaydes.rawhttp.cli/com.athaydes.rawhttp.cli=junit",
-        ]
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'com.athaydes.rawhttp.cli',
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'Renato Athaydes',
+                'Main-Class': mainClassName
     }
+
+    archiveName = runnableJarName
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
-task jlink(type: Exec) {
-    dependsOn('jar', ':rawhttp-core:jar', ':java9-nullable:jar')
-    inputs.files(buildFile, jar.archivePath,
-            tasks.findByPath(':rawhttp-core:jar'),
-            tasks.findByPath(':java9-nullable:jar'))
-    outputs.dir('dist')
-
-    def javaHome = System.properties['java.home']
-    def libs = configurations.runtime.collect { it.absolutePath }
-    libs += "$javaHome/jmods"
-    libs += jar.archivePath.absolutePath
-
-    commandLine 'jlink', '-p', libs.join(File.pathSeparator),
-            '--add-modules', 'com.athaydes.rawhttp.cli',
-            '--launcher', 'rawhttp=com.athaydes.rawhttp.cli/com.athaydes.rawhttp.cli.Main',
-            '--strip-debug', '--compress=2',
-            '--no-header-files', '--no-man-pages',
-            '--output', 'dist'
-
-    doFirst {
-        delete file('dist')
-    }
-}
+ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
