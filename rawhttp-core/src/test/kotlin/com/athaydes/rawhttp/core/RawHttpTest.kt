@@ -144,6 +144,25 @@ class SimpleHttpRequestTests : StringSpec({
         }
     }
 
+    "Should be able to parse HTTP Request with trailing new-line as recommended for robustness" {
+        RawHttp().parseRequest("\r\nGET localhost:8080").eagerly().run {
+            method shouldBe "GET"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
+            uri shouldEqual URI.create("http://localhost:8080")
+            toString() shouldBe "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("localhost"))
+            body should notBePresent()
+        }
+        RawHttp().parseRequest("\nGET localhost:8080").eagerly().run {
+            method shouldBe "GET"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
+            uri shouldEqual URI.create("http://localhost:8080")
+            toString() shouldBe "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("localhost"))
+            body should notBePresent()
+        }
+    }
+
 })
 
 class SimpleHttpResponseTests : StringSpec({
@@ -269,6 +288,25 @@ class SimpleHttpResponseTests : StringSpec({
 
         // verify that the stream was only consumed until the empty-line after the last header
         String(stream.readBytes(4)) shouldEqual "BODY"
+    }
+
+    "Should be able to parse HTTP Response with trailing new-line as recommended for robustness" {
+        RawHttp().parseResponse("\r\nHTTP/1.0 404 NOT FOUND").eagerly().run {
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_0
+            startLine.statusCode shouldBe 404
+            startLine.reason shouldEqual "NOT FOUND"
+            toString() shouldEqual "HTTP/1.0 404 NOT FOUND\r\n\r\n"
+            headers.headerNames should beEmpty()
+            body should bePresent { it.toString() shouldEqual "" }
+        }
+        RawHttp().parseResponse("\nHTTP/1.0 404 NOT FOUND").eagerly().run {
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_0
+            startLine.statusCode shouldBe 404
+            startLine.reason shouldEqual "NOT FOUND"
+            toString() shouldEqual "HTTP/1.0 404 NOT FOUND\r\n\r\n"
+            headers.headerNames should beEmpty()
+            body should bePresent { it.toString() shouldEqual "" }
+        }
     }
 
 })

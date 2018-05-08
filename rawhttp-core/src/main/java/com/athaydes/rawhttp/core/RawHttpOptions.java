@@ -11,11 +11,14 @@ public class RawHttpOptions {
 
     private final boolean insertHostHeaderIfMissing;
     private final boolean allowNewLineWithoutReturn;
+    private final boolean ignoreLeadingEmptyLine;
 
     private RawHttpOptions(boolean insertHostHeaderIfMissing,
-                           boolean allowNewLineWithoutReturn) {
+                           boolean allowNewLineWithoutReturn,
+                           boolean ignoreLeadingEmptyLine) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
+        this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
     }
 
     /**
@@ -47,12 +50,20 @@ public class RawHttpOptions {
     }
 
     /**
+     * @return whether or not to ignore a leading empty line.
+     */
+    public boolean ignoreLeadingEmptyLine() {
+        return ignoreLeadingEmptyLine;
+    }
+
+    /**
      * Builder for {@link RawHttpOptions}.
      */
     public static class Builder {
 
         private boolean insertHostHeaderIfMissing = true;
         private boolean allowNewLineWithoutReturn = true;
+        private boolean ignoreLeadingEmptyLine = true;
 
         /**
          * @return a new builder of {@link RawHttpOptions}.
@@ -93,11 +104,25 @@ public class RawHttpOptions {
         }
 
         /**
+         * Configure the {@link RawHttp} instance to NOT ignore trailing a new-line when parsing HTTP messages.
+         * <p>
+         * The HTTP specification recommends that HTTP message receivers
+         * <a href="https://tools.ietf.org/html/rfc7230#section-3.5">ignore a leading empty-line</a> in the name of
+         * robustness, hence {@link RawHttp} will do that by default.
+         *
+         * @return this
+         */
+        public Builder doNotIgnoreLeadingEmptyLine() {
+            this.ignoreLeadingEmptyLine = false;
+            return this;
+        }
+
+        /**
          * @return a configured instance of {@link RawHttpOptions}.
          * @see RawHttp#RawHttp(RawHttpOptions)
          */
         public RawHttpOptions build() {
-            return new RawHttpOptions(insertHostHeaderIfMissing, allowNewLineWithoutReturn);
+            return new RawHttpOptions(insertHostHeaderIfMissing, allowNewLineWithoutReturn, ignoreLeadingEmptyLine);
         }
 
     }

@@ -295,7 +295,7 @@ public abstract class BodyReader implements Closeable {
         BiFunction<String, Integer, RuntimeException> errorCreator =
                 (msg, lineNumber) -> new IllegalStateException(msg + " (parsing chunked body headers)");
 
-        List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn);
+        List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn, false);
         RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
         trailerConsumer.accept(trailerHeaders);
     }

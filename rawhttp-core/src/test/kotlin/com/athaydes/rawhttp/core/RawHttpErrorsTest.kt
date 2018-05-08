@@ -133,4 +133,16 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
+    "Cannot parse invalid request (starting with new-line, if configured to not allow it)" {
+        shouldThrow<InvalidHttpRequest> {
+            RawHttp(RawHttpOptions.Builder.newBuilder()
+                    .doNotIgnoreLeadingEmptyLine()
+                    .build()
+            ).parseRequest("\r\nGET http://localhost").eagerly()
+        }.run {
+            message shouldBe "No content"
+            lineNumber shouldBe 0
+        }
+    }
+
 })

@@ -3,8 +3,6 @@ package com.athaydes.rawhttp.core;
 import com.athaydes.rawhttp.core.BodyReader.BodyType;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
 import com.athaydes.rawhttp.core.errors.InvalidHttpResponse;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
+import javax.annotation.Nullable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -111,7 +110,8 @@ public class RawHttp {
                                        @Nullable InetAddress senderAddress) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpRequest::new,
-                options.allowNewLineWithoutReturn());
+                options.allowNewLineWithoutReturn(),
+                options.ignoreLeadingEmptyLine());
 
         if (metadataLines.isEmpty()) {
             throw new InvalidHttpRequest("No content", 0);
@@ -191,7 +191,8 @@ public class RawHttp {
                                                @Nullable MethodLine methodLine) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpResponse::new,
-                options.allowNewLineWithoutReturn());
+                options.allowNewLineWithoutReturn(),
+                options.ignoreLeadingEmptyLine());
 
         if (metadataLines.isEmpty()) {
             throw new InvalidHttpResponse("No content", 0);
@@ -226,10 +227,12 @@ public class RawHttp {
 
     static List<String> parseMetadataLines(InputStream inputStream,
                                            BiFunction<String, Integer, RuntimeException> createError,
-                                           boolean allowNewLineWithoutReturn) throws IOException {
+                                           boolean allowNewLineWithoutReturn,
+                                           boolean ignoreLeadingNewLine) throws IOException {
         List<String> metadataLines = new ArrayList<>();
         StringBuilder metadataBuilder = new StringBuilder();
         boolean wasNewLine = true;
+        boolean skipNewLine = ignoreLeadingNewLine; // start by skipping new line if we can ignore it
         int lineNumber = 1;
         int b;
         while ((b = inputStream.read()) >= 0) {
@@ -237,6 +240,7 @@ public class RawHttp {
                 // expect new-line
                 int next = inputStream.read();
                 if (next < 0 || next == '\n') {
+                    if (skipNewLine) continue;
                     lineNumber++;
                     if (wasNewLine) break;
                     metadataLines.add(metadataBuilder.toString());
@@ -248,6 +252,7 @@ public class RawHttp {
                     throw createError.apply("Illegal character after return", lineNumber);
                 }
             } else if (b == '\n') {
+                if (skipNewLine) continue;
                 if (!allowNewLineWithoutReturn) {
                     throw createError.apply("Illegal new-line character without preceding return", lineNumber);
                 }
@@ -262,6 +267,7 @@ public class RawHttp {
                 metadataBuilder.append((char) b);
                 wasNewLine = false;
             }
+            skipNewLine = false;
         }
 
         if (metadataBuilder.length() > 0) {
