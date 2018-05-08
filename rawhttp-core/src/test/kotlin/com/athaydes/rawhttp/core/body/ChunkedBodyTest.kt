@@ -5,6 +5,7 @@ import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.shouldHaveSameElementsAs
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
 
 class ChunkedBodyTest : StringSpec({
@@ -15,13 +16,14 @@ class ChunkedBodyTest : StringSpec({
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
-            it.asString(Charsets.UTF_8) shouldBe "Hi"
+            it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 2
                 it.chunks[0].data shouldHaveSameElementsAs "Hi".toByteArray()
                 it.chunks[1].data.size shouldBe 0 // last chunk
                 it.data shouldHaveSameElementsAs "Hi".toByteArray()
                 it.trailerHeaders.asMap().size shouldBe 0
+                it.asString(Charsets.US_ASCII) shouldEqual "Hi"
             }
         }
     }
@@ -32,7 +34,7 @@ class ChunkedBodyTest : StringSpec({
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
-            it.asString(Charsets.UTF_8) shouldBe "Hi"
+            it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 2
                 it.chunks[0].data shouldHaveSameElementsAs "Hi".toByteArray()
@@ -49,7 +51,7 @@ class ChunkedBodyTest : StringSpec({
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
-            it.asString(Charsets.UTF_8) shouldBe "Hello world"
+            it.asString(Charsets.US_ASCII) shouldEqual "4\r\nHell\r\n4\r\no wo\r\n3\r\nrld\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 4
                 it.chunks[0].data shouldHaveSameElementsAs "Hell".toByteArray()

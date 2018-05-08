@@ -13,6 +13,7 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldHave
 import io.kotlintest.specs.StringSpec
 import java.net.Socket
+import java.net.SocketException
 
 class TcpRawHttpServerTests : StringSpec() {
 
@@ -185,10 +186,18 @@ class TcpRawHttpServerTests : StringSpec() {
         }
         soTimeout = 250
         http.parseRequest("GET /is-open HTTP/1.1\r\nHost: localhost").writeTo(getOutputStream())
-        if (getInputStream().read() < 0) {
-            fail("Expected Socket to be open, but it appears to have been closed remotely")
+        try {
+            if (getInputStream().read() < 0) {
+                fail("Expected Socket to be open, but it appears to have been closed remotely")
+            }
+            close()
+        } catch (e: SocketException) {
+            if (e.message == "Connection reset") {
+                fail("Expected Socket to be open, but it appears to have been closed remotely")
+            } else {
+                throw e
+            }
         }
-        close()
     }
 
     private fun Socket.assertIsClosed() {
@@ -196,8 +205,15 @@ class TcpRawHttpServerTests : StringSpec() {
             // check if the server closed it
             //soTimeout = 250
             http.parseRequest("GET /is-open HTTP/1.1\r\nHost: localhost").writeTo(getOutputStream())
-            if (getInputStream().read() > 0) {
-                fail("Expected Socket to be closed, but it seems to still be open")
+            try {
+                if (getInputStream().read() > 0) {
+                    fail("Expected Socket to be closed, but it seems to still be open")
+                }
+            } catch (e: SocketException) {
+                // a closed socket may result in a "Connection reset" error, so this would be fine
+                if (e.message != "Connection reset") {
+                    throw e
+                }
             }
         }
     }

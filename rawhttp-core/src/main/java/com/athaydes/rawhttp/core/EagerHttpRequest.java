@@ -54,7 +54,7 @@ public class EagerHttpRequest extends RawHttpRequest {
         }
 
         return new EagerHttpRequest(request.getStartLine(), headers,
-                request.getBody().orElse(null), request.getSenderAddress().orElse(null));
+                bodyReader, request.getSenderAddress().orElse(null));
     }
 
     @Override
