@@ -59,7 +59,6 @@ class EagerBodyReaderTest : StringSpec({
 
         reader.run {
             bodyType shouldBe CHUNKED
-            asString(Charsets.UTF_8) shouldBe "Hi there"
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
                 it.chunks.size shouldBe 2
@@ -74,7 +73,10 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs "Hi there".toByteArray()
+            asBytes() shouldHaveSameElementsAs body
+            asString(Charsets.UTF_8) shouldBe "8\r\nHi there\r\n0\r\n\r\n"
+            decodeBody() shouldHaveSameElementsAs "Hi there".toByteArray()
+            decodeBodyToString(UTF_8) shouldBe "Hi there"
         }
     }
 
@@ -86,7 +88,6 @@ class EagerBodyReaderTest : StringSpec({
 
         reader.run {
             bodyType shouldBe CHUNKED
-            asString(Charsets.UTF_8) shouldBe "1234598"
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
                 it.chunks.size shouldBe 3
@@ -107,19 +108,21 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs "1234598".toByteArray()
+            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asString(Charsets.UTF_8) shouldBe body
+            decodeBody() shouldHaveSameElementsAs "1234598".toByteArray()
+            decodeBodyToString(UTF_8) shouldBe "1234598"
         }
     }
 
     "Can read empty chunked body with only extensions in last chunk" {
-        val body = "0;hi=true;bye=false,maybe;hi=22;cool\r\n\r\n"
+        val body = "0;hi=true;hi=22;bye=false,maybe;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
         val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED
-            asString(Charsets.UTF_8) shouldBe ""
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
                 it.chunks.size shouldBe 1
@@ -135,19 +138,22 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs "".toByteArray()
+            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asString(UTF_8) shouldBe body
+            decodeBody() shouldHaveSameElementsAs byteArrayOf()
+            decodeBodyToString(UTF_8) shouldBe ""
         }
     }
 
     "Can read chunked body with trailer" {
-        val body = "2\r\n98\r\n0\r\nHello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED"
+        val body = "2\r\n98\r\n0\r\nHello: hi there\r\nHello: wow\r\nBye: true\r\n\r\n"
 
-        val stream = body.toByteArray().inputStream()
+        // add some extra bytes to the stream so we can test the HTTP message is only read to its last byte
+        val stream = (body + "IGNORED").toByteArray().inputStream()
         val reader = EagerBodyReader(CHUNKED, stream, null, false)
 
         reader.run {
             bodyType shouldBe CHUNKED
-            asString(Charsets.UTF_8) shouldBe "98"
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()
                 it.chunks.size shouldBe 2
@@ -162,11 +168,14 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual RawHttpHeaders.Builder.newBuilder()
                         .with("Hello", "hi there")
-                        .with("Bye", "true")
                         .with("Hello", "wow")
+                        .with("Bye", "true")
                         .build()
             }
-            asBytes() shouldHaveSameElementsAs "98".toByteArray()
+            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asString(Charsets.UTF_8) shouldBe body
+            decodeBody() shouldHaveSameElementsAs "98".toByteArray()
+            decodeBodyToString(UTF_8) shouldBe "98"
         }
 
         // verify that the parser stopped at the correct body ending

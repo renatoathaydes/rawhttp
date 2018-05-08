@@ -1,7 +1,5 @@
 package com.athaydes.rawhttp.core;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -16,6 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 import static java.nio.charset.StandardCharsets.US_ASCII;
@@ -119,9 +119,9 @@ public abstract class BodyReader implements Closeable {
 
     /**
      * @return the HTTP message's body as bytes.
-     * Notice that this method does not decode the body, so if the body is chunked, for example,
-     * the bytes will represent the chunked body, not the decoded body.
-     * Use {@link #asChunkedBodyContents()} then {@link ChunkedBodyContents#getData()} to decode the body in such cases.
+     * Notice that this method does not decode the body.
+     * To get the decoded body, use
+     * {@link #decodeBody()} or {@link #decodeBodyToString(Charset)}.
      */
     public byte[] asBytes() {
         List<byte[]> bytesParts = new ArrayList<>();
@@ -164,12 +164,35 @@ public abstract class BodyReader implements Closeable {
 
     /**
      * Convert the HTTP message's body into a String.
+     * <p>
+     * The body is returned without being decoded (i.e. raw).
+     * To get the decoded body, use
+     * {@link #decodeBody()} or {@link #decodeBodyToString(Charset)}.
      *
      * @param charset text message's charset
-     * @return String representing the HTTP message's body.
+     * @return String representing the raw HTTP message's body.
      */
     public String asString(Charset charset) {
         return new String(asBytes(), charset);
+    }
+
+    /**
+     * Decode the HTTP message's body.
+     *
+     * @return the decoded message body
+     */
+    public byte[] decodeBody() {
+        return getConsumedBody().use(Function.identity(), ChunkedBodyContents::getData);
+    }
+
+    /**
+     * Decode the HTTP message's body, then turn it into a String using the given encoding.
+     *
+     * @param charset to use to convert the body into a String
+     * @return the decoded message body as a String
+     */
+    public String decodeBodyToString(Charset charset) {
+        return new String(decodeBody(), charset);
     }
 
     protected static class ConsumedBody {
