@@ -194,6 +194,25 @@ public class RawHttpHeaders {
     }
 
     /**
+     * Create a new builder containing all values of the given headers.
+     *
+     * @param headers to start from
+     * @return new builder
+     */
+    public static Builder newBuilder(RawHttpHeaders headers) {
+        return Builder.newBuilder(headers);
+    }
+
+    /**
+     * Create a new, empty builder.
+     *
+     * @return new builder
+     */
+    public static Builder newBuilder() {
+        return Builder.newBuilder();
+    }
+
+    /**
      * Builder of {@link RawHttpHeaders}.
      */
     public static class Builder {
