@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Simple implementation of {@link RawHttpClient} based on TCP {@link Socket}s.
@@ -133,13 +134,15 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             @Nullable Socket socket = socketByHost.get(host);
 
             if (socket == null || socket.isClosed() || !socket.isConnected()) {
+                boolean useHttps = "https".equalsIgnoreCase(uri.getScheme());
                 int port = uri.getPort();
-                if (port == -1) {
-                    port = "https".equalsIgnoreCase(uri.getScheme()) ?
-                            43 : 80;
+                if (port < 1) {
+                    port = useHttps ? 443 : 80;
                 }
                 try {
-                    socket = new Socket(host, port);
+                    socket = useHttps
+                            ? SSLSocketFactory.getDefault().createSocket(host, port)
+                            : new Socket(uri.getHost(), uri.getPort());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
