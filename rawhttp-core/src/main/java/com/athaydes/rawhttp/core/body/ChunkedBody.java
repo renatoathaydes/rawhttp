@@ -3,12 +3,11 @@ package com.athaydes.rawhttp.core.body;
 import com.athaydes.rawhttp.core.BodyReader;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
+import javax.annotation.Nullable;
 
 /**
  * This class encodes the contents of a {@link InputStream} with the "chunked" Transfer-Encoding.
@@ -26,11 +25,11 @@ public class ChunkedBody extends HttpMessageBody {
      * <p>
      * The stream is read lazily, so it shouldn't be closed until this body is consumed.
      *
-     * @param contentType Content-Type of the stream contents
      * @param stream      content to encode
+     * @param contentType Content-Type of the stream contents
      * @param chunkLength the length of each chunk
      */
-    public ChunkedBody(@Nullable String contentType, InputStream stream, int chunkLength) {
+    public ChunkedBody(InputStream stream, @Nullable String contentType, int chunkLength) {
         super(contentType);
         this.stream = stream;
         this.chunkLength = chunkLength;

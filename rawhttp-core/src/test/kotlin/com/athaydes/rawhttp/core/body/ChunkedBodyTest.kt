@@ -12,7 +12,7 @@ class ChunkedBodyTest : StringSpec({
 
     "Can encode chunked body with single chunk" {
         val stream = "Hi".byteInputStream()
-        val body = ChunkedBody(null, stream, 2)
+        val body = ChunkedBody(stream, null, 2)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
@@ -30,7 +30,7 @@ class ChunkedBodyTest : StringSpec({
 
     "Can encode chunked body with single chunk (bigger than the data)" {
         val stream = "Hi".byteInputStream()
-        val body = ChunkedBody(null, stream, 512)
+        val body = ChunkedBody(stream, null, 512)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
@@ -47,7 +47,7 @@ class ChunkedBodyTest : StringSpec({
 
     "Can encode chunked body with several chunks" {
         val stream = "Hello world".byteInputStream()
-        val body = ChunkedBody(null, stream, 4)
+        val body = ChunkedBody(stream, null, 4)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED

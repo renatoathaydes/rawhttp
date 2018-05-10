@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -130,8 +129,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @param request received by the server
          * @return the default ServerError (500) response to send out when an Exception occurs in the {@link Router}.
          */
-        @Nullable
-        default EagerHttpResponse<Void> serverErrorResponse(RawHttpRequest request) {
+        default Optional<EagerHttpResponse<Void>> serverErrorResponse(RawHttpRequest request) {
             return null;
         }
 
@@ -139,8 +137,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @param request received by the server
          * @return the default NotFound (404) response to send out when an Exception occurs in the {@link Router}.
          */
-        @Nullable
-        default EagerHttpResponse<Void> notFoundResponse(RawHttpRequest request) {
+        default Optional<EagerHttpResponse<Void>> notFoundResponse(RawHttpRequest request) {
             return null;
         }
 
@@ -272,17 +269,13 @@ public class TcpRawHttpServer implements RawHttpServer {
             try {
                 response = router.route(request);
                 if (response == null) {
-                    response = options.notFoundResponse(request);
-                    if (response == null) {
-                        response = HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion());
-                    }
+                    response = options.notFoundResponse(request).orElseGet(() ->
+                            HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion()));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                response = options.serverErrorResponse(request);
-                if (response == null) {
-                    response = HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion());
-                }
+                response = options.serverErrorResponse(request).orElseGet(() ->
+                        HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion()));
             }
             return withAutoHeaders(response);
         }
