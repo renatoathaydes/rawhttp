@@ -38,7 +38,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             .with("Server", "RawHTTP")
             .build();
 
-    public static final RawHttp STRICT_HTTP = new RawHttp(RawHttpOptions.Builder.newBuilder()
+    public static final RawHttp STRICT_HTTP = new RawHttp(RawHttpOptions.newBuilder()
             .doNotAllowNewLineWithoutReturn()
             .doNotInsertHostHeaderIfMissing()
             .build());

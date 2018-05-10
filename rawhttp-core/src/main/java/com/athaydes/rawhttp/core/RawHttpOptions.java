@@ -57,6 +57,13 @@ public class RawHttpOptions {
     }
 
     /**
+     * @return a new builder of {@link RawHttpOptions}.
+     */
+    public static Builder newBuilder() {
+        return Builder.newBuilder();
+    }
+
+    /**
      * Builder for {@link RawHttpOptions}.
      */
     public static class Builder {
