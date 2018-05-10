@@ -8,6 +8,7 @@ import com.athaydes.rawhttp.core.RawHttpOptions;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -19,7 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
@@ -95,7 +95,7 @@ public class TcpRawHttpServer implements RawHttpServer {
     /**
      * Configuration options for {@link TcpRawHttpServer}.
      */
-    public interface TcpRawHttpServerOptions {
+    public interface TcpRawHttpServerOptions extends Closeable {
 
         /**
          * Create a server socket for the server to use.
@@ -154,6 +154,10 @@ public class TcpRawHttpServer implements RawHttpServer {
         default Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(@SuppressWarnings("unused") int statusCode) {
             return Optional.of(() -> getCurrentDateHeader().and(SERVER_HEADER));
         }
+
+        @Override
+        default void close() throws IOException {
+        }
     }
 
     private static class RouterAndSocket {
@@ -162,9 +166,7 @@ public class TcpRawHttpServer implements RawHttpServer {
         private final ServerSocket socket;
         private final ExecutorService executorService;
         private final RawHttp http;
-        private final Function<RawHttpRequest, EagerHttpResponse<Void>> serverErrorResponse;
-        private final Function<RawHttpRequest, EagerHttpResponse<Void>> notFoundResponse;
-        private final Function<Integer, Optional<Supplier<RawHttpHeaders>>> autoHeadersForStatusCode;
+        private final TcpRawHttpServerOptions options;
 
         RouterAndSocket(Router router,
                         TcpRawHttpServerOptions options) throws IOException {
@@ -172,9 +174,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             this.socket = options.getServerSocket();
             this.http = options.getRawHttp();
             this.executorService = options.getExecutorService();
-            this.autoHeadersForStatusCode = options::autoHeadersSupplier;
-            this.serverErrorResponse = options::serverErrorResponse;
-            this.notFoundResponse = options::notFoundResponse;
+            this.options = options;
 
             start();
         }
@@ -272,14 +272,14 @@ public class TcpRawHttpServer implements RawHttpServer {
             try {
                 response = router.route(request);
                 if (response == null) {
-                    response = notFoundResponse.apply(request);
+                    response = options.notFoundResponse(request);
                     if (response == null) {
                         response = HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion());
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                response = serverErrorResponse.apply(request);
+                response = options.serverErrorResponse(request);
                 if (response == null) {
                     response = HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion());
                 }
@@ -294,12 +294,18 @@ public class TcpRawHttpServer implements RawHttpServer {
                 throw new RuntimeException(e);
             } finally {
                 executorService.shutdown();
+
+                try {
+                    options.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         private <R> RawHttpResponse<R> withAutoHeaders(RawHttpResponse<R> response) {
             Integer statusCode = response.getStatusCode();
-            Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = autoHeadersForStatusCode.apply(statusCode);
+            Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = options.autoHeadersSupplier(statusCode);
             return autoHeadersSupplier.map(s -> response.withHeaders(s.get())).orElse(response);
         }
 

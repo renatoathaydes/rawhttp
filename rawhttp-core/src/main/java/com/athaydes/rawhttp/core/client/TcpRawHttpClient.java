@@ -110,6 +110,10 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         RawHttpResponse<Void> onResponse(
                 Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException;
 
+        @Override
+        default void close() throws IOException {
+        }
+
     }
 
     /**
