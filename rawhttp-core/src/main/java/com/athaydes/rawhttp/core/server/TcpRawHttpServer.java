@@ -55,6 +55,9 @@ public class TcpRawHttpServer implements RawHttpServer {
         this.options = options;
     }
 
+    /**
+     * @return the options used by this server
+     */
     public TcpRawHttpServerOptions getOptions() {
         return options;
     }
@@ -130,7 +133,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @return the default ServerError (500) response to send out when an Exception occurs in the {@link Router}.
          */
         default Optional<EagerHttpResponse<Void>> serverErrorResponse(RawHttpRequest request) {
-            return null;
+            return Optional.empty();
         }
 
         /**
@@ -138,7 +141,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @return the default NotFound (404) response to send out when an Exception occurs in the {@link Router}.
          */
         default Optional<EagerHttpResponse<Void>> notFoundResponse(RawHttpRequest request) {
-            return null;
+            return Optional.empty();
         }
 
         /**
@@ -216,7 +219,7 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         private void handle(Socket client) {
-            RawHttpRequest request = null;
+            RawHttpRequest request;
             boolean serverWillCloseConnection = false;
 
             while (!serverWillCloseConnection) {

@@ -14,6 +14,7 @@ import io.kotlintest.matchers.shouldHave
 import io.kotlintest.specs.StringSpec
 import java.net.Socket
 import java.net.SocketException
+import java.util.Optional
 
 class TcpRawHttpServerTests : StringSpec() {
 
@@ -24,7 +25,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
     private fun startServer() {
         server.start { req ->
-            when (req.uri.path) {
+            Optional.ofNullable(when (req.uri.path) {
                 "/hello", "/" ->
                     when (req.method) {
                         "GET" ->
@@ -44,7 +45,7 @@ class TcpRawHttpServerTests : StringSpec() {
                     http.parseResponse("HTTP/1.1 404 Not Found\n" +
                             "Content-Type: text/plain"
                     ).replaceBody(StringBody("Content was not found"))
-            }
+            })
         }
     }
 
