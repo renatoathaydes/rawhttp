@@ -152,6 +152,22 @@ public class TcpRawHttpServer implements RawHttpServer {
             return Optional.of(() -> getCurrentDateHeader().and(SERVER_HEADER));
         }
 
+        /**
+         * Callback that will be called every time the server receives a HTTP request, but before it sends out a
+         * HTTP response.
+         * <p>
+         * The actual response the client will see is the one returned by this method.
+         *
+         * @param request  received by the server
+         * @param response the server routed to. Normally, this callback should return this response with possibly
+         *                 minor alterations.
+         * @return the response the client should receive. Must not be null.
+         */
+        default RawHttpResponse<Void> onResponse(RawHttpRequest request, RawHttpResponse<Void> response)
+                throws IOException {
+            return response;
+        }
+
         @Override
         default void close() throws IOException {
         }
@@ -214,7 +230,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                     // If the "close" connection option is present, the connection will
                     // not persist after the current response
                     serverWillCloseConnection = connectionOption
-                            .map(c -> "close".equalsIgnoreCase(c))
+                            .map("close"::equalsIgnoreCase)
                             .orElse(false);
 
                     if (!serverWillCloseConnection) {
@@ -228,7 +244,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                         boolean serverShouldPersistConnection =
                                 !httpVersion.isOlderThan(HttpVersion.HTTP_1_1)
                                         || (httpVersion == HttpVersion.HTTP_1_0 && connectionOption
-                                        .map(c -> "keep-alive".equalsIgnoreCase(c))
+                                        .map("keep-alive"::equalsIgnoreCase)
                                         .orElse(false));
                         serverWillCloseConnection = !serverShouldPersistConnection;
                     }
@@ -264,20 +280,19 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
-        private RawHttpResponse<?> route(RawHttpRequest request) {
-            RawHttpResponse<?> response;
+        private RawHttpResponse<?> route(RawHttpRequest request) throws IOException {
+            RawHttpResponse<Void> response;
             try {
-                response = router.route(request);
-                if (response == null) {
-                    response = options.notFoundResponse(request).orElseGet(() ->
-                            HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion()));
-                }
+                //noinspection unchecked (it's always safe to cast generic type to Void)
+                response = router.route(request).map(res -> (RawHttpResponse<Void>) res)
+                        .orElseGet(() -> options.notFoundResponse(request).orElseGet(() ->
+                                HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion())));
             } catch (Exception e) {
                 e.printStackTrace();
                 response = options.serverErrorResponse(request).orElseGet(() ->
                         HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion()));
             }
-            return withAutoHeaders(response);
+            return options.onResponse(request, withAutoHeaders(response));
         }
 
         void stop() {
@@ -296,7 +311,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
-        private <R> RawHttpResponse<R> withAutoHeaders(RawHttpResponse<R> response) {
+        private RawHttpResponse<Void> withAutoHeaders(RawHttpResponse<Void> response) {
             Integer statusCode = response.getStatusCode();
             Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = options.autoHeadersSupplier(statusCode);
             return autoHeadersSupplier.map(s -> response.withHeaders(s.get())).orElse(response);

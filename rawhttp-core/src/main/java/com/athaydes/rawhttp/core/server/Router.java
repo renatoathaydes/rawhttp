@@ -2,7 +2,7 @@ package com.athaydes.rawhttp.core.server;
 
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * HTTP Server router.
@@ -17,9 +17,9 @@ public interface Router {
      *
      * @param request HTTP request
      * @return a HTTP response to send to the client.
-     * If null, a default 404 response is returned. If an Exception happens, a default 500 response is returned.
+     * If an empty Optional is returned, the server will use a default 404 response.
+     * If an Exception happens, a default 500 response is returned.
      */
-    @Nullable
-    RawHttpResponse<?> route(RawHttpRequest request);
+    Optional<RawHttpResponse<?>> route(RawHttpRequest request);
 
 }
