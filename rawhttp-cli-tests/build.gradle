@@ -14,8 +14,7 @@ compileKotlin {
 }
 
 test {
-    systemProperty 'RAWHTTP_CLI_JAR', project(':rawhttp-cli').ext.runnableJar
-    systemProperty 'JAVA_HOME', System.getProperty('java.home')
+    systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
     dependsOn ':rawhttp-cli:fatJar'
 }
 

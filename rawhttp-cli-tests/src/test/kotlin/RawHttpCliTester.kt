@@ -65,11 +65,9 @@ abstract class RawHttpCliTester {
         var httpServerThread: Thread? = null
 
         init {
-            val rawhttpCliJar = System.getProperty("RAWHTTP_CLI_JAR")
-                    ?: throw IllegalStateException("RAWHTTP_CLI_JAR system property must be set")
+            val rawhttpCliJar = tryLocateRawHttpCliJar()
 
-            val javaHome = System.getProperty("JAVA_HOME")
-                    ?: throw IllegalStateException("JAVA_HOME system property must be set")
+            val javaHome = System.getProperty("java.home")
 
             val cliJar = File(rawhttpCliJar)
             if (!cliJar.isFile) {
@@ -84,6 +82,21 @@ abstract class RawHttpCliTester {
             CLI_EXECUTABLE = arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
 
             println("Running tests with executable: ${CLI_EXECUTABLE.joinToString(" ")}")
+        }
+
+        private fun tryLocateRawHttpCliJar(): String {
+            val guessLocation: () -> String? = {
+                val workingDir = File(System.getProperty("user.dir"))
+                listOf(".", "..")
+                        .map { File(workingDir, "$it/rawhttp-cli/build/libs/rawhttp.jar").canonicalFile }
+                        .filter { it.isFile }
+                        .map { it.absolutePath }
+                        .firstOrNull()
+            }
+
+            return System.getProperty("rawhttp.cli.jar")
+                    ?: guessLocation()
+                    ?: throw IllegalStateException("rawhttp.cli.jar system property must be set")
         }
 
         @BeforeClass
