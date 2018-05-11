@@ -10,13 +10,16 @@ public class RawHttpOptions {
     private static final RawHttpOptions DEFAULT_INSTANCE = Builder.newBuilder().build();
 
     private final boolean insertHostHeaderIfMissing;
+    private final boolean insertHttpVersionIfMissing;
     private final boolean allowNewLineWithoutReturn;
     private final boolean ignoreLeadingEmptyLine;
 
     private RawHttpOptions(boolean insertHostHeaderIfMissing,
+                           boolean insertHttpVersionIfMissing,
                            boolean allowNewLineWithoutReturn,
                            boolean ignoreLeadingEmptyLine) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
+        this.insertHttpVersionIfMissing = insertHttpVersionIfMissing;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
     }
@@ -36,10 +39,18 @@ public class RawHttpOptions {
     /**
      * @return whether or not a Host header should be automatically inserted in
      * {@link RawHttpRequest} if missing. The host is obtained from the
-     * {@link MethodLine#getUri()}, if possible.
+     * {@link RequestLine#getUri()}, if possible.
      */
     public boolean insertHostHeaderIfMissing() {
         return insertHostHeaderIfMissing;
+    }
+
+    /**
+     * @return whether or not a HTTP version should be automatically inserted in a
+     * {@link HttpMessage} if missing.
+     */
+    public boolean insertHttpVersionIfMissing() {
+        return insertHttpVersionIfMissing;
     }
 
     /**
@@ -71,6 +82,7 @@ public class RawHttpOptions {
         private boolean insertHostHeaderIfMissing = true;
         private boolean allowNewLineWithoutReturn = true;
         private boolean ignoreLeadingEmptyLine = true;
+        private boolean insertHttpVersionIfMissing = true;
 
         /**
          * @return a new builder of {@link RawHttpOptions}.
@@ -93,6 +105,22 @@ public class RawHttpOptions {
          */
         public Builder doNotInsertHostHeaderIfMissing() {
             this.insertHostHeaderIfMissing = false;
+            return this;
+        }
+
+        /**
+         * Configure the {@link RawHttp} instance to NOT insert the HTTP version if missing
+         * from a HTTP message.
+         * <p>
+         * If this option is used and a HTTP message which does not include a HTTP version is parsed, an Exception
+         * will be thrown because it's illegal for HTTP messages to not include a version.
+         * <p>
+         * The default HTTP version is {@code HTTP/1.1}.
+         *
+         * @return this
+         */
+        public Builder doNotInsertHttpVersionIfMissing() {
+            this.insertHttpVersionIfMissing = false;
             return this;
         }
 
@@ -129,7 +157,8 @@ public class RawHttpOptions {
          * @see RawHttp#RawHttp(RawHttpOptions)
          */
         public RawHttpOptions build() {
-            return new RawHttpOptions(insertHostHeaderIfMissing, allowNewLineWithoutReturn, ignoreLeadingEmptyLine);
+            return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine);
         }
 
     }

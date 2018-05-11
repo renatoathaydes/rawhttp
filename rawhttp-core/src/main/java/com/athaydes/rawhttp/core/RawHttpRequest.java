@@ -12,17 +12,17 @@ import javax.annotation.Nullable;
  */
 public class RawHttpRequest extends HttpMessage {
 
-    private final MethodLine methodLine;
+    private final RequestLine requestLine;
 
     @Nullable
     private final InetAddress senderAddress;
 
-    public RawHttpRequest(MethodLine methodLine,
+    public RawHttpRequest(RequestLine requestLine,
                           RawHttpHeaders headers,
                           @Nullable BodyReader bodyReader,
                           @Nullable InetAddress senderAddress) {
         super(headers, bodyReader);
-        this.methodLine = methodLine;
+        this.requestLine = requestLine;
         this.senderAddress = senderAddress;
     }
 
@@ -30,19 +30,19 @@ public class RawHttpRequest extends HttpMessage {
      * @return this request's method name.
      */
     public String getMethod() {
-        return methodLine.getMethod();
+        return requestLine.getMethod();
     }
 
     /**
      * @return the URI in the method-line.
      */
     public URI getUri() {
-        return methodLine.getUri();
+        return requestLine.getUri();
     }
 
     @Override
-    public MethodLine getStartLine() {
-        return methodLine;
+    public RequestLine getStartLine() {
+        return requestLine;
     }
 
     /**
@@ -67,7 +67,7 @@ public class RawHttpRequest extends HttpMessage {
 
     @Override
     public RawHttpRequest replaceBody(HttpMessageBody body) {
-        return new RawHttpRequest(methodLine,
+        return new RawHttpRequest(requestLine,
                 body.headersFrom(getHeaders()),
                 body.toBodyReader(),
                 getSenderAddress().orElse(null));
@@ -75,20 +75,20 @@ public class RawHttpRequest extends HttpMessage {
 
     @Override
     public RawHttpRequest withHeaders(RawHttpHeaders headers) {
-        return new RawHttpRequest(methodLine,
+        return new RawHttpRequest(requestLine,
                 getHeaders().and(headers),
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));
     }
 
     /**
-     * Create a copy of this HTTP request, replacing its methodLine with the provided one.
+     * Create a copy of this HTTP request, replacing its requestLine with the provided one.
      *
-     * @param methodLine to replace
-     * @return copy of this HTTP message with the provided startLine
+     * @param requestLine to replace
+     * @return copy of this HTTP message with the provided requestLine
      */
-    public RawHttpRequest withMethodLine(MethodLine methodLine) {
-        return new RawHttpRequest(methodLine,
+    public RawHttpRequest withRequestLine(RequestLine requestLine) {
+        return new RawHttpRequest(requestLine,
                 getHeaders(),
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));

@@ -4,7 +4,7 @@ import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.HttpVersion;
 import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpResponse;
-import com.athaydes.rawhttp.core.StatusCodeLine;
+import com.athaydes.rawhttp.core.StatusLine;
 import com.athaydes.rawhttp.core.body.StringBody;
 import java.io.IOException;
 
@@ -12,10 +12,14 @@ import static com.athaydes.rawhttp.core.server.TcpRawHttpServer.STRICT_HTTP;
 
 final class HttpResponses {
 
-    private static final StatusCodeLine STATUS_200_HTTP1_0 = RawHttp.parseStatusCodeLine("HTTP/1.0 200 OK");
-    private static final StatusCodeLine STATUS_200_HTTP1_1 = RawHttp.parseStatusCodeLine("HTTP/1.1 200 OK");
-    private static final StatusCodeLine STATUS_405_HTTP1_0 = RawHttp.parseStatusCodeLine("HTTP/1.0 405 Method Not Allowed");
-    private static final StatusCodeLine STATUS_405_HTTP1_1 = RawHttp.parseStatusCodeLine("HTTP/1.1 405 Method Not Allowed");
+    private static final StatusLine STATUS_200_HTTP1_0 = RawHttp.parseStatusLine(
+            "HTTP/1.0 200 OK", false);
+    private static final StatusLine STATUS_200_HTTP1_1 = RawHttp.parseStatusLine(
+            "HTTP/1.1 200 OK", false);
+    private static final StatusLine STATUS_405_HTTP1_0 = RawHttp.parseStatusLine(
+            "HTTP/1.0 405 Method Not Allowed", false);
+    private static final StatusLine STATUS_405_HTTP1_1 = RawHttp.parseStatusLine("" +
+            "HTTP/1.1 405 Method Not Allowed", false);
 
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_0;
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_1;
@@ -24,7 +28,7 @@ final class HttpResponses {
 
     static {
         OK_RESPONSE_HTTP1_0 = STRICT_HTTP.parseResponse(STATUS_200_HTTP1_0 + "");
-        OK_RESPONSE_HTTP1_1 = OK_RESPONSE_HTTP1_0.withStatusCodeLine(STATUS_200_HTTP1_1);
+        OK_RESPONSE_HTTP1_1 = OK_RESPONSE_HTTP1_0.withStatusLine(STATUS_200_HTTP1_1);
 
         StringBody status405body = new StringBody("Method not allowed.", "text/plain");
 
@@ -35,7 +39,7 @@ final class HttpResponses {
                     .eagerly();
 
             METHOD_NOT_ALLOWED_RESPONSE_HTTP1_1 = METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0
-                    .withStatusCodeLine(STATUS_405_HTTP1_1);
+                    .withStatusLine(STATUS_405_HTTP1_1);
         } catch (IOException e) {
             throw new IllegalStateException("Default responses could not be parsed");
         }

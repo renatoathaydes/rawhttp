@@ -19,7 +19,7 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
     private EagerHttpResponse(@Nullable Response libResponse,
                               @Nullable RawHttpRequest request,
-                              StatusCodeLine startLine,
+                              StatusLine startLine,
                               RawHttpHeaders headers,
                               @Nullable EagerBodyReader bodyReader) {
         super(libResponse,
@@ -90,10 +90,10 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
                 getBody().orElse(null));
     }
 
-    public EagerHttpResponse<Response> withStatusCodeLine(StatusCodeLine statusCodeLine) {
+    public EagerHttpResponse<Response> withStatusLine(StatusLine statusLine) {
         return new EagerHttpResponse<>(getLibResponse().orElse(null),
                 getRequest().orElse(null),
-                statusCodeLine,
+                statusLine,
                 getHeaders(),
                 getBody().orElse(null));
     }

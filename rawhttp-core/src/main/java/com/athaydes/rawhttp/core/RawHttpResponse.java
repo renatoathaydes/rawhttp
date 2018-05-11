@@ -21,17 +21,17 @@ public class RawHttpResponse<Response> extends HttpMessage {
     @Nullable
     private final RawHttpRequest request;
 
-    private final StatusCodeLine statusCodeLine;
+    private final StatusLine statusLine;
 
     public RawHttpResponse(@Nullable Response libResponse,
                            @Nullable RawHttpRequest request,
-                           StatusCodeLine statusCodeLine,
+                           StatusLine statusLine,
                            RawHttpHeaders headers,
                            @Nullable BodyReader bodyReader) {
         super(headers, bodyReader);
         this.libResponse = libResponse;
         this.request = request;
-        this.statusCodeLine = statusCodeLine;
+        this.statusLine = statusLine;
     }
 
     /**
@@ -49,8 +49,8 @@ public class RawHttpResponse<Response> extends HttpMessage {
     }
 
     @Override
-    public StatusCodeLine getStartLine() {
-        return statusCodeLine;
+    public StatusLine getStartLine() {
+        return statusLine;
     }
 
     /**
@@ -58,7 +58,7 @@ public class RawHttpResponse<Response> extends HttpMessage {
      * @see #getStartLine()
      */
     public int getStatusCode() {
-        return statusCodeLine.getStatusCode();
+        return statusLine.getStatusCode();
     }
 
     /**
@@ -106,24 +106,24 @@ public class RawHttpResponse<Response> extends HttpMessage {
 
     @Override
     public RawHttpResponse<Response> replaceBody(HttpMessageBody body) {
-        return new RawHttpResponse<>(libResponse, request, statusCodeLine,
+        return new RawHttpResponse<>(libResponse, request, statusLine,
                 body.headersFrom(getHeaders()), body.toBodyReader());
     }
 
     @Override
     public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
-        return new RawHttpResponse<>(libResponse, request, statusCodeLine,
+        return new RawHttpResponse<>(libResponse, request, statusLine,
                 getHeaders().and(headers), getBody().orElse(null));
     }
 
     /**
-     * Create a copy of this HTTP response, replacing its statusCodeLine with the provided one.
+     * Create a copy of this HTTP response, replacing its statusLine with the provided one.
      *
-     * @param statusCodeLine to replace
-     * @return copy of this HTTP message with the provided statusCodeLine
+     * @param statusLine to replace
+     * @return copy of this HTTP message with the provided statusLine
      */
-    public RawHttpResponse<Response> withStatusCodeLine(StatusCodeLine statusCodeLine) {
-        return new RawHttpResponse<>(libResponse, request, statusCodeLine,
+    public RawHttpResponse<Response> withStatusLine(StatusLine statusLine) {
+        return new RawHttpResponse<>(libResponse, request, statusLine,
                 getHeaders(), getBody().orElse(null));
     }
 

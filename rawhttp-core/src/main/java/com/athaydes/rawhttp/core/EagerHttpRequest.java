@@ -16,11 +16,11 @@ import static com.athaydes.rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeade
  */
 public class EagerHttpRequest extends RawHttpRequest {
 
-    private EagerHttpRequest(MethodLine methodLine,
+    private EagerHttpRequest(RequestLine requestLine,
                              RawHttpHeaders headers,
                              @Nullable BodyReader bodyReader,
                              @Nullable InetAddress senderAddress) {
-        super(methodLine, headers, bodyReader, senderAddress);
+        super(requestLine, headers, bodyReader, senderAddress);
     }
 
     /**
@@ -78,8 +78,8 @@ public class EagerHttpRequest extends RawHttpRequest {
     }
 
     @Override
-    public EagerHttpRequest withMethodLine(MethodLine methodLine) {
-        return new EagerHttpRequest(methodLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
+    public EagerHttpRequest withRequestLine(RequestLine requestLine) {
+        return new EagerHttpRequest(requestLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
     }
 
 }

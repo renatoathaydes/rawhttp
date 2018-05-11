@@ -7,11 +7,10 @@ import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
-import com.athaydes.rawhttp.core.StatusCodeLine;
+import com.athaydes.rawhttp.core.StatusLine;
 import com.athaydes.rawhttp.core.client.RawHttpClient;
 import org.apache.http.Header;
 import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.InputStreamEntity;
@@ -69,8 +68,8 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         return new RawHttpResponse<>(response, request, adaptStatus(response.getStatusLine()), headers, body);
     }
 
-    private StatusCodeLine adaptStatus(StatusLine statusLine) {
-        return new StatusCodeLine(
+    private StatusLine adaptStatus(org.apache.http.StatusLine statusLine) {
+        return new StatusLine(
                 HttpVersion.parse(statusLine.getProtocolVersion().toString()),
                 statusLine.getStatusCode(),
                 statusLine.getReasonPhrase());

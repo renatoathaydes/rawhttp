@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -36,6 +37,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @see RawHttpHeaders
  */
 public class RawHttp {
+
+    private static final Pattern statusCodePattern = Pattern.compile("\\d{3}");
 
     private final RawHttpOptions options;
 
@@ -117,18 +120,21 @@ public class RawHttp {
             throw new InvalidHttpRequest("No content", 0);
         }
 
-        MethodLine methodLine = parseMethodLine(metadataLines.remove(0));
+        RequestLine requestLine = parseRequestLine(
+                metadataLines.remove(0),
+                options.insertHttpVersionIfMissing());
+
         RawHttpHeaders.Builder headersBuilder = parseHeaders(metadataLines, InvalidHttpRequest::new);
 
         // do a little cleanup to make sure the request is actually valid
-        methodLine = verifyHost(methodLine, headersBuilder);
+        requestLine = verifyHost(requestLine, headersBuilder);
 
         RawHttpHeaders headers = headersBuilder.build();
 
         boolean hasBody = requestHasBody(headers);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
 
-        return new RawHttpRequest(methodLine, headers, bodyReader, senderAddress);
+        return new RawHttpRequest(requestLine, headers, bodyReader, senderAddress);
     }
 
     /**
@@ -179,7 +185,7 @@ public class RawHttp {
      * Parses the HTTP response produced by the given stream.
      *
      * @param inputStream producing a HTTP response
-     * @param methodLine  optional {@link MethodLine} of the request which results in this response.
+     * @param requestLine optional {@link RequestLine} of the request which results in this response.
      *                    If provided, it is taken into consideration when deciding whether the response contains
      *                    a body. See <a href="https://tools.ietf.org/html/rfc7230#section-3.3">Section 3.3</a>
      *                    of RFC-7230 for details.
@@ -188,7 +194,7 @@ public class RawHttp {
      * @throws IOException         if a problem occurs accessing the stream
      */
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
-                                               @Nullable MethodLine methodLine) throws IOException {
+                                               @Nullable RequestLine requestLine) throws IOException {
         List<String> metadataLines = parseMetadataLines(inputStream,
                 InvalidHttpResponse::new,
                 options.allowNewLineWithoutReturn(),
@@ -198,13 +204,16 @@ public class RawHttp {
             throw new InvalidHttpResponse("No content", 0);
         }
 
-        StatusCodeLine statusCodeLine = parseStatusCodeLine(metadataLines.remove(0));
+        StatusLine statusLine = parseStatusLine(
+                metadataLines.remove(0),
+                options.insertHttpVersionIfMissing());
+
         RawHttpHeaders headers = parseHeaders(metadataLines, InvalidHttpResponse::new).build();
 
-        boolean hasBody = responseHasBody(statusCodeLine, methodLine);
+        boolean hasBody = responseHasBody(statusLine, requestLine);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
 
-        return new RawHttpResponse<>(null, null, statusCodeLine, headers, bodyReader);
+        return new RawHttpResponse<>(null, null, statusLine, headers, bodyReader);
     }
 
     @Nullable
@@ -309,42 +318,42 @@ public class RawHttp {
     }
 
     /**
-     * Determines whether a response with the given status code should have a body.
+     * Determines whether a response with the given status-line should have a body.
      * <p>
-     * This method ignores the method line of the request which produced such response. If the request
-     * is known, use the {@link #responseHasBody(StatusCodeLine, MethodLine)} method instead.
+     * This method ignores the request-line of the request which produced such response. If the request
+     * is known, use the {@link #responseHasBody(StatusLine, RequestLine)} method instead.
      *
-     * @param statusCodeLine status code of response
+     * @param statusLine status-line of response
      * @return true if such response has a body, false otherwise
      */
-    public static boolean responseHasBody(StatusCodeLine statusCodeLine) {
-        return responseHasBody(statusCodeLine, null);
+    public static boolean responseHasBody(StatusLine statusLine) {
+        return responseHasBody(statusLine, null);
     }
 
     /**
-     * Determines whether a response with the given status code should have a body.
+     * Determines whether a response with the given status-line should have a body.
      * <p>
-     * If provided, the method line of the request which produced such response is taken into
+     * If provided, the request-line of the request which produced such response is taken into
      * consideration. See <a href="https://tools.ietf.org/html/rfc7230#section-3.3">Section 3.3</a>
      * of RFC-7230 for details.
      *
-     * @param statusCodeLine status code of response
-     * @param methodLine     method line of request, if any
+     * @param statusLine  status-line of response
+     * @param requestLine request-line of request, if any
      * @return true if such response has a body, false otherwise
      */
-    public static boolean responseHasBody(StatusCodeLine statusCodeLine,
-                                          @Nullable MethodLine methodLine) {
-        if (methodLine != null) {
-            if (methodLine.getMethod().equalsIgnoreCase("HEAD")) {
+    public static boolean responseHasBody(StatusLine statusLine,
+                                          @Nullable RequestLine requestLine) {
+        if (requestLine != null) {
+            if (requestLine.getMethod().equalsIgnoreCase("HEAD")) {
                 return false; // HEAD response must never have a body
             }
-            if (methodLine.getMethod().equalsIgnoreCase("CONNECT") &&
-                    startsWith(2, statusCodeLine.getStatusCode())) {
+            if (requestLine.getMethod().equalsIgnoreCase("CONNECT") &&
+                    startsWith(2, statusLine.getStatusCode())) {
                 return false; // CONNECT successful means start tunelling
             }
         }
 
-        int statusCode = statusCodeLine.getStatusCode();
+        int statusCode = statusLine.getStatusCode();
 
         // All 1xx (Informational), 204 (No Content), and 304 (Not Modified)
         // responses do not include a message body.
@@ -382,77 +391,92 @@ public class RawHttp {
     }
 
     /**
-     * Parses a HTTP response's status code line.
+     * Parses a HTTP response's status-line.
      *
-     * @param line status code line
-     * @return the status code line
+     * @param line                       status-line
+     * @param insertHttpVersionIfMissing whether to insert a HTTP version if it's missing
+     * @return the status-line
      * @throws InvalidHttpResponse if the status code line is invalid
      */
-    public static StatusCodeLine parseStatusCodeLine(String line) {
+    public static StatusLine parseStatusLine(String line,
+                                             boolean insertHttpVersionIfMissing) {
         if (line.trim().isEmpty()) {
             throw new InvalidHttpResponse("Empty status line", 1);
         }
-        String[] parts = line.split("\\s+", 3);
+        String[] parts = line.split("\\s", 3);
 
-        String httpVersion = "HTTP/1.1";
+        String httpVersion = null;
         String statusCode;
         String reason = "";
 
-        switch (parts.length) {
-            // accept just a status code
-            case 1:
+        if (parts.length == 1) {
+            statusCode = parts[0];
+        } else {
+            if (parts[0].startsWith("HTTP")) {
+                httpVersion = parts[0];
+                statusCode = parts[1];
+                if (parts.length == 3) {
+                    reason = parts[2];
+                }
+            } else {
                 statusCode = parts[0];
-                break;
-            case 2:
-                httpVersion = parts[0];
-                statusCode = parts[1];
-                break;
-            case 3:
-                httpVersion = parts[0];
-                statusCode = parts[1];
-                reason = parts[2];
-                break;
-            default:
-                // should never happen, we limit the split to 3 parts
-                throw new IllegalStateException();
+
+                // parts 1 and 2, if it's there, must be "reason"
+                reason = parts[1];
+                if (parts.length == 3) {
+                    reason += " " + parts[2];
+                }
+            }
         }
 
         HttpVersion version;
-        try {
-            version = HttpVersion.parse(httpVersion);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidHttpResponse("Invalid HTTP version", 1);
+        if (httpVersion == null) {
+            if (insertHttpVersionIfMissing) {
+                version = HttpVersion.HTTP_1_1;
+            } else {
+                throw new InvalidHttpResponse("Missing HTTP version", 1);
+            }
+        } else {
+            try {
+                version = HttpVersion.parse(httpVersion);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidHttpResponse("Invalid HTTP version", 1);
+            }
+        }
+
+        if (!statusCodePattern.matcher(statusCode).matches()) {
+            throw new InvalidHttpResponse("Invalid status code", 1);
         }
 
         try {
-            return new StatusCodeLine(version, Integer.parseInt(statusCode), reason);
+            return new StatusLine(version, Integer.parseInt(statusCode), reason);
         } catch (NumberFormatException e) {
-            throw new InvalidHttpResponse("Invalid status", 1);
+            throw new InvalidHttpResponse("Invalid status code", 1);
         }
 
     }
 
-    private MethodLine verifyHost(MethodLine methodLine, RawHttpHeaders.Builder headers) {
+    private RequestLine verifyHost(RequestLine requestLine, RawHttpHeaders.Builder headers) {
         List<String> host = headers.build().get("Host");
         if (host.isEmpty()) {
             if (!options.insertHostHeaderIfMissing()) {
                 throw new InvalidHttpRequest("Host header is missing", 1);
-            } else if (methodLine.getUri().getHost() == null) {
+            } else if (requestLine.getUri().getHost() == null) {
                 throw new InvalidHttpRequest("Host not given either in method line or Host header", 1);
             } else {
                 // add the Host header to make sure the request is legal
-                headers.with("Host", methodLine.getUri().getHost());
+                headers.with("Host", requestLine.getUri().getHost());
             }
-            return methodLine;
+            return requestLine;
         } else if (host.size() == 1) {
-            if (methodLine.getUri().getHost() != null) {
+            if (requestLine.getUri().getHost() != null) {
                 throw new InvalidHttpRequest("Host specified both in Host header and in method line", 1);
             }
             try {
-                MethodLine newMethodLine = methodLine.withHost(host.iterator().next());
+                RequestLine newRequestLine = requestLine.withHost(host.iterator().next());
                 // cleanup the host header
-                headers.overwrite("Host", newMethodLine.getUri().getHost());
-                return newMethodLine;
+                headers.overwrite("Host", newRequestLine.getUri().getHost());
+                return newRequestLine;
             } catch (IllegalArgumentException e) {
                 int lineNumber = headers.getLineNumbers("Host").get(0);
                 throw new InvalidHttpRequest("Invalid host header: " + e.getMessage(), lineNumber);
@@ -464,30 +488,38 @@ public class RawHttp {
     }
 
     /**
-     * Parses a HTTP request's method line.
+     * Parses a HTTP request's request-line.
      *
-     * @param methodLine method line
-     * @return the method line
-     * @throws InvalidHttpRequest if the method line is invalid
+     * @param requestLine               request line
+     * @param inserHttpVersionIfMissing whether to insert a HTTP version if it's missing
+     * @return the request line
+     * @throws InvalidHttpRequest if the request line is invalid
      */
-    public static MethodLine parseMethodLine(String methodLine) {
-        if (methodLine.isEmpty()) {
-            throw new InvalidHttpRequest("Empty method line", 1);
+    public static RequestLine parseRequestLine(String requestLine,
+                                               boolean inserHttpVersionIfMissing) {
+        if (requestLine.isEmpty()) {
+            throw new InvalidHttpRequest("Empty request line", 1);
         } else {
-            String[] parts = methodLine.split("\\s+");
+            String[] parts = requestLine.split("\\s");
             if (parts.length == 2 || parts.length == 3) {
                 String method = parts[0];
+                if (FieldValues.indexOfNotAllowedInTokens(method).isPresent()) {
+                    throw new InvalidHttpRequest("Invalid method name", 1);
+                }
                 URI uri = createUri(parts[1]);
-                String version = parts.length == 3 ? parts[2] : "HTTP/1.1";
-                HttpVersion httpVersion;
-                try {
-                    httpVersion = HttpVersion.parse(version);
+                HttpVersion httpVersion = inserHttpVersionIfMissing
+                        ? HttpVersion.HTTP_1_1 : null;
+                if (parts.length == 3) try {
+                    httpVersion = HttpVersion.parse(parts[2]);
                 } catch (IllegalArgumentException e) {
                     throw new InvalidHttpRequest("Invalid HTTP version", 1);
                 }
-                return new MethodLine(method, uri, httpVersion);
+                if (httpVersion == null) {
+                    throw new InvalidHttpRequest("Missing HTTP version", 1);
+                }
+                return new RequestLine(method, uri, httpVersion);
             } else {
-                throw new InvalidHttpRequest("Invalid method line", 1);
+                throw new InvalidHttpRequest("Invalid request line", 1);
             }
         }
     }

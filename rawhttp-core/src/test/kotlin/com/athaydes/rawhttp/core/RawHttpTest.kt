@@ -168,6 +168,17 @@ class SimpleHttpRequestTests : StringSpec({
 class SimpleHttpResponseTests : StringSpec({
 
     "Should be able to parse simplest HTTP Response" {
+        RawHttp().parseResponse("404").eagerly().run {
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
+            startLine.statusCode shouldBe 404
+            startLine.reason shouldEqual ""
+            toString() shouldEqual "HTTP/1.1 404\r\n\r\n"
+            headers.headerNames should beEmpty()
+            body should bePresent { it.toString() shouldEqual "" }
+        }
+    }
+
+    "Should be able to parse simple HTTP Response" {
         RawHttp().parseResponse("HTTP/1.0 404 NOT FOUND").eagerly().run {
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_0
             startLine.statusCode shouldBe 404

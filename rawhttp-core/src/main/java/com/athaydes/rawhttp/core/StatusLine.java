@@ -3,13 +3,13 @@ package com.athaydes.rawhttp.core;
 /**
  * A {@link RawHttpResponse}'s start-line.
  */
-public class StatusCodeLine implements StartLine {
+public class StatusLine implements StartLine {
 
     private final HttpVersion httpVersion;
     private final int statusCode;
     private final String reason;
 
-    public StatusCodeLine(HttpVersion httpVersion, int statusCode, String reason) {
+    public StatusLine(HttpVersion httpVersion, int statusCode, String reason) {
         this.httpVersion = httpVersion;
         this.statusCode = statusCode;
         this.reason = reason;
@@ -39,6 +39,6 @@ public class StatusCodeLine implements StartLine {
      */
     @Override
     public String toString() {
-        return String.join(" ", httpVersion.toString(), Integer.toString(statusCode), reason);
+        return String.join(" ", httpVersion.toString(), Integer.toString(statusCode), reason).trim();
     }
 }

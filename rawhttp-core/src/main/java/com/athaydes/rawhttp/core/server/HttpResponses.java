@@ -3,7 +3,7 @@ package com.athaydes.rawhttp.core.server;
 import com.athaydes.rawhttp.core.EagerHttpResponse;
 import com.athaydes.rawhttp.core.HttpVersion;
 import com.athaydes.rawhttp.core.RawHttp;
-import com.athaydes.rawhttp.core.StatusCodeLine;
+import com.athaydes.rawhttp.core.StatusLine;
 import java.io.IOException;
 
 import static com.athaydes.rawhttp.core.server.TcpRawHttpServer.STRICT_HTTP;
@@ -15,10 +15,14 @@ final class HttpResponses {
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_0;
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_1;
 
-    private static final StatusCodeLine STATUS_404_HTTP1_0 = RawHttp.parseStatusCodeLine("HTTP/1.0 404 Not Found");
-    private static final StatusCodeLine STATUS_404_HTTP1_1 = RawHttp.parseStatusCodeLine("HTTP/1.1 404 Not Found");
-    private static final StatusCodeLine STATUS_500_HTTP1_0 = RawHttp.parseStatusCodeLine("HTTP/1.0 500 Server Error");
-    private static final StatusCodeLine STATUS_500_HTTP1_1 = RawHttp.parseStatusCodeLine("HTTP/1.1 500 Server Error");
+    private static final StatusLine STATUS_404_HTTP1_0 = RawHttp.parseStatusLine(
+            "HTTP/1.0 404 Not Found", false);
+    private static final StatusLine STATUS_404_HTTP1_1 = RawHttp.parseStatusLine(
+            "HTTP/1.1 404 Not Found", false);
+    private static final StatusLine STATUS_500_HTTP1_0 = RawHttp.parseStatusLine(
+            "HTTP/1.0 500 Server Error", false);
+    private static final StatusLine STATUS_500_HTTP1_1 = RawHttp.parseStatusLine(
+            "HTTP/1.1 500 Server Error", false);
 
     static {
         try {
@@ -31,7 +35,7 @@ final class HttpResponses {
                             "\r\n" +
                             "Resource was not found.").eagerly();
 
-            NOT_FOUND_404_HTTP1_0 = NOT_FOUND_404_HTTP1_1.withStatusCodeLine(STATUS_404_HTTP1_0);
+            NOT_FOUND_404_HTTP1_0 = NOT_FOUND_404_HTTP1_1.withStatusLine(STATUS_404_HTTP1_0);
 
             SERVER_ERROR_500_HTTP1_1 = STRICT_HTTP.parseResponse(
                     STATUS_500_HTTP1_1 + "\r\n" +
@@ -42,7 +46,7 @@ final class HttpResponses {
                             "\r\n" +
                             "A Server Error has occurred.").eagerly();
 
-            SERVER_ERROR_500_HTTP1_0 = SERVER_ERROR_500_HTTP1_1.withStatusCodeLine(STATUS_500_HTTP1_0);
+            SERVER_ERROR_500_HTTP1_0 = SERVER_ERROR_500_HTTP1_1.withStatusLine(STATUS_500_HTTP1_0);
         } catch (IOException e) {
             throw new IllegalStateException("Default HTTP responses could not be parsed");
         }
