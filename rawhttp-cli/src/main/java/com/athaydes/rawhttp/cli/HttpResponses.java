@@ -35,7 +35,7 @@ final class HttpResponses {
         try {
             METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0 = STRICT_HTTP
                     .parseResponse(STATUS_405_HTTP1_0 + "")
-                    .replaceBody(status405body)
+                    .withBody(status405body)
                     .eagerly();
 
             METHOD_NOT_ALLOWED_RESPONSE_HTTP1_1 = METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0

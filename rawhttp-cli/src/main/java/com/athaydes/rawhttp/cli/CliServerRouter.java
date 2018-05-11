@@ -57,7 +57,7 @@ final class CliServerRouter implements Router {
             if (resource.isFile()) {
                 response = HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
                         .withHeaders(contentTypeHeaderFor(resource.getName()))
-                        .replaceBody(new FileBody(resource));
+                        .withBody(new FileBody(resource));
             } else {
                 response = null; // 404 - NOT FOUND
             }

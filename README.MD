@@ -181,16 +181,16 @@ server.start { req ->
                 "GET" ->
                     http.parseResponse("HTTP/1.1 200 OK\n" +
                             "Content-Type: text/plain"
-                    ).replaceBody(StringBody("Hello RawHTTP!"))
+                    ).withBody(StringBody("Hello RawHTTP!"))
                 else ->
                     http.parseResponse("HTTP/1.1 405 Method Not Allowed\n" +
                             "Content-Type: text/plain"
-                    ).replaceBody(StringBody("Sorry, can't handle this method"))
+                    ).withBody(StringBody("Sorry, can't handle this method"))
             }
         else ->
             http.parseResponse("HTTP/1.1 404 Not Found\n" +
                     "Content-Type: text/plain"
-            ).replaceBody(StringBody("Content was not found"))
+            ).withBody(StringBody("Content was not found"))
     }
 }
 ```

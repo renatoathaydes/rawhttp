@@ -36,14 +36,14 @@ public abstract class HttpMessage {
     public abstract StartLine getStartLine();
 
     /**
-     * Replace the body of this HTTP message with the given body.
+     * Create a copy of this HTTP message, replacing its body with the given body.
      * <p>
      * The headers of this message should be adjusted if necessary to be consistent with the new body.
      *
      * @param body body
      * @return a copy of this HTTP message with the new body.
      */
-    public abstract HttpMessage replaceBody(HttpMessageBody body);
+    public abstract HttpMessage withBody(HttpMessageBody body);
 
     /**
      * @return the headers of this HTTP message.

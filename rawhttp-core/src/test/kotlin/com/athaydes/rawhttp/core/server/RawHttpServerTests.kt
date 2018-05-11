@@ -31,13 +31,13 @@ class RawHttpServerTests : StringSpec({
                         if (request.method == "GET") {
                             http.parseResponse("HTTP/1.1 200 OK\r\n" +
                                     "Content-Type: text/plain"
-                            ).replaceBody(
+                            ).withBody(
                                     StringBody("Hello RawHTTP!")
                             ).writeTo(client.getOutputStream())
                         } else {
                             http.parseResponse("HTTP/1.1 405 Method Not Allowed\r\n" +
                                     "Content-Type: text/plain"
-                            ).replaceBody(
+                            ).withBody(
                                     StringBody("Sorry, can't handle this request")
                             ).writeTo(client.getOutputStream())
                         }

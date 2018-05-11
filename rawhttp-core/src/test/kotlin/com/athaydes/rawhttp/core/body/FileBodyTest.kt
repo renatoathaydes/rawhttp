@@ -18,7 +18,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", true)
 
-        request.replaceBody(fileBody).eagerly().run {
+        request.withBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
@@ -37,7 +37,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        request.replaceBody(fileBody).eagerly().run {
+        request.withBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
             uri shouldEqual URI.create("http://localhost:8080/404")
@@ -54,7 +54,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        response.replaceBody(fileBody).eagerly().run {
+        response.withBody(fileBody).eagerly().run {
             statusCode shouldBe 200
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
             startLine.reason shouldEqual "OK"
@@ -73,7 +73,7 @@ class FileBodyTest : StringSpec({
 
         val fileBody = FileBody(fileFromResource("404.png"), "image/png", false)
 
-        response.replaceBody(fileBody).eagerly().run {
+        response.withBody(fileBody).eagerly().run {
             statusCode shouldBe 201
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
             startLine.reason shouldEqual "CREATED"

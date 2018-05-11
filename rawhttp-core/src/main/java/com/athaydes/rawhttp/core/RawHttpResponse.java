@@ -105,7 +105,7 @@ public class RawHttpResponse<Response> extends HttpMessage {
     }
 
     @Override
-    public RawHttpResponse<Response> replaceBody(HttpMessageBody body) {
+    public RawHttpResponse<Response> withBody(HttpMessageBody body) {
         return new RawHttpResponse<>(libResponse, request, statusLine,
                 body.headersFrom(getHeaders()), body.toBodyReader());
     }
