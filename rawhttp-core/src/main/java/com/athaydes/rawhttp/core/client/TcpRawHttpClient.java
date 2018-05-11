@@ -95,10 +95,10 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         Socket getSocket(URI uri);
 
         /**
-         * Callback that will be called every time a socket is used to receive a response.
+         * Callback that will be called every time the HTTP client receives a response.
          * <p>
-         * This callback may be used to perform maintenance (such as closing the connection), or transform
-         * the provided HTTP response, returning a modified one.
+         * It may be used to perform maintenance (such as calling {@link RawHttpResponse#eagerly()}
+         * then closing the connection), or transform the provided HTTP response, returning a modified one.
          *
          * @param socket       the socket used to send out a HTTP request. This socket is always
          *                     the same as provided by a previous call to {@link #getSocket(URI)}.
@@ -146,7 +146,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                 try {
                     socket = useHttps
                             ? SSLSocketFactory.getDefault().createSocket(host, port)
-                            : new Socket(uri.getHost(), uri.getPort());
+                            : new Socket(host, port);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
