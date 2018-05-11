@@ -462,7 +462,7 @@ public class RawHttp {
             if (!options.insertHostHeaderIfMissing()) {
                 throw new InvalidHttpRequest("Host header is missing", 1);
             } else if (requestLine.getUri().getHost() == null) {
-                throw new InvalidHttpRequest("Host not given either in method line or Host header", 1);
+                throw new InvalidHttpRequest("Host not given either in request line or Host header", 1);
             } else {
                 // add the Host header to make sure the request is legal
                 headers.with("Host", requestLine.getUri().getHost());
@@ -470,7 +470,7 @@ public class RawHttp {
             return requestLine;
         } else if (host.size() == 1) {
             if (requestLine.getUri().getHost() != null) {
-                throw new InvalidHttpRequest("Host specified both in Host header and in method line", 1);
+                throw new InvalidHttpRequest("Host specified both in Host header and in request line", 1);
             }
             try {
                 RequestLine newRequestLine = requestLine.withHost(host.iterator().next());

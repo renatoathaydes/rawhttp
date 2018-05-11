@@ -15,14 +15,14 @@ class RawHttpErrorsTest : StringSpec({
         val examples = table(
                 headers("Request", "lineNumber", "message"),
                 row("", 0, "No content"),
-                row("    ", 1, "Invalid method line"),
-                row("POST", 1, "Invalid method line"),
-                row("A B C D", 1, "Invalid method line"),
+                row("    ", 1, "Invalid request line"),
+                row("POST", 1, "Invalid request line"),
+                row("A B C D", 1, "Invalid request line"),
                 row("GET / HTTP/1.1\r\nINVALID\r\n", 2, "Invalid header"),
                 row("GET / HTTP/1.1\r\nAccept: all\r\nINVALID\r\n", 3, "Invalid header"),
-                row("GET / HTTP/1.1\r\nAccept: all\r\n", 1, "Host not given either in method line or Host header"),
-                row("GET /path HTTP/1.1", 1, "Host not given either in method line or Host header"),
-                row("GET http://hi.com\r\nHost: hi.com", 1, "Host specified both in Host header and in method line"),
+                row("GET / HTTP/1.1\r\nAccept: all\r\n", 1, "Host not given either in request line or Host header"),
+                row("GET /path HTTP/1.1", 1, "Host not given either in request line or Host header"),
+                row("GET http://hi.com\r\nHost: hi.com", 1, "Host specified both in Host header and in request line"),
                 row("GET /\r\nHost: hi.com\r\nAccept: */*\r\nHost: hi.com", 4, "More than one Host header specified"),
                 row("GET /\r\nHost: ^&^%", 2, "Invalid host header: Invalid host format: " +
                         "Illegal character in authority at index 7: http://^&^%")
