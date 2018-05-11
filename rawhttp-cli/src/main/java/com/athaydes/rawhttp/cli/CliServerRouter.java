@@ -6,16 +6,10 @@ import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.body.FileBody;
 import com.athaydes.rawhttp.core.server.Router;
 import java.io.File;
-import java.net.InetAddress;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Optional;
 
 final class CliServerRouter implements Router {
 
@@ -43,17 +37,13 @@ final class CliServerRouter implements Router {
     }
 
     private final File rootDir;
-    private final RequestLogger requestLogger;
 
-    CliServerRouter(File rootDir, boolean logRequests) {
+    CliServerRouter(File rootDir) {
         this.rootDir = rootDir;
-        this.requestLogger = logRequests ?
-                new AsyncSysoutRequestLogger() :
-                new NoopRequestLogger();
     }
 
     @Override
-    public RawHttpResponse<?> route(RawHttpRequest request) {
+    public Optional<RawHttpResponse<?>> route(RawHttpRequest request) {
         final RawHttpResponse<Void> response;
         if (request.getMethod().equals("GET")) {
             String path = request.getStartLine().getUri().normalize().getPath().replaceAll("../", "");
@@ -74,8 +64,7 @@ final class CliServerRouter implements Router {
         } else {
             response = HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion());
         }
-        requestLogger.logRequest(request, response);
-        return response;
+        return Optional.ofNullable(response);
     }
 
     private static RawHttpHeaders contentTypeHeaderFor(String resourceName) {
@@ -91,50 +80,6 @@ final class CliServerRouter implements Router {
         }
         String extension = resourceName.substring(idx + 1);
         return mimeMapping.getOrDefault(extension, "application/octet-stream");
-    }
-
-}
-
-interface RequestLogger {
-    void logRequest(RawHttpRequest request,
-                    RawHttpResponse<?> response);
-}
-
-final class NoopRequestLogger implements RequestLogger {
-    @Override
-    public void logRequest(RawHttpRequest request, RawHttpResponse<?> response) {
-        // noop
-    }
-}
-
-final class AsyncSysoutRequestLogger implements RequestLogger {
-
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter
-            .ofPattern("d/MMM/yyyy:HH:mm:ss z")
-            .withLocale(Locale.getDefault())
-            .withZone(ZoneId.systemDefault());
-
-    private final ExecutorService executor = Executors.newFixedThreadPool(2, r -> {
-        Thread t = new Thread(r);
-        t.setName("async-sysout-request-logger");
-        t.setDaemon(true);
-        return t;
-    });
-
-    @Override
-    public void logRequest(RawHttpRequest request, RawHttpResponse<?> response) {
-        executor.submit(() -> {
-            if (request.getSenderAddress().isPresent()) {
-                InetAddress senderAddress = request.getSenderAddress().get();
-                System.out.print(senderAddress.getHostAddress() + " ");
-            }
-            Long bytes = response.getBody()
-                    .map(b -> b.getLengthIfKnown().orElse(-1L))
-                    .orElse(-1L);
-            System.out.println("[" + LocalDateTime.now().format(dateFormat) + "] \"" +
-                    request.getStartLine() + "\" " + response.getStatusCode() +
-                    " " + bytes);
-        });
     }
 
 }

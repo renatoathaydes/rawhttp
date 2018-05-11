@@ -7,7 +7,6 @@ import com.athaydes.rawhttp.core.client.TcpRawHttpClient;
 import com.athaydes.rawhttp.core.errors.InvalidHttpRequest;
 import com.athaydes.rawhttp.core.server.RawHttpServer;
 import com.athaydes.rawhttp.core.server.TcpRawHttpServer;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -103,8 +102,11 @@ public class Main {
 
         System.out.println("Serving directory " + options.dir.getAbsolutePath() + " on port " + options.port);
 
-        RawHttpServer server = new TcpRawHttpServer(options.port);
-        server.start(new CliServerRouter(options.dir, options.logRequests));
+        RequestLogger requestLogger = options.logRequests
+                ? new AsyncSysoutRequestLogger()
+                : new NoopRequestLogger();
+        RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port, requestLogger));
+        server.start(new CliServerRouter(options.dir));
     }
 
     private static void error(ErrorCode code, String message) {
