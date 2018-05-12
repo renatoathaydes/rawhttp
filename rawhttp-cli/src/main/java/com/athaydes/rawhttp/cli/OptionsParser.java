@@ -20,6 +20,20 @@ final class ServerOptions {
     }
 }
 
+final class ClientOptions {
+    final Optional<File> requestFile;
+    final Optional<String> requestText;
+    final Optional<File> requestBody;
+
+    public ClientOptions(Optional<File> requestFile,
+                         Optional<String> requestText,
+                         Optional<File> requestBody) {
+        this.requestFile = requestFile;
+        this.requestText = requestText;
+        this.requestBody = requestBody;
+    }
+}
+
 final class OptionsException extends Exception {
     OptionsException(String message) {
         super(message);
