@@ -3,6 +3,7 @@
 build/
 out/
 dist/
+public/
 
 *.class
 *.jar
