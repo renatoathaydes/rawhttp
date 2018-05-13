@@ -4,6 +4,7 @@ import com.athaydes.rawhttp.core.BodyReader;
 import com.athaydes.rawhttp.core.HttpMetadataParser;
 import com.athaydes.rawhttp.core.LazyBodyReader;
 import com.athaydes.rawhttp.core.RawHttpHeaders;
+import com.athaydes.rawhttp.core.RawHttpOptions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,19 @@ public class ChunkedBody extends HttpMessageBody {
     private final InputStream stream;
     private final int chunkLength;
     private final HttpMetadataParser metadataParser;
+
+    /**
+     * Create a new {@link ChunkedBody} to encode the contents of the given stream.
+     * <p>
+     * The stream is read lazily, so it shouldn't be closed until this body is consumed.
+     *
+     * @param stream      content to encode
+     * @param contentType Content-Type of the stream contents
+     * @param chunkLength the length of each chunk
+     */
+    public ChunkedBody(InputStream stream, @Nullable String contentType, int chunkLength) {
+        this(stream, contentType, chunkLength, new HttpMetadataParser(RawHttpOptions.defaultInstance()));
+    }
 
     /**
      * Create a new {@link ChunkedBody} to encode the contents of the given stream.

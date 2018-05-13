@@ -303,7 +303,7 @@ public class DocsSamples {
         RawHttp http = new RawHttp();
         RawHttpRequest request = http.parseRequest("POST http://example.com/hello");
         RawHttpRequest requestWithBody = request.withBody(
-                new ChunkedBody(stream, "text/plain", chunkSize, null));
+                new ChunkedBody(stream, "text/plain", chunkSize));
         System.out.println(requestWithBody.eagerly());
     }
 
