@@ -26,13 +26,13 @@ class RawHttpCliTest : RawHttpCliTester() {
         val shortOptHandle = runCli("-h")
         assertHelpOptOutput(shortOptHandle)
 
-        val longOptHandle = runCli("--help")
+        val longOptHandle = runCli("help")
         assertHelpOptOutput(longOptHandle)
     }
 
     @Test
     fun canReadRequestFromSysIn() {
-        val handle = runCli()
+        val handle = runCli("send")
 
         // write the request to the process sysin
         handle.process.outputStream.writer().use {
@@ -43,8 +43,8 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
-    fun canReadRequestFromArgument() {
-        val handle = runCli(SUCCESS_HTTP_REQUEST)
+    fun canReadRequestFromTextArgument() {
+        val handle = runCli("send", "-t", SUCCESS_HTTP_REQUEST)
         assertOutputIsSuccessResponse(handle)
     }
 
@@ -53,7 +53,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val tempFile = File.createTempFile(javaClass.name, "request")
         tempFile.writeText(SUCCESS_HTTP_REQUEST)
 
-        val handle = runCli("-f", tempFile.absolutePath)
+        val handle = runCli("send", "-f", tempFile.absolutePath)
         assertOutputIsSuccessResponse(handle)
     }
 
@@ -63,7 +63,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
                 ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
 
-        val handle = runCli("-s")
+        val handle = runCli("serve", ".")
 
         val response = try {
             sendHttpRequest("""
@@ -87,7 +87,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val someFile = File(tempDir, "my-file")
         someFile.writeText("Hello RawHTTP!")
 
-        val handle = runCli("--log-requests", "--server", tempDir.absolutePath)
+        val handle = runCli("serve", tempDir.absolutePath, "--log-requests")
 
         val response = try {
             sendHttpRequest("""
@@ -142,7 +142,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         parentDirFile.writeText("not visible")
         parentDirFile.deleteOnExit()
 
-        val handle = runCli("--server", tempDir.absolutePath)
+        val handle = runCli("serve", tempDir.absolutePath)
 
         val response = try {
             sendHttpRequest("""

@@ -53,6 +53,8 @@ final class CliServerRouter implements Router {
                 path = "index.html";
             }
 
+            // TODO try to find out a file extension based on the Accept header
+            // if no extension is provided in the path
             File resource = new File(rootDir, path);
             if (resource.isFile()) {
                 response = HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())

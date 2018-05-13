@@ -2,9 +2,12 @@ package com.athaydes.rawhttp.cli;
 
 import java.io.File;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-import static java.util.stream.Collectors.joining;
+enum HelpOptions {
+    GENERAL, SERVE, SEND
+}
 
 final class ServerOptions {
     static final int DEFAULT_SERVER_PORT = 8080;
@@ -12,26 +15,97 @@ final class ServerOptions {
     final File dir;
     final int port;
     final boolean logRequests;
+    private final File mediaTypesFile;
 
-    public ServerOptions(File dir, int port, boolean logRequests) {
+    ServerOptions(File dir, int port, boolean logRequests,
+                  File mediaTypesFile) {
         this.dir = dir;
         this.port = port;
         this.logRequests = logRequests;
+        this.mediaTypesFile = mediaTypesFile;
+    }
+
+    public Optional<File> getMediaTypesFile() {
+        return Optional.ofNullable(mediaTypesFile);
+    }
+}
+
+final class RequestBody {
+    private final File file;
+    private final String text;
+
+    public RequestBody(File file) {
+        this.file = file;
+        this.text = null;
+    }
+
+    public RequestBody(String text) {
+        this.file = null;
+        this.text = text;
+    }
+
+    <T> T run(Function<File, T> useFile, Function<String, T> useText) {
+        if (file != null) {
+            return useFile.apply(file);
+        }
+        if (text != null) {
+            return useText.apply(text);
+        }
+        throw new IllegalStateException("Neither file nor text present");
+    }
+}
+
+final class RequestRunOptions {
+    private final RequestBody requestBody;
+    final boolean printBodyOnly;
+
+    RequestRunOptions(RequestBody requestBody, boolean printBodyOnly) {
+        this.requestBody = requestBody;
+        this.printBodyOnly = printBodyOnly;
+    }
+
+    public Optional<RequestBody> getRequestBody() {
+        return Optional.ofNullable(requestBody);
     }
 }
 
 final class ClientOptions {
-    final Optional<File> requestFile;
-    final Optional<String> requestText;
-    final Optional<File> requestBody;
+    private final File requestFile;
+    private final String requestText;
+    private final RequestRunOptions requestRunOptions;
 
-    public ClientOptions(Optional<File> requestFile,
-                         Optional<String> requestText,
-                         Optional<File> requestBody) {
+    static ClientOptions readFromStdin(RequestRunOptions requestRunOptions) {
+        return new ClientOptions(null, null, requestRunOptions);
+    }
+
+    static ClientOptions withFile(File requestFile, RequestRunOptions requestRunOptions) {
+        return new ClientOptions(requestFile, null, requestRunOptions);
+    }
+
+    static ClientOptions withRequestText(String requestText, RequestRunOptions requestRunOptions) {
+        return new ClientOptions(null, requestText, requestRunOptions);
+    }
+
+    private ClientOptions(File requestFile,
+                          String requestText,
+                          RequestRunOptions requestRunOptions) {
         this.requestFile = requestFile;
         this.requestText = requestText;
-        this.requestBody = requestBody;
+        this.requestRunOptions = requestRunOptions;
     }
+
+    <T> T run(Function<RequestRunOptions, T> runFromSysin,
+              BiFunction<File, RequestRunOptions, T> runFile,
+              BiFunction<String, RequestRunOptions, T> runText) {
+        if (requestFile != null) {
+            return runFile.apply(requestFile, requestRunOptions);
+        }
+        if (requestText != null) {
+            return runText.apply(requestText, requestRunOptions);
+        }
+        return runFromSysin.apply(requestRunOptions);
+    }
+
 }
 
 final class OptionsException extends Exception {
@@ -40,142 +114,226 @@ final class OptionsException extends Exception {
     }
 }
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 final class Options {
-    final Optional<File> requestFile;
-    final boolean showHelp;
-    final Optional<ServerOptions> serverOptions;
-    final Optional<String> requestText;
+    private final ClientOptions clientOptions;
+    private final ServerOptions serverOptions;
+    private final HelpOptions helpOptions;
 
-    Options(Optional<File> requestFile,
-            boolean showHelp,
-            Optional<ServerOptions> serverOptions,
-            Optional<String> requestText) {
-        this.requestFile = requestFile;
-        this.showHelp = showHelp;
+    static Options justShowHelp(HelpOptions helpOptions) {
+        return new Options(null, null, helpOptions);
+    }
+
+    static Options withClientOptions(ClientOptions clientOptions) {
+        return new Options(clientOptions, null, null);
+    }
+
+    static Options withServerOptions(ServerOptions serverOptions) {
+        return new Options(null, serverOptions, null);
+    }
+
+    private Options(ClientOptions clientOptions,
+                    ServerOptions serverOptions,
+                    HelpOptions helpOptions) {
+        this.clientOptions = clientOptions;
         this.serverOptions = serverOptions;
-        this.requestText = requestText;
+        this.helpOptions = helpOptions;
+    }
+
+    <T> T run(Function<ClientOptions, T> runClient,
+              Function<ServerOptions, T> runServer,
+              Function<HelpOptions, T> showHelp) {
+        if (clientOptions != null) {
+            return runClient.apply(clientOptions);
+        }
+        if (serverOptions != null) {
+            return runServer.apply(serverOptions);
+        }
+        if (helpOptions != null) {
+            return showHelp.apply(helpOptions);
+        }
+        throw new IllegalStateException("No option selected");
     }
 
     @Override
     public String toString() {
-        return "Options{" +
-                "requestFile=" + requestFile +
-                ", showHelp=" + showHelp +
-                ", serverOptions=" + serverOptions +
-                ", requestText=" + requestText +
-                '}';
+        return "Options{" + run(c -> c, s -> s, h -> h) + "}";
     }
 }
 
 final class OptionsParser {
 
+    private static final String AVAILABLE_COMMANDS_MSG =
+            "Available commands are 'send', 'serve' and 'help'.\n" +
+                    "Use the 'help' command to show more information.";
+
     static Options parse(String[] args) throws OptionsException {
-        if (args.length > 0 && !args[0].startsWith("-")) {
-            // interpret args as request text because no option was given
-            String request = Stream.of(args).collect(joining(" "));
-            return new Options(Optional.empty(), false, Optional.empty(), Optional.of(request));
+        if (args.length == 0) {
+            throw new OptionsException("No sub-command provided. " + AVAILABLE_COMMANDS_MSG);
         }
-        boolean help = getShowHelp(args);
-        Optional<File> requestFile = getRequestFile(args);
-        Optional<ServerOptions> serverOptions = getServerOptions(args);
-
-        for (String arg : args) {
-            if (!arg.isEmpty()) {
-                throw new OptionsException("Unrecognized option: " + arg);
-            }
+        String subCommand = args[0];
+        switch (subCommand) {
+            case "send":
+                return parseSendCommand(args);
+            case "serve":
+                return parseServeCommand(args);
+            case "help":
+            case "-h":
+                HelpOptions helpOptions = HelpOptions.GENERAL;
+                if (args.length > 1) try {
+                    helpOptions = HelpOptions.valueOf(args[1].toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // ignore invalid option
+                }
+                return Options.justShowHelp(helpOptions);
+            default:
+                throw new OptionsException("Unknown sub-command: " + subCommand + ". " +
+                        AVAILABLE_COMMANDS_MSG);
         }
-
-        return new Options(requestFile, help, serverOptions, Optional.empty());
     }
 
-    private static boolean getShowHelp(String[] args) {
-        int index = 0;
-        boolean result = false;
-        while (index < args.length) {
-            switch (args[index]) {
-                case "--help":
-                case "-h":
-                    args[index] = "";
-                    result = true;
-            }
-            index++;
-        }
-        return result;
-    }
-
-    private static Optional<File> getRequestFile(String[] args)
-            throws OptionsException {
+    private static Options parseSendCommand(String[] args) throws OptionsException {
         File requestFile = null;
-        int index = 0;
-        while (index < args.length) {
-            switch (args[index]) {
-                case "--file":
-                case "-f":
+        String requestText = null;
+        RequestBody requestBody = null;
+        boolean printBodyOnly = false;
+        for (int i = 1; i < args.length; i++) {
+            String arg = args[i];
+            switch (arg) {
+                case "-t":
+                case "--text":
+                    if (requestText != null) {
+                        throw new OptionsException("The --request-text option can only be used once");
+                    }
                     if (requestFile != null) {
-                        throw new OptionsException("--file -f: option cannot be used more than once");
+                        throw new OptionsException("Cannot use both --text and --file options together");
                     }
-                    args[index] = "";
-                    index++;
-                    if (index < args.length) {
-                        requestFile = new File(args[index]);
-                        args[index] = "";
+                    if (i + 1 < args.length) {
+                        requestText = args[i + 1];
+                        i++;
                     } else {
-                        throw new OptionsException("--file -f: option requires a file argument");
+                        throw new OptionsException("Missing argument for " + arg + " flag");
                     }
+                    break;
+                case "-f":
+                case "--file":
+                    if (requestFile != null) {
+                        throw new OptionsException("the --file option can only be used once");
+                    }
+                    if (requestText != null) {
+                        throw new OptionsException("Cannot use both --text and --file options together");
+                    }
+                    if (i + 1 < args.length) {
+                        requestFile = new File(args[i + 1]);
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-b":
+                case "--body-text":
+                    if (requestBody != null) {
+                        String error = requestBody.run(
+                                f -> "Cannot use both --body-text and --body-file options together",
+                                t -> "The --body-text option can only be used once");
+                        throw new OptionsException(error);
+                    }
+                    if (i + 1 < args.length) {
+                        requestBody = new RequestBody(args[i + 1]);
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-g":
+                case "--body-file":
+                    if (requestBody != null) {
+                        String error = requestBody.run(
+                                f -> "The --body-file option can only be used once",
+                                t -> "Cannot use both --body-text and --body-file options together");
+                        throw new OptionsException(error);
+                    }
+                    if (i + 1 < args.length) {
+                        requestBody = new RequestBody(new File(args[i + 1]));
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-p":
+                case "--print-body-only":
+                    printBodyOnly = true;
+                    break;
+                default:
+                    throw new OptionsException("Unrecognized option: " + arg);
             }
-            index++;
         }
-        return Optional.ofNullable(requestFile);
+
+        RequestRunOptions options = new RequestRunOptions(requestBody, printBodyOnly);
+        ClientOptions clientOptions;
+        if (requestFile != null) {
+            clientOptions = ClientOptions.withFile(requestFile, options);
+        } else if (requestText != null) {
+            clientOptions = ClientOptions.withRequestText(requestText, options);
+        } else {
+            clientOptions = ClientOptions.readFromStdin(options);
+        }
+        return Options.withClientOptions(clientOptions);
     }
 
-    private static Optional<ServerOptions> getServerOptions(String[] args)
-            throws OptionsException {
+    private static Options parseServeCommand(String[] args) throws OptionsException {
+        if (args.length == 1) {
+            throw new OptionsException("The serve sub-command requires a directory");
+        }
+        File dir = new File(args[1]);
         boolean logRequests = false;
-        int port = ServerOptions.DEFAULT_SERVER_PORT;
-        File dir = new File(".").getAbsoluteFile();
-        boolean serverOptionProvided = false;
-
-        int index = 0;
-        while (index < args.length) {
-            switch (args[index]) {
-                case "--log-requests":
+        File mediaTypesFile = null;
+        Integer port = null;
+        for (int i = 2; i < args.length; i++) {
+            String arg = args[i];
+            switch (arg) {
                 case "-l":
+                case "--log-requests":
                     logRequests = true;
-                    args[index] = "";
                     break;
-                case "--server":
-                case "-s":
-                    if (serverOptionProvided) {
-                        throw new OptionsException("--server -s: option cannot be used more than once");
+                case "-m":
+                case "--media-types":
+                    if (mediaTypesFile != null) {
+                        throw new OptionsException("the --media-types option can only be used once");
                     }
-                    serverOptionProvided = true;
-                    args[index] = "";
-                    index++;
-                    if (index < args.length) {
-                        dir = new File(args[index]);
-                        args[index] = "";
-                        index++;
-                        if (index < args.length) {
-                            try {
-                                port = Integer.valueOf(args[index]);
-                                args[index] = "";
-                            } catch (NumberFormatException e) {
-                                index--; // not an int, so move back as maybe this is another option
-                            }
-                        }
+                    if (i + 1 < args.length) {
+                        mediaTypesFile = new File(args[i + 1]);
+                        i++;
                     } else {
-                        index--; // move back as dir is not mandatory
+                        throw new OptionsException("Missing argument for " + arg + " flag");
                     }
+                    break;
+                case "-p":
+                case "--port":
+                    if (port != null) {
+                        throw new OptionsException("the --port option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        try {
+                            port = Integer.parseInt(args[i + 1]);
+                        } catch (NumberFormatException e) {
+                            throw new OptionsException("Invalid port number, not a number: " + args[i + 1]);
+                        }
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                default:
+                    throw new OptionsException("Unrecognized option: " + arg);
             }
-            index++;
         }
 
-        if (serverOptionProvided) {
-            return Optional.of(new ServerOptions(dir, port, logRequests));
-        } else {
-            return Optional.empty();
-        }
+        return Options.withServerOptions(
+                new ServerOptions(dir, port == null
+                        ? ServerOptions.DEFAULT_SERVER_PORT
+                        : port,
+                        logRequests,
+                        mediaTypesFile));
     }
 
 }
