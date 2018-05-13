@@ -12,6 +12,14 @@ import io.kotlintest.specs.StringSpec
 
 class RequestLineTest : StringSpec({
 
+    val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
+    val strictMetadataParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .doNotIgnoreLeadingEmptyLine()
+            .doNotInsertHttpVersionIfMissing()
+            .build())
+
     "Can parse legal request-line (allow missing HTTP version)" {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
@@ -23,7 +31,7 @@ class RequestLineTest : StringSpec({
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {
-                RawHttp.parseRequestLine(requestLine, true).run {
+                metadataParser.parseRequestLine(requestLine).run {
                     httpVersion shouldBe expectedVersion
                     method shouldBe expectedMethod
                     uri.path shouldBe expectedPath
@@ -37,7 +45,7 @@ class RequestLineTest : StringSpec({
 
     "Cannot parse illegal request-line (allow missing HTTP version)" {
         val table = table(headers("Request line", "Expected error"),
-                row("", "Empty request line"),
+                row("", "No content"),
                 row("/", "Invalid request line"),
                 row("GET", "Invalid request line"),
                 row("POST  ", "Invalid request line"),
@@ -47,9 +55,9 @@ class RequestLineTest : StringSpec({
                 row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
 
         forAll(table) { requestLine, expectedError ->
-            val error = shouldThrow<InvalidHttpRequest> { RawHttp.parseRequestLine(requestLine, true) }
+            val error = shouldThrow<InvalidHttpRequest> { metadataParser.parseRequestLine(requestLine) }
             error.message shouldBe expectedError
-            error.lineNumber shouldBe 1
+            error.lineNumber shouldBe if (requestLine.isEmpty()) 0 else 1
         }
     }
 
@@ -62,7 +70,7 @@ class RequestLineTest : StringSpec({
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {
-                RawHttp.parseRequestLine(requestLine, false).run {
+                strictMetadataParser.parseRequestLine(requestLine).run {
                     httpVersion shouldBe expectedVersion
                     method shouldBe expectedMethod
                     uri.path shouldBe expectedPath
@@ -76,7 +84,7 @@ class RequestLineTest : StringSpec({
 
     "Cannot parse illegal request-line (strict)" {
         val table = table(headers("Request line", "Expected error"),
-                row("", "Empty request line"),
+                row("", "No content"),
                 row("/", "Invalid request line"),
                 row("GET", "Invalid request line"),
                 row("POST  ", "Invalid request line"),
@@ -89,9 +97,9 @@ class RequestLineTest : StringSpec({
                 row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
 
         forAll(table) { requestLine, expectedError ->
-            val error = shouldThrow<InvalidHttpRequest> { RawHttp.parseRequestLine(requestLine, false) }
+            val error = shouldThrow<InvalidHttpRequest> { strictMetadataParser.parseRequestLine(requestLine) }
             error.message shouldBe expectedError
-            error.lineNumber shouldBe 1
+            error.lineNumber shouldBe if (requestLine.isEmpty()) 0 else 1
         }
     }
 

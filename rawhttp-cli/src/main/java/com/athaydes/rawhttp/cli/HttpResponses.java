@@ -1,8 +1,9 @@
 package com.athaydes.rawhttp.cli;
 
 import com.athaydes.rawhttp.core.EagerHttpResponse;
+import com.athaydes.rawhttp.core.HttpMetadataParser;
 import com.athaydes.rawhttp.core.HttpVersion;
-import com.athaydes.rawhttp.core.RawHttp;
+import com.athaydes.rawhttp.core.RawHttpHeaders;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.StatusLine;
 import com.athaydes.rawhttp.core.body.StringBody;
@@ -12,14 +13,10 @@ import static com.athaydes.rawhttp.core.server.TcpRawHttpServer.STRICT_HTTP;
 
 final class HttpResponses {
 
-    private static final StatusLine STATUS_200_HTTP1_0 = RawHttp.parseStatusLine(
-            "HTTP/1.0 200 OK", false);
-    private static final StatusLine STATUS_200_HTTP1_1 = RawHttp.parseStatusLine(
-            "HTTP/1.1 200 OK", false);
-    private static final StatusLine STATUS_405_HTTP1_0 = RawHttp.parseStatusLine(
-            "HTTP/1.0 405 Method Not Allowed", false);
-    private static final StatusLine STATUS_405_HTTP1_1 = RawHttp.parseStatusLine("" +
-            "HTTP/1.1 405 Method Not Allowed", false);
+    private static final StatusLine STATUS_200_HTTP1_0;
+    private static final StatusLine STATUS_200_HTTP1_1;
+    private static final StatusLine STATUS_405_HTTP1_0;
+    private static final StatusLine STATUS_405_HTTP1_1;
 
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_0;
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_1;
@@ -27,14 +24,26 @@ final class HttpResponses {
     private static final EagerHttpResponse<Void> METHOD_NOT_ALLOWED_RESPONSE_HTTP1_1;
 
     static {
-        OK_RESPONSE_HTTP1_0 = STRICT_HTTP.parseResponse(STATUS_200_HTTP1_0 + "");
+        HttpMetadataParser metadataParser = STRICT_HTTP.getMetadataParser();
+
+        STATUS_200_HTTP1_0 = metadataParser.parseStatusLine(
+                "HTTP/1.0 200 OK");
+        STATUS_200_HTTP1_1 = metadataParser.parseStatusLine(
+                "HTTP/1.1 200 OK");
+        STATUS_405_HTTP1_0 = metadataParser.parseStatusLine(
+                "HTTP/1.0 405 Method Not Allowed");
+        STATUS_405_HTTP1_1 = metadataParser.parseStatusLine(
+                "HTTP/1.1 405 Method Not Allowed");
+
+        OK_RESPONSE_HTTP1_0 = new RawHttpResponse<>(null, null, STATUS_200_HTTP1_0,
+                RawHttpHeaders.empty(), null);
         OK_RESPONSE_HTTP1_1 = OK_RESPONSE_HTTP1_0.withStatusLine(STATUS_200_HTTP1_1);
 
         StringBody status405body = new StringBody("Method not allowed.", "text/plain");
 
         try {
-            METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0 = STRICT_HTTP
-                    .parseResponse(STATUS_405_HTTP1_0 + "")
+            METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0 = new RawHttpResponse<Void>(null, null,
+                    STATUS_405_HTTP1_0, RawHttpHeaders.empty(), null)
                     .withBody(status405body)
                     .eagerly();
 

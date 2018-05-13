@@ -36,9 +36,14 @@ public abstract class BodyReader implements Closeable {
     }
 
     private final BodyType bodyType;
+    protected final HttpMetadataParser metadataParser;
 
-    public BodyReader(BodyType bodyType) {
+    public BodyReader(BodyType bodyType,
+                      @Nullable HttpMetadataParser metadataParser) {
         this.bodyType = bodyType;
+        this.metadataParser = metadataParser == null
+                ? new HttpMetadataParser(RawHttpOptions.defaultInstance())
+                : metadataParser;
     }
 
     /**
@@ -100,7 +105,7 @@ public abstract class BodyReader implements Closeable {
                 readAndWriteBytesUpToLength(inputStream, bodyLength.getAsLong(), out, bufferSize);
                 break;
             case CHUNKED:
-                readAndWriteChunkedBody(inputStream, true,
+                readAndWriteChunkedBody(inputStream,
                         chunk -> chunk.writeTo(out),
                         headers -> out.write(headers.toString().getBytes(US_ASCII)));
                 break;
@@ -224,10 +229,9 @@ public abstract class BodyReader implements Closeable {
 
     }
 
-    protected static ConsumedBody consumeBody(BodyType bodyType,
-                                              @Nonnull InputStream inputStream,
-                                              @Nullable Long bodyLength,
-                                              boolean allowNewLineWithoutReturn) throws IOException {
+    protected ConsumedBody consumeBody(BodyType bodyType,
+                                       @Nonnull InputStream inputStream,
+                                       @Nullable Long bodyLength) throws IOException {
         switch (bodyType) {
             case CONTENT_LENGTH:
                 if (bodyLength == null || bodyLength < 0) {
@@ -235,7 +239,7 @@ public abstract class BodyReader implements Closeable {
                 }
                 return new ConsumedBody(readBytesUpToLength(inputStream, Math.toIntExact(bodyLength)));
             case CHUNKED:
-                return new ConsumedBody(readChunkedBody(inputStream, allowNewLineWithoutReturn));
+                return new ConsumedBody(readChunkedBody(inputStream));
             case CLOSE_TERMINATED:
                 return new ConsumedBody(readBytesWhileAvailable(inputStream));
             default:
@@ -268,35 +272,31 @@ public abstract class BodyReader implements Closeable {
         }
     }
 
-    private static ChunkedBodyContents readChunkedBody(InputStream inputStream,
-                                                       boolean allowNewLineWithoutReturn) throws IOException {
+    private ChunkedBodyContents readChunkedBody(InputStream inputStream) throws IOException {
         List<ChunkedBodyContents.Chunk> chunks = new ArrayList<>();
         AtomicReference<RawHttpHeaders> headersRef = new AtomicReference<>();
-        readAndWriteChunkedBody(inputStream, allowNewLineWithoutReturn, chunks::add, headersRef::set);
+        readAndWriteChunkedBody(inputStream, chunks::add, headersRef::set);
         return new ChunkedBodyContents(chunks, headersRef.get());
     }
 
-    private static void readAndWriteChunkedBody(InputStream inputStream,
-                                                boolean allowNewLineWithoutReturn,
-                                                IOConsumer<ChunkedBodyContents.Chunk> chunkConsumer,
-                                                IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
+    private void readAndWriteChunkedBody(InputStream inputStream,
+                                         IOConsumer<ChunkedBodyContents.Chunk> chunkConsumer,
+                                         IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
         int chunkSize = 1;
         while (chunkSize > 0) {
             AtomicBoolean hasExtensions = new AtomicBoolean(false);
-            chunkSize = readChunkSize(inputStream, allowNewLineWithoutReturn, hasExtensions);
+            chunkSize = readChunkSize(inputStream, hasExtensions);
             if (chunkSize < 0) {
                 throw new IllegalStateException("unexpected EOF, could not read chunked body");
             }
-            ChunkedBodyContents.Chunk chunk = readChunk(inputStream, chunkSize,
-                    allowNewLineWithoutReturn, hasExtensions.get());
+            ChunkedBodyContents.Chunk chunk = readChunk(inputStream, chunkSize, hasExtensions.get());
             chunkConsumer.accept(chunk);
         }
 
         BiFunction<String, Integer, RuntimeException> errorCreator =
                 (msg, lineNumber) -> new IllegalStateException(msg + " (parsing chunked body headers)");
 
-        List<String> trailer = RawHttp.parseMetadataLines(inputStream, errorCreator, allowNewLineWithoutReturn, false);
-        RawHttpHeaders trailerHeaders = RawHttp.parseHeaders(trailer, errorCreator).build();
+        RawHttpHeaders trailerHeaders = metadataParser.parseHeaders(inputStream, errorCreator).build();
         trailerConsumer.accept(trailerHeaders);
     }
 
@@ -319,14 +319,14 @@ public abstract class BodyReader implements Closeable {
         }
     }
 
-    private static ChunkedBodyContents.Chunk readChunk(InputStream inputStream,
-                                                       int chunkSize,
-                                                       boolean allowNewLineWithoutReturn,
-                                                       boolean hasExtensions) throws IOException {
+    private ChunkedBodyContents.Chunk readChunk(InputStream inputStream,
+                                                int chunkSize,
+                                                boolean hasExtensions) throws IOException {
         RawHttpHeaders extensions = hasExtensions ?
-                parseExtensions(inputStream, allowNewLineWithoutReturn) :
+                parseExtensions(inputStream) :
                 emptyRawHttpHeaders();
 
+        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
         byte[] data = new byte[chunkSize];
 
         if (chunkSize > 0) {
@@ -363,9 +363,9 @@ public abstract class BodyReader implements Closeable {
         return new ChunkedBodyContents.Chunk(extensions, data);
     }
 
-    private static int readChunkSize(InputStream inputStream,
-                                     boolean allowNewLineWithoutReturn,
-                                     AtomicBoolean hasExtensions) throws IOException {
+    private int readChunkSize(InputStream inputStream,
+                              AtomicBoolean hasExtensions) throws IOException {
+        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
         char[] chars = new char[4];
         int b;
         int i = 0;
@@ -422,8 +422,9 @@ public abstract class BodyReader implements Closeable {
         }
     }
 
-    private static RawHttpHeaders parseExtensions(InputStream inputStream,
-                                                  boolean allowNewLineWithoutReturn) throws IOException {
+    private RawHttpHeaders parseExtensions(InputStream inputStream) throws IOException {
+        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
+
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;

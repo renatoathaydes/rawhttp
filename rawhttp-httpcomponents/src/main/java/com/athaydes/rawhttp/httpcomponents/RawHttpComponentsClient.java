@@ -9,6 +9,10 @@ import com.athaydes.rawhttp.core.RawHttpRequest;
 import com.athaydes.rawhttp.core.RawHttpResponse;
 import com.athaydes.rawhttp.core.StatusLine;
 import com.athaydes.rawhttp.core.client.RawHttpClient;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.OptionalLong;
+import javax.annotation.Nullable;
 import org.apache.http.Header;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -17,11 +21,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.OptionalLong;
 
 import static java.util.stream.Collectors.joining;
 
@@ -57,10 +56,10 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
 
         @Nullable LazyBodyReader body;
         if (response.getEntity() != null) {
-            OptionalLong headerLength = RawHttp.parseContentLength(headers);
+            OptionalLong headerLength = RawHttp.extractContentLength(headers);
             @Nullable Long length = headerLength.isPresent() ? headerLength.getAsLong() : null;
             BodyType bodyType = RawHttp.getBodyType(headers, length);
-            body = new LazyBodyReader(bodyType, response.getEntity().getContent(), length, false);
+            body = new LazyBodyReader(bodyType, null, response.getEntity().getContent(), length);
         } else {
             body = null;
         }

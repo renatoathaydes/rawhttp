@@ -12,6 +12,14 @@ import io.kotlintest.specs.StringSpec
 
 class StatusLineTest : StringSpec({
 
+    val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
+    val strictMetadataParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .doNotIgnoreLeadingEmptyLine()
+            .doNotInsertHttpVersionIfMissing()
+            .build())
+
     "Can parse legal status-line (allow missing HTTP version)" {
         val table = table(headers("Status Line", "Expected version", "Expected status code", "Expected phrase"),
                 row("200", HttpVersion.HTTP_1_1, 200, ""),
@@ -28,7 +36,7 @@ class StatusLineTest : StringSpec({
 
         forAll(table) { statusLine, expectedVersion, expectedStatusCode, expectedPhrase ->
             try {
-                RawHttp.parseStatusLine(statusLine, true).run {
+                metadataParser.parseStatusLine(statusLine).run {
                     httpVersion shouldBe expectedVersion
                     statusCode shouldBe expectedStatusCode
                     reason shouldBe expectedPhrase
@@ -41,7 +49,7 @@ class StatusLineTest : StringSpec({
 
     "Cannot parse illegal status-line (allow missing HTTP version)" {
         val table = table(headers("Status Line", "Expected error"),
-                row("", "Empty status line"),
+                row("", "No content"),
                 row("OK", "Invalid status code"),
                 row("Accept: application/json", "Invalid status code"),
                 row("OK 200", "Invalid status code"),
@@ -49,9 +57,9 @@ class StatusLineTest : StringSpec({
                 row("HTTP/1.2 200 OK", "Invalid HTTP version"))
 
         forAll(table) { statusLine, expectedError ->
-            val error = shouldThrow<InvalidHttpResponse> { RawHttp.parseStatusLine(statusLine, true) }
+            val error = shouldThrow<InvalidHttpResponse> { metadataParser.parseStatusLine(statusLine) }
             error.message shouldBe expectedError
-            error.lineNumber shouldBe 1
+            error.lineNumber shouldBe if (statusLine.isEmpty()) 0 else 1
         }
     }
 
@@ -66,7 +74,7 @@ class StatusLineTest : StringSpec({
 
         forAll(table) { statusLine, expectedVersion, expectedStatusCode, expectedPhrase ->
             try {
-                RawHttp.parseStatusLine(statusLine, false).run {
+                strictMetadataParser.parseStatusLine(statusLine).run {
                     httpVersion shouldBe expectedVersion
                     statusCode shouldBe expectedStatusCode
                     reason shouldBe expectedPhrase
@@ -79,7 +87,7 @@ class StatusLineTest : StringSpec({
 
     "Cannot parse illegal status-line (strict)" {
         val table = table(headers("Status Line", "Expected error"),
-                row("", "Empty status line"),
+                row("", "No content"),
                 row("OK", "Missing HTTP version"),
                 row("Accept: application/json", "Missing HTTP version"),
                 row("OK 200", "Missing HTTP version"),
@@ -91,9 +99,9 @@ class StatusLineTest : StringSpec({
                 row("404 Not Found", "Missing HTTP version"))
 
         forAll(table) { statusLine, expectedError ->
-            val error = shouldThrow<InvalidHttpResponse> { RawHttp.parseStatusLine(statusLine, false) }
+            val error = shouldThrow<InvalidHttpResponse> { strictMetadataParser.parseStatusLine(statusLine) }
             error.message shouldBe expectedError
-            error.lineNumber shouldBe 1
+            error.lineNumber shouldBe if (statusLine.isEmpty()) 0 else 1
         }
     }
 })

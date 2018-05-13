@@ -1,12 +1,12 @@
 package com.athaydes.rawhttp.core;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 
 /**
  * Lazy implementation of {@link BodyReader}.
@@ -29,22 +29,19 @@ public final class LazyBodyReader extends BodyReader {
     @Nullable
     private final Long streamLength;
 
-    private final boolean allowNewLineWithoutReturn;
-
     public LazyBodyReader(BodyType bodyType,
+                          @Nullable HttpMetadataParser metadataParser,
                           InputStream inputStream,
-                          @Nullable Long streamLength,
-                          boolean allowNewLineWithoutReturn) {
-        super(bodyType);
+                          @Nullable Long streamLength) {
+        super(bodyType, metadataParser);
         this.inputStream = inputStream;
         this.streamLength = streamLength;
-        this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
     }
 
     @Override
     protected ConsumedBody getConsumedBody() {
         try {
-            return consumeBody(getBodyType(), inputStream, streamLength, allowNewLineWithoutReturn);
+            return consumeBody(getBodyType(), inputStream, streamLength);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -77,7 +74,7 @@ public final class LazyBodyReader extends BodyReader {
     public EagerBodyReader eager() throws IOException {
         markConsumed();
         try {
-            return new EagerBodyReader(getBodyType(), inputStream, streamLength, allowNewLineWithoutReturn);
+            return new EagerBodyReader(getBodyType(), metadataParser, inputStream, streamLength);
         } catch (IOException e) {
             // error while trying to read message body, we cannot keep the connection alive
             try {

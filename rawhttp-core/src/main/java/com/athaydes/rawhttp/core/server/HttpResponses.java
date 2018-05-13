@@ -1,8 +1,8 @@
 package com.athaydes.rawhttp.core.server;
 
 import com.athaydes.rawhttp.core.EagerHttpResponse;
+import com.athaydes.rawhttp.core.HttpMetadataParser;
 import com.athaydes.rawhttp.core.HttpVersion;
-import com.athaydes.rawhttp.core.RawHttp;
 import com.athaydes.rawhttp.core.StatusLine;
 import java.io.IOException;
 
@@ -15,16 +15,23 @@ final class HttpResponses {
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_0;
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_1;
 
-    private static final StatusLine STATUS_404_HTTP1_0 = RawHttp.parseStatusLine(
-            "HTTP/1.0 404 Not Found", false);
-    private static final StatusLine STATUS_404_HTTP1_1 = RawHttp.parseStatusLine(
-            "HTTP/1.1 404 Not Found", false);
-    private static final StatusLine STATUS_500_HTTP1_0 = RawHttp.parseStatusLine(
-            "HTTP/1.0 500 Server Error", false);
-    private static final StatusLine STATUS_500_HTTP1_1 = RawHttp.parseStatusLine(
-            "HTTP/1.1 500 Server Error", false);
+    private static final StatusLine STATUS_404_HTTP1_0;
+    private static final StatusLine STATUS_404_HTTP1_1;
+    private static final StatusLine STATUS_500_HTTP1_0;
+    private static final StatusLine STATUS_500_HTTP1_1;
 
     static {
+        HttpMetadataParser metadataParser = STRICT_HTTP.getMetadataParser();
+
+        STATUS_404_HTTP1_0 = metadataParser.parseStatusLine(
+                "HTTP/1.0 404 Not Found");
+        STATUS_404_HTTP1_1 = metadataParser.parseStatusLine(
+                "HTTP/1.1 404 Not Found");
+        STATUS_500_HTTP1_0 = metadataParser.parseStatusLine(
+                "HTTP/1.0 500 Server Error");
+        STATUS_500_HTTP1_1 = metadataParser.parseStatusLine(
+                "HTTP/1.1 500 Server Error");
+
         try {
             NOT_FOUND_404_HTTP1_1 = STRICT_HTTP.parseResponse(
                     STATUS_404_HTTP1_1 + "\r\n" +

@@ -1,13 +1,13 @@
 package com.athaydes.rawhttp.core;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An eager implementation of {@link BodyReader}.
@@ -22,13 +22,22 @@ public final class EagerBodyReader extends BodyReader {
 
     private final ConsumedBody consumedBody;
 
-    EagerBodyReader(BodyType bodyType,
-                    @Nonnull InputStream inputStream,
-                    @Nullable Long bodyLength,
-                    boolean allowNewLineWithoutReturn) throws IOException {
-        super(bodyType);
+    /**
+     * Create an {@link EagerBodyReader}.
+     *
+     * @param bodyType       body type
+     * @param metadataParser HTTP metadata parser
+     * @param inputStream    providing the body. The body is consumed immediately
+     * @param bodyLength     the body's length if known
+     * @throws IOException if the inputStream throws
+     */
+    public EagerBodyReader(BodyType bodyType,
+                           @Nullable HttpMetadataParser metadataParser,
+                           @Nonnull InputStream inputStream,
+                           @Nullable Long bodyLength) throws IOException {
+        super(bodyType, metadataParser);
         this.rawInputStream = inputStream;
-        this.consumedBody = consumeBody(bodyType, inputStream, bodyLength, allowNewLineWithoutReturn);
+        this.consumedBody = consumeBody(bodyType, inputStream, bodyLength);
     }
 
     /**
@@ -36,10 +45,11 @@ public final class EagerBodyReader extends BodyReader {
      * <p>
      * The bytes are assumed to be the decoded HTTP message's body.
      *
-     * @param bytes plain HTTP message's body
+     * @param bytes          plain HTTP message's body
+     * @param metadataParser HTTP metadata parser
      */
-    public EagerBodyReader(byte[] bytes) {
-        super(BodyType.CONTENT_LENGTH);
+    public EagerBodyReader(byte[] bytes, @Nullable HttpMetadataParser metadataParser) {
+        super(BodyType.CONTENT_LENGTH, metadataParser);
         this.rawInputStream = null;
         this.consumedBody = new ConsumedBody(bytes);
     }

@@ -2,13 +2,12 @@ package com.athaydes.rawhttp.core.body;
 
 import com.athaydes.rawhttp.core.BodyReader;
 import com.athaydes.rawhttp.core.LazyBodyReader;
-
-import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.OptionalLong;
+import javax.annotation.Nullable;
 
 /**
  * A {@link HttpMessageBody} containing the contents of a {@link File}.
@@ -16,18 +15,15 @@ import java.util.OptionalLong;
 public class FileBody extends HttpMessageBody {
 
     private final File file;
-    private final boolean allowNewLineWithoutReturn;
 
     public FileBody(File file) {
-        this(file, null, false);
+        this(file, null);
     }
 
     public FileBody(File file,
-                    @Nullable String contentType,
-                    boolean allowNewLineWithoutReturn) {
+                    @Nullable String contentType) {
         super(contentType);
         this.file = file;
-        this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
     }
 
     /**
@@ -40,10 +36,9 @@ public class FileBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         try {
-            return new LazyBodyReader(BodyReader.BodyType.CONTENT_LENGTH,
+            return new LazyBodyReader(BodyReader.BodyType.CONTENT_LENGTH, null,
                     new BufferedInputStream(new FileInputStream(file)),
-                    file.length(),
-                    allowNewLineWithoutReturn);
+                    file.length());
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -1,6 +1,8 @@
 package com.athaydes.rawhttp.core.body
 
 import com.athaydes.rawhttp.core.BodyReader
+import com.athaydes.rawhttp.core.HttpMetadataParser
+import com.athaydes.rawhttp.core.RawHttpOptions
 import com.athaydes.rawhttp.core.bePresent
 import com.athaydes.rawhttp.core.shouldHaveSameElementsAs
 import io.kotlintest.matchers.should
@@ -10,9 +12,11 @@ import io.kotlintest.specs.StringSpec
 
 class ChunkedBodyTest : StringSpec({
 
+    val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
     "Can encode chunked body with single chunk" {
         val stream = "Hi".byteInputStream()
-        val body = ChunkedBody(stream, null, 2)
+        val body = ChunkedBody(stream, null, 2, metadataParser)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
@@ -30,7 +34,7 @@ class ChunkedBodyTest : StringSpec({
 
     "Can encode chunked body with single chunk (bigger than the data)" {
         val stream = "Hi".byteInputStream()
-        val body = ChunkedBody(stream, null, 512)
+        val body = ChunkedBody(stream, null, 512, metadataParser)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED
@@ -47,7 +51,7 @@ class ChunkedBodyTest : StringSpec({
 
     "Can encode chunked body with several chunks" {
         val stream = "Hello world".byteInputStream()
-        val body = ChunkedBody(stream, null, 4)
+        val body = ChunkedBody(stream, null, 4, metadataParser)
 
         body.toBodyReader().eager().should {
             it.bodyType shouldBe BodyReader.BodyType.CHUNKED

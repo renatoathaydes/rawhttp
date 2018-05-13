@@ -15,7 +15,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read content-length body" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
+        val reader = EagerBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -28,7 +28,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read empty content-length body" {
         val body = ""
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
+        val reader = EagerBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -41,7 +41,7 @@ class EagerBodyReaderTest : StringSpec({
     "Can read body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CLOSE_TERMINATED, stream, null, true)
+        val reader = EagerBodyReader(CLOSE_TERMINATED, null, stream, null)
 
         reader.run {
             bodyType shouldBe CLOSE_TERMINATED
@@ -55,7 +55,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = byteArrayOf(56, 13, 10, 72, 105, 32, 116, 104, 101, 114, 101, 13, 10, 48, 13, 10, 13, 10)
 
         val stream = body.inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null, false)
+        val reader = EagerBodyReader(CHUNKED, null, stream, null)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -84,7 +84,7 @@ class EagerBodyReaderTest : StringSpec({
         val body = "5;abc=123\r\n12345\r\n2\r\n98\r\n0\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null, false)
+        val reader = EagerBodyReader(CHUNKED, null, stream, null)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -115,11 +115,15 @@ class EagerBodyReaderTest : StringSpec({
         }
     }
 
+    val strictMetadataParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .build())
+
     "Can read empty chunked body with only extensions in last chunk" {
         val body = "0;hi=true;hi=22;bye=false,maybe;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null, false)
+        val reader = EagerBodyReader(CHUNKED, strictMetadataParser, stream, null)
 
         reader.run {
             bodyType shouldBe CHUNKED
@@ -150,7 +154,7 @@ class EagerBodyReaderTest : StringSpec({
 
         // add some extra bytes to the stream so we can test the HTTP message is only read to its last byte
         val stream = (body + "IGNORED").toByteArray().inputStream()
-        val reader = EagerBodyReader(CHUNKED, stream, null, false)
+        val reader = EagerBodyReader(CHUNKED, strictMetadataParser, stream, null )
 
         reader.run {
             bodyType shouldBe CHUNKED

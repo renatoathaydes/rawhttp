@@ -2,10 +2,9 @@ package com.athaydes.rawhttp.core.body;
 
 import com.athaydes.rawhttp.core.BodyReader;
 import com.athaydes.rawhttp.core.LazyBodyReader;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.util.OptionalLong;
+import javax.annotation.Nullable;
 
 /**
  * A simple {@link HttpMessageBody} whose contents are given by a byte array.
@@ -32,9 +31,9 @@ public class BytesBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         return new LazyBodyReader(BodyReader.BodyType.CONTENT_LENGTH,
+                null,
                 new ByteArrayInputStream(bytes),
-                (long) bytes.length,
-                false);
+                (long) bytes.length);
     }
 
 }

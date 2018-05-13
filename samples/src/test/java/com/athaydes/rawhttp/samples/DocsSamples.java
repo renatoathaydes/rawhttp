@@ -277,7 +277,7 @@ public class DocsSamples {
         RawHttpRequest request = http.parseRequest("POST http://example.com/hello");
         try {
             RawHttpRequest requestWithBody = request.withBody(
-                    new FileBody(new File("hello.request"), "text/plain", true));
+                    new FileBody(new File("hello.request"), "text/plain"));
             System.out.println(requestWithBody.eagerly());
         } catch (RuntimeException e) {
             throw e.getCause();
@@ -303,7 +303,7 @@ public class DocsSamples {
         RawHttp http = new RawHttp();
         RawHttpRequest request = http.parseRequest("POST http://example.com/hello");
         RawHttpRequest requestWithBody = request.withBody(
-                new ChunkedBody(stream, "text/plain", chunkSize));
+                new ChunkedBody(stream, "text/plain", chunkSize, null));
         System.out.println(requestWithBody.eagerly());
     }
 

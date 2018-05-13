@@ -212,10 +212,17 @@ public class RawHttpHeaders {
         return Builder.newBuilder();
     }
 
+    public static RawHttpHeaders empty() {
+        return Builder.EMPTY;
+    }
+
     /**
      * Builder of {@link RawHttpHeaders}.
      */
     public static class Builder {
+
+        private static final RawHttpHeaders EMPTY =
+                new RawHttpHeaders(emptyMap(), false);
 
         private final Map<String, List<Integer>> linesPerHeader = new HashMap<>(8);
 

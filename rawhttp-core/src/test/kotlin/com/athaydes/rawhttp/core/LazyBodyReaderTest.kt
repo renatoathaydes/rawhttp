@@ -16,7 +16,7 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write content-length body" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
+        val reader = LazyBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -29,7 +29,7 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write empty content-length body" {
         val body = ""
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CONTENT_LENGTH, stream, body.length.toLong(), true)
+        val reader = LazyBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
 
         reader.run {
             bodyType shouldBe CONTENT_LENGTH
@@ -42,7 +42,7 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CLOSE_TERMINATED, stream, null, true)
+        val reader = LazyBodyReader(CLOSE_TERMINATED, null, stream, null)
 
         reader.run {
             bodyType shouldBe CLOSE_TERMINATED
@@ -57,7 +57,7 @@ class LazyBodyReaderTest : StringSpec({
 
         val createReader = {
             val stream = body.inputStream()
-            LazyBodyReader(CHUNKED, stream, null, false)
+            LazyBodyReader(CHUNKED, null, stream, null)
         }
 
         // verify chunks
@@ -97,7 +97,7 @@ class LazyBodyReaderTest : StringSpec({
 
         val createReader = {
             val stream = body.toByteArray().inputStream()
-            LazyBodyReader(CHUNKED, stream, null, false)
+            LazyBodyReader(CHUNKED, null, stream, null)
         }
 
         createReader().run {
@@ -137,12 +137,16 @@ class LazyBodyReaderTest : StringSpec({
         }
     }
 
+    val strictMetadataParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .build())
+
     "Can read empty chunked body with only extensions in last chunk" {
         val body = "0;hi=true;hi=22;bye=false,maybe;cool\r\n\r\n"
 
         val createReader = {
             val stream = body.toByteArray().inputStream()
-            LazyBodyReader(CHUNKED, stream, null, false)
+            LazyBodyReader(CHUNKED, strictMetadataParser, stream, null)
         }
 
         createReader().run {
@@ -181,7 +185,7 @@ class LazyBodyReaderTest : StringSpec({
         val body = "2\r\n98\r\n0\r\nHello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED"
 
         val stream = body.toByteArray().inputStream()
-        val reader = LazyBodyReader(CHUNKED, stream, null, false)
+        val reader = LazyBodyReader(CHUNKED, strictMetadataParser, stream, null)
 
         reader.run {
             bodyType shouldBe CHUNKED
