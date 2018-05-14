@@ -3,7 +3,12 @@
 build/
 out/
 dist/
+
+# published website on branch "gh-pages"
 public/
+
+# sources for the website on branch "site"
+site/
 
 *.class
 *.jar
