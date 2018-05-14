@@ -1,12 +1,12 @@
-import com.athaydes.rawhttp.core.EagerHttpResponse
-import com.athaydes.rawhttp.core.RawHttp
-import com.athaydes.rawhttp.core.RawHttpResponse
-import com.athaydes.rawhttp.core.client.TcpRawHttpClient
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.AfterClass
 import org.junit.Assert.assertThat
 import org.junit.Assert.fail
 import org.junit.BeforeClass
+import rawhttp.core.EagerHttpResponse
+import rawhttp.core.RawHttp
+import rawhttp.core.RawHttpResponse
+import rawhttp.core.client.TcpRawHttpClient
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException

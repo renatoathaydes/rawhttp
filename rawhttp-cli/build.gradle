@@ -9,7 +9,7 @@ targetCompatibility = 1.8
 
 description = 'RawHTTP CLI Tool'
 
-mainClassName = 'com.athaydes.rawhttp.cli.Main'
+mainClassName = 'rawhttp.cli.Main'
 final runnableJarName = 'rawhttp.jar'
 
 dependencies {
@@ -19,7 +19,7 @@ dependencies {
 
 task fatJar(type: Jar) {
     manifest {
-        attributes 'Implementation-Title': 'com.athaydes.rawhttp.cli',
+        attributes 'Implementation-Title': 'rawhttp.cli',
                 'Implementation-Version': version,
                 'Implementation-Vendor': 'Renato Athaydes',
                 'Main-Class': mainClassName

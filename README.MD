@@ -115,7 +115,7 @@ Even though it's quite simple to implement your own HTTP client by using the `Ra
 requests and responses (which can then be transmitted via Sockets), RawHTTP offers a simple HTTP client definition
 (and implementation) that makes it a little bit more convenient to consume HTTP APIs.
 
-Here's the [`RawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/RawHttpClient.java) interface:
+Here's the [`RawHttpClient`](rawhttp-core/src/main/java/rawhttp/core/client/RawHttpClient.java) interface:
 
 ```java
 public interface RawHttpClient<Response> {
@@ -125,7 +125,7 @@ public interface RawHttpClient<Response> {
 
 The `Response` type parameter allows implementations to expose their own type for HTTP Responses, if needed.
 
-In the core module, a simple implementation is provided: [`TcpRawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/TcpRawHttpClient.java).
+In the core module, a simple implementation is provided: [`TcpRawHttpClient`](rawhttp-core/src/main/java/rawhttp/core/client/TcpRawHttpClient.java).
 
 Example usage:
 
@@ -141,7 +141,7 @@ Other implementations are available in separate modules:
 
 * `RawHttpComponentsClient` - based on HttpComponents's HttpClient.
 
-> Requires the `com.athaydes.rawhttp:rawhttp-httpcomponents` module.
+> Requires the `rawhttp:rawhttp-httpcomponents` module.
 
 You can use this if you need support for external specifications, such as
 cookies ([RFC-6265](https://tools.ietf.org/html/rfc6265)), or basic-auth, for example.
@@ -159,7 +159,7 @@ RawHttpClient<?> client = new RawHttpComponentsClient(httpClient);
 
 ## HTTP server
 
-RawHTTP also contains a [package](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/server) defining a few types
+RawHTTP also contains a [package](rawhttp-core/src/main/java/rawhttp/core/server) defining a few types
 that describe a simple HTTP server.
 
 The main type is the interface `RawHttpServer`, which uses a `Router` to route HTTP requests, returning a HTTP response.
@@ -197,5 +197,5 @@ server.start { req ->
 
 ## Samples
 
-Several samples showing how to use RawHTTP, including all [examples](samples/src/test/java/com/athaydes/rawhttp/samples/JavaSample.java)
+Several samples showing how to use RawHTTP, including all [examples](samples/src/test/java/rawhttp/samples/JavaSample.java)
 in this page, can be found in the [samples](samples) project.

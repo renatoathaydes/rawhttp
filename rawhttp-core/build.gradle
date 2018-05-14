@@ -52,7 +52,7 @@ jar {
         attributes 'Implementation-Version': version,
                 'Implementation-Name': 'RawHTTP Core',
                 'Implementation-Vendor': 'Renato Athaydes',
-                'Automatic-Module-Name': 'com.athaydes.rawhttp.core'
+                'Automatic-Module-Name': 'rawhttp.core'
     }
 }
 
