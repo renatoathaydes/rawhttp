@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  */
 public class TcpRawHttpServer implements RawHttpServer {
 
-    private static final RawHttpHeaders SERVER_HEADER = RawHttpHeaders.Builder.newBuilder()
+    private static final RawHttpHeaders SERVER_HEADER = RawHttpHeaders.newBuilder()
             .with("Server", "RawHTTP")
             .build();
 

@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.core;
 
+import com.athaydes.rawhttp.core.errors.InvalidHttpHeader;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -294,10 +295,14 @@ public abstract class BodyReader implements Closeable {
         }
 
         BiFunction<String, Integer, RuntimeException> errorCreator =
-                (msg, lineNumber) -> new IllegalStateException(msg + " (parsing chunked body headers)");
+                (msg, lineNumber) -> new IllegalStateException(msg + " (trailer header)");
 
-        RawHttpHeaders trailerHeaders = metadataParser.parseHeaders(inputStream, errorCreator).build();
-        trailerConsumer.accept(trailerHeaders);
+        try {
+            RawHttpHeaders trailerHeaders = metadataParser.parseHeaders(inputStream, errorCreator);
+            trailerConsumer.accept(trailerHeaders);
+        } catch (InvalidHttpHeader e) {
+            throw new InvalidHttpHeader(e.getMessage() + " (trailer header)");
+        }
     }
 
     private static byte[] readBytesWhileAvailable(InputStream inputStream) throws IOException {
@@ -428,7 +433,7 @@ public abstract class BodyReader implements Closeable {
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;
-        RawHttpHeaders.Builder extensions = RawHttpHeaders.Builder.newBuilder();
+        RawHttpHeaders.Builder extensions = RawHttpHeaders.newBuilder();
         int b;
         while ((b = inputStream.read()) >= 0) {
             if (b == '\r') {

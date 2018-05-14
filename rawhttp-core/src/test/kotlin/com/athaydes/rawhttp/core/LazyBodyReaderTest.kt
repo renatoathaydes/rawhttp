@@ -107,7 +107,7 @@ class LazyBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 3
 
                 it.chunks[0].data shouldHaveSameElementsAs "12345".toByteArray()
-                it.chunks[0].extensions shouldEqual RawHttpHeaders.Builder
+                it.chunks[0].extensions shouldEqual RawHttpHeaders
                         .newBuilder()
                         .with("abc", "123").build()
                 it.chunks[0].size() shouldBe 5
@@ -156,7 +156,7 @@ class LazyBodyReaderTest : StringSpec({
                 it.chunks.size shouldBe 1
 
                 it.chunks[0].data.size shouldBe 0
-                it.chunks[0].extensions shouldEqual RawHttpHeaders.Builder.newBuilder()
+                it.chunks[0].extensions shouldEqual RawHttpHeaders.newBuilder()
                         .with("hi", "true")
                         .with("hi", "22")
                         .with("bye", "false,maybe")
@@ -201,7 +201,7 @@ class LazyBodyReaderTest : StringSpec({
                 it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual RawHttpHeaders.Builder.newBuilder()
+                it.trailerHeaders shouldEqual RawHttpHeaders.newBuilder()
                         .with("Hello", "hi there")
                         .with("Bye", "true")
                         .with("Hello", "wow")

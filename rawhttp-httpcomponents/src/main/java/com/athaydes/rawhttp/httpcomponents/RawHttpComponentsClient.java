@@ -76,7 +76,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
 
     private RawHttpHeaders readHeaders(CloseableHttpResponse response) {
         Header[] allHeaders = response.getAllHeaders();
-        RawHttpHeaders.Builder headers = RawHttpHeaders.Builder.newBuilder();
+        RawHttpHeaders.Builder headers = RawHttpHeaders.newBuilder();
         for (Header header : allHeaders) {
             String meta = header.getElements().length > 0 ?
                     ";" + Arrays.stream(header.getElements())

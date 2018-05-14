@@ -70,7 +70,7 @@ final class CliServerRouter implements Router {
     }
 
     private static RawHttpHeaders contentTypeHeaderFor(String resourceName) {
-        return RawHttpHeaders.Builder.newBuilder()
+        return RawHttpHeaders.newBuilder()
                 .with("Content-Type", mimeTypeOf(resourceName))
                 .build();
     }

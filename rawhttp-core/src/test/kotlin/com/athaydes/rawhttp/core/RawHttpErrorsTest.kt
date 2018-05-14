@@ -18,8 +18,8 @@ class RawHttpErrorsTest : StringSpec({
                 row("    ", 1, "Invalid request line"),
                 row("POST", 1, "Invalid request line"),
                 row("A B C D", 1, "Invalid request line"),
-                row("GET / HTTP/1.1\r\nINVALID\r\n", 2, "Invalid header"),
-                row("GET / HTTP/1.1\r\nAccept: all\r\nINVALID\r\n", 3, "Invalid header"),
+                row("GET / HTTP/1.1\r\nINVALID\r\n", 2, "Invalid header: missing the ':' separator"),
+                row("GET / HTTP/1.1\r\nAccept: all\r\nINVALID\r\n", 3, "Invalid header: missing the ':' separator"),
                 row("GET / HTTP/1.1\r\nAccept: all\r\n", 1, "Host not given either in request line or Host header"),
                 row("GET /path HTTP/1.1", 1, "Host not given either in request line or Host header"),
                 row("GET http://hi.com\r\nHost: hi.com", 1, "Host specified both in Host header and in request line"),
@@ -74,7 +74,7 @@ class RawHttpErrorsTest : StringSpec({
                     .build()
             ).parseRequest("GET http://localhost\r\nTransfer-Encoding: chunked\r\n\r\n0\r\nHi: true\n\r\n").eagerly()
         }.run {
-            message shouldBe "Illegal new-line character without preceding return (parsing chunked body headers)"
+            message shouldBe "Illegal new-line character without preceding return (trailer header)"
         }
     }
 
@@ -85,7 +85,7 @@ class RawHttpErrorsTest : StringSpec({
                     .build()
             ).parseRequest("GET http://localhost\r\nTransfer-Encoding: chunked\r\n\r\n0\r\nHi\r\n\r\n").eagerly()
         }.run {
-            message shouldBe "Invalid header (parsing chunked body headers)"
+            message shouldBe "Invalid header: missing the ':' separator (trailer header)"
         }
     }
 

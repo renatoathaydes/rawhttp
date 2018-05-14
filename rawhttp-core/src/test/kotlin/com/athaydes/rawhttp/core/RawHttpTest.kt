@@ -325,7 +325,7 @@ class SimpleHttpResponseTests : StringSpec({
 class CopyHttpRequestTests : StringSpec({
 
     "Can make a copy of a HTTP Request with added headers" {
-        val addedHeaders = RawHttpHeaders.Builder.newBuilder()
+        val addedHeaders = RawHttpHeaders.newBuilder()
                 .with("Accept", "any/thing")
                 .with("User-Agent", "raw-http")
                 .build()
@@ -348,7 +348,7 @@ class CopyHttpRequestTests : StringSpec({
 class CopyHttpResponseTests : StringSpec({
 
     "Can make a copy of a HTTP Response with added headers" {
-        val addedHeaders = RawHttpHeaders.Builder.newBuilder()
+        val addedHeaders = RawHttpHeaders.newBuilder()
                 .with("Accept", "any/thing")
                 .with("User-Agent", "raw-http")
                 .build()

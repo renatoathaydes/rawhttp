@@ -11,7 +11,7 @@ import io.kotlintest.specs.StringSpec
 class HttpHeadersTest : StringSpec({
 
     "Headers are multi-value, case-insensitive" {
-        RawHttpHeaders.Builder.newBuilder()
+        RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
                 .with("ho", "ccc")
@@ -44,7 +44,7 @@ class HttpHeadersTest : StringSpec({
     }
 
     "Headers can be re-constructed exactly" {
-        RawHttpHeaders.Builder.newBuilder()
+        RawHttpHeaders.newBuilder()
                 .with("Content-Type", "33")
                 .with("Accept", "application/json")
                 .with("Accept", "text/html")
@@ -55,20 +55,20 @@ class HttpHeadersTest : StringSpec({
                 "Content-Type: 33\r\n" +
                 "Accept: application/json\r\n" +
                 "Accept: text/html\r\n" +
-                "Accept: text/plain\r\n" + // headers are grouped together, so the order may change
                 "Server: nginx\r\n" +
+                "Accept: text/plain\r\n" +
                 "Date: 22 March 2012\r\n" +
                 "\r\n"
     }
 
     "Headers may be added to other headers" {
-        val otherHeaders = RawHttpHeaders.Builder.newBuilder()
+        val otherHeaders = RawHttpHeaders.newBuilder()
                 .with("hi", "bye")
                 .with("Accept", "text/xml")
                 .with("Accept", "text/plain")
                 .with("New", "True").build()
 
-        RawHttpHeaders.Builder.newBuilder()
+        RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
                 .with("ho", "ccc")
@@ -83,7 +83,7 @@ class HttpHeadersTest : StringSpec({
 
     "Header names must not contain invalid characters" {
         val error = shouldThrow<InvalidHttpHeader> {
-            RawHttpHeaders.Builder.newBuilder()
+            RawHttpHeaders.newBuilder()
                     .with("ABC(D)", "aaa").build()
         }
         error.message shouldEqual "Invalid header name (contains illegal character at index 3): ABC(D)"
@@ -91,7 +91,7 @@ class HttpHeadersTest : StringSpec({
 
     "Header values must not contain invalid characters" {
         val error = shouldThrow<InvalidHttpHeader> {
-            RawHttpHeaders.Builder.newBuilder()
+            RawHttpHeaders.newBuilder()
                     .with("Hello", "hallå").build()
         }
         error.message shouldEqual "Invalid header value (contains illegal character at index 4): hallå"

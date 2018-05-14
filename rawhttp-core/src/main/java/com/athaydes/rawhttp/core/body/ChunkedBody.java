@@ -69,7 +69,7 @@ public class ChunkedBody extends HttpMessageBody {
 
     @Override
     public RawHttpHeaders headersFrom(RawHttpHeaders headers) {
-        RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder(headers);
+        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilder(headers);
         getContentType().ifPresent(contentType -> builder.overwrite("Content-Type", contentType));
         builder.overwrite("Transfer-Encoding", "chunked");
         builder.remove("Content-Length");

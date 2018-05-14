@@ -45,7 +45,7 @@ public abstract class HttpMessageBody {
      * containing this body.
      */
     public RawHttpHeaders headersFrom(RawHttpHeaders headers) {
-        RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder(headers);
+        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilder(headers);
         getContentType().ifPresent(contentType -> builder.overwrite("Content-Type", contentType));
         getContentLength().ifPresent(length -> builder.overwrite("Content-Length", Long.toString(length)));
         return builder.build();

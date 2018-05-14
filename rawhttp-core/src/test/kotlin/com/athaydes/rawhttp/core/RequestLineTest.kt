@@ -50,7 +50,7 @@ class RequestLineTest : StringSpec({
                 row("GET", "Invalid request line"),
                 row("POST  ", "Invalid request line"),
                 row("POST  / HTTP/1.1", "Invalid request line"),
-                row("/Hi /", "Invalid method name"),
+                row("/Hi /", "Invalid method name: illegal character at index 0"),
                 row("POST /hi HTTP/1.2", "Invalid HTTP version"),
                 row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
 
@@ -91,8 +91,8 @@ class RequestLineTest : StringSpec({
                 row("POST  / HTTP/1.1", "Invalid request line"),
                 row("GET /", "Missing HTTP version"),
                 row("POST /hello", "Missing HTTP version"),
-                row("/Hi / HTTP/1.1", "Invalid method name"),
-                row("GÅ / HTTP/1.1", "Invalid method name"),
+                row("/Hi / HTTP/1.1", "Invalid method name: illegal character at index 0"),
+                row("GÅ / HTTP/1.1", "Invalid method name: illegal character at index 1"),
                 row("POST /hi HTTP/1.2", "Invalid HTTP version"),
                 row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
 

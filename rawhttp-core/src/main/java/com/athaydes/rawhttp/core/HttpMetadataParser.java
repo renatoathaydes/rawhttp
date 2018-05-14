@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
@@ -42,11 +43,11 @@ public final class HttpMetadataParser {
      *
      * @param inputStream supplying the header fields
      * @param createError error factory - used in case an error is encountered
-     * @return modifiable {@link RawHttpHeaders.Builder}
+     * @return the {@link RawHttpHeaders}
      */
-    public RawHttpHeaders.Builder parseHeaders(InputStream inputStream,
-                                               BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        return buildHeaders(parseHeaderLines(inputStream, createError), createError);
+    public RawHttpHeaders parseHeaders(InputStream inputStream,
+                                       BiFunction<String, Integer, RuntimeException> createError) throws IOException {
+        return buildHeaders(parseHeaderLines(inputStream, createError), createError).build();
     }
 
     /**
@@ -62,10 +63,6 @@ public final class HttpMetadataParser {
 
     /**
      * Parses a HTTP request's request-line.
-     * <p>
-     * This method does not perform validation of characters and is provided for
-     * performance reasons where the request-line is known to be legal.
-     * Prefer to use {@link this#parseRequestLine(InputStream)} in case the input cannot be trusted.
      *
      * @param statusLine the request-line
      * @return the request-line
@@ -82,8 +79,10 @@ public final class HttpMetadataParser {
         String[] parts = requestLine.split("\\s");
         if (parts.length == 2 || parts.length == 3) {
             String method = parts[0];
-            if (FieldValues.indexOfNotAllowedInTokens(method).isPresent()) {
-                throw new InvalidHttpRequest("Invalid method name", 1);
+            OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(method);
+            if (illegalIndex.isPresent()) {
+                throw new InvalidHttpRequest("Invalid method name: illegal character at index " +
+                        illegalIndex.getAsInt(), 1);
             }
             URI uri = createUri(parts[1]);
             HttpVersion httpVersion = options.insertHttpVersionIfMissing()
@@ -119,7 +118,7 @@ public final class HttpMetadataParser {
      * <p>
      * This method does not perform validation of characters and is provided for
      * performance reasons where the status-line is known to be legal.
-     * Prefer to use {@link this#parseStatusLine(InputStream)} in case the input cannot be trusted.
+     * Prefer to use {@link HttpMetadataParser#parseStatusLine(InputStream)} in case the input cannot be trusted.
      *
      * @param statusLine the status-line
      * @return the status-line
@@ -179,17 +178,13 @@ public final class HttpMetadataParser {
             throw new InvalidHttpResponse("Invalid status code", 1);
         }
 
-        try {
-            return new StatusLine(version, Integer.parseInt(statusCode), reason);
-        } catch (NumberFormatException e) {
-            throw new InvalidHttpResponse("Invalid status code", 1);
-        }
+        return new StatusLine(version, Integer.parseInt(statusCode), reason);
     }
 
     private RawHttpHeaders.Builder buildHeaders(
             List<String> lines,
             BiFunction<String, Integer, RuntimeException> createError) {
-        RawHttpHeaders.Builder builder = RawHttpHeaders.Builder.newBuilder();
+        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilderSkippingValidation();
         int lineNumber = 2;
         for (String line : lines) {
             line = line.trim();
@@ -198,9 +193,16 @@ public final class HttpMetadataParser {
             }
             String[] parts = line.split(":\\s?", 2);
             if (parts.length != 2) {
-                throw createError.apply("Invalid header", lineNumber);
+                throw createError.apply("Invalid header: missing the ':' separator", lineNumber);
             }
-            builder.with(parts[0], parts[1], lineNumber);
+
+            // only validate the header name here because the header value is already validated
+            // when reading the lines from the stream.
+            OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(parts[0]);
+            if (illegalIndex.isPresent()) {
+                throw createError.apply("Illegal character in header name at index " + illegalIndex.getAsInt(), lineNumber);
+            }
+            builder.with(parts[0], parts[1]);
             lineNumber++;
         }
 
@@ -256,8 +258,12 @@ public final class HttpMetadataParser {
                 // unexpected, but let's accept new-line without returns
                 break;
             } else {
-                // TODO verify character is a VCHAR
-                metadataBuilder.append((char) b);
+                char c = (char) b;
+                if (FieldValues.isAllowedInVCHARs(c)) {
+                    metadataBuilder.append(c);
+                } else {
+                    throw createError.apply("Illegal character in HTTP message metadata", lineNumber);
+                }
             }
             skipLeadingNewLine = false;
         }

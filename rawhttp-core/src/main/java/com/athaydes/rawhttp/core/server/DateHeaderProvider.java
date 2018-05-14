@@ -28,7 +28,7 @@ final class DateHeaderProvider implements Supplier<RawHttpHeaders> {
     }
 
     private static RawHttpHeaders createDateHeader() {
-        return RawHttpHeaders.Builder.newBuilder()
+        return RawHttpHeaders.newBuilderSkippingValidation()
                 .with("Date", RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)))
                 .build();
     }

@@ -121,12 +121,13 @@ public class RawHttp {
     public RawHttpRequest parseRequest(InputStream inputStream,
                                        @Nullable InetAddress senderAddress) throws IOException {
         RequestLine requestLine = metadataParser.parseRequestLine(inputStream);
-        RawHttpHeaders.Builder headersBuilder = metadataParser.parseHeaders(inputStream, InvalidHttpRequest::new);
+        RawHttpHeaders originalHeaders = metadataParser.parseHeaders(inputStream, InvalidHttpRequest::new);
+        RawHttpHeaders.Builder modifiableHeaders = RawHttpHeaders.newBuilder(originalHeaders);
 
         // do a little cleanup to make sure the request is actually valid
-        requestLine = verifyHost(requestLine, headersBuilder);
+        requestLine = verifyHost(requestLine, modifiableHeaders);
 
-        RawHttpHeaders headers = headersBuilder.build();
+        RawHttpHeaders headers = modifiableHeaders.build();
 
         boolean hasBody = requestHasBody(headers);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
@@ -193,7 +194,7 @@ public class RawHttp {
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
                                                @Nullable RequestLine requestLine) throws IOException {
         StatusLine statusLine = metadataParser.parseStatusLine(inputStream);
-        RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, InvalidHttpResponse::new).build();
+        RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, InvalidHttpResponse::new);
 
         boolean hasBody = responseHasBody(statusLine, requestLine);
         @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
@@ -324,32 +325,33 @@ public class RawHttp {
     }
 
     private RequestLine verifyHost(RequestLine requestLine, RawHttpHeaders.Builder headers) {
-        List<String> host = headers.build().get("Host");
-        if (host.isEmpty()) {
+        List<String> hostHeaderValues = headers.get("Host");
+        @Nullable String requestLineHost = requestLine.getUri().getHost();
+        if (hostHeaderValues.isEmpty()) {
             if (!options.insertHostHeaderIfMissing()) {
                 throw new InvalidHttpRequest("Host header is missing", 1);
-            } else if (requestLine.getUri().getHost() == null) {
+            } else if (requestLineHost == null) {
                 throw new InvalidHttpRequest("Host not given either in request line or Host header", 1);
             } else {
                 // add the Host header to make sure the request is legal
-                headers.with("Host", requestLine.getUri().getHost());
+                headers.with("Host", requestLineHost);
             }
             return requestLine;
-        } else if (host.size() == 1) {
-            if (requestLine.getUri().getHost() != null) {
+        } else if (hostHeaderValues.size() == 1) {
+            if (requestLineHost != null) {
                 throw new InvalidHttpRequest("Host specified both in Host header and in request line", 1);
             }
             try {
-                RequestLine newRequestLine = requestLine.withHost(host.iterator().next());
+                RequestLine newRequestLine = requestLine.withHost(hostHeaderValues.iterator().next());
                 // cleanup the host header
                 headers.overwrite("Host", newRequestLine.getUri().getHost());
                 return newRequestLine;
             } catch (IllegalArgumentException e) {
-                int lineNumber = headers.getLineNumbers("Host").get(0);
+                int lineNumber = headers.getLineNumberAt("Host", 0);
                 throw new InvalidHttpRequest("Invalid host header: " + e.getMessage(), lineNumber);
             }
         } else {
-            int lineNumber = headers.getLineNumbers("Host").get(1);
+            int lineNumber = headers.getLineNumberAt("Host", 1);
             throw new InvalidHttpRequest("More than one Host header specified", lineNumber);
         }
     }

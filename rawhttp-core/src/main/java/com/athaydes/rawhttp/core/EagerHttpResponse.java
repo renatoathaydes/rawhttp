@@ -54,7 +54,7 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
             RawHttpHeaders trailingHeaders = bodyReader.asChunkedBodyContents()
                     .map(ChunkedBodyContents::getTrailerHeaders)
                     .orElse(emptyRawHttpHeaders());
-            headers = RawHttpHeaders.Builder.newBuilder(response.getHeaders())
+            headers = RawHttpHeaders.newBuilder(response.getHeaders())
                     .merge(trailingHeaders)
                     .build();
         } else {

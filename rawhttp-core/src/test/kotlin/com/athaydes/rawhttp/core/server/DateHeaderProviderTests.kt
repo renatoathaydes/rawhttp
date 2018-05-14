@@ -27,7 +27,7 @@ class DateHeaderProviderTests : StringSpec({
         val createDateHeaderCounter = AtomicInteger()
         val dateHeaderMock = Supplier<RawHttpHeaders> {
             createDateHeaderCounter.incrementAndGet()
-            RawHttpHeaders.Builder.newBuilder().with("Date", Thread.currentThread().id.toString()).build()
+            RawHttpHeaders.newBuilder().with("Date", Thread.currentThread().id.toString()).build()
         }
 
         val cacheDurationMillis = 40L
