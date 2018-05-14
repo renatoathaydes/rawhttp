@@ -4,6 +4,7 @@ import com.athaydes.rawhttp.core.errors.InvalidHttpHeader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,8 +197,17 @@ public class RawHttpHeaders {
      */
     public RawHttpHeaders and(RawHttpHeaders headers) {
         Builder builder = RawHttpHeaders.newBuilderSkippingValidation(this);
-        headers.forEach((name, value) -> builder.remove(name));
-        return builder.merge(headers).build();
+        Set<String> visitedNames = new HashSet<>(headers.headerNames.size());
+        headers.forEach((name, value) -> {
+            String key = toUppercaseAscii(name);
+            boolean isNewKey = visitedNames.add(key);
+            if (isNewKey) {
+                builder.overwrite(name, value);
+            } else {
+                builder.with(name, value);
+            }
+        });
+        return builder.build();
     }
 
     /**

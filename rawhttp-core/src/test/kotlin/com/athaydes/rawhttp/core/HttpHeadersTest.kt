@@ -62,22 +62,40 @@ class HttpHeadersTest : StringSpec({
     }
 
     "Headers may be added to other headers" {
-        val otherHeaders = RawHttpHeaders.newBuilder()
-                .with("hi", "bye")
-                .with("Accept", "text/xml")
-                .with("Accept", "text/plain")
-                .with("New", "True").build()
-
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
                 .with("ho", "ccc")
                 .with("Accept", "application/json")
-                .build().and(otherHeaders).run {
+                .build().and(RawHttpHeaders.newBuilder()
+                        .with("hi", "bye")
+                        .with("Accept", "text/xml")
+                        .with("Accept", "text/plain")
+                        .with("New", "True").build()).run {
                     get("hi") shouldEqual listOf("bye")
                     get("ho") shouldEqual listOf("ccc")
                     get("Accept") shouldEqual listOf("text/xml", "text/plain")
                     get("New") shouldEqual listOf("True")
+                    headerNames shouldBe listOf("hi", "ho", "Accept", "Accept", "New")
+                }
+    }
+
+    "Headers may be merged with other headers" {
+        RawHttpHeaders.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Accept", "application/json")
+                .merge(RawHttpHeaders.newBuilder()
+                        .with("hi", "bye")
+                        .with("Accept", "text/xml")
+                        .with("Accept", "text/plain")
+                        .with("New", "True").build()).build().run {
+                    get("hi") shouldEqual listOf("aaa", "bbb", "bye")
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("application/json", "text/xml", "text/plain")
+                    get("New") shouldEqual listOf("True")
+                    headerNames shouldBe listOf("hi", "hi", "ho", "Accept", "hi", "Accept", "Accept", "New")
                 }
     }
 
@@ -89,12 +107,26 @@ class HttpHeadersTest : StringSpec({
         error.message shouldEqual "Invalid header name (contains illegal character at index 3): ABC(D)"
     }
 
+    "Header names may contain invalid characters if skipping validation" {
+        RawHttpHeaders.newBuilderSkippingValidation().with("ABC(D)", "aaa").build().run {
+            headerNames shouldBe listOf("ABC(D)")
+            get("ABC(D)") shouldBe listOf("aaa")
+        }
+    }
+
     "Header values must not contain invalid characters" {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder()
                     .with("Hello", "hallå").build()
         }
         error.message shouldEqual "Invalid header value (contains illegal character at index 4): hallå"
+    }
+
+    "Header values may contain invalid characters if skipping validation" {
+        RawHttpHeaders.newBuilderSkippingValidation().with("Hello", "hallå").build().run {
+            headerNames shouldBe listOf("Hello")
+            get("Hello") shouldBe listOf("hallå")
+        }
     }
 
 })
