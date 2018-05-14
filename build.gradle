@@ -3,7 +3,7 @@ plugins {
 }
 
 subprojects {
-    group 'com.athaydes.rawhttp'
+    group 'rawhttp'
     version '1.0-SNAPSHOT'
 
     repositories {
