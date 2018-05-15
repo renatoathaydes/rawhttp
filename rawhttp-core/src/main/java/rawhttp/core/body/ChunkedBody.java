@@ -1,8 +1,6 @@
 package rawhttp.core.body;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
@@ -68,7 +66,7 @@ public class ChunkedBody extends HttpMessageBody {
     public LazyBodyReader toBodyReader() {
         List<String> encodings = Collections.singletonList("chunked");
         return new LazyBodyReader(new BodyReader.BodyType.Encoded(encodings), metadataParser,
-                new ChunkedInputStream(stream, chunkLength));
+                new InputStreamChunkEncoder(stream, chunkLength));
     }
 
     @Override
@@ -78,62 +76,6 @@ public class ChunkedBody extends HttpMessageBody {
         builder.overwrite("Transfer-Encoding", "chunked");
         builder.remove("Content-Length");
         return builder.build();
-    }
-
-    private static class ChunkedInputStream extends InputStream {
-
-        private final InputStream stream;
-        private final int chunkSize;
-
-        private byte[] buffer = new byte[0];
-        private int index = 0;
-        private boolean terminated = false;
-
-        ChunkedInputStream(InputStream stream, int chunkSize) {
-            this.stream = stream;
-            this.chunkSize = chunkSize;
-        }
-
-        private byte[] nextChunk() throws IOException {
-            byte[] chunkData = new byte[chunkSize];
-            int bytesRead = stream.read(chunkData);
-            if (bytesRead <= 0) {
-                terminated = true;
-                bytesRead = 0;
-            }
-
-            byte[] chunkSizeBytes = (Integer.toString(bytesRead, 16) + "\r\n").getBytes(StandardCharsets.US_ASCII);
-
-            byte[] chunk = new byte[chunkSizeBytes.length + bytesRead + 2];
-            System.arraycopy(chunkSizeBytes, 0, chunk, 0, chunkSizeBytes.length);
-            if (bytesRead > 0) {
-                System.arraycopy(chunkData, 0, chunk, chunkSizeBytes.length, bytesRead);
-            }
-            chunk[chunk.length - 2] = '\r';
-            chunk[chunk.length - 1] = '\n';
-            return chunk;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (index >= buffer.length) {
-                if (terminated) {
-                    return -1;
-                }
-                buffer = nextChunk();
-                if (buffer.length == 0) {
-                    return -1;
-                }
-                index = 0;
-            }
-            return buffer[index++];
-        }
-
-        @Override
-        public boolean markSupported() {
-            return false;
-        }
-
     }
 
 }
