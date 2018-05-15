@@ -1,4 +1,4 @@
-package rawhttp.core;
+package rawhttp.core.body;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+import rawhttp.core.HttpMetadataParser;
 
 /**
  * Lazy implementation of {@link BodyReader}.
@@ -46,7 +47,7 @@ public final class LazyBodyReader extends BodyReader {
     public OptionalLong getLengthIfKnown() {
         BodyType bodyType = getBodyType();
         if (bodyType instanceof BodyType.ContentLength) {
-            return OptionalLong.of(((BodyType.ContentLength) bodyType).bodyLength);
+            return OptionalLong.of(((BodyType.ContentLength) bodyType).getBodyLength());
         }
         return OptionalLong.empty();
     }

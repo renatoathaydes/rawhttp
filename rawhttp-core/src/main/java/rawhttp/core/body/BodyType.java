@@ -1,7 +1,8 @@
-package rawhttp.core;
+package rawhttp.core.body;
 
 import java.io.IOException;
 import java.util.List;
+import rawhttp.core.IOFunction;
 
 /**
  * Type of HTTP message body.
@@ -45,11 +46,15 @@ public abstract class BodyType {
     }
 
     public static final class ContentLength extends BodyType {
-        final long bodyLength;
+        private final long bodyLength;
 
         public ContentLength(long bodyLength) {
             super(null);
             this.bodyLength = bodyLength;
+        }
+
+        public long getBodyLength() {
+            return bodyLength;
         }
 
         @Override
@@ -74,11 +79,15 @@ public abstract class BodyType {
     }
 
     public static final class Encoded extends BodyType {
-        final List<String> encodings;
+        private final List<String> encodings;
 
         public Encoded(List<String> encodings) {
             super(null);
             this.encodings = encodings;
+        }
+
+        public List<String> getEncodings() {
+            return encodings;
         }
 
         @Override
@@ -103,7 +112,7 @@ public abstract class BodyType {
     }
 
     public static final class CloseTerminated extends BodyType {
-        static final CloseTerminated INSTANCE = new CloseTerminated();
+        public static final CloseTerminated INSTANCE = new CloseTerminated();
 
         private CloseTerminated() {
             super(null);

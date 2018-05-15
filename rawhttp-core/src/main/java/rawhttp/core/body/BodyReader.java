@@ -1,4 +1,4 @@
-package rawhttp.core;
+package rawhttp.core.body;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -16,6 +16,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import rawhttp.core.HttpMetadataParser;
+import rawhttp.core.IOConsumer;
+import rawhttp.core.RawHttpHeaders;
+import rawhttp.core.RawHttpOptions;
 import rawhttp.core.errors.InvalidHttpHeader;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
@@ -90,7 +94,7 @@ public abstract class BodyReader implements Closeable {
         InputStream inputStream = asStream();
         bodyType.use(
                 cl -> {
-                    readAndWriteBytesUpToLength(inputStream, cl.bodyLength, out, bufferSize);
+                    readAndWriteBytesUpToLength(inputStream, cl.getBodyLength(), out, bufferSize);
                     return null;
                 }, enc -> {
                     // TODO check encodings needed
@@ -219,7 +223,7 @@ public abstract class BodyReader implements Closeable {
     protected ConsumedBody consumeBody(BodyType bodyType,
                                        @Nonnull InputStream inputStream) throws IOException {
         return bodyType.use(
-                cl -> new ConsumedBody(readBytesUpToLength(inputStream, Math.toIntExact(cl.bodyLength))),
+                cl -> new ConsumedBody(readBytesUpToLength(inputStream, Math.toIntExact(cl.getBodyLength()))),
                 enc -> new ConsumedBody(readChunkedBody(inputStream)),
                 ct -> new ConsumedBody(readBytesWhileAvailable(inputStream)));
     }

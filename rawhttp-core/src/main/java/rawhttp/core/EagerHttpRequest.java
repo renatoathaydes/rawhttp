@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import rawhttp.core.body.BodyReader;
+import rawhttp.core.body.ChunkedBodyContents;
+import rawhttp.core.body.EagerBodyReader;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 

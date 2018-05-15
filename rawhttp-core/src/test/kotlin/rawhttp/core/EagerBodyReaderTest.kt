@@ -5,10 +5,11 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
-import rawhttp.core.BodyType.CloseTerminated
-import rawhttp.core.BodyType.ContentLength
-import rawhttp.core.BodyType.Encoded
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
+import rawhttp.core.body.BodyType.CloseTerminated
+import rawhttp.core.body.BodyType.ContentLength
+import rawhttp.core.body.BodyType.Encoded
+import rawhttp.core.body.EagerBodyReader
 import kotlin.text.Charsets.UTF_8
 
 class EagerBodyReaderTest : StringSpec({

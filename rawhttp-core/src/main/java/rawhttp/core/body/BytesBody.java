@@ -3,8 +3,6 @@ package rawhttp.core.body;
 import java.io.ByteArrayInputStream;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
-import rawhttp.core.BodyType;
-import rawhttp.core.LazyBodyReader;
 
 /**
  * A simple {@link HttpMessageBody} whose contents are given by a byte array.

@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
 import rawhttp.core.HttpMessage;
-import rawhttp.core.LazyBodyReader;
 import rawhttp.core.RawHttpHeaders;
 
 /**

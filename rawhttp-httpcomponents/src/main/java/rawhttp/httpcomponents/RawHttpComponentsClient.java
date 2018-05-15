@@ -11,14 +11,14 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import rawhttp.core.BodyType;
 import rawhttp.core.HttpVersion;
-import rawhttp.core.LazyBodyReader;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.StatusLine;
+import rawhttp.core.body.BodyType;
+import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.client.RawHttpClient;
 
 import static java.util.stream.Collectors.joining;

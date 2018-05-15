@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
+import rawhttp.core.body.BodyReader;
+import rawhttp.core.body.BodyType;
+import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
 

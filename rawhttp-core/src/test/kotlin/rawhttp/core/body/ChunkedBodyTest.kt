@@ -5,7 +5,6 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
-import rawhttp.core.BodyType
 import rawhttp.core.bePresent
 import rawhttp.core.shouldHaveSameElementsAs
 

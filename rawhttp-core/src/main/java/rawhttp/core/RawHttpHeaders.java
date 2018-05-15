@@ -156,7 +156,16 @@ public class RawHttpHeaders {
         }
     }
 
-    void forEachIO(IOBiConsumer<String, String> consumer) throws IOException {
+    /**
+     * Iterate over all entries in this set of headers.
+     * <p>
+     * The consumer is called for each value of a header. If a header has multiple values, each value is consumed
+     * once, so the same header name (with the original case it was inserted with) may be consumed more than once.
+     *
+     * @param consumer accepts the header name and value
+     * @throws IOException if the consumer throws
+     */
+    public void forEachIO(IOBiConsumer<String, String> consumer) throws IOException {
         try {
             forEach((name, value) -> {
                 try {

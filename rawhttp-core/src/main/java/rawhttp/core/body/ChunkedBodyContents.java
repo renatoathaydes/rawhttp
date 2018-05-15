@@ -1,9 +1,10 @@
-package rawhttp.core;
+package rawhttp.core.body;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
+import rawhttp.core.RawHttpHeaders;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;

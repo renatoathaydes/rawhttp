@@ -5,10 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
-import rawhttp.core.BodyType;
-import rawhttp.core.ChunkedBodyContents;
 import rawhttp.core.HttpMetadataParser;
-import rawhttp.core.LazyBodyReader;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpOptions;
 

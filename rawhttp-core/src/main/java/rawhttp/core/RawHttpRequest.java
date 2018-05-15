@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.HttpMessageBody;
 
 /**

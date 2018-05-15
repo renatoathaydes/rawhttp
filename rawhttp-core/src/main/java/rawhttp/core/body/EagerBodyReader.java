@@ -1,4 +1,4 @@
-package rawhttp.core;
+package rawhttp.core.body;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import rawhttp.core.HttpMetadataParser;
 
 /**
  * An eager implementation of {@link BodyReader}.

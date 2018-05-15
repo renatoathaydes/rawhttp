@@ -6,8 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
-import rawhttp.core.BodyType;
-import rawhttp.core.LazyBodyReader;
 
 /**
  * A {@link HttpMessageBody} containing the contents of a {@link File}.
