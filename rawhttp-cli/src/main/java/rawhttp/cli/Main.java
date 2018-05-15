@@ -2,7 +2,10 @@ package rawhttp.cli;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Properties;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
@@ -201,7 +204,18 @@ public class Main {
                 ? new AsyncSysoutRequestLogger()
                 : new NoopRequestLogger();
         RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port, requestLogger));
-        server.start(new CliServerRouter(options.dir));
+        Optional<File> mediaTypesFile = options.getMediaTypesFile();
+        if (mediaTypesFile.isPresent()) {
+            Properties mediaTypeProperties = new Properties();
+            try {
+                mediaTypeProperties.load(new FileReader(mediaTypesFile.get()));
+            } catch (IOException e) {
+                return new CliError(ErrorCode.IO_EXCEPTION, "Could not read media-types file: " + e.getMessage());
+            }
+            server.start(new CliServerRouter(options.dir, mediaTypeProperties));
+        } else {
+            server.start(new CliServerRouter(options.dir));
+        }
         return null;
     }
 

@@ -2,7 +2,6 @@ package rawhttp.cli;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,29 +13,7 @@ import static java.util.Collections.singletonList;
 
 final class FileLocator {
 
-    private static final Map<String, String> mimeByFileExtension;
     private static final List<String> ANY_CONTENT_TYPE = singletonList("*/*");
-
-    static {
-        Map<String, String> _mimeMapping = new HashMap<>(13);
-
-        _mimeMapping.put("html", "text/html");
-        _mimeMapping.put("txt", "text/plain");
-        _mimeMapping.put("json", "application/json");
-        _mimeMapping.put("js", "application/javascript");
-        _mimeMapping.put("xml", "text/xml");
-        _mimeMapping.put("jpg", "image/jpeg");
-        _mimeMapping.put("jpeg", "image/jpeg");
-        _mimeMapping.put("gif", "image/gif");
-        _mimeMapping.put("png", "image/png");
-        _mimeMapping.put("tif", "image/tiff");
-        _mimeMapping.put("tiff", "image/tiff");
-        _mimeMapping.put("ico", "image/x-icon");
-        _mimeMapping.put("pdf", "application/pdf");
-        _mimeMapping.put("css", "text/css");
-
-        mimeByFileExtension = Collections.unmodifiableMap(_mimeMapping);
-    }
 
     static final class FileResult {
         final File file;
@@ -59,12 +36,13 @@ final class FileLocator {
     }
 
     private final File rootDir;
+    private final Map<String, String> mimeByFileExtension;
 
-    FileLocator(File rootDir) {
+    FileLocator(File rootDir, Map<String, String> mimeByFileExtension) {
         this.rootDir = rootDir;
+        this.mimeByFileExtension = mimeByFileExtension;
     }
 
-    @SuppressWarnings("UnusedLabel")
     Optional<FileResult> find(String path, List<String> accept) {
         Optional<FileResult> result = findExactMatch(path);
         if (!result.isPresent()) {
@@ -185,7 +163,7 @@ final class FileLocator {
         return result.stream().sorted().map(i -> i.value).collect(Collectors.toList());
     }
 
-    private static RawHttpHeaders contentTypeHeaderFor(String resourceName) {
+    private RawHttpHeaders contentTypeHeaderFor(String resourceName) {
         return contentTypeHeaderWithValue(mimeTypeOf(resourceName));
     }
 
@@ -195,7 +173,7 @@ final class FileLocator {
                 .build();
     }
 
-    static String mimeTypeOf(String resourceName) {
+    String mimeTypeOf(String resourceName) {
         int idx = resourceName.lastIndexOf('.');
         if (idx < 0 || idx == resourceName.length() - 1) {
             return "application/octet-stream";

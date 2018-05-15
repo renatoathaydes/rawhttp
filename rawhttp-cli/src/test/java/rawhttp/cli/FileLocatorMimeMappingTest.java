@@ -1,5 +1,6 @@
 package rawhttp.cli;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.Test;
@@ -13,6 +14,7 @@ public class FileLocatorMimeMappingTest {
 
     private final String resourceName;
     private final String expectedMimeType;
+    private final FileLocator fileLocator = new FileLocator(new File("."), CliServerRouter.mimeByFileExtension);
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -50,7 +52,7 @@ public class FileLocatorMimeMappingTest {
 
     @Test
     public void correctMimeTypeIsSelectedFromFileExtension() {
-        String mimeType = FileLocator.mimeTypeOf(resourceName);
+        String mimeType = fileLocator.mimeTypeOf(resourceName);
         assertEquals(mimeType, expectedMimeType);
     }
 

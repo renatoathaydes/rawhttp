@@ -88,6 +88,45 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canServeResourceUsingCustomMediaTypes() {
+        val tempDir = createTempDir(javaClass.name)
+        val mp3File = File(tempDir, "resource.mp3")
+        mp3File.writeText("Music!!")
+        val jsonFile = File(tempDir, "some.json")
+        jsonFile.writeText("true")
+
+        val mediaTypesFile = File(tempDir, "media.properties")
+        mediaTypesFile.writeText("mp3: music/mp3")
+
+        val handle = runCli("serve", tempDir.absolutePath, "--media-types", mediaTypesFile.absolutePath)
+
+        val (mp3response, jsonResponse) = try {
+            sendHttpRequest("""
+            GET http://localhost:8080/${mp3File.name}
+            Accept: */*
+            """.trimIndent()).eagerly() to sendHttpRequest("""
+            GET http://localhost:8080/${jsonFile.name}
+            Accept: */*
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat(mp3response.statusCode, equalTo(200))
+        assertTrue(mp3response.body.isPresent)
+        assertThat(mp3response.body.get().asBytes(), equalTo(mp3File.readBytes()))
+        assertThat(mp3response.headers["Content-Type"], equalTo(listOf("music/mp3")))
+
+        // verify that the standard mappings are still used
+        assertThat(jsonResponse.statusCode, equalTo(200))
+        assertTrue(jsonResponse.body.isPresent)
+        assertThat(jsonResponse.body.get().asBytes(), equalTo(jsonFile.readBytes()))
+        assertThat(jsonResponse.headers["Content-Type"], equalTo(listOf("application/json")))
+    }
+
+    @Test
     fun canServeAnyDirectoryLoggingRequests() {
         val tempDir = createTempDir(javaClass.name)
         val someFile = File(tempDir, "my-file")

@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.Test;
 
@@ -23,8 +25,12 @@ public class FileLocatorTest {
     private final FileLocator fileLocator;
 
     public FileLocatorTest() throws IOException {
+        Map<String, String> mimeMapping = new HashMap<>(2);
+        mimeMapping.put("json", "application/json");
+        mimeMapping.put("xml", "text/xml");
+
         rootDir = Files.createTempDirectory(FileLocatorTest.class.getSimpleName());
-        fileLocator = new FileLocator(rootDir.toFile());
+        fileLocator = new FileLocator(rootDir.toFile(), mimeMapping);
 
         // create a few files for tests
         Files.write(rootDir.resolve("hello"), singletonList("Hello root"), CREATE);
