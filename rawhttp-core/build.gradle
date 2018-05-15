@@ -14,7 +14,7 @@ plugins {
 }
 
 description = 'RawHTTP core module'
-version '2.0-SNAPSHOT'
+version '2.0-beta1'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

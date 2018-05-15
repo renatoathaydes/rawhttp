@@ -3,7 +3,7 @@ plugins {
 }
 
 subprojects {
-    group 'rawhttp'
+    group 'com.athaydes.rawhttp'
 
     repositories {
         mavenLocal()

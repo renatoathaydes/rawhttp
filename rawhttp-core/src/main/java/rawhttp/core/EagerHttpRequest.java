@@ -49,9 +49,13 @@ public class EagerHttpRequest extends RawHttpRequest {
             RawHttpHeaders trailingHeaders = bodyReader.asChunkedBodyContents()
                     .map(ChunkedBodyContents::getTrailerHeaders)
                     .orElse(emptyRawHttpHeaders());
-            headers = RawHttpHeaders.newBuilder(request.getHeaders())
-                    .merge(trailingHeaders)
-                    .build();
+            if (trailingHeaders.isEmpty()) {
+                headers = request.getHeaders();
+            } else {
+                headers = RawHttpHeaders.newBuilder(request.getHeaders())
+                        .merge(trailingHeaders)
+                        .build();
+            }
         } else {
             headers = request.getHeaders();
         }

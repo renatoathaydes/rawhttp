@@ -276,6 +276,13 @@ public class RawHttpHeaders {
     }
 
     /**
+     * @return true if there is no headers in this container, false otherwise.
+     */
+    public boolean isEmpty() {
+        return headerNames.isEmpty();
+    }
+
+    /**
      * Builder of {@link RawHttpHeaders}.
      */
     public static final class Builder {
