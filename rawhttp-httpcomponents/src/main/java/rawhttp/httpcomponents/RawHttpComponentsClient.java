@@ -11,7 +11,7 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import rawhttp.core.BodyReader.BodyType;
+import rawhttp.core.BodyType;
 import rawhttp.core.HttpVersion;
 import rawhttp.core.LazyBodyReader;
 import rawhttp.core.RawHttp;

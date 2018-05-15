@@ -212,13 +212,13 @@ public class RawHttp {
      * @param headers HTTP message's headers
      * @return the body type of the HTTP message
      */
-    public static BodyReader.BodyType getBodyType(RawHttpHeaders headers) {
+    public static BodyType getBodyType(RawHttpHeaders headers) {
         return parseContentEncoding(headers).orElseGet(() -> {
             OptionalLong contentLength = extractContentLength(headers);
             if (contentLength.isPresent()) {
-                return new BodyReader.BodyType.ContentLength(contentLength.getAsLong());
+                return new BodyType.ContentLength(contentLength.getAsLong());
             }
-            return BodyReader.BodyType.CloseTerminated.INSTANCE;
+            return BodyType.CloseTerminated.INSTANCE;
         });
     }
 
@@ -288,10 +288,10 @@ public class RawHttp {
         return minCode <= statusCode && statusCode <= maxCode;
     }
 
-    private static Optional<BodyReader.BodyType> parseContentEncoding(RawHttpHeaders headers) {
+    private static Optional<BodyType> parseContentEncoding(RawHttpHeaders headers) {
         List<String> encoding = headers.get("Transfer-Encoding");
         if (!encoding.isEmpty()) {
-            return Optional.of(new BodyReader.BodyType.Encoded(encoding));
+            return Optional.of(new BodyType.Encoded(encoding));
         } else {
             return Optional.empty();
         }

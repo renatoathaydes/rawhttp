@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
-import rawhttp.core.BodyReader;
+import rawhttp.core.BodyType;
 import rawhttp.core.LazyBodyReader;
 
 /**
@@ -36,7 +36,7 @@ public class FileBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         try {
-            return new LazyBodyReader(new BodyReader.BodyType.ContentLength(file.length()),
+            return new LazyBodyReader(new BodyType.ContentLength(file.length()),
                     null,
                     new BufferedInputStream(new FileInputStream(file)));
         } catch (FileNotFoundException e) {

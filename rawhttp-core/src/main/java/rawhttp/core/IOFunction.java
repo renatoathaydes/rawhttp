@@ -3,8 +3,14 @@ package rawhttp.core;
 
 import java.io.IOException;
 
+/**
+ * Function that can throw {@link IOException}.
+ *
+ * @param <T> the argument type
+ * @param <R> the return type
+ */
 @FunctionalInterface
-interface IOFunction<T, R> {
+public interface IOFunction<T, R> {
 
     /**
      * Applies this function to the given argument.

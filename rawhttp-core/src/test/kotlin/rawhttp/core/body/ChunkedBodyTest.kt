@@ -5,7 +5,7 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
-import rawhttp.core.BodyReader
+import rawhttp.core.BodyType
 import rawhttp.core.bePresent
 import rawhttp.core.shouldHaveSameElementsAs
 
@@ -16,7 +16,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 2)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyReader.BodyType.Encoded>()
+            it.bodyType should beOfType<BodyType.Encoded>()
             it.isEncoded shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
@@ -35,7 +35,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 512)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyReader.BodyType.Encoded>()
+            it.bodyType should beOfType<BodyType.Encoded>()
             it.isEncoded shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
@@ -53,7 +53,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 4)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyReader.BodyType.Encoded>()
+            it.bodyType should beOfType<BodyType.Encoded>()
             it.isEncoded shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "4\r\nHell\r\n4\r\no wo\r\n3\r\nrld\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {

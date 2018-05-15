@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
-import rawhttp.core.BodyReader;
+import rawhttp.core.BodyType;
 import rawhttp.core.ChunkedBodyContents;
 import rawhttp.core.HttpMetadataParser;
 import rawhttp.core.LazyBodyReader;
@@ -65,7 +65,7 @@ public class ChunkedBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         List<String> encodings = Collections.singletonList("chunked");
-        return new LazyBodyReader(new BodyReader.BodyType.Encoded(encodings), metadataParser,
+        return new LazyBodyReader(new BodyType.Encoded(encodings), metadataParser,
                 new InputStreamChunkEncoder(stream, chunkLength));
     }
 

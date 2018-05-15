@@ -5,9 +5,9 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
-import rawhttp.core.BodyReader.BodyType.CloseTerminated
-import rawhttp.core.BodyReader.BodyType.ContentLength
-import rawhttp.core.BodyReader.BodyType.Encoded
+import rawhttp.core.BodyType.CloseTerminated
+import rawhttp.core.BodyType.ContentLength
+import rawhttp.core.BodyType.Encoded
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
 import kotlin.text.Charsets.UTF_8
 

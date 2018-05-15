@@ -27,105 +27,6 @@ import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
  */
 public abstract class BodyReader implements Closeable {
 
-    /**
-     * Type of HTTP message body.
-     */
-    public interface BodyType {
-        static <T> T use(BodyType bodyType,
-                         IOFunction<ContentLength, T> useContentLength,
-                         IOFunction<Encoded, T> useEncoded,
-                         IOFunction<CloseTerminated, T> useCloseTerminated) throws IOException {
-            if (bodyType instanceof ContentLength) {
-                return useContentLength.apply((ContentLength) bodyType);
-            }
-            if (bodyType instanceof Encoded) {
-                return useEncoded.apply((Encoded) bodyType);
-            }
-            if (bodyType instanceof CloseTerminated) {
-                return useCloseTerminated.apply((CloseTerminated) bodyType);
-            }
-            throw new IllegalStateException("Unknown body type: " + bodyType);
-        }
-
-        class ContentLength implements BodyType {
-            final long bodyLength;
-
-            public ContentLength(long bodyLength) {
-                this.bodyLength = bodyLength;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ContentLength that = (ContentLength) other;
-                return bodyLength == that.bodyLength;
-            }
-
-            @Override
-            public int hashCode() {
-                return (int) (bodyLength ^ (bodyLength >>> 32));
-            }
-
-            @Override
-            public String toString() {
-                return "ContentLength{" +
-                        "value=" + bodyLength +
-                        '}';
-            }
-        }
-
-        class Encoded implements BodyType {
-            final List<String> encodings;
-
-            public Encoded(List<String> encodings) {
-                this.encodings = encodings;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Encoded encoded = (Encoded) other;
-                return encodings.equals(encoded.encodings);
-            }
-
-            @Override
-            public int hashCode() {
-                return encodings.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Encoded{" +
-                        "values=" + encodings +
-                        '}';
-            }
-        }
-
-        class CloseTerminated implements BodyType {
-            static final CloseTerminated INSTANCE = new CloseTerminated();
-
-            private CloseTerminated() {
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other;
-            }
-
-            @Override
-            public int hashCode() {
-                return 32;
-            }
-
-            @Override
-            public String toString() {
-                return "CloseTerminated{}";
-            }
-        }
-    }
-
     private final BodyType bodyType;
     protected final HttpMetadataParser metadataParser;
 
@@ -187,11 +88,12 @@ public abstract class BodyReader implements Closeable {
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
         InputStream inputStream = asStream();
-        BodyType.use(bodyType,
+        bodyType.use(
                 cl -> {
                     readAndWriteBytesUpToLength(inputStream, cl.bodyLength, out, bufferSize);
                     return null;
                 }, enc -> {
+                    // TODO check encodings needed
                     readAndWriteChunkedBody(inputStream,
                             chunk -> chunk.writeTo(out),
                             headers -> out.write(headers.toString().getBytes(US_ASCII)));
@@ -316,7 +218,7 @@ public abstract class BodyReader implements Closeable {
 
     protected ConsumedBody consumeBody(BodyType bodyType,
                                        @Nonnull InputStream inputStream) throws IOException {
-        return BodyType.use(bodyType,
+        return bodyType.use(
                 cl -> new ConsumedBody(readBytesUpToLength(inputStream, Math.toIntExact(cl.bodyLength))),
                 enc -> new ConsumedBody(readChunkedBody(inputStream)),
                 ct -> new ConsumedBody(readBytesWhileAvailable(inputStream)));
