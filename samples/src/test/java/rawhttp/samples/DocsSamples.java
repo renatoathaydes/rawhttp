@@ -201,7 +201,7 @@ public class DocsSamples {
 
             @Override
             public void close() throws IOException {
-                // TODO the client was closed, perform cleanup
+                // the client was closed, perform cleanup
             }
         }
 

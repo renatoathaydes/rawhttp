@@ -9,7 +9,7 @@ import org.junit.runners.Parameterized;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class CliServerRouterTest {
+public class FileLocatorMimeMappingTest {
 
     private final String resourceName;
     private final String expectedMimeType;
@@ -21,7 +21,7 @@ public class CliServerRouterTest {
                 {"b.txt", "text/plain"},
                 {"cd.json", "application/json"},
                 {".js", "application/javascript"},
-                {"..xml", "application/xml"},
+                {"..xml", "text/xml"},
                 {"e.jpg", "image/jpeg"},
                 {"f.jpeg", "image/jpeg"},
                 {"gg.gif", "image/gif"},
@@ -43,16 +43,15 @@ public class CliServerRouterTest {
         });
     }
 
-    public CliServerRouterTest(String resourceName, String expectedMimeType) {
+    public FileLocatorMimeMappingTest(String resourceName, String expectedMimeType) {
         this.resourceName = resourceName;
         this.expectedMimeType = expectedMimeType;
     }
 
     @Test
     public void correctMimeTypeIsSelectedFromFileExtension() {
-        String mimeType = CliServerRouter.mimeTypeOf(resourceName);
+        String mimeType = FileLocator.mimeTypeOf(resourceName);
         assertEquals(mimeType, expectedMimeType);
     }
-
 
 }

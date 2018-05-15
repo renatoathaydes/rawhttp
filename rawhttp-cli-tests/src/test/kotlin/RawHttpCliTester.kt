@@ -45,12 +45,17 @@ abstract class RawHttpCliTester {
     companion object {
         val CLI_EXECUTABLE: Array<String>
 
-        val SUCCESS_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
+        const val SUCCESS_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
                 "Host: localhost:8083\r\n" +
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
 
-        val SUCCESS_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
+        const val NOT_FOUND_HTTP_REQUEST = "GET /does/not/exist HTTP/1.1\r\n" +
+                "Host: localhost:8083\r\n" +
+                "Accept: */*\r\n" +
+                "User-Agent: RawHTTP"
+
+        const val SUCCESS_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "Content-Length: 9\r\n" +
                 "\r\n" +
@@ -162,6 +167,12 @@ abstract class RawHttpCliTester {
             assertThat(handle.err, equalTo(""))
         }
 
+        fun assertOutputIs404Response(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE))
+            assertThat(handle.err, equalTo(""))
+        }
+
         fun sendHttpRequest(request: String): RawHttpResponse<*> {
             var response: EagerHttpResponse<*>? = null
             var failedConnectionAttempts = 0
@@ -173,7 +184,7 @@ abstract class RawHttpCliTester {
                     break
                 } catch (e: IOException) {
                     failedConnectionAttempts++
-                    sleep(100)
+                    sleep(150)
                 }
             }
 

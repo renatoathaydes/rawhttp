@@ -49,6 +49,12 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun serverReturns404OnNonExistentResource() {
+        val handle = runCli("send", "-t", NOT_FOUND_HTTP_REQUEST)
+        assertOutputIs404Response(handle)
+    }
+
+    @Test
     fun canReadRequestFromFile() {
         val tempFile = File.createTempFile(javaClass.name, "request")
         tempFile.writeText(SUCCESS_HTTP_REQUEST)
@@ -134,7 +140,6 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat(handle.err, equalTo(""))
     }
 
-
     @Test
     fun doesNotExposeParentDirectoryWhenServingDirectory() {
         val tempDir = createTempDir(javaClass.name)
@@ -159,6 +164,43 @@ class RawHttpCliTest : RawHttpCliTester() {
                 response.statusCode, equalTo(404))
         assertTrue(response.body.isPresent)
         assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Resource was not found."))
+    }
+
+    @Test
+    fun canFindResourceWithoutExtension() {
+        val tempDir = createTempDir(javaClass.name)
+        val jsonFile = File(tempDir, "hello.json")
+        val xmlFile = File(tempDir, "hello.xml")
+        jsonFile.writeText("{\"hello\": true}")
+        xmlFile.writeText("<hello>true</hello>")
+        tempDir.deleteOnExit()
+
+        val handle = runCli("serve", tempDir.absolutePath)
+
+        val (jsonResponse, xmlResponse) = try {
+            sendHttpRequest("""
+            GET http://localhost:8080/hello
+            Accept: application/json
+            """.trimIndent()).eagerly() to
+                    sendHttpRequest("""
+            GET http://localhost:8080/hello
+            Accept: text/xml
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat("Server returned unexpected status code\n$handle",
+                jsonResponse.statusCode, equalTo(200))
+        assertTrue(jsonResponse.body.isPresent)
+        assertThat(jsonResponse.body.get().asString(Charsets.UTF_8), equalTo(jsonFile.readText()))
+
+        assertThat("Server returned unexpected status code\n$handle",
+                xmlResponse.statusCode, equalTo(200))
+        assertTrue(xmlResponse.body.isPresent)
+        assertThat(xmlResponse.body.get().asString(Charsets.UTF_8), equalTo(xmlFile.readText()))
     }
 
 }
