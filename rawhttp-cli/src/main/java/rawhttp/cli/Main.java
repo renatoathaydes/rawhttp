@@ -118,11 +118,12 @@ public class Main {
                         "Usage:\n" +
                         "  rawhttp serve <dir> [options]\n" +
                         "\n" +
-                        "* -l --log-requests\n" +
+                        "Options:\n" +
+                        "  * -l --log-requests\n" +
                         "      log requests received by the server\n" +
-                        "* -m --media-types <file>\n" +
+                        "  * -m --media-types <file>\n" +
                         "      use custom Media-Type mappings\n" +
-                        "* -p --port <port-number>\n" +
+                        "  * -p --port <port-number>\n" +
                         "      the port to listen on\n");
                 break;
             default:
