@@ -28,16 +28,14 @@ public final class EagerBodyReader extends BodyReader {
      * @param bodyType       body type
      * @param metadataParser HTTP metadata parser
      * @param inputStream    providing the body. The body is consumed immediately
-     * @param bodyLength     the body's length if known
      * @throws IOException if the inputStream throws
      */
     public EagerBodyReader(BodyType bodyType,
                            @Nullable HttpMetadataParser metadataParser,
-                           @Nonnull InputStream inputStream,
-                           @Nullable Long bodyLength) throws IOException {
+                           @Nonnull InputStream inputStream) throws IOException {
         super(bodyType, metadataParser);
         this.rawInputStream = inputStream;
-        this.consumedBody = consumeBody(bodyType, inputStream, bodyLength);
+        this.consumedBody = consumeBody(bodyType, inputStream);
     }
 
     /**
@@ -49,7 +47,7 @@ public final class EagerBodyReader extends BodyReader {
      * @param metadataParser HTTP metadata parser
      */
     public EagerBodyReader(byte[] bytes, @Nullable HttpMetadataParser metadataParser) {
-        super(BodyType.CONTENT_LENGTH, metadataParser);
+        super(new BodyType.ContentLength(bytes.length), metadataParser);
         this.rawInputStream = null;
         this.consumedBody = new ConsumedBody(bytes);
     }

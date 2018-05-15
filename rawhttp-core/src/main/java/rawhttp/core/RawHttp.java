@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -128,8 +127,9 @@ public class RawHttp {
 
         RawHttpHeaders headers = modifiableHeaders.build();
 
-        boolean hasBody = requestHasBody(headers);
-        @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
+        @Nullable BodyReader bodyReader = requestHasBody(headers)
+                ? createBodyReader(inputStream, headers)
+                : null;
 
         return new RawHttpRequest(requestLine, headers, bodyReader, senderAddress);
     }
@@ -195,45 +195,31 @@ public class RawHttp {
         StatusLine statusLine = metadataParser.parseStatusLine(inputStream);
         RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, InvalidHttpResponse::new);
 
-        boolean hasBody = responseHasBody(statusLine, requestLine);
-        @Nullable BodyReader bodyReader = createBodyReader(inputStream, headers, hasBody);
+        @Nullable BodyReader bodyReader = responseHasBody(statusLine, requestLine)
+                ? createBodyReader(inputStream, headers)
+                : null;
 
         return new RawHttpResponse<>(null, null, statusLine, headers, bodyReader);
     }
 
-    @Nullable
-    private BodyReader createBodyReader(InputStream inputStream, RawHttpHeaders headers, boolean hasBody) {
-        @Nullable BodyReader bodyReader;
-
-        if (hasBody) {
-            @Nullable Long bodyLength = null;
-            OptionalLong headerLength = extractContentLength(headers);
-            if (headerLength.isPresent()) {
-                bodyLength = headerLength.getAsLong();
-            }
-            BodyReader.BodyType bodyType = getBodyType(headers, bodyLength);
-            bodyReader = new LazyBodyReader(bodyType, metadataParser, inputStream, bodyLength);
-        } else {
-            bodyReader = null;
-        }
-        return bodyReader;
+    private BodyReader createBodyReader(InputStream inputStream, RawHttpHeaders headers) {
+        return new LazyBodyReader(getBodyType(headers), metadataParser, inputStream);
     }
 
     /**
      * Get the body type of a HTTP message with the given headers.
-     * <p>
-     * If the value of the Content-Length header is known, it should be passed as the {@code bodyLength}
-     * argument, as it is not extracted otherwise.
      *
-     * @param headers    HTTP message's headers
-     * @param bodyLength body length if known
+     * @param headers HTTP message's headers
      * @return the body type of the HTTP message
      */
-    public static BodyReader.BodyType getBodyType(RawHttpHeaders headers,
-                                                  @Nullable Long bodyLength) {
-        return bodyLength == null ?
-                parseContentEncoding(headers).orElse(BodyReader.BodyType.CLOSE_TERMINATED) :
-                BodyReader.BodyType.CONTENT_LENGTH;
+    public static BodyReader.BodyType getBodyType(RawHttpHeaders headers) {
+        return parseContentEncoding(headers).orElseGet(() -> {
+            OptionalLong contentLength = extractContentLength(headers);
+            if (contentLength.isPresent()) {
+                return new BodyReader.BodyType.ContentLength(contentLength.getAsLong());
+            }
+            return BodyReader.BodyType.CloseTerminated.INSTANCE;
+        });
     }
 
     /**
@@ -303,24 +289,12 @@ public class RawHttp {
     }
 
     private static Optional<BodyReader.BodyType> parseContentEncoding(RawHttpHeaders headers) {
-        Optional<String> encoding = last(headers.get("Transfer-Encoding"));
-        if (encoding.isPresent()) {
-            if (encoding.get().equalsIgnoreCase("chunked")) {
-                return Optional.of(BodyReader.BodyType.CHUNKED);
-            } else {
-                throw new IllegalArgumentException("Transfer-Encoding is not supported: " + encoding);
-            }
+        List<String> encoding = headers.get("Transfer-Encoding");
+        if (!encoding.isEmpty()) {
+            return Optional.of(new BodyReader.BodyType.Encoded(encoding));
         } else {
             return Optional.empty();
         }
-    }
-
-    private static Optional<String> last(Collection<String> items) {
-        String result = null;
-        for (String item : items) {
-            result = item;
-        }
-        return Optional.ofNullable(result);
     }
 
     private RequestLine verifyHost(RequestLine requestLine, RawHttpHeaders.Builder headers) {

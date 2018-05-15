@@ -3,6 +3,8 @@ package rawhttp.core.body;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
 import rawhttp.core.BodyReader;
@@ -64,8 +66,9 @@ public class ChunkedBody extends HttpMessageBody {
 
     @Override
     public LazyBodyReader toBodyReader() {
-        return new LazyBodyReader(BodyReader.BodyType.CHUNKED, metadataParser,
-                new ChunkedInputStream(stream, chunkLength), null);
+        List<String> encodings = Collections.singletonList("chunked");
+        return new LazyBodyReader(new BodyReader.BodyType.Encoded(encodings), metadataParser,
+                new ChunkedInputStream(stream, chunkLength));
     }
 
     @Override

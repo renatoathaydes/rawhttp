@@ -2,7 +2,6 @@ package rawhttp.httpcomponents;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.OptionalLong;
 import javax.annotation.Nullable;
 import org.apache.http.Header;
 import org.apache.http.ProtocolVersion;
@@ -56,10 +55,8 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
 
         @Nullable LazyBodyReader body;
         if (response.getEntity() != null) {
-            OptionalLong headerLength = RawHttp.extractContentLength(headers);
-            @Nullable Long length = headerLength.isPresent() ? headerLength.getAsLong() : null;
-            BodyType bodyType = RawHttp.getBodyType(headers, length);
-            body = new LazyBodyReader(bodyType, null, response.getEntity().getContent(), length);
+            BodyType bodyType = RawHttp.getBodyType(headers);
+            body = new LazyBodyReader(bodyType, null, response.getEntity().getContent());
         } else {
             body = null;
         }

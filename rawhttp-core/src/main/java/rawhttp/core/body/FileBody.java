@@ -36,9 +36,9 @@ public class FileBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         try {
-            return new LazyBodyReader(BodyReader.BodyType.CONTENT_LENGTH, null,
-                    new BufferedInputStream(new FileInputStream(file)),
-                    file.length());
+            return new LazyBodyReader(new BodyReader.BodyType.ContentLength(file.length()),
+                    null,
+                    new BufferedInputStream(new FileInputStream(file)));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -4,9 +4,9 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
-import rawhttp.core.BodyReader.BodyType.CHUNKED
-import rawhttp.core.BodyReader.BodyType.CLOSE_TERMINATED
-import rawhttp.core.BodyReader.BodyType.CONTENT_LENGTH
+import rawhttp.core.BodyReader.BodyType.CloseTerminated
+import rawhttp.core.BodyReader.BodyType.ContentLength
+import rawhttp.core.BodyReader.BodyType.Encoded
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
 import java.io.ByteArrayOutputStream
 import kotlin.text.Charsets.UTF_8
@@ -16,10 +16,10 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write content-length body" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
+        val reader = LazyBodyReader(ContentLength(body.length.toLong()), null, stream)
 
         reader.run {
-            bodyType shouldBe CONTENT_LENGTH
+            bodyType shouldBe ContentLength(body.length.toLong())
             val writtenBody = ByteArrayOutputStream(body.length)
             writeTo(writtenBody)
             writtenBody.toByteArray() shouldHaveSameElementsAs body.toByteArray()
@@ -29,10 +29,10 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write empty content-length body" {
         val body = ""
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CONTENT_LENGTH, null, stream, body.length.toLong())
+        val reader = LazyBodyReader(ContentLength(body.length.toLong()), null, stream)
 
         reader.run {
-            bodyType shouldBe CONTENT_LENGTH
+            bodyType shouldBe ContentLength(body.length.toLong())
             val writtenBody = ByteArrayOutputStream(body.length)
             writeTo(writtenBody)
             writtenBody.toByteArray() shouldHaveSameElementsAs body.toByteArray()
@@ -42,10 +42,10 @@ class LazyBodyReaderTest : StringSpec({
     "Can read and write body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = LazyBodyReader(CLOSE_TERMINATED, null, stream, null)
+        val reader = LazyBodyReader(CloseTerminated.INSTANCE, null, stream)
 
         reader.run {
-            bodyType shouldBe CLOSE_TERMINATED
+            bodyType shouldBe CloseTerminated.INSTANCE
             val writtenBody = ByteArrayOutputStream(body.length)
             writeTo(writtenBody)
             writtenBody.toByteArray() shouldHaveSameElementsAs body.toByteArray()
@@ -57,12 +57,12 @@ class LazyBodyReaderTest : StringSpec({
 
         val createReader = {
             val stream = body.inputStream()
-            LazyBodyReader(CHUNKED, null, stream, null)
+            LazyBodyReader(Encoded(listOf("chunked")), null, stream)
         }
 
         // verify chunks
         createReader().run {
-            bodyType shouldBe CHUNKED
+            bodyType shouldBe Encoded(listOf("chunked"))
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
                 it.chunks.size shouldBe 2
@@ -97,11 +97,11 @@ class LazyBodyReaderTest : StringSpec({
 
         val createReader = {
             val stream = body.toByteArray().inputStream()
-            LazyBodyReader(CHUNKED, null, stream, null)
+            LazyBodyReader(Encoded(listOf("chunked")), null, stream)
         }
 
         createReader().run {
-            bodyType shouldBe CHUNKED
+            bodyType shouldBe Encoded(listOf("chunked"))
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
                 it.chunks.size shouldBe 3
@@ -145,11 +145,11 @@ class LazyBodyReaderTest : StringSpec({
 
         val createReader = {
             val stream = body.toByteArray().inputStream()
-            LazyBodyReader(CHUNKED, strictMetadataParser, stream, null)
+            LazyBodyReader(Encoded(listOf("chunked")), strictMetadataParser, stream)
         }
 
         createReader().run {
-            bodyType shouldBe CHUNKED
+            bodyType shouldBe Encoded(listOf("chunked"))
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
                 it.chunks.size shouldBe 1
@@ -184,10 +184,10 @@ class LazyBodyReaderTest : StringSpec({
         val body = "2\r\n98\r\n0\r\nHello: hi there\r\nBye:true\r\nHello: wow\r\n\r\nIGNORED"
 
         val stream = body.toByteArray().inputStream()
-        val reader = LazyBodyReader(CHUNKED, strictMetadataParser, stream, null)
+        val reader = LazyBodyReader(Encoded(listOf("chunked")), strictMetadataParser, stream)
 
         reader.run {
-            bodyType shouldBe CHUNKED
+            bodyType shouldBe Encoded(listOf("chunked"))
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()
                 it.chunks.size shouldBe 2

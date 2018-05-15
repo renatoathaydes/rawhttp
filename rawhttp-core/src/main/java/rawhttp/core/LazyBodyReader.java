@@ -26,22 +26,17 @@ public final class LazyBodyReader extends BodyReader {
     private final AtomicBoolean isConsumed = new AtomicBoolean(false);
     private final InputStream inputStream;
 
-    @Nullable
-    private final Long streamLength;
-
     public LazyBodyReader(BodyType bodyType,
                           @Nullable HttpMetadataParser metadataParser,
-                          InputStream inputStream,
-                          @Nullable Long streamLength) {
+                          InputStream inputStream) {
         super(bodyType, metadataParser);
         this.inputStream = inputStream;
-        this.streamLength = streamLength;
     }
 
     @Override
     protected ConsumedBody getConsumedBody() {
         try {
-            return consumeBody(getBodyType(), inputStream, streamLength);
+            return consumeBody(getBodyType(), inputStream);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -49,7 +44,11 @@ public final class LazyBodyReader extends BodyReader {
 
     @Override
     public OptionalLong getLengthIfKnown() {
-        return streamLength == null ? OptionalLong.empty() : OptionalLong.of(streamLength);
+        BodyType bodyType = getBodyType();
+        if (bodyType instanceof BodyType.ContentLength) {
+            return OptionalLong.of(((BodyType.ContentLength) bodyType).bodyLength);
+        }
+        return OptionalLong.empty();
     }
 
     @Override
@@ -74,7 +73,7 @@ public final class LazyBodyReader extends BodyReader {
     public EagerBodyReader eager() throws IOException {
         markConsumed();
         try {
-            return new EagerBodyReader(getBodyType(), metadataParser, inputStream, streamLength);
+            return new EagerBodyReader(getBodyType(), metadataParser, inputStream);
         } catch (IOException e) {
             // error while trying to read message body, we cannot keep the connection alive
             try {
