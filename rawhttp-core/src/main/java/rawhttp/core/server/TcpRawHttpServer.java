@@ -145,11 +145,14 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         /**
-         * @return a supplier of HTTP headers for responses with the given status code.
-         * <p/>
+         * Returns a supplier of HTTP headers for responses with the given status code.
+         * <p>
          * By default, the server inserts a "Server: RawHTTP" header and an appropriate "Date" header in all responses
          * (notice that the HTTP specification recommends adding the "Date" header to all responses, but that's not
          * mandatory).
+         *
+         * @param statusCode the status code of the HTTP response
+         * @return a supplier of HTTP headers.
          */
         default Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(@SuppressWarnings("unused") int statusCode) {
             return Optional.of(() -> getCurrentDateHeader().and(SERVER_HEADER));
@@ -165,6 +168,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @param response the server routed to. Normally, this callback should return this response with possibly
          *                 minor alterations.
          * @return the response the client should receive. Must not be null.
+         * @throws IOException if an error occurs reading/writing HTTP messages
          */
         default RawHttpResponse<Void> onResponse(RawHttpRequest request, RawHttpResponse<Void> response)
                 throws IOException {

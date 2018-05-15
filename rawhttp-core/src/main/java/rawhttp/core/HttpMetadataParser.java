@@ -44,6 +44,7 @@ public final class HttpMetadataParser {
      * @param inputStream supplying the header fields
      * @param createError error factory - used in case an error is encountered
      * @return the {@link RawHttpHeaders}
+     * @throws IOException if an error occurs while consuming the stream
      */
     public RawHttpHeaders parseHeaders(InputStream inputStream,
                                        BiFunction<String, Integer, RuntimeException> createError) throws IOException {
@@ -55,6 +56,7 @@ public final class HttpMetadataParser {
      *
      * @param inputStream supplying the request-line
      * @return request-line
+     * @throws IOException if an error occurs while consuming the stream
      */
     public RequestLine parseRequestLine(InputStream inputStream) throws IOException {
         return buildRequestLine(parseMetadataLine(inputStream, 1,
@@ -107,6 +109,7 @@ public final class HttpMetadataParser {
      * @param inputStream providing the status-line
      * @return the status-line
      * @throws InvalidHttpResponse if the status-line is invalid
+     * @throws IOException if an error occurs while consuming the stream
      */
     public StatusLine parseStatusLine(InputStream inputStream) throws IOException {
         return buildStatusLine(parseMetadataLine(inputStream, 1,

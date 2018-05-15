@@ -15,12 +15,13 @@ public class RequestLine implements StartLine {
 
     /**
      * Create a new {@link RequestLine}.
-     *
+     * <p>
      * This constructor does not validate the method name. If validation is required,
      * use the {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
-     * @param method
-     * @param uri
-     * @param httpVersion
+     *
+     * @param method      name of the HTTP method
+     * @param uri         URI of the request target
+     * @param httpVersion HTTP version of the message
      */
     public RequestLine(String method, URI uri, HttpVersion httpVersion) {
         this.method = method;
