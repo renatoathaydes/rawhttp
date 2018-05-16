@@ -2,7 +2,6 @@ package rawhttp.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import rawhttp.core.body.BodyReader;
@@ -18,7 +17,7 @@ import rawhttp.core.body.HttpMessageBody;
  * @see RawHttpRequest
  * @see RawHttpResponse
  */
-public abstract class HttpMessage {
+public abstract class HttpMessage implements Writable {
 
     private final RawHttpHeaders headers;
 
@@ -52,7 +51,6 @@ public abstract class HttpMessage {
     public RawHttpHeaders getHeaders() {
         return headers;
     }
-
 
     /**
      * Create a copy of this HTTP message, adding/replacing the provided headers.
@@ -89,6 +87,7 @@ public abstract class HttpMessage {
      * @param out to write this HTTP message to
      * @throws IOException if an error occurs while writing the message
      */
+    @Override
     public void writeTo(OutputStream out) throws IOException {
         writeTo(out, 4096);
     }
@@ -101,7 +100,14 @@ public abstract class HttpMessage {
      * @throws IOException if an error occurs while writing the message
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        out.write(messageWithoutBody().getBytes(StandardCharsets.US_ASCII));
+        getStartLine().writeTo(out);
+        out.write('\r');
+        out.write('\n');
+        getHeaders().writeTo(out);
+        out.write('\r');
+        out.write('\n');
+        out.write('\r');
+        out.write('\n');
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
             BodyReader bodyReader = body.get();

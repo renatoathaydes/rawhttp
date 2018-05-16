@@ -1,7 +1,10 @@
 package rawhttp.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
@@ -68,6 +71,12 @@ public class RequestLine implements StartLine {
             throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
                     e.getMessage()).map(s -> ": " + s).orElse(""));
         }
+    }
+
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
+        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
+        outputStream.write(bytes);
     }
 
     /**

@@ -1,6 +1,7 @@
 package rawhttp.core;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ import static java.util.stream.Collectors.toMap;
  *
  * @see HttpMessage
  */
-public class RawHttpHeaders {
+public class RawHttpHeaders implements Writable {
 
     private final Map<String, Header> headersByCapitalizedName;
     private final List<String> headerNames;
@@ -280,6 +281,12 @@ public class RawHttpHeaders {
      */
     public boolean isEmpty() {
         return headerNames.isEmpty();
+    }
+
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
+        byte[] bytes = toString().getBytes();
+        outputStream.write(bytes);
     }
 
     /**

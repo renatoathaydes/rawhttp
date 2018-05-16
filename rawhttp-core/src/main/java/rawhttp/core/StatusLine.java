@@ -1,5 +1,9 @@
 package rawhttp.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 /**
  * A {@link RawHttpResponse}'s start-line.
  */
@@ -32,6 +36,12 @@ public class StatusLine implements StartLine {
      */
     public String getReason() {
         return reason;
+    }
+
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
+        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
+        outputStream.write(bytes);
     }
 
     /**
