@@ -49,6 +49,7 @@ public class StatusLine implements StartLine {
      */
     @Override
     public String toString() {
-        return String.join(" ", httpVersion.toString(), Integer.toString(statusCode), reason).trim();
+        return String.join(" ", httpVersion.toString(), Integer.toString(statusCode), reason).trim() + "\r\n";
     }
+
 }

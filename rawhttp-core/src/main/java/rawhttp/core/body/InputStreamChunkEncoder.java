@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class InputStreamChunkEncoder extends InputStream {
 
+    // TODO allow users to insert chunk extensions and a trailer
+
     private final InputStream stream;
     private final int chunkSize;
 

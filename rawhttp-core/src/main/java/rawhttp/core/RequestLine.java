@@ -96,6 +96,6 @@ public class RequestLine implements StartLine {
             throw new RuntimeException(e);
         }
 
-        return method + " " + pathURI + " " + httpVersion;
+        return method + " " + pathURI + " " + httpVersion + "\r\n";
     }
 }

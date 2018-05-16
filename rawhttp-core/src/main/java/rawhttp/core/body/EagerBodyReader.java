@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import rawhttp.core.HttpMetadataParser;
 
 /**
  * An eager implementation of {@link BodyReader}.
@@ -20,23 +19,20 @@ public final class EagerBodyReader extends BodyReader {
 
     @Nullable
     private final InputStream rawInputStream;
-
-    private final ConsumedBody consumedBody;
+    private final byte[] rawBytes;
 
     /**
      * Create an {@link EagerBodyReader}.
      *
-     * @param bodyType       body type
-     * @param metadataParser HTTP metadata parser
-     * @param inputStream    providing the body. The body is consumed immediately
+     * @param bodyType    body type
+     * @param inputStream providing the body. The body is consumed immediately
      * @throws IOException if the inputStream throws
      */
     public EagerBodyReader(BodyType bodyType,
-                           @Nullable HttpMetadataParser metadataParser,
                            @Nonnull InputStream inputStream) throws IOException {
-        super(bodyType, metadataParser);
+        super(bodyType);
         this.rawInputStream = inputStream;
-        this.consumedBody = consumeBody(bodyType, inputStream);
+        this.rawBytes = bodyType.getBodyConsumer().consume(inputStream);
     }
 
     /**
@@ -44,26 +40,23 @@ public final class EagerBodyReader extends BodyReader {
      * <p>
      * The bytes are assumed to be the decoded HTTP message's body.
      *
-     * @param bytes          plain HTTP message's body
-     * @param metadataParser HTTP metadata parser
+     * @param bytes plain HTTP message's body
      */
-    public EagerBodyReader(byte[] bytes, @Nullable HttpMetadataParser metadataParser) {
-        super(new BodyType.ContentLength(bytes.length), metadataParser);
+    public EagerBodyReader(byte[] bytes) {
+        super(new BodyType.ContentLength(bytes.length));
         this.rawInputStream = null;
-        this.consumedBody = new ConsumedBody(bytes);
+        this.rawBytes = bytes;
     }
 
     @Override
-    protected ConsumedBody getConsumedBody() {
-        return consumedBody;
+    public byte[] asBytes() {
+        return rawBytes;
     }
 
     @Override
     public OptionalLong getLengthIfKnown() {
         // the eager body reader consumes the whole body, so we know it must fit into an array (of int size)
-        return OptionalLong.of(consumedBody.use(
-                b -> (long) b.length,
-                c -> (long) c.getData().length));
+        return OptionalLong.of(rawBytes.length);
     }
 
     @Override
@@ -80,7 +73,7 @@ public final class EagerBodyReader extends BodyReader {
 
     @Override
     public InputStream asStream() {
-        return new ByteArrayInputStream(asBytes());
+        return new ByteArrayInputStream(rawBytes);
     }
 
     /**
@@ -89,7 +82,7 @@ public final class EagerBodyReader extends BodyReader {
      */
     @Override
     public String toString() {
-        return asString(StandardCharsets.UTF_8);
+        return new String(rawBytes, StandardCharsets.UTF_8);
     }
 
 }

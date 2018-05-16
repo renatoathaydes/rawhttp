@@ -20,11 +20,11 @@ import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
  */
 public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
-    private EagerHttpResponse(@Nullable Response libResponse,
-                              @Nullable RawHttpRequest request,
-                              StatusLine startLine,
-                              RawHttpHeaders headers,
-                              @Nullable EagerBodyReader bodyReader) {
+    public EagerHttpResponse(@Nullable Response libResponse,
+                             @Nullable RawHttpRequest request,
+                             StatusLine startLine,
+                             RawHttpHeaders headers,
+                             @Nullable EagerBodyReader bodyReader) {
         super(libResponse,
                 request,
                 startLine,

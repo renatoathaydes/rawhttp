@@ -7,14 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
 import javax.annotation.Nullable;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.BodyType;
 import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
+import rawhttp.core.errors.InvalidMessageFrame;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -131,7 +130,7 @@ public class RawHttp {
         RawHttpHeaders headers = modifiableHeaders.build();
 
         @Nullable BodyReader bodyReader = requestHasBody(headers)
-                ? createBodyReader(inputStream, headers)
+                ? createBodyReader(inputStream, requestLine, headers)
                 : null;
 
         return new RawHttpRequest(requestLine, headers, bodyReader, senderAddress);
@@ -199,30 +198,56 @@ public class RawHttp {
         RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, InvalidHttpResponse::new);
 
         @Nullable BodyReader bodyReader = responseHasBody(statusLine, requestLine)
-                ? createBodyReader(inputStream, headers)
+                ? createBodyReader(inputStream, statusLine, headers)
                 : null;
 
         return new RawHttpResponse<>(null, null, statusLine, headers, bodyReader);
     }
 
-    private BodyReader createBodyReader(InputStream inputStream, RawHttpHeaders headers) {
-        return new LazyBodyReader(getBodyType(headers), metadataParser, inputStream);
+    private BodyReader createBodyReader(InputStream inputStream, StartLine startLine, RawHttpHeaders headers) {
+        return new LazyBodyReader(getBodyType(startLine, headers), inputStream);
     }
 
     /**
-     * Get the body type of a HTTP message with the given headers.
+     * Get the body type of a HTTP message with the given start-line and headers.
+     * <p>
+     * This method assumes the message has a body. To check if a HTTP message has a body, call
+     * {@link RawHttp#requestHasBody(RawHttpHeaders)} or {@link RawHttp#responseHasBody(StatusLine, RequestLine)}.
      *
-     * @param headers HTTP message's headers
+     * @param startLine HTTP message's start-line
+     * @param headers   HTTP message's headers
      * @return the body type of the HTTP message
+     * @throws InvalidMessageFrame if the headers are insufficient to
+     *                             safely determine the body type of a message
      */
-    public static BodyType getBodyType(RawHttpHeaders headers) {
-        return parseContentEncoding(headers).orElseGet(() -> {
-            OptionalLong contentLength = extractContentLength(headers);
-            if (contentLength.isPresent()) {
-                return new BodyType.ContentLength(contentLength.getAsLong());
+    public BodyType getBodyType(StartLine startLine, RawHttpHeaders headers) {
+        List<String> encodings = headers.get("Transfer-Encoding");
+        boolean isChunked = !encodings.isEmpty() &&
+                encodings.get(encodings.size() - 1).equalsIgnoreCase("chunked");
+        if (isChunked) {
+            return new BodyType.Chunked(encodings, metadataParser);
+        }
+        List<String> lengthValues = headers.get("Content-Length");
+        if (lengthValues.isEmpty()) {
+            if (startLine instanceof StatusLine) {
+                // response has no message framing information available
+                return new BodyType.CloseTerminated(encodings);
             }
-            return BodyType.CloseTerminated.INSTANCE;
-        });
+            // request body without framing is not allowed
+            throw new InvalidMessageFrame("The length of the request body cannot be determined. " +
+                    "The Content-Length header is missing and the Transfer-Encoding header does not " +
+                    "indicate the message is chunked");
+        }
+        if (lengthValues.size() > 1) {
+            throw new InvalidMessageFrame("More than one Content-Length header value is present");
+        }
+        long bodyLength;
+        try {
+            bodyLength = Long.parseLong(lengthValues.get(0));
+        } catch (NumberFormatException e) {
+            throw new InvalidMessageFrame("Content-Length header value is not a valid number");
+        }
+        return new BodyType.ContentLength(bodyLength, encodings);
     }
 
     /**
@@ -291,15 +316,6 @@ public class RawHttp {
         return minCode <= statusCode && statusCode <= maxCode;
     }
 
-    private static Optional<BodyType> parseContentEncoding(RawHttpHeaders headers) {
-        List<String> encoding = headers.get("Transfer-Encoding");
-        if (!encoding.isEmpty()) {
-            return Optional.of(new BodyType.Encoded(encoding));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     private RequestLine verifyHost(RequestLine requestLine, RawHttpHeaders.Builder headers) {
         List<String> hostHeaderValues = headers.get("Host");
         @Nullable String requestLineHost = requestLine.getUri().getHost();
@@ -330,19 +346,6 @@ public class RawHttp {
             int lineNumber = headers.getLineNumberAt("Host", 1);
             throw new InvalidHttpRequest("More than one Host header specified", lineNumber);
         }
-    }
-
-    /**
-     * Extracts the Content-Length header's value from the given headers, if available.
-     * <p>
-     * If more than one value is available, returns the first one.
-     *
-     * @param headers HTTP message's headers
-     * @return the value of the Content-Length header, if any, or empty otherwise.
-     */
-    public static OptionalLong extractContentLength(RawHttpHeaders headers) {
-        Optional<String> contentLength = headers.getFirst("Content-Length");
-        return contentLength.map(s -> OptionalLong.of(Long.parseLong(s))).orElseGet(OptionalLong::empty);
     }
 
 }

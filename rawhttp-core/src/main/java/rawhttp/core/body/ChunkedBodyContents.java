@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import rawhttp.core.RawHttpHeaders;
+import rawhttp.core.Writable;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -15,9 +16,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * See <a href="https://tools.ietf.org/html/rfc7230#section-4.1">Section 4.1</a>
  * of RFC-7230 for details.
  */
-public class ChunkedBodyContents {
+public class ChunkedBodyContents implements Writable {
 
-    public static class Chunk {
+    public static class Chunk implements Writable {
 
         private final RawHttpHeaders extensions;
         private final byte[] data;
@@ -39,6 +40,7 @@ public class ChunkedBodyContents {
             return data.length;
         }
 
+        @Override
         public void writeTo(OutputStream out) throws IOException {
             out.write(Integer.toString(size(), 16).getBytes());
             getExtensions().forEachIO((name, value) -> {
@@ -102,6 +104,14 @@ public class ChunkedBodyContents {
             offset += chunk.size();
         }
         return result;
+    }
+
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
+        for (Chunk chunk : chunks) {
+            chunk.writeTo(outputStream);
+        }
+        trailerHeaders.writeTo(outputStream);
     }
 
     /**

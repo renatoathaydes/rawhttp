@@ -6,9 +6,9 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
+import rawhttp.core.body.BodyType.Chunked
 import rawhttp.core.body.BodyType.CloseTerminated
 import rawhttp.core.body.BodyType.ContentLength
-import rawhttp.core.body.BodyType.Encoded
 import rawhttp.core.body.EagerBodyReader
 import kotlin.text.Charsets.UTF_8
 
@@ -17,11 +17,11 @@ class EagerBodyReaderTest : StringSpec({
     "Can read content-length body" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(ContentLength(body.length.toLong()), null, stream)
+        val reader = EagerBodyReader(ContentLength(body.length.toLong()), stream)
 
         reader.run {
             bodyType should beOfType<ContentLength>()
-            isEncoded shouldBe false
+            isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
@@ -31,11 +31,11 @@ class EagerBodyReaderTest : StringSpec({
     "Can read empty content-length body" {
         val body = ""
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(ContentLength(body.length.toLong()), null, stream)
+        val reader = EagerBodyReader(ContentLength(body.length.toLong()), stream)
 
         reader.run {
             bodyType should beOfType<ContentLength>()
-            isEncoded shouldBe false
+            isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
@@ -45,26 +45,28 @@ class EagerBodyReaderTest : StringSpec({
     "Can read body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CloseTerminated.INSTANCE, null, stream)
+        val reader = EagerBodyReader(CloseTerminated(emptyList()), stream)
 
         reader.run {
-            bodyType shouldBe CloseTerminated.INSTANCE
-            isEncoded shouldBe false
+            bodyType shouldBe CloseTerminated(emptyList())
+            isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
             asBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
 
+    val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
     "Can read simple chunked body" {
         val body = byteArrayOf(56, 13, 10, 72, 105, 32, 116, 104, 101, 114, 101, 13, 10, 48, 13, 10, 13, 10)
 
         val stream = body.inputStream()
-        val reader = EagerBodyReader(Encoded(listOf("chunked")), null, stream)
+        val reader = EagerBodyReader(Chunked(listOf("chunked"), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Encoded(listOf("chunked"))
-            isEncoded shouldBe true
+            bodyType shouldBe Chunked(listOf("chunked"), metadataParser)
+            isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
                 it.chunks.size shouldBe 2
@@ -90,11 +92,11 @@ class EagerBodyReaderTest : StringSpec({
         val body = "5;abc=123\r\n12345\r\n2\r\n98\r\n0\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(Encoded(listOf("chunked")), null, stream)
+        val reader = EagerBodyReader(Chunked(listOf("chunked"), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Encoded(listOf("chunked"))
-            isEncoded shouldBe true
+            bodyType shouldBe Chunked(listOf("chunked"), metadataParser)
+            isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
                 it.chunks.size shouldBe 3
@@ -129,11 +131,11 @@ class EagerBodyReaderTest : StringSpec({
         val body = "0;hi=true;hi=22;bye=false,maybe;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(Encoded(listOf("chunked")), strictMetadataParser, stream)
+        val reader = EagerBodyReader(Chunked(listOf("chunked"), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Encoded(listOf("chunked"))
-            isEncoded shouldBe true
+            bodyType shouldBe Chunked(listOf("chunked"), strictMetadataParser)
+            isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
                 it.chunks.size shouldBe 1
@@ -161,11 +163,11 @@ class EagerBodyReaderTest : StringSpec({
 
         // add some extra bytes to the stream so we can test the HTTP message is only read to its last byte
         val stream = (body + "IGNORED").toByteArray().inputStream()
-        val reader = EagerBodyReader(Encoded(listOf("chunked")), strictMetadataParser, stream)
+        val reader = EagerBodyReader(Chunked(listOf("chunked"), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Encoded(listOf("chunked"))
-            isEncoded shouldBe true
+            bodyType shouldBe Chunked(listOf("chunked"), strictMetadataParser)
+            isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()
                 it.chunks.size shouldBe 2

@@ -287,10 +287,10 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
+        @SuppressWarnings("unchecked")
         private RawHttpResponse<?> route(RawHttpRequest request) throws IOException {
             RawHttpResponse<Void> response;
             try {
-                //noinspection unchecked (it's always safe to cast generic type to Void)
                 response = router.route(request).map(res -> (RawHttpResponse<Void>) res)
                         .orElseGet(() -> options.notFoundResponse(request).orElseGet(() ->
                                 HttpResponses.getNotFoundResponse(request.getStartLine().getHttpVersion())));

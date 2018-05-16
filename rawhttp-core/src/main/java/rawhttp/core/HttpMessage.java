@@ -67,10 +67,6 @@ public abstract class HttpMessage implements Writable {
         return Optional.ofNullable(bodyReader);
     }
 
-    private String messageWithoutBody() {
-        return String.join("\r\n", getStartLine().toString(), getHeaders().toString());
-    }
-
     /**
      * @return the String representation of this HTTP message.
      * This is exactly equivalent to the actual message bytes that would have been sent.
@@ -78,7 +74,7 @@ public abstract class HttpMessage implements Writable {
     @Override
     public String toString() {
         String body = getBody().map(Object::toString).orElse("");
-        return messageWithoutBody() + body;
+        return "" + getStartLine() + getHeaders() + body;
     }
 
     /**
@@ -101,13 +97,7 @@ public abstract class HttpMessage implements Writable {
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
         getStartLine().writeTo(out);
-        out.write('\r');
-        out.write('\n');
         getHeaders().writeTo(out);
-        out.write('\r');
-        out.write('\n');
-        out.write('\r');
-        out.write('\n');
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
             BodyReader bodyReader = body.get();

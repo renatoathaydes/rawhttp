@@ -9,7 +9,9 @@ import java.io.OutputStream;
 public interface Writable {
 
     /**
-     * Write this to outputStream
+     * Write this to the outputStream.
+     * <p>
+     * Line-endings marking the end of this entity must be written out by all implementations.
      *
      * @param outputStream to write to
      * @throws IOException if an error occurs while writing to the given stream

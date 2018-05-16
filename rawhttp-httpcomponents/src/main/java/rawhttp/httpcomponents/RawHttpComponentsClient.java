@@ -30,13 +30,20 @@ import static java.util.stream.Collectors.joining;
 public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpResponse> {
 
     private final CloseableHttpClient httpClient;
+    private final RawHttp http;
 
     public RawHttpComponentsClient() {
         this(HttpClients.createDefault());
     }
 
     public RawHttpComponentsClient(CloseableHttpClient httpClient) {
+        this(httpClient, new RawHttp());
+    }
+
+    public RawHttpComponentsClient(CloseableHttpClient httpClient,
+                                   RawHttp http) {
         this.httpClient = httpClient;
+        this.http = http;
     }
 
     public RawHttpResponse<CloseableHttpResponse> send(RawHttpRequest request) throws IOException {
@@ -52,16 +59,17 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
         CloseableHttpResponse response = httpClient.execute(builder.build());
 
         RawHttpHeaders headers = readHeaders(response);
+        StatusLine statusLine = adaptStatus(response.getStatusLine());
 
         @Nullable LazyBodyReader body;
         if (response.getEntity() != null) {
-            BodyType bodyType = RawHttp.getBodyType(headers);
-            body = new LazyBodyReader(bodyType, null, response.getEntity().getContent());
+            BodyType bodyType = http.getBodyType(statusLine, headers);
+            body = new LazyBodyReader(bodyType, response.getEntity().getContent());
         } else {
             body = null;
         }
 
-        return new RawHttpResponse<>(response, request, adaptStatus(response.getStatusLine()), headers, body);
+        return new RawHttpResponse<>(response, request, statusLine, headers, body);
     }
 
     private StatusLine adaptStatus(org.apache.http.StatusLine statusLine) {

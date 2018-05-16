@@ -6,8 +6,6 @@ import java.io.OutputStream;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
-import rawhttp.core.HttpMetadataParser;
 
 /**
  * Lazy implementation of {@link BodyReader}.
@@ -28,28 +26,21 @@ public final class LazyBodyReader extends BodyReader {
     private final InputStream inputStream;
 
     public LazyBodyReader(BodyType bodyType,
-                          @Nullable HttpMetadataParser metadataParser,
                           InputStream inputStream) {
-        super(bodyType, metadataParser);
+        super(bodyType);
         this.inputStream = inputStream;
     }
 
     @Override
-    protected ConsumedBody getConsumedBody() {
-        try {
-            return consumeBody(getBodyType(), inputStream);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    @Override
     public OptionalLong getLengthIfKnown() {
-        BodyType bodyType = getBodyType();
-        if (bodyType instanceof BodyType.ContentLength) {
-            return OptionalLong.of(((BodyType.ContentLength) bodyType).getBodyLength());
+        try {
+            return getBodyType().use(
+                    cl -> OptionalLong.of(cl.getBodyLength()),
+                    chunked -> OptionalLong.empty(),
+                    ct -> OptionalLong.empty());
+        } catch (IOException e) {
+            return OptionalLong.empty();
         }
-        return OptionalLong.empty();
     }
 
     @Override
@@ -59,13 +50,13 @@ public final class LazyBodyReader extends BodyReader {
     }
 
     @Override
-    public byte[] asBytes() {
+    public byte[] asBytes() throws IOException {
         markConsumed();
         return super.asBytes();
     }
 
     @Override
-    public Optional<ChunkedBodyContents> asChunkedBodyContents() {
+    public Optional<ChunkedBodyContents> asChunkedBodyContents() throws IOException {
         markConsumed();
         return super.asChunkedBodyContents();
     }
@@ -74,7 +65,7 @@ public final class LazyBodyReader extends BodyReader {
     public EagerBodyReader eager() throws IOException {
         markConsumed();
         try {
-            return new EagerBodyReader(getBodyType(), metadataParser, inputStream);
+            return new EagerBodyReader(getBodyType(), inputStream);
         } catch (IOException e) {
             // error while trying to read message body, we cannot keep the connection alive
             try {

@@ -47,7 +47,7 @@ class KotlinSamples : StringSpec() {
             RawHttp().parseResponse(socket.getInputStream()).run {
                 assertThat(statusCode, equalTo(200))
                 assertTrue(body.isPresent)
-                if (body.get().isEncoded) {
+                if (body.get().isChunked) {
                     assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo("Hello"))
                 } else {
                     assertThat(body.get().asString(UTF_8), equalTo("Hello"))
@@ -71,7 +71,7 @@ class KotlinSamples : StringSpec() {
 
                 val expectedBody = "helloKotlin".repeat(1_000)
 
-                if (body.get().isEncoded) {
+                if (body.get().isChunked) {
                     assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo(expectedBody))
                 } else {
                     assertThat(body.get().asString(UTF_8), equalTo(expectedBody))

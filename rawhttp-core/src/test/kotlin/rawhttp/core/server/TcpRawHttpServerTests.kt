@@ -212,7 +212,7 @@ class TcpRawHttpServerTests : StringSpec() {
                 }
             } catch (e: SocketException) {
                 // a closed socket may result in a "Connection reset" error, so this would be fine
-                if (e.message != "Connection reset") {
+                if (e.message !in setOf("Connection reset", "Broken pipe (Write failed)")) {
                     throw e
                 }
             }
