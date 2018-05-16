@@ -80,6 +80,24 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
+    "Headers may be built from other headers" {
+        RawHttpHeaders.newBuilder(RawHttpHeaders.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Accept", "application/json")
+                .build()).with("hi", "bye")
+                .with("Accept", "text/xml")
+                .with("Accept", "text/plain")
+                .with("New", "True").build().run {
+                    get("hi") shouldEqual listOf("aaa", "bbb", "bye")
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("application/json", "text/xml", "text/plain")
+                    get("New") shouldEqual listOf("True")
+                    headerNames shouldBe listOf("hi", "hi", "ho", "Accept", "hi", "Accept", "Accept", "New")
+                }
+    }
+
     "Headers may be merged with other headers" {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
@@ -127,6 +145,60 @@ class HttpHeadersTest : StringSpec({
             headerNames shouldBe listOf("Hello")
             get("Hello") shouldBe listOf("hallå")
         }
+    }
+
+    "Header builder may remove previous headers" {
+        RawHttpHeaders.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Accept", "application/json")
+                .remove("hi")
+                .build().run {
+                    get("hi") shouldBe emptyList<String>()
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("application/json")
+                    headerNames shouldBe listOf("ho", "Accept")
+                }
+    }
+
+    "Header builder may overwrite previous values" {
+        RawHttpHeaders.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Accept", "application/json")
+                .overwrite("hi", "z")
+                .build().run {
+                    get("hi") shouldEqual listOf("z")
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("application/json")
+                    headerNames shouldBe listOf("hi", "ho", "Accept")
+                }
+    }
+
+    "Header names are validated by default" {
+        val error = shouldThrow<InvalidHttpHeader> {
+            RawHttpHeaders.newBuilder().with("A:B", "aaa")
+        }
+
+        error.message shouldBe "Invalid header name (contains illegal character at index 1): A:B"
+    }
+
+    "Header values are validated by default" {
+        val error = shouldThrow<InvalidHttpHeader> {
+            RawHttpHeaders.newBuilder().with("A", "abc+åäö")
+        }
+
+        error.message shouldBe "Invalid header value (contains illegal character at index 4): abc+åäö"
+    }
+
+    "Header names are NOT validated if asked" {
+        RawHttpHeaders.newBuilderSkippingValidation().with("A:B", "aaa")
+    }
+
+    "Header values are NOT validated if asked" {
+        RawHttpHeaders.newBuilderSkippingValidation().with("A", "abc+åäö")
     }
 
 })

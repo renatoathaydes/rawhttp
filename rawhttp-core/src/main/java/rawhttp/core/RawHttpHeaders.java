@@ -2,6 +2,7 @@ package rawhttp.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -285,7 +286,7 @@ public class RawHttpHeaders implements Writable {
 
     @Override
     public void writeTo(OutputStream outputStream) throws IOException {
-        byte[] bytes = toString().getBytes();
+        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
         outputStream.write(bytes);
     }
 
@@ -407,11 +408,13 @@ public class RawHttpHeaders implements Writable {
          * Remove the header with the given name (including all values).
          *
          * @param headerName case-insensitive header name
+         * @return this
          */
-        public void remove(String headerName) {
+        public Builder remove(String headerName) {
             String key = toUppercaseAscii(headerName);
             headersByCapitalizedName.remove(key);
             headerNames.removeIf(name -> name.equalsIgnoreCase(headerName));
+            return this;
         }
 
         /**
