@@ -12,6 +12,7 @@ import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.client.waitForPortToBeTaken
 import rawhttp.core.validDateHeader
+import java.lang.Thread.sleep
 import java.net.Socket
 import java.net.SocketException
 import java.util.Optional
@@ -71,6 +72,25 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response.statusCode shouldBe 200
             response.body should bePresent {
+                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+            }
+        }
+
+        "Server can handle multiple successful http client requests" {
+            val request = http.parseRequest("GET http://localhost:8093/hello")
+            val response = httpClient.send(request).eagerly()
+
+            response.statusCode shouldBe 200
+            response.body should bePresent {
+                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+            }
+
+            sleep(500)
+
+            val response2 = httpClient.send(request).eagerly()
+
+            response2.statusCode shouldBe 200
+            response2.body should bePresent {
                 it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         }

@@ -147,6 +147,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                     socket = useHttps
                             ? SSLSocketFactory.getDefault().createSocket(host, port)
                             : new Socket(host, port);
+                    socket.setSoTimeout(5_000);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
