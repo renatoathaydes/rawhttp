@@ -76,6 +76,9 @@ class RawHttpCliTest : RawHttpCliTester() {
             GET http://localhost:8080/${someFileInWorkDir.name}
             Accept: */*
             """.trimIndent()).eagerly()
+        } catch (e:AssertionError){
+            println(handle)
+            throw e
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
