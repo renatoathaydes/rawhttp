@@ -42,6 +42,8 @@ public class StatusLine implements StartLine {
     public void writeTo(OutputStream outputStream) throws IOException {
         byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
         outputStream.write(bytes);
+        outputStream.write('\r');
+        outputStream.write('\n');
     }
 
     /**
@@ -49,7 +51,15 @@ public class StatusLine implements StartLine {
      */
     @Override
     public String toString() {
-        return String.join(" ", httpVersion.toString(), Integer.toString(statusCode), reason).trim() + "\r\n";
+        StringBuilder builder = new StringBuilder();
+        builder.append(httpVersion);
+        builder.append(' ');
+        builder.append(statusCode);
+        if (!reason.isEmpty()) {
+            builder.append(' ');
+            builder.append(reason);
+        }
+        return builder.toString();
     }
 
 }

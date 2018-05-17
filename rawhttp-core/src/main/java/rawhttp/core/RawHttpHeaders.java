@@ -194,7 +194,7 @@ public class RawHttpHeaders implements Writable {
         StringBuilder builder = new StringBuilder();
         forEach((name, value) ->
                 builder.append(name).append(": ").append(value).append("\r\n"));
-        return builder.append("\r\n").toString();
+        return builder.toString();
     }
 
     /**
@@ -288,6 +288,8 @@ public class RawHttpHeaders implements Writable {
     public void writeTo(OutputStream outputStream) throws IOException {
         byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
         outputStream.write(bytes);
+        outputStream.write('\r');
+        outputStream.write('\n');
     }
 
     /**

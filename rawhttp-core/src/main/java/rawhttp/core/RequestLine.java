@@ -77,6 +77,8 @@ public class RequestLine implements StartLine {
     public void writeTo(OutputStream outputStream) throws IOException {
         byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
         outputStream.write(bytes);
+        outputStream.write('\r');
+        outputStream.write('\n');
     }
 
     /**
@@ -96,6 +98,6 @@ public class RequestLine implements StartLine {
             throw new RuntimeException(e);
         }
 
-        return method + " " + pathURI + " " + httpVersion + "\r\n";
+        return method + " " + pathURI + " " + httpVersion;
     }
 }

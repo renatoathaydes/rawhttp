@@ -57,8 +57,7 @@ class HttpHeadersTest : StringSpec({
                 "Accept: text/html\r\n" +
                 "Server: nginx\r\n" +
                 "Accept: text/plain\r\n" +
-                "Date: 22 March 2012\r\n" +
-                "\r\n"
+                "Date: 22 March 2012\r\n"
     }
 
     "Headers may be added to other headers" {

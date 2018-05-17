@@ -23,11 +23,11 @@ class RequestLineTest : StringSpec({
     "Can parse legal request-line (allow missing HTTP version)" {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
-                row("GET /", HttpVersion.HTTP_1_1, "GET", "/", "GET / HTTP/1.1\r\n"),
-                row("POST /hello", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1\r\n"),
-                row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1\r\n"),
-                row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0\r\n"),
-                row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0\r\n"))
+                row("GET /", HttpVersion.HTTP_1_1, "GET", "/", "GET / HTTP/1.1"),
+                row("POST /hello", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
+                row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
+                row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0"),
+                row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0"))
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {
@@ -64,9 +64,9 @@ class RequestLineTest : StringSpec({
     "Can parse legal request-line (strict)" {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
-                row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1\r\n"),
-                row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0\r\n"),
-                row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0\r\n"))
+                row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
+                row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0"),
+                row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0"))
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {

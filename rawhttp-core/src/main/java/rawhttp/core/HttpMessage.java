@@ -1,7 +1,9 @@
 package rawhttp.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import rawhttp.core.body.BodyReader;
@@ -73,8 +75,14 @@ public abstract class HttpMessage implements Writable {
      */
     @Override
     public String toString() {
-        String body = getBody().map(Object::toString).orElse("");
-        return "" + getStartLine() + getHeaders() + body;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            writeTo(out);
+        } catch (IOException e) {
+            // should be impossible for ByteArrayOutputStream to throw
+            throw new IllegalStateException();
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     /**
