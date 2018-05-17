@@ -20,12 +20,12 @@ import org.junit.Test;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
+import rawhttp.core.body.EagerBodyReader;
 import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
 import rawhttp.httpcomponents.RawHttpComponentsClient;
 import spark.Spark;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -97,7 +97,7 @@ public class JavaSample {
             rawHttpStatusCode = rawResponse.getStatusCode();
             rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE)
                     .iterator().next().split(";")[0];
-            rawHttpResponseBody = rawResponse.getBody().map(b -> b.asString(UTF_8))
+            rawHttpResponseBody = rawResponse.getBody().map(EagerBodyReader::toString)
                     .orElseThrow(() -> new RuntimeException("No body"));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -115,7 +115,7 @@ public class JavaSample {
         EagerHttpResponse<?> response = client.send(request).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
-        assertThat(response.getBody().map(b -> b.asString(UTF_8))
+        assertThat(response.getBody().map(EagerBodyReader::toString)
                 .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
     }
 
@@ -159,7 +159,7 @@ public class JavaSample {
         EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
-        assertThat(response.getBody().map(b -> b.asString(UTF_8))
+        assertThat(response.getBody().map(EagerBodyReader::toString)
                 .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
     }
 

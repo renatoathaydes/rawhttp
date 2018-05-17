@@ -48,7 +48,7 @@ final class HttpResponses {
 
         SERVER_ERROR_500_HTTP1_1 = new EagerHttpResponse<>(null, null,
                 STATUS_500_HTTP1_1,
-                RawHttpHeaders.newBuilderSkippingValidation()
+                RawHttpHeaders.newBuilderSkippingValidation(basicHeaders)
                         .overwrite("Content-Length", Integer.toString(serverErrorResponseBody.length))
                         .build(),
                 new EagerBodyReader(serverErrorResponseBody));

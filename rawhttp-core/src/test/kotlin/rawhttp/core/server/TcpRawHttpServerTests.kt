@@ -204,14 +204,14 @@ class TcpRawHttpServerTests : StringSpec() {
     private fun Socket.assertIsClosed() {
         if (!isClosed) {
             // check if the server closed it
-            //soTimeout = 250
-            http.parseRequest("GET /is-open HTTP/1.1\r\nHost: localhost").writeTo(getOutputStream())
+            soTimeout = 250
             try {
+                http.parseRequest("GET /is-open HTTP/1.1\r\nHost: localhost").writeTo(getOutputStream())
                 if (getInputStream().read() > 0) {
                     fail("Expected Socket to be closed, but it seems to still be open")
                 }
             } catch (e: SocketException) {
-                // a closed socket may result in a "Connection reset" error, so this would be fine
+                // a closed socket may result in a "Connection reset" or "Broken pipe" error, so this would be fine
                 if (e.message !in setOf("Connection reset", "Broken pipe (Write failed)")) {
                     throw e
                 }

@@ -2,7 +2,7 @@ package rawhttp.core.server
 
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
-import io.kotlintest.specs.StringSpec
+import org.junit.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
@@ -11,9 +11,10 @@ import rawhttp.core.client.waitForPortToBeTaken
 import java.net.ServerSocket
 import java.util.concurrent.Executors
 
-class RawHttpServerTests : StringSpec({
+class RawHttpServerTests {
 
-    "Server can handle http client request" {
+    @Test
+    fun ServerCanHandleHttpClientRequest() {
         val http = RawHttp()
         val executor = Executors.newCachedThreadPool({ r ->
             val thread = Thread(r, "tcp-raw-http-server-test")
@@ -67,4 +68,4 @@ class RawHttpServerTests : StringSpec({
         }
     }
 
-})
+}
