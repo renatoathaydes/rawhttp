@@ -12,6 +12,7 @@ import java.net.Socket
 import java.net.URI
 import kotlin.text.Charsets.UTF_8
 
+@Suppress("UNUSED_PARAMETER", "UNUSED_ANONYMOUS_PARAMETER")
 fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     Spark.port(8082)
     Spark.get("/hello", "text/plain") { req, res -> "Hello" }
