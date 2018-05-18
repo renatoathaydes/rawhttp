@@ -9,8 +9,6 @@ import rawhttp.core.HttpMetadataParser;
 import rawhttp.core.IOFunction;
 import rawhttp.core.RawHttpHeaders;
 
-import static java.util.Collections.emptyList;
-
 /**
  * Type of HTTP message body.
  * <p>
@@ -23,11 +21,11 @@ import static java.util.Collections.emptyList;
  */
 public abstract class BodyType {
 
-    private final List<String> encodings;
+    private final BodyDecoder bodyDecoder;
 
     // hidden, so only sub-types declared within this class can exist
-    private BodyType(List<String> encodings) {
-        this.encodings = encodings;
+    private BodyType(BodyDecoder bodyDecoder) {
+        this.bodyDecoder = bodyDecoder;
     }
 
     /**
@@ -38,7 +36,15 @@ public abstract class BodyType {
      * <a href="https://tools.ietf.org/html/rfc7230#section-8.4">Transfer Coding Registry</a>.
      */
     public List<String> getEncodings() {
-        return encodings;
+        return bodyDecoder.getEncodings();
+    }
+
+    /**
+     * @return the body-encoding container which can be used to access the decoders required to decode the body
+     * of a HTTP message.
+     */
+    public BodyDecoder getBodyDecoder() {
+        return bodyDecoder;
     }
 
     /**
@@ -84,17 +90,17 @@ public abstract class BodyType {
          * @param bodyLength the length of the HTTP message body
          */
         public ContentLength(long bodyLength) {
-            this(bodyLength, emptyList());
+            this(new BodyDecoder(), bodyLength);
         }
 
         /**
          * Create a new instance of the {@link ContentLength} body type.
          *
-         * @param bodyLength the length of the HTTP message body
-         * @param encodings  see {@link BodyType#getEncodings()}
+         * @param bodyDecoder the body encoding
+         * @param bodyLength  the length of the HTTP message body
          */
-        public ContentLength(long bodyLength, List<String> encodings) {
-            super(encodings);
+        public ContentLength(BodyDecoder bodyDecoder, long bodyLength) {
+            super(bodyDecoder);
             this.bodyLength = bodyLength;
         }
 
@@ -141,11 +147,12 @@ public abstract class BodyType {
         /**
          * Create a new instance of the {@link Chunked} body type.
          *
-         * @param encodings      see {@link BodyType#getEncodings()}
+         * @param bodyDecoder    the body encoding
          * @param metadataParser parser for the body trailer part
          */
-        public Chunked(List<String> encodings, HttpMetadataParser metadataParser) {
-            super(encodings);
+        public Chunked(BodyDecoder bodyDecoder, HttpMetadataParser metadataParser) {
+            super(bodyDecoder);
+            assert "chunked".equalsIgnoreCase(bodyDecoder.getEncodings().get(bodyDecoder.getEncodings().size() - 1));
             this.bodyParser = new ChunkedBodyParser(metadataParser);
         }
 
@@ -192,10 +199,10 @@ public abstract class BodyType {
         /**
          * Create a new instance of the {@link CloseTerminated} body type.
          *
-         * @param encodings see {@link BodyType#getEncodings()}
+         * @param bodyDecoder the body encoding
          */
-        public CloseTerminated(List<String> encodings) {
-            super(encodings);
+        public CloseTerminated(BodyDecoder bodyDecoder) {
+            super(bodyDecoder);
         }
 
         @Override

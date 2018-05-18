@@ -1,5 +1,9 @@
 package rawhttp.core;
 
+import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
+import rawhttp.core.body.encoding.HttpMessageDecoder;
+import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry;
+
 /**
  * Options that can be used to configure an instance of {@link RawHttp}.
  *
@@ -13,15 +17,18 @@ public class RawHttpOptions {
     private final boolean insertHttpVersionIfMissing;
     private final boolean allowNewLineWithoutReturn;
     private final boolean ignoreLeadingEmptyLine;
+    private final HttpBodyEncodingRegistry encodingRegistry;
 
     private RawHttpOptions(boolean insertHostHeaderIfMissing,
                            boolean insertHttpVersionIfMissing,
                            boolean allowNewLineWithoutReturn,
-                           boolean ignoreLeadingEmptyLine) {
+                           boolean ignoreLeadingEmptyLine,
+                           HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
         this.insertHttpVersionIfMissing = insertHttpVersionIfMissing;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
+        this.encodingRegistry = encodingRegistry;
     }
 
     /**
@@ -68,6 +75,13 @@ public class RawHttpOptions {
     }
 
     /**
+     * @return the encoding registry to use to encode/decode HTTP message bodies
+     */
+    public HttpBodyEncodingRegistry getEncodingRegistry() {
+        return encodingRegistry;
+    }
+
+    /**
      * @return a new builder of {@link RawHttpOptions}.
      */
     public static Builder newBuilder() {
@@ -83,6 +97,7 @@ public class RawHttpOptions {
         private boolean allowNewLineWithoutReturn = true;
         private boolean ignoreLeadingEmptyLine = true;
         private boolean insertHttpVersionIfMissing = true;
+        private HttpBodyEncodingRegistry encodingRegistry;
 
         /**
          * @return a new builder of {@link RawHttpOptions}.
@@ -153,12 +168,30 @@ public class RawHttpOptions {
         }
 
         /**
+         * Use a custom implementation of {@link HttpBodyEncodingRegistry}.
+         * <p>
+         * This can be used to provide {@link HttpMessageDecoder} implementations
+         * using a different system than the default {@link ServiceLoaderHttpBodyEncodingRegistry} implementation.
+         *
+         * @param encodingRegistry the custom registry to use
+         * @return this
+         */
+        public Builder withEncodingRegistry(HttpBodyEncodingRegistry encodingRegistry) {
+            this.encodingRegistry = encodingRegistry;
+            return this;
+        }
+
+        /**
          * @return a configured instance of {@link RawHttpOptions}.
          * @see RawHttp#RawHttp(RawHttpOptions)
          */
         public RawHttpOptions build() {
+            HttpBodyEncodingRegistry registry = encodingRegistry == null
+                    ? new ServiceLoaderHttpBodyEncodingRegistry()
+                    : encodingRegistry;
+
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine);
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, registry);
         }
 
     }

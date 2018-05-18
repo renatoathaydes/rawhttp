@@ -15,23 +15,6 @@ public abstract class BodyConsumer {
     }
 
     /**
-     * Get a {@link InputStream} that, when consumed, produces the decoded body of a HTTP message.
-     *
-     * @param inputStream the raw input stream
-     * @return the decoded input stream
-     */
-    public abstract InputStream asDecodedStream(InputStream inputStream);
-
-    /**
-     * Decode the HTTP message body.
-     *
-     * @param inputStream the raw input stream
-     * @return the decoded HTTP message body
-     * @throws IOException if an error occurs while reading the stream
-     */
-    public abstract byte[] decode(InputStream inputStream) throws IOException;
-
-    /**
      * Consume the HTTP message body fully without decoding it.
      *
      * @param inputStream the raw input stream
@@ -41,18 +24,17 @@ public abstract class BodyConsumer {
     public abstract byte[] consume(InputStream inputStream) throws IOException;
 
     /**
-     * Write the HTTP message body obtained by consuming the input stream to the given output stream.
+     * Consume the HTTP message body obtained by reading the input stream into the given output stream.
      *
      * @param inputStream  to read original message body from
      * @param outputStream stream to write the message body to
      * @param bufferSize   the size of the buffer to use, if possible
-     * @throws IOException if an error occurs while writing to the stream
+     * @throws IOException if an error occurs while reading or writing the streams
      */
-    public abstract void readAndWrite(
+    public abstract void consumeInto(
             InputStream inputStream,
             OutputStream outputStream,
             int bufferSize) throws IOException;
-
 
     /**
      * Consumer of HTTP message body of type {@link rawhttp.core.body.BodyType.Chunked}.
@@ -66,35 +48,30 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public byte[] decode(InputStream inputStream) throws IOException {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            bodyParser.parseChunkedBody(inputStream, chunk -> {
-                outputStream.write(chunk.getData());
-            }, rawHttpHeaders -> {
-            });
-            return outputStream.toByteArray();
-        }
-
-        @Override
-        public InputStream asDecodedStream(InputStream inputStream) {
-            return new InputStreamChunkDecoder(bodyParser, inputStream);
-        }
-
-        @Override
         public byte[] consume(InputStream inputStream) throws IOException {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            readAndWrite(inputStream, out, -1);
+            consumeInto(inputStream, out, -1);
             return out.toByteArray();
         }
 
         @Override
-        public void readAndWrite(
+        public void consumeInto(
                 InputStream inputStream,
                 OutputStream outputStream,
                 int bufferSize) throws IOException {
-            bodyParser.parseChunkedBody(inputStream,
-                    chunk -> chunk.writeTo(outputStream),
-                    trailer -> trailer.writeTo(outputStream));
+            if (outputStream instanceof ChunkedOutputStream) {
+                // we can decode the chunks directly, even though we can only start writing each
+                // chunk after consuming it fully
+                OutputStream decodeTarget = ((ChunkedOutputStream) outputStream).getDecodedChunksTarget();
+                bodyParser.parseChunkedBody(inputStream,
+                        chunk -> decodeTarget.write(chunk.getData()),
+                        trailer -> { // ignore
+                        });
+            } else {
+                bodyParser.parseChunkedBody(inputStream,
+                        chunk -> chunk.writeTo(outputStream),
+                        trailer -> trailer.writeTo(outputStream));
+            }
         }
     }
 
@@ -110,25 +87,15 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public InputStream asDecodedStream(InputStream inputStream) {
-            return inputStream;
-        }
-
-        @Override
-        public byte[] decode(InputStream inputStream) throws IOException {
-            return consume(inputStream);
-        }
-
-        @Override
         public byte[] consume(InputStream inputStream) throws IOException {
             int length = Math.toIntExact(bodyLength);
             return readBytesUpToLength(inputStream, length);
         }
 
         @Override
-        public void readAndWrite(InputStream inputStream,
-                                 OutputStream outputStream,
-                                 int bufferSize) throws IOException {
+        public void consumeInto(InputStream inputStream,
+                                OutputStream outputStream,
+                                int bufferSize) throws IOException {
             readAndWriteBytesUpToLength(inputStream, bodyLength, outputStream, bufferSize);
         }
 
@@ -166,22 +133,12 @@ public abstract class BodyConsumer {
 
         private static final CloseTerminatedBodyConsumer INSTANCE = new CloseTerminatedBodyConsumer();
 
-        static CloseTerminatedBodyConsumer getInstance() {
+        public static CloseTerminatedBodyConsumer getInstance() {
             return INSTANCE;
         }
 
         private CloseTerminatedBodyConsumer() {
             // hide
-        }
-
-        @Override
-        public InputStream asDecodedStream(InputStream inputStream) {
-            return inputStream;
-        }
-
-        @Override
-        public byte[] decode(InputStream inputStream) throws IOException {
-            return consume(inputStream);
         }
 
         @Override
@@ -196,9 +153,9 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public void readAndWrite(InputStream inputStream,
-                                 OutputStream outputStream,
-                                 int bufferSize) throws IOException {
+        public void consumeInto(InputStream inputStream,
+                                OutputStream outputStream,
+                                int bufferSize) throws IOException {
             byte[] buffer = new byte[bufferSize];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) > 0) {

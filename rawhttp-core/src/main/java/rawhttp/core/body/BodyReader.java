@@ -1,5 +1,6 @@
 package rawhttp.core.body;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,8 @@ import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.OptionalLong;
 import rawhttp.core.Writable;
+import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
+import rawhttp.core.errors.UnknownEncodingException;
 
 /**
  * HTTP message body reader.
@@ -73,7 +76,7 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while writing the message
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        getBodyType().getBodyConsumer().readAndWrite(asStream(), out, bufferSize);
+        getBodyType().getBodyConsumer().consumeInto(asStream(), out, bufferSize);
     }
 
     /**
@@ -97,15 +100,15 @@ public abstract class BodyReader implements Writable, Closeable {
      *
      * @param out        to write the decoded message body to
      * @param bufferSize size of the buffer to use for writing, if possible
-     * @throws IOException if an error occurs while writing the message
+     * @throws IOException              if an error occurs while writing the message
+     * @throws UnknownEncodingException if the body is encoded with an encoding that is unknown
+     *                                  by the {@link HttpBodyEncodingRegistry}.
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
-        InputStream decodedStream = getBodyType().getBodyConsumer().asDecodedStream(asStream());
-        byte[] buffer = new byte[bufferSize];
-        int bytesRead;
-        while ((bytesRead = decodedStream.read(buffer)) > 0) {
-            out.write(buffer, 0, bytesRead);
-        }
+        final BodyType bodyType = getBodyType();
+        // FIXME after decoding, the consumer can no longer consume it
+        OutputStream decodedOutput = bodyType.getBodyDecoder().decoding(out);
+        bodyType.getBodyConsumer().consumeInto(asStream(), decodedOutput, bufferSize);
     }
 
     /**
@@ -160,7 +163,9 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while consuming the message body
      */
     public byte[] decodeBody() throws IOException {
-        return getBodyType().getBodyConsumer().decode(asStream());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        writeDecodedTo(out);
+        return out.toByteArray();
     }
 
     /**

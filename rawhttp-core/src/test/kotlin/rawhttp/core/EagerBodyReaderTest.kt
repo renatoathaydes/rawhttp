@@ -6,13 +6,18 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
+import rawhttp.core.body.BodyDecoder
 import rawhttp.core.body.BodyType.Chunked
 import rawhttp.core.body.BodyType.CloseTerminated
 import rawhttp.core.body.BodyType.ContentLength
 import rawhttp.core.body.EagerBodyReader
+import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry
 import kotlin.text.Charsets.UTF_8
 
 class EagerBodyReaderTest : StringSpec({
+
+    val registry = ServiceLoaderHttpBodyEncodingRegistry()
+    val noOpDecoder = BodyDecoder()
 
     "Can read content-length body" {
         val body = "Hello world"
@@ -45,10 +50,10 @@ class EagerBodyReaderTest : StringSpec({
     "Can read body until EOF" {
         val body = "Hello world"
         val stream = body.byteInputStream()
-        val reader = EagerBodyReader(CloseTerminated(emptyList()), stream)
+        val reader = EagerBodyReader(CloseTerminated(noOpDecoder), stream)
 
         reader.run {
-            bodyType shouldBe CloseTerminated(emptyList())
+            bodyType shouldBe CloseTerminated(noOpDecoder)
             isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
@@ -62,10 +67,10 @@ class EagerBodyReaderTest : StringSpec({
         val body = byteArrayOf(56, 13, 10, 72, 105, 32, 116, 104, 101, 114, 101, 13, 10, 48, 13, 10, 13, 10)
 
         val stream = body.inputStream()
-        val reader = EagerBodyReader(Chunked(listOf("chunked"), metadataParser), stream)
+        val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(listOf("chunked"), metadataParser)
+            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
@@ -92,10 +97,10 @@ class EagerBodyReaderTest : StringSpec({
         val body = "5;abc=123\r\n12345\r\n2\r\n98\r\n0\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(Chunked(listOf("chunked"), metadataParser), stream)
+        val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(listOf("chunked"), metadataParser)
+            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
@@ -131,10 +136,10 @@ class EagerBodyReaderTest : StringSpec({
         val body = "0;hi=true;hi=22;bye=false,maybe;cool\r\n\r\n"
 
         val stream = body.toByteArray().inputStream()
-        val reader = EagerBodyReader(Chunked(listOf("chunked"), strictMetadataParser), stream)
+        val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(listOf("chunked"), strictMetadataParser)
+            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
@@ -163,10 +168,10 @@ class EagerBodyReaderTest : StringSpec({
 
         // add some extra bytes to the stream so we can test the HTTP message is only read to its last byte
         val stream = (body + "IGNORED").toByteArray().inputStream()
-        val reader = EagerBodyReader(Chunked(listOf("chunked"), strictMetadataParser), stream)
+        val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(listOf("chunked"), strictMetadataParser)
+            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()

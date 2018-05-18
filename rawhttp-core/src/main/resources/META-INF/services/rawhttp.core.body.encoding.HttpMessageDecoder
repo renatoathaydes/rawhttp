@@ -1,0 +1,3 @@
+rawhttp.core.body.encoding.ChunkDecoder
+rawhttp.core.body.encoding.GzipDecoder
+rawhttp.core.body.encoding.DeflateDecoder

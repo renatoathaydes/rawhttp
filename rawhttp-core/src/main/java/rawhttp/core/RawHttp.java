@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.List;
 import javax.annotation.Nullable;
+import rawhttp.core.body.BodyDecoder;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.BodyType;
 import rawhttp.core.body.LazyBodyReader;
@@ -222,16 +223,19 @@ public class RawHttp {
      */
     public BodyType getBodyType(StartLine startLine, RawHttpHeaders headers) {
         List<String> encodings = headers.get("Transfer-Encoding");
+        BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(), encodings);
+
         boolean isChunked = !encodings.isEmpty() &&
                 encodings.get(encodings.size() - 1).equalsIgnoreCase("chunked");
+
         if (isChunked) {
-            return new BodyType.Chunked(encodings, metadataParser);
+            return new BodyType.Chunked(bodyDecoder, metadataParser);
         }
         List<String> lengthValues = headers.get("Content-Length");
         if (lengthValues.isEmpty()) {
             if (startLine instanceof StatusLine) {
                 // response has no message framing information available
-                return new BodyType.CloseTerminated(encodings);
+                return new BodyType.CloseTerminated(bodyDecoder);
             }
             // request body without framing is not allowed
             throw new InvalidMessageFrame("The length of the request body cannot be determined. " +
@@ -247,7 +251,7 @@ public class RawHttp {
         } catch (NumberFormatException e) {
             throw new InvalidMessageFrame("Content-Length header value is not a valid number");
         }
-        return new BodyType.ContentLength(bodyLength, encodings);
+        return new BodyType.ContentLength(bodyDecoder, bodyLength);
     }
 
     /**
