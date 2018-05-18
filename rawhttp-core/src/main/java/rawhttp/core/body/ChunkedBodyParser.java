@@ -11,15 +11,30 @@ import rawhttp.core.errors.InvalidHttpHeader;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
-final class ChunkedBodyParser {
+/**
+ * Parser of HTTP message body encoded with the "chunked" encoding.
+ * <p>
+ * This parser is used by {@link InputStreamChunkDecoder} to provide an implementation of
+ * {@link InputStream} that decodes the contents of a chunked message.
+ */
+public final class ChunkedBodyParser {
 
     private final HttpMetadataParser metadataParser;
+    private final boolean allowNewLineWithoutReturn;
 
-    ChunkedBodyParser(HttpMetadataParser metadataParser) {
+    public ChunkedBodyParser(HttpMetadataParser metadataParser) {
         this.metadataParser = metadataParser;
+        this.allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
     }
 
-    ChunkedBodyContents.Chunk readNextChunk(InputStream inputStream) throws IOException {
+    /**
+     * Read a single chunk from the given stream.
+     *
+     * @param inputStream to read chunk from
+     * @return a single chunk
+     * @throws IOException if an error occurs while reading the stream
+     */
+    public ChunkedBodyContents.Chunk readNextChunk(InputStream inputStream) throws IOException {
         AtomicBoolean hasExtensions = new AtomicBoolean(false);
         int chunkSize = readChunkSize(inputStream, hasExtensions);
         if (chunkSize < 0) {
@@ -28,9 +43,17 @@ final class ChunkedBodyParser {
         return readChunk(inputStream, chunkSize, hasExtensions.get());
     }
 
-    void parseChunkedBody(InputStream inputStream,
-                          IOConsumer<ChunkedBodyContents.Chunk> chunkConsumer,
-                          IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
+    /**
+     * Parse the full contents of the chunked message.
+     *
+     * @param inputStream     to read message from
+     * @param chunkConsumer   consumer of individual chunks
+     * @param trailerConsumer consumer of the trailer part
+     * @throws IOException if an error occurs while reading the stream or calling the callbacks
+     */
+    public void parseChunkedBody(InputStream inputStream,
+                                 IOConsumer<ChunkedBodyContents.Chunk> chunkConsumer,
+                                 IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
         int chunkSize = 1;
         while (chunkSize > 0) {
             AtomicBoolean hasExtensions = new AtomicBoolean(false);
@@ -46,7 +69,17 @@ final class ChunkedBodyParser {
         trailerConsumer.accept(trailer);
     }
 
-    RawHttpHeaders readTrailer(InputStream inputStream) throws IOException {
+    /**
+     * Read the trailer-part.
+     * <p>
+     * This method must only be called after the last chunk has been read via
+     * {@link ChunkedBodyParser#readNextChunk(InputStream)}.
+     *
+     * @param inputStream to read trailer from
+     * @return the trailer part of the message
+     * @throws IOException if an error occurs while reading the stream
+     */
+    public RawHttpHeaders readTrailer(InputStream inputStream) throws IOException {
         BiFunction<String, Integer, RuntimeException> errorCreator =
                 (msg, lineNumber) -> new IllegalStateException(msg + " (trailer header)");
         try {
@@ -63,7 +96,6 @@ final class ChunkedBodyParser {
                 parseExtensions(inputStream) :
                 emptyRawHttpHeaders();
 
-        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
         byte[] data = new byte[chunkSize];
 
         if (chunkSize > 0) {
@@ -102,7 +134,6 @@ final class ChunkedBodyParser {
 
     private int readChunkSize(InputStream inputStream,
                               AtomicBoolean hasExtensions) throws IOException {
-        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
         char[] chars = new char[4];
         int b;
         int i = 0;
@@ -160,8 +191,6 @@ final class ChunkedBodyParser {
     }
 
     private RawHttpHeaders parseExtensions(InputStream inputStream) throws IOException {
-        final boolean allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
-
         StringBuilder currentName = new StringBuilder();
         StringBuilder currentValue = new StringBuilder();
         boolean parsingValue = false;
