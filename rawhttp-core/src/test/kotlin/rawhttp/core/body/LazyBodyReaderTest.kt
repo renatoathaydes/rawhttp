@@ -1,16 +1,19 @@
-package rawhttp.core
+package rawhttp.core.body
 
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.StringSpec
+import rawhttp.core.HttpMetadataParser
+import rawhttp.core.RawHttpHeaders
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
-import rawhttp.core.body.BodyDecoder
+import rawhttp.core.RawHttpOptions
+import rawhttp.core.bePresent
 import rawhttp.core.body.BodyType.Chunked
 import rawhttp.core.body.BodyType.CloseTerminated
 import rawhttp.core.body.BodyType.ContentLength
-import rawhttp.core.body.LazyBodyReader
 import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry
+import rawhttp.core.shouldHaveSameElementsAs
 import java.io.ByteArrayOutputStream
 import kotlin.text.Charsets.UTF_8
 
