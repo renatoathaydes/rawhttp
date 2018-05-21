@@ -17,7 +17,7 @@ import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.StatusLine;
-import rawhttp.core.body.BodyType;
+import rawhttp.core.body.FramedBody;
 import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.client.RawHttpClient;
 
@@ -63,8 +63,8 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
 
         @Nullable LazyBodyReader body;
         if (response.getEntity() != null) {
-            BodyType bodyType = http.getBodyType(statusLine, headers);
-            body = new LazyBodyReader(bodyType, response.getEntity().getContent());
+            FramedBody framedBody = http.getFramedBody(statusLine, headers);
+            body = new LazyBodyReader(framedBody, response.getEntity().getContent());
         } else {
             body = null;
         }

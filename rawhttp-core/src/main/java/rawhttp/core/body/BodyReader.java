@@ -17,17 +17,17 @@ import rawhttp.core.errors.UnknownEncodingException;
  */
 public abstract class BodyReader implements Writable, Closeable {
 
-    private final BodyType bodyType;
+    private final FramedBody framedBody;
 
-    public BodyReader(BodyType bodyType) {
-        this.bodyType = bodyType;
+    public BodyReader(FramedBody framedBody) {
+        this.framedBody = framedBody;
     }
 
     /**
-     * @return the type of the body of a HTTP message.
+     * @return the framed body of the HTTP message.
      */
-    public BodyType getBodyType() {
-        return bodyType;
+    public FramedBody getFramedBody() {
+        return framedBody;
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while writing the message
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        getBodyType().getBodyConsumer().consumeInto(asStream(), out, bufferSize);
+        getFramedBody().getBodyConsumer().consumeInto(asStream(), out, bufferSize);
     }
 
     /**
@@ -105,10 +105,10 @@ public abstract class BodyReader implements Writable, Closeable {
      *                                  by the {@link HttpBodyEncodingRegistry}.
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
-        final BodyType bodyType = getBodyType();
+        final FramedBody framedBody = getFramedBody();
         // FIXME after decoding, the consumer can no longer consume it
-        OutputStream decodedOutput = bodyType.getBodyDecoder().decoding(out);
-        bodyType.getBodyConsumer().consumeInto(asStream(), decodedOutput, bufferSize);
+        OutputStream decodedOutput = framedBody.getBodyDecoder().decoding(out);
+        framedBody.getBodyConsumer().consumeInto(asStream(), decodedOutput, bufferSize);
     }
 
     /**
@@ -119,14 +119,14 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while consuming the message body
      */
     public byte[] asBytes() throws IOException {
-        return bodyType.getBodyConsumer().consume(asStream());
+        return framedBody.getBodyConsumer().consume(asStream());
     }
 
     /**
      * @return true if the body is encoded and framed with the "chunked" encoding, false otherwise.
      */
     public boolean isChunked() {
-        return bodyType instanceof BodyType.Chunked;
+        return framedBody instanceof FramedBody.Chunked;
     }
 
     /**
@@ -135,7 +135,7 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while consuming the message body
      */
     public Optional<ChunkedBodyContents> asChunkedBodyContents() throws IOException {
-        return bodyType.use(
+        return framedBody.use(
                 cl -> Optional.empty(),
                 chunked -> Optional.of(chunked.getContents(asStream())),
                 ct -> Optional.empty());

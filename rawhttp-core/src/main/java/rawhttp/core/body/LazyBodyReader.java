@@ -25,16 +25,16 @@ public final class LazyBodyReader extends BodyReader {
     private final AtomicBoolean isConsumed = new AtomicBoolean(false);
     private final InputStream inputStream;
 
-    public LazyBodyReader(BodyType bodyType,
+    public LazyBodyReader(FramedBody framedBody,
                           InputStream inputStream) {
-        super(bodyType);
+        super(framedBody);
         this.inputStream = inputStream;
     }
 
     @Override
     public OptionalLong getLengthIfKnown() {
         try {
-            return getBodyType().use(
+            return getFramedBody().use(
                     cl -> OptionalLong.of(cl.getBodyLength()),
                     chunked -> OptionalLong.empty(),
                     ct -> OptionalLong.empty());
@@ -65,7 +65,7 @@ public final class LazyBodyReader extends BodyReader {
     public EagerBodyReader eager() throws IOException {
         markConsumed();
         try {
-            return new EagerBodyReader(getBodyType(), inputStream);
+            return new EagerBodyReader(getFramedBody(), inputStream);
         } catch (IOException e) {
             // error while trying to read message body, we cannot keep the connection alive
             try {

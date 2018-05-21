@@ -24,15 +24,15 @@ public final class EagerBodyReader extends BodyReader {
     /**
      * Create an {@link EagerBodyReader}.
      *
-     * @param bodyType    body type
+     * @param framedBody    the framed body
      * @param inputStream providing the body. The body is consumed immediately
      * @throws IOException if the inputStream throws
      */
-    public EagerBodyReader(BodyType bodyType,
+    public EagerBodyReader(FramedBody framedBody,
                            @Nonnull InputStream inputStream) throws IOException {
-        super(bodyType);
+        super(framedBody);
         this.rawInputStream = inputStream;
-        this.rawBytes = bodyType.getBodyConsumer().consume(inputStream);
+        this.rawBytes = framedBody.getBodyConsumer().consume(inputStream);
     }
 
     /**
@@ -43,7 +43,7 @@ public final class EagerBodyReader extends BodyReader {
      * @param bytes plain HTTP message's body
      */
     public EagerBodyReader(byte[] bytes) {
-        super(new BodyType.ContentLength(bytes.length));
+        super(new FramedBody.ContentLength(bytes.length));
         this.rawInputStream = null;
         this.rawBytes = bytes;
     }

@@ -10,7 +10,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import rawhttp.core.body.BodyDecoder;
 import rawhttp.core.body.BodyReader;
-import rawhttp.core.body.BodyType;
+import rawhttp.core.body.FramedBody;
 import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
@@ -206,22 +206,22 @@ public class RawHttp {
     }
 
     private BodyReader createBodyReader(InputStream inputStream, StartLine startLine, RawHttpHeaders headers) {
-        return new LazyBodyReader(getBodyType(startLine, headers), inputStream);
+        return new LazyBodyReader(getFramedBody(startLine, headers), inputStream);
     }
 
     /**
-     * Get the body type of a HTTP message with the given start-line and headers.
+     * Get the framed body of a HTTP message with the given start-line and headers.
      * <p>
      * This method assumes the message has a body. To check if a HTTP message has a body, call
      * {@link RawHttp#requestHasBody(RawHttpHeaders)} or {@link RawHttp#responseHasBody(StatusLine, RequestLine)}.
      *
      * @param startLine HTTP message's start-line
      * @param headers   HTTP message's headers
-     * @return the body type of the HTTP message
+     * @return the framed body of the HTTP message
      * @throws InvalidMessageFrame if the headers are insufficient to
      *                             safely determine the body type of a message
      */
-    public BodyType getBodyType(StartLine startLine, RawHttpHeaders headers) {
+    public FramedBody getFramedBody(StartLine startLine, RawHttpHeaders headers) {
         List<String> encodings = headers.get("Transfer-Encoding");
         BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(), encodings);
 
@@ -229,13 +229,13 @@ public class RawHttp {
                 encodings.get(encodings.size() - 1).equalsIgnoreCase("chunked");
 
         if (isChunked) {
-            return new BodyType.Chunked(bodyDecoder, metadataParser);
+            return new FramedBody.Chunked(bodyDecoder, metadataParser);
         }
         List<String> lengthValues = headers.get("Content-Length");
         if (lengthValues.isEmpty()) {
             if (startLine instanceof StatusLine) {
                 // response has no message framing information available
-                return new BodyType.CloseTerminated(bodyDecoder);
+                return new FramedBody.CloseTerminated(bodyDecoder);
             }
             // request body without framing is not allowed
             throw new InvalidMessageFrame("The length of the request body cannot be determined. " +
@@ -251,7 +251,7 @@ public class RawHttp {
         } catch (NumberFormatException e) {
             throw new InvalidMessageFrame("Content-Length header value is not a valid number");
         }
-        return new BodyType.ContentLength(bodyDecoder, bodyLength);
+        return new FramedBody.ContentLength(bodyDecoder, bodyLength);
     }
 
     /**

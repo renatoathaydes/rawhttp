@@ -15,7 +15,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 2)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyType.Chunked>()
+            it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
@@ -34,7 +34,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 512)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyType.Chunked>()
+            it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
@@ -52,7 +52,7 @@ class ChunkedBodyTest : StringSpec({
         val body = ChunkedBody(stream, null, 4)
 
         body.toBodyReader().eager().should {
-            it.bodyType should beOfType<BodyType.Chunked>()
+            it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
             it.asString(Charsets.US_ASCII) shouldEqual "4\r\nHell\r\n4\r\no wo\r\n3\r\nrld\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {

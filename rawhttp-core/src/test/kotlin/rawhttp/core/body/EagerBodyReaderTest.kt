@@ -10,9 +10,9 @@ import rawhttp.core.RawHttpHeaders
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
 import rawhttp.core.RawHttpOptions
 import rawhttp.core.bePresent
-import rawhttp.core.body.BodyType.Chunked
-import rawhttp.core.body.BodyType.CloseTerminated
-import rawhttp.core.body.BodyType.ContentLength
+import rawhttp.core.body.FramedBody.Chunked
+import rawhttp.core.body.FramedBody.CloseTerminated
+import rawhttp.core.body.FramedBody.ContentLength
 import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry
 import rawhttp.core.notBePresent
 import rawhttp.core.shouldHaveSameElementsAs
@@ -29,7 +29,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(ContentLength(body.length.toLong()), stream)
 
         reader.run {
-            bodyType should beOfType<ContentLength>()
+            framedBody should beOfType<ContentLength>()
             isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
@@ -43,7 +43,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(ContentLength(body.length.toLong()), stream)
 
         reader.run {
-            bodyType should beOfType<ContentLength>()
+            framedBody should beOfType<ContentLength>()
             isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
@@ -57,7 +57,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(CloseTerminated(noOpDecoder), stream)
 
         reader.run {
-            bodyType shouldBe CloseTerminated(noOpDecoder)
+            framedBody shouldBe CloseTerminated(noOpDecoder)
             isChunked shouldBe false
             asString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
@@ -74,7 +74,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
+            framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
@@ -104,7 +104,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
+            framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
@@ -143,7 +143,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
+            framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
@@ -175,7 +175,7 @@ class EagerBodyReaderTest : StringSpec({
         val reader = EagerBodyReader(Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser), stream)
 
         reader.run {
-            bodyType shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
+            framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
             isChunked shouldBe true
             asChunkedBodyContents() should bePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()

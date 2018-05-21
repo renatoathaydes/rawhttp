@@ -10,7 +10,7 @@ import rawhttp.core.IOFunction;
 import rawhttp.core.RawHttpHeaders;
 
 /**
- * Type of HTTP message body.
+ * A framed HTTP message body.
  * <p>
  * This is a closed type with only 3 possible implementations:
  * <ul>
@@ -19,12 +19,12 @@ import rawhttp.core.RawHttpHeaders;
  * <li>{@link CloseTerminated}</li>
  * </ul>
  */
-public abstract class BodyType {
+public abstract class FramedBody {
 
     private final BodyDecoder bodyDecoder;
 
     // hidden, so only sub-types declared within this class can exist
-    private BodyType(BodyDecoder bodyDecoder) {
+    private FramedBody(BodyDecoder bodyDecoder) {
         this.bodyDecoder = bodyDecoder;
     }
 
@@ -34,6 +34,10 @@ public abstract class BodyType {
      * RFC-7230 explicitly mentions "chunked", "compress", "deflate" and "gzip", but others may also be applied
      * as long as they are included in the
      * <a href="https://tools.ietf.org/html/rfc7230#section-8.4">Transfer Coding Registry</a>.
+     * <p>
+     * RawHTTP can support custom encodings by being given custom implementations of
+     * {@link rawhttp.core.body.encoding.HttpBodyEncodingRegistry} or, more simply, by using the
+     * {@link rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry} mechanism, which is the default.
      */
     public List<String> getEncodings() {
         return bodyDecoder.getEncodings();
@@ -48,16 +52,16 @@ public abstract class BodyType {
     }
 
     /**
-     * @return the consumer for this {@link BodyType}
+     * @return the consumer for this {@link FramedBody}
      */
     protected abstract BodyConsumer getBodyConsumer();
 
     /**
-     * Use this body type, mapping each possible implementation into a value of type @{link T}.
+     * Use the un-framed message body, mapping each possible implementation into a value of type @{link T}.
      *
-     * @param useContentLength   called if the body type is {@link ContentLength}
-     * @param useChunked         called if the body type is {@link Chunked}
-     * @param useCloseTerminated called if the body type is {@link CloseTerminated}
+     * @param useContentLength   called if the body frame is {@link ContentLength}
+     * @param useChunked         called if the body frame is {@link Chunked}
+     * @param useCloseTerminated called if the body frame is {@link CloseTerminated}
      * @param <T>                type of returned Object
      * @return the value returned by the selected mapping function
      * @throws IOException if the selected function throws
@@ -80,12 +84,12 @@ public abstract class BodyType {
     /**
      * Type of HTTP message body framed via the Content-Length header.
      */
-    public static final class ContentLength extends BodyType {
+    public static final class ContentLength extends FramedBody {
 
         private final long bodyLength;
 
         /**
-         * Create a new instance of the {@link ContentLength} body type.
+         * Create a new instance of the {@link ContentLength} framed body.
          *
          * @param bodyLength the length of the HTTP message body
          */
@@ -94,7 +98,7 @@ public abstract class BodyType {
         }
 
         /**
-         * Create a new instance of the {@link ContentLength} body type.
+         * Create a new instance of the {@link ContentLength} framed body.
          *
          * @param bodyDecoder the body encoding
          * @param bodyLength  the length of the HTTP message body
@@ -140,7 +144,7 @@ public abstract class BodyType {
      * <p>
      * Notice that the "chunked" encoding serves as both a normal encoding and as a message framing strategy.
      */
-    public static final class Chunked extends BodyType {
+    public static final class Chunked extends FramedBody {
 
         private final ChunkedBodyParser bodyParser;
 
@@ -194,7 +198,7 @@ public abstract class BodyType {
      * <p>
      * The stream providing the message body is simply read until the connection is closed.
      */
-    public static final class CloseTerminated extends BodyType {
+    public static final class CloseTerminated extends FramedBody {
 
         /**
          * Create a new instance of the {@link CloseTerminated} body type.

@@ -23,7 +23,7 @@ public abstract class HttpMessageBody {
     /**
      * @return the Content-Type header associated with this message, if available.
      */
-    protected Optional<String> getContentType() {
+    public Optional<String> getContentType() {
         return Optional.ofNullable(contentType);
     }
 

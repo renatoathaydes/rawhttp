@@ -71,7 +71,7 @@ public class ChunkedBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         List<String> encodings = Collections.singletonList("chunked");
-        return new LazyBodyReader(new BodyType.Chunked(new BodyDecoder(chunkedRegistry, encodings), metadataParser),
+        return new LazyBodyReader(new FramedBody.Chunked(new BodyDecoder(chunkedRegistry, encodings), metadataParser),
                 new InputStreamChunkEncoder(stream, chunkLength));
     }
 

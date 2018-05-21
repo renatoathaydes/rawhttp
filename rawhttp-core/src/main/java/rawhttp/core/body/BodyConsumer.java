@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * The consumer of a HTTP message body associated with a specific type of {@link BodyType}.
+ * The consumer of a HTTP message body associated with a specific type of {@link FramedBody}.
  */
 public abstract class BodyConsumer {
 
@@ -37,7 +37,7 @@ public abstract class BodyConsumer {
             int bufferSize) throws IOException;
 
     /**
-     * Consumer of HTTP message body of type {@link rawhttp.core.body.BodyType.Chunked}.
+     * Consumer of HTTP message body framed as {@link FramedBody.Chunked}.
      */
     public static final class ChunkedBodyConsumer extends BodyConsumer {
 
@@ -76,7 +76,7 @@ public abstract class BodyConsumer {
     }
 
     /**
-     * Consumer of HTTP message body of type {@link rawhttp.core.body.BodyType.ContentLength}.
+     * Consumer of HTTP message body framed as {@link FramedBody.ContentLength}.
      */
     public static final class ContentLengthBodyConsumer extends BodyConsumer {
 
@@ -127,7 +127,7 @@ public abstract class BodyConsumer {
     }
 
     /**
-     * Consumer of HTTP message body of type {@link rawhttp.core.body.BodyType.CloseTerminated}.
+     * Consumer of HTTP message body framed as {@link FramedBody.CloseTerminated}.
      */
     public static class CloseTerminatedBodyConsumer extends BodyConsumer {
 

@@ -28,7 +28,7 @@ public class BytesBody extends HttpMessageBody {
 
     @Override
     public LazyBodyReader toBodyReader() {
-        return new LazyBodyReader(new BodyType.ContentLength((long) bytes.length),
+        return new LazyBodyReader(new FramedBody.ContentLength((long) bytes.length),
                 new ByteArrayInputStream(bytes));
     }
 
