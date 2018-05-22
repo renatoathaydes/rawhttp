@@ -4,7 +4,7 @@ import java.io.OutputStream;
 import java.util.zip.InflaterOutputStream;
 
 /**
- * Decoder for the "deflat" encoding.
+ * Decoder for the "deflate" encoding.
  */
 public class DeflateDecoder implements HttpMessageDecoder {
     @Override
@@ -13,8 +13,8 @@ public class DeflateDecoder implements HttpMessageDecoder {
     }
 
     @Override
-    public OutputStream decode(OutputStream outputStream) {
-        return new InflaterOutputStream(outputStream);
+    public DecodingOutputStream decode(OutputStream outputStream) {
+        return new DecodingOutputStream(new InflaterOutputStream(outputStream));
     }
 
 }

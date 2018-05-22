@@ -15,12 +15,18 @@ public class FileBody extends HttpMessageBody {
     private final File file;
 
     public FileBody(File file) {
-        this(file, null);
+        this(file, null, null);
     }
 
     public FileBody(File file,
                     @Nullable String contentType) {
-        super(contentType);
+        this(file, contentType, null);
+    }
+
+    public FileBody(File file,
+                    @Nullable String contentType,
+                    @Nullable BodyDecoder bodyDecoder) {
+        super(contentType, bodyDecoder);
         this.file = file;
     }
 
@@ -34,7 +40,8 @@ public class FileBody extends HttpMessageBody {
     @Override
     public LazyBodyReader toBodyReader() {
         try {
-            return new LazyBodyReader(new FramedBody.ContentLength(file.length()),
+            return new LazyBodyReader(
+                    new FramedBody.ContentLength(getBodyDecoder(), file.length()),
                     new BufferedInputStream(new FileInputStream(file)));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);

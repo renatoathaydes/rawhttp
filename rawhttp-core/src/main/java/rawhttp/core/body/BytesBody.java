@@ -12,12 +12,25 @@ public class BytesBody extends HttpMessageBody {
     private final byte[] bytes;
 
     public BytesBody(byte[] bytes) {
-        this(bytes, null);
+        this(bytes, null, new BodyDecoder());
     }
 
     public BytesBody(byte[] bytes,
                      @Nullable String contentType) {
-        super(contentType);
+        this(bytes, contentType, new BodyDecoder());
+    }
+
+    /**
+     * Create a {@link HttpMessageBody} whose contents are the given bytes.
+     *
+     * @param bytes
+     * @param contentType
+     * @param bodyDecoder
+     */
+    public BytesBody(byte[] bytes,
+                     @Nullable String contentType,
+                     BodyDecoder bodyDecoder) {
+        super(contentType, bodyDecoder);
         this.bytes = bytes;
     }
 
@@ -28,7 +41,8 @@ public class BytesBody extends HttpMessageBody {
 
     @Override
     public LazyBodyReader toBodyReader() {
-        return new LazyBodyReader(new FramedBody.ContentLength((long) bytes.length),
+        return new LazyBodyReader(
+                new FramedBody.ContentLength(getBodyDecoder(), (long) bytes.length),
                 new ByteArrayInputStream(bytes));
     }
 

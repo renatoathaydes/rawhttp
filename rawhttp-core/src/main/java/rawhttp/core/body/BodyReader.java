@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.OptionalLong;
 import rawhttp.core.Writable;
+import rawhttp.core.body.encoding.DecodingOutputStream;
 import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.errors.UnknownEncodingException;
 
@@ -109,8 +110,9 @@ public abstract class BodyReader implements Writable, Closeable {
      *                                  by the {@link HttpBodyEncodingRegistry}.
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
-        OutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
+        DecodingOutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
         framedBody.getBodyConsumer().consumeDataInto(asStream(), decodedStream, bufferSize);
+        decodedStream.finishDecoding();
     }
 
     /**

@@ -24,7 +24,19 @@ public class ChunkedBody extends HttpMessageBody {
     private final int chunkLength;
     private final HttpMetadataParser metadataParser;
 
-    private final HttpBodyEncodingRegistry chunkedRegistry;
+    /**
+     * Create a new {@link ChunkedBody} to encode the contents of the given stream.
+     * <p>
+     * The stream is read lazily, so it shouldn't be closed until this body is consumed.
+     * <p>
+     * A default chunk size of 4096 bytes is used.
+     *
+     * @param stream content to encode
+     */
+    public ChunkedBody(InputStream stream) {
+        this(stream, null, 4096, defaultChunkedBodyDecoder(),
+                new HttpMetadataParser(RawHttpOptions.defaultInstance()));
+    }
 
     /**
      * Create a new {@link ChunkedBody} to encode the contents of the given stream.
@@ -36,7 +48,8 @@ public class ChunkedBody extends HttpMessageBody {
      * @param chunkLength the length of each chunk
      */
     public ChunkedBody(InputStream stream, @Nullable String contentType, int chunkLength) {
-        this(stream, contentType, chunkLength, new HttpMetadataParser(RawHttpOptions.defaultInstance()));
+        this(stream, contentType, chunkLength, defaultChunkedBodyDecoder(),
+                new HttpMetadataParser(RawHttpOptions.defaultInstance()));
     }
 
     /**
@@ -47,17 +60,27 @@ public class ChunkedBody extends HttpMessageBody {
      * @param stream         content to encode
      * @param contentType    Content-Type of the stream contents
      * @param chunkLength    the length of each chunk
+     * @param bodyDecoder    the body decoder. The last encoding must be "chunked".
      * @param metadataParser metadata parser (chunked body may contain metadata)
+     * @throws IllegalArgumentException if the bodyDecoder's last encoding is not "chunked"
      */
-    public ChunkedBody(InputStream stream, @Nullable String contentType,
-                       int chunkLength, HttpMetadataParser metadataParser) {
-        super(contentType);
+    public ChunkedBody(InputStream stream,
+                       @Nullable String contentType,
+                       int chunkLength,
+                       BodyDecoder bodyDecoder,
+                       HttpMetadataParser metadataParser) {
+        super(contentType, bodyDecoder);
         this.stream = stream;
         this.chunkLength = chunkLength;
         this.metadataParser = metadataParser;
-        this.chunkedRegistry = (enc) -> "chunked".equalsIgnoreCase(enc)
-                ? Optional.of(new ChunkDecoder())
-                : Optional.empty();
+        validateEncodings(bodyDecoder.getEncodings());
+    }
+
+    private static void validateEncodings(List<String> encodings) {
+        if (encodings.isEmpty() || !"chunked".equalsIgnoreCase(encodings.get(encodings.size() - 1))) {
+            throw new IllegalArgumentException("Last encoding in BodyEncoder's encodings is not 'chunked': " +
+                    encodings);
+        }
     }
 
     /**
@@ -70,18 +93,23 @@ public class ChunkedBody extends HttpMessageBody {
 
     @Override
     public LazyBodyReader toBodyReader() {
-        List<String> encodings = Collections.singletonList("chunked");
-        return new LazyBodyReader(new FramedBody.Chunked(new BodyDecoder(chunkedRegistry, encodings), metadataParser),
+        return new LazyBodyReader(new FramedBody.Chunked(getBodyDecoder(), metadataParser),
                 new InputStreamChunkEncoder(stream, chunkLength));
     }
 
     @Override
     public RawHttpHeaders headersFrom(RawHttpHeaders headers) {
-        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilder(headers);
-        getContentType().ifPresent(contentType -> builder.overwrite("Content-Type", contentType));
-        builder.overwrite("Transfer-Encoding", "chunked");
+        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilder(super.headersFrom(headers));
         builder.remove("Content-Length");
         return builder.build();
+    }
+
+    private static BodyDecoder defaultChunkedBodyDecoder() {
+        HttpBodyEncodingRegistry registry = (enc) -> "chunked".equalsIgnoreCase(enc)
+                ? Optional.of(new ChunkDecoder())
+                : Optional.empty();
+        List<String> encodings = Collections.singletonList("chunked");
+        return new BodyDecoder(registry, encodings);
     }
 
 }
