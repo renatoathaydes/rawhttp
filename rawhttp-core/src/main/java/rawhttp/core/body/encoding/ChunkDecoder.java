@@ -1,7 +1,6 @@
 package rawhttp.core.body.encoding;
 
 import java.io.OutputStream;
-import rawhttp.core.body.ChunkedOutputStream;
 
 /**
  * Decoder for the "chunked" encoding.
