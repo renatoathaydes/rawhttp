@@ -47,26 +47,27 @@ public abstract class BodyReader implements Writable, Closeable {
     public abstract InputStream asStream();
 
     /**
-     * @return the length of this body if known without consuming it first.
+     * @return the length of the raw message body if known without consuming it first.
      */
     public abstract OptionalLong getLengthIfKnown();
 
     /**
-     * Read the HTTP message body, simultaneously writing it to the given output.
+     * Read the raw HTTP message body, simultaneously writing it to the given output.
      * <p>
      * This method may not validate the full HTTP message before it starts writing it out.
      * To perform a full validation first, call {@link #eager()} to get an eager reader.
      *
      * @param out to write the HTTP body to
      * @throws IOException if an error occurs while writing the message
+     * @see BodyReader#writeDecodedTo(OutputStream)
      */
     @Override
     public void writeTo(OutputStream out) throws IOException {
-        writeTo(out, 4096);
+        writeTo(out, BodyConsumer.DEFAULT_BUFFER_SIZE);
     }
 
     /**
-     * Read the HTTP message body, simultaneously writing it to the given output.
+     * Read the raw HTTP message body, simultaneously writing it to the given output.
      * <p>
      * This method may not validate the full HTTP message before it starts writing it out.
      * To perform a full validation first, call {@link #eager()} to get an eager reader.
@@ -74,46 +75,48 @@ public abstract class BodyReader implements Writable, Closeable {
      * @param out        to write the HTTP body to
      * @param bufferSize size of the buffer to use for writing, if possible
      * @throws IOException if an error occurs while writing the message
+     * @see BodyReader#writeDecodedTo(OutputStream, int)
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        getFramedBody().getBodyConsumer().consumeInto(asStream(), out, bufferSize);
+        framedBody.getBodyConsumer().consumeInto(asStream(), out, bufferSize);
     }
 
     /**
-     * Read the HTTP message body, simultaneously decoding it, then writing the decoded body to the given output.
+     * Read the HTTP message body, simultaneously unframing and decoding it,
+     * then writing the decoded body to the given output.
      * <p>
      * This method may not validate the full HTTP message before it starts writing it out.
      * To perform a full validation first, call {@link #eager()} to get an eager reader.
      *
-     * @param out to write the decoded message body to
+     * @param out to write the unframed, decoded message body to
      * @throws IOException if an error occurs while writing the message
      */
     public void writeDecodedTo(OutputStream out) throws IOException {
-        writeDecodedTo(out, 4096);
+        writeDecodedTo(out, BodyConsumer.DEFAULT_BUFFER_SIZE);
     }
 
     /**
-     * Read the HTTP message body, simultaneously decoding it, then writing the decoded body to the given output.
+     * Read the HTTP message body, simultaneously unframing and decoding it,
+     * then writing the decoded body to the given output.
      * <p>
      * This method may not validate the full HTTP message before it starts writing it out.
      * To perform a full validation first, call {@link #eager()} to get an eager reader.
      *
-     * @param out        to write the decoded message body to
+     * @param out        to write the unframed, decoded message body to
      * @param bufferSize size of the buffer to use for writing, if possible
      * @throws IOException              if an error occurs while writing the message
      * @throws UnknownEncodingException if the body is encoded with an encoding that is unknown
      *                                  by the {@link HttpBodyEncodingRegistry}.
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
-        final FramedBody framedBody = getFramedBody();
-        // FIXME after decoding, the consumer can no longer consume it
-        OutputStream decodedOutput = framedBody.getBodyDecoder().decoding(out);
-        framedBody.getBodyConsumer().consumeInto(asStream(), decodedOutput, bufferSize);
+        OutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
+        framedBody.getBodyConsumer().consumeDataInto(asStream(), decodedStream, bufferSize);
     }
 
     /**
-     * @return the HTTP message's body as bytes.
-     * This method does not decode the body in case the body is encoded.
+     * @return the raw HTTP message's body as bytes.
+     * <p>
+     * This method does not unframe nor decode the body in case the body is encoded.
      * To get the decoded body, use
      * {@link #decodeBody()} or {@link #decodeBodyToString(Charset)}.
      * @throws IOException if an error occurs while consuming the message body
@@ -123,7 +126,7 @@ public abstract class BodyReader implements Writable, Closeable {
     }
 
     /**
-     * @return true if the body is encoded and framed with the "chunked" encoding, false otherwise.
+     * @return true if the body is framed with the "chunked" encoding, false otherwise.
      */
     public boolean isChunked() {
         return framedBody instanceof FramedBody.Chunked;
@@ -157,19 +160,19 @@ public abstract class BodyReader implements Writable, Closeable {
     }
 
     /**
-     * Decode the HTTP message's body.
+     * Unframe and decode the HTTP message's body.
      *
-     * @return the decoded message body
+     * @return the unframed, decoded message body
      * @throws IOException if an error occurs while consuming the message body
      */
     public byte[] decodeBody() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        writeDecodedTo(out);
+        writeDecodedTo(out, BodyConsumer.DEFAULT_BUFFER_SIZE);
         return out.toByteArray();
     }
 
     /**
-     * Decode the HTTP message's body, then turn it into a String using the given encoding.
+     * Unframe and decode the HTTP message's body, then turn it into a String using the given charset.
      *
      * @param charset to use to convert the body into a String
      * @return the decoded message body as a String

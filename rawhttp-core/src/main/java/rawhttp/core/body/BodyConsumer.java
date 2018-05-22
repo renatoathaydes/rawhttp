@@ -10,31 +10,68 @@ import java.io.OutputStream;
  */
 public abstract class BodyConsumer {
 
+    public static final int DEFAULT_BUFFER_SIZE = 4096;
+
     private BodyConsumer() {
         // do not allow sub-types outside of this class
     }
 
     /**
-     * Consume the HTTP message body fully without decoding it.
+     * Consume the HTTP message body fully, including any metadata used to frame the body.
      *
      * @param inputStream the raw input stream
-     * @return the exact bytes of the message body, without any decoding being performe
+     * @return the exact bytes of the message body
      * @throws IOException if an error occurs while consuming the message body
      */
-    public abstract byte[] consume(InputStream inputStream) throws IOException;
+    public byte[] consume(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        consumeInto(inputStream, out, DEFAULT_BUFFER_SIZE);
+        return out.toByteArray();
+    }
+
+    /**
+     * Consume the HTTP message body fully, excluding framing metadata.
+     * <p>
+     * For the {@link rawhttp.core.body.FramedBody.Chunked} frame, for example, this method returns only the actual
+     * data which is wrapped into the chunks, but not the chunk-size, attributes and trailer-part.
+     *
+     * @param inputStream the raw input stream
+     * @return the bytes of the data included in the message body
+     * @throws IOException if an error occurs while consuming the message body
+     */
+    public byte[] consumeData(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        consumeDataInto(inputStream, out, DEFAULT_BUFFER_SIZE);
+        return out.toByteArray();
+    }
 
     /**
      * Consume the HTTP message body obtained by reading the input stream into the given output stream.
      *
      * @param inputStream  to read original message body from
      * @param outputStream stream to write the message body to
-     * @param bufferSize   the size of the buffer to use, if possible
+     * @param bufferSize   the size of the buffer to use, if possible. A non-positive value must be ignored.
      * @throws IOException if an error occurs while reading or writing the streams
      */
     public abstract void consumeInto(
             InputStream inputStream,
             OutputStream outputStream,
             int bufferSize) throws IOException;
+
+    /**
+     * Consume the HTTP message body fully, excluding framing metadata, into the given output stream.
+     * <p>
+     * For the {@link rawhttp.core.body.FramedBody.Chunked} frame, for example, this method consumes only the actual
+     * data which is wrapped into the chunks, but not the chunk-size, attributes and trailer-part.
+     *
+     * @param inputStream  to read original message body from
+     * @param outputStream stream to write the decoded message body to
+     * @param bufferSize   the size of the buffer to use, if possible
+     * @throws IOException if an error occurs while reading or writing the streams
+     */
+    public abstract void consumeDataInto(InputStream inputStream,
+                                         OutputStream outputStream,
+                                         int bufferSize) throws IOException;
 
     /**
      * Consumer of HTTP message body framed as {@link FramedBody.Chunked}.
@@ -48,31 +85,25 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public byte[] consume(InputStream inputStream) throws IOException {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            consumeInto(inputStream, out, -1);
-            return out.toByteArray();
-        }
-
-        @Override
         public void consumeInto(
                 InputStream inputStream,
                 OutputStream outputStream,
                 int bufferSize) throws IOException {
-            if (outputStream instanceof ChunkedOutputStream) {
-                // we can decode the chunks directly, even though we can only start writing each
-                // chunk after consuming it fully
-                OutputStream decodeTarget = ((ChunkedOutputStream) outputStream).getDecodedChunksTarget();
-                bodyParser.parseChunkedBody(inputStream,
-                        chunk -> decodeTarget.write(chunk.getData()),
-                        trailer -> { // ignore
-                        });
-            } else {
-                bodyParser.parseChunkedBody(inputStream,
-                        chunk -> chunk.writeTo(outputStream),
-                        trailer -> trailer.writeTo(outputStream));
-            }
+            bodyParser.parseChunkedBody(inputStream,
+                    chunk -> chunk.writeTo(outputStream),
+                    trailer -> trailer.writeTo(outputStream));
         }
+
+        @Override
+        public void consumeDataInto(InputStream inputStream, OutputStream out, int bufferSize)
+                throws IOException {
+            bodyParser.parseChunkedBody(inputStream,
+                    chunk -> out.write(chunk.getData()),
+                    trailer -> {
+                        // ignore trailer
+                    });
+        }
+
     }
 
     /**
@@ -87,29 +118,24 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public byte[] consume(InputStream inputStream) throws IOException {
-            int length = Math.toIntExact(bodyLength);
-            return readBytesUpToLength(inputStream, length);
-        }
-
-        @Override
         public void consumeInto(InputStream inputStream,
                                 OutputStream outputStream,
                                 int bufferSize) throws IOException {
             readAndWriteBytesUpToLength(inputStream, bodyLength, outputStream, bufferSize);
         }
 
-        private static byte[] readBytesUpToLength(InputStream inputStream,
-                                                  int bodyLength) throws IOException {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bodyLength);
-            readAndWriteBytesUpToLength(inputStream, bodyLength, outputStream, 4096);
-            return outputStream.toByteArray();
+        @Override
+        public void consumeDataInto(InputStream inputStream, OutputStream outputStream, int bufferSize) throws IOException {
+            consumeInto(inputStream, outputStream, bufferSize);
         }
 
         private static void readAndWriteBytesUpToLength(InputStream inputStream,
                                                         long bodyLength,
                                                         OutputStream outputStream,
                                                         int bufferSize) throws IOException {
+            if (bufferSize <= 0) {
+                bufferSize = DEFAULT_BUFFER_SIZE;
+            }
             long offset = 0L;
             byte[] bytes = new byte[(int) Math.min(bodyLength, bufferSize)];
             while (offset < bodyLength) {
@@ -142,25 +168,22 @@ public abstract class BodyConsumer {
         }
 
         @Override
-        public byte[] consume(InputStream inputStream) throws IOException {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) > 0) {
-                out.write(buffer, 0, bytesRead);
-            }
-            return out.toByteArray();
-        }
-
-        @Override
         public void consumeInto(InputStream inputStream,
                                 OutputStream outputStream,
                                 int bufferSize) throws IOException {
+            if (bufferSize <= 0) {
+                bufferSize = DEFAULT_BUFFER_SIZE;
+            }
             byte[] buffer = new byte[bufferSize];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) > 0) {
                 outputStream.write(buffer, 0, bytesRead);
             }
+        }
+
+        @Override
+        public void consumeDataInto(InputStream inputStream, OutputStream outputStream, int bufferSize) throws IOException {
+            consumeInto(inputStream, outputStream, bufferSize);
         }
     }
 
