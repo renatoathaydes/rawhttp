@@ -43,13 +43,23 @@ infix fun ByteArray.shouldHaveSameElementsAs(other: ByteArray) {
     val expected = other.toList()
     val actual = this.toList()
     if (expected.size != actual.size) {
-        throw AssertionError("expected array of size ${expected.size} but got array of size ${actual.size}")
+        throw AssertionError("expected array of size ${expected.size} but got array of size ${actual.size}\n" +
+                "Actual:   ${actual.toShortString()}\n" +
+                "Expected: ${expected.toShortString()}")
     }
     for ((index, values) in expected.zip(actual).withIndex()) {
         val (e, a) = values
         if (e != a) {
             throw AssertionError("expected $e but got $a at index $index")
         }
+    }
+}
+
+private fun List<*>.toShortString(): String {
+    return if (size > 100) {
+        "[${this.subList(0, 100).joinToString()} ...]"
+    } else {
+        toString()
     }
 }
 
