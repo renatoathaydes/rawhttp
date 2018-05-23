@@ -4,25 +4,29 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 
 final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
-    private final PipedInputStream pipedInputStream;
-    private final PipedOutputStream pipedOutputStream;
+    private final PipedInputStream encodedBytesReceiver;
+    private final PipedOutputStream encodedBytesSink;
     private final AtomicBoolean readerRunning = new AtomicBoolean(false);
     private final ExecutorService executorService;
     private final int bufferSize;
+    private Future<?> readerExecution;
 
     GZipUncompressorOutputStream(OutputStream out, int bufferSize) {
         super(out);
         this.bufferSize = bufferSize;
-        this.pipedInputStream = new PipedInputStream();
-        this.pipedOutputStream = new PipedOutputStream();
+        this.encodedBytesReceiver = new PipedInputStream();
+        this.encodedBytesSink = new PipedOutputStream();
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -36,17 +40,17 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         if (!readerRunning.getAndSet(true)) {
-            pipedOutputStream.connect(pipedInputStream);
+            encodedBytesSink.connect(encodedBytesReceiver);
             startReader();
         }
-        pipedOutputStream.write(b, off, len);
+        encodedBytesSink.write(b, off, len);
     }
 
     private void startReader() {
-        executorService.submit(() -> {
+        readerExecution = executorService.submit(() -> {
             int bytesRead;
             byte[] buffer = new byte[bufferSize];
-            try (GZIPInputStream decoderStream = new GZIPInputStream(pipedInputStream)) {
+            try (GZIPInputStream decoderStream = new GZIPInputStream(encodedBytesReceiver)) {
                 while ((bytesRead = decoderStream.read(buffer, 0, bufferSize)) >= 0) {
                     out.write(buffer, 0, bytesRead);
                 }
@@ -58,19 +62,29 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
     @Override
     public void flush() throws IOException {
-        pipedOutputStream.flush();
+        encodedBytesSink.flush();
         super.flush();
     }
 
     @Override
-    public void close() throws IOException {
-        executorService.shutdown();
+    public void finishDecoding() throws IOException {
+        super.finishDecoding();
+        encodedBytesSink.close();
+
         try {
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
+            readerExecution.get(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             executorService.shutdownNow();
             throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            executorService.shutdownNow();
+            throw new RuntimeException(e.getCause());
+        } catch (TimeoutException e) {
+            executorService.shutdownNow();
+            throw new RuntimeException("Timeout waiting for stream to close");
         }
-        super.close();
+
+        executorService.shutdown();
     }
+
 }

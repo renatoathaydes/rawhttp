@@ -48,10 +48,15 @@ public class BodyDecoder {
     public DecodingOutputStream decoding(OutputStream out) throws IOException {
         ArrayList<HttpMessageDecoder> decoders = getDecoders();
 
-        // by reversing the encoders, we start decoding from the last encoding applied to the stream
-        Collections.reverse(decoders);
-
         DecodingOutputStream decoderStream = new DecodingOutputStream(out);
+
+        if (decoders.isEmpty()) {
+            return decoderStream;
+        } else if (decoders.get(decoders.size() - 1).encodingName().equalsIgnoreCase("chunked")) {
+            // when the chunked encoding is used to frame the message, we don't need to to decode its contents
+            decoders.remove(decoders.size() - 1);
+        }
+
         for (HttpMessageDecoder decoder : decoders) {
             decoderStream = decoder.decode(decoderStream);
         }

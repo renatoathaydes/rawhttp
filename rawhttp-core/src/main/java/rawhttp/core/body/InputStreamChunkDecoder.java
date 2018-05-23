@@ -68,7 +68,7 @@ public class InputStreamChunkDecoder extends InputStream {
             currentSource = null;
             return read();
         }
-        return b;
+        return b & 0xFF;
     }
 
     /**

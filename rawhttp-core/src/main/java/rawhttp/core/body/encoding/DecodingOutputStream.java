@@ -14,16 +14,16 @@ public class DecodingOutputStream extends FilterOutputStream {
     }
 
     public void finishDecoding() throws IOException {
+        flush();
         if (out instanceof DecodingOutputStream) {
-            out.close();
+            ((DecodingOutputStream) out).finishDecoding();
         }
-        close();
     }
 
     @Override
     public void close() throws IOException {
-        // do not close the underlying OutputStream, as it may be a client's stream
-        out.flush();
+        // do not close the underlying OutputStream as it may be a client's stream
+        finishDecoding();
     }
 
 }

@@ -30,7 +30,12 @@ public class InputStreamChunkEncoder extends InputStream {
         this.chunkSize = chunkSize;
     }
 
-    private byte[] nextChunk() throws IOException {
+    @Override
+    public int available() {
+        return terminated ? 0 : buffer.length - index;
+    }
+
+    private void readNextChunk() throws IOException {
         byte[] chunkData = new byte[chunkSize];
         int bytesRead = stream.read(chunkData);
         if (bytesRead <= 0) {
@@ -40,14 +45,13 @@ public class InputStreamChunkEncoder extends InputStream {
 
         byte[] chunkSizeBytes = (Integer.toString(bytesRead, 16) + "\r\n").getBytes(StandardCharsets.US_ASCII);
 
-        byte[] chunk = new byte[chunkSizeBytes.length + bytesRead + 2];
-        System.arraycopy(chunkSizeBytes, 0, chunk, 0, chunkSizeBytes.length);
+        buffer = new byte[chunkSizeBytes.length + bytesRead + 2];
+        System.arraycopy(chunkSizeBytes, 0, buffer, 0, chunkSizeBytes.length);
         if (bytesRead > 0) {
-            System.arraycopy(chunkData, 0, chunk, chunkSizeBytes.length, bytesRead);
+            System.arraycopy(chunkData, 0, buffer, chunkSizeBytes.length, bytesRead);
         }
-        chunk[chunk.length - 2] = '\r';
-        chunk[chunk.length - 1] = '\n';
-        return chunk;
+        buffer[buffer.length - 2] = '\r';
+        buffer[buffer.length - 1] = '\n';
     }
 
     @Override
@@ -56,13 +60,13 @@ public class InputStreamChunkEncoder extends InputStream {
             if (terminated) {
                 return -1;
             }
-            buffer = nextChunk();
+            readNextChunk();
             if (buffer.length == 0) {
                 return -1;
             }
             index = 0;
         }
-        return buffer[index++];
+        return buffer[index++] & 0xFF;
     }
 
     @Override

@@ -73,7 +73,7 @@ public final class FieldValues {
      * @return true if the given char is allowed in VCHAR field-values, false otherwise.
      */
     public static boolean isAllowedInVCHARs(char c) {
-        return c > 31 & c < 127;
+        return c > 31 && c < 127;
     }
 
 }
