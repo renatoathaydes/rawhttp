@@ -45,6 +45,14 @@ public class BodyDecoder {
         this.encodings = encodings;
     }
 
+    /**
+     * Create a {@link DecodingOutputStream} that decodes the contents written to it before passing it on
+     * to the given {@link OutputStream}.
+     *
+     * @param out receiver of decoded contents
+     * @return a stream that decodes the bytes written into it, then writes the decoded bytes into another stream
+     * @throws IOException if an error occurs while writing to the given stream
+     */
     public DecodingOutputStream decoding(OutputStream out) throws IOException {
         ArrayList<HttpMessageDecoder> decoders = getDecoders();
 

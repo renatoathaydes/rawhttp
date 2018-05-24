@@ -14,15 +14,35 @@ public class FileBody extends HttpMessageBody {
 
     private final File file;
 
+    /**
+     * Create a {@link HttpMessageBody} whose contents are provided by the given file.
+     *
+     * @param file the file whose contents form this message
+     */
     public FileBody(File file) {
         this(file, null, null);
     }
 
+    /**
+     * Create a {@link HttpMessageBody} whose contents are provided by the given file.
+     *
+     * @param file        the file whose contents form this message
+     * @param contentType Content-Type of the body
+     */
     public FileBody(File file,
                     @Nullable String contentType) {
         this(file, contentType, null);
     }
 
+    /**
+     * Create a {@link HttpMessageBody} whose contents are provided by the given file.
+     * <p>
+     * The body is assumed to be in encoded form and can be decoded with the provided {@link BodyDecoder}.
+     *
+     * @param file        the file whose contents form this message
+     * @param contentType Content-Type of the body
+     * @param bodyDecoder decoder capable of decoding the body
+     */
     public FileBody(File file,
                     @Nullable String contentType,
                     @Nullable BodyDecoder bodyDecoder) {

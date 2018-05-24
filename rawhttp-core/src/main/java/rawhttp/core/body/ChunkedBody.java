@@ -60,7 +60,7 @@ public class ChunkedBody extends HttpMessageBody {
      * @param stream         content to encode
      * @param contentType    Content-Type of the stream contents
      * @param chunkLength    the length of each chunk
-     * @param bodyDecoder    the body decoder. The last encoding must be "chunked".
+     * @param bodyDecoder    decoder capable of decoding the body. The last encoding must be "chunked".
      * @param metadataParser metadata parser (chunked body may contain metadata)
      * @throws IllegalArgumentException if the bodyDecoder's last encoding is not "chunked"
      */

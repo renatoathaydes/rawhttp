@@ -41,6 +41,11 @@ public abstract class HttpMessageBody {
      */
     public abstract LazyBodyReader toBodyReader();
 
+    /**
+     * @return the {@link BodyDecoder} capable of decoding this message's body.
+     * <p>
+     * If the message body is not encoded, a no-op decoder is returned.
+     */
     public BodyDecoder getBodyDecoder() {
         return bodyDecoder == null ? new BodyDecoder() : bodyDecoder;
     }

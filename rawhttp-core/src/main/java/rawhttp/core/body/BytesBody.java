@@ -11,10 +11,21 @@ public class BytesBody extends HttpMessageBody {
 
     private final byte[] bytes;
 
+    /**
+     * Create a {@link HttpMessageBody} whose contents are the given bytes.
+     *
+     * @param bytes contents of the body
+     */
     public BytesBody(byte[] bytes) {
         this(bytes, null, new BodyDecoder());
     }
 
+    /**
+     * Create a {@link HttpMessageBody} whose contents are the given bytes.
+     *
+     * @param bytes       contents of the body
+     * @param contentType Content-Type of the body
+     */
     public BytesBody(byte[] bytes,
                      @Nullable String contentType) {
         this(bytes, contentType, new BodyDecoder());
@@ -22,10 +33,12 @@ public class BytesBody extends HttpMessageBody {
 
     /**
      * Create a {@link HttpMessageBody} whose contents are the given bytes.
+     * <p>
+     * The body is assumed to be in encoded form and can be decoded with the provided {@link BodyDecoder}.
      *
-     * @param bytes
-     * @param contentType
-     * @param bodyDecoder
+     * @param bytes       contents of the body
+     * @param contentType Content-Type of the body
+     * @param bodyDecoder decoder capable of decoding the body
      */
     public BytesBody(byte[] bytes,
                      @Nullable String contentType,

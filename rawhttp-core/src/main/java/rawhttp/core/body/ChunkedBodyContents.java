@@ -18,6 +18,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class ChunkedBodyContents implements Writable {
 
+    /**
+     * A single chunk, part of {@link ChunkedBodyContents}.
+     */
     public static class Chunk implements Writable {
 
         private final RawHttpHeaders extensions;
@@ -28,14 +31,23 @@ public class ChunkedBodyContents implements Writable {
             this.data = data;
         }
 
+        /**
+         * @return the chunk extensions
+         */
         public RawHttpHeaders getExtensions() {
             return extensions;
         }
 
+        /**
+         * @return the data contained in this chunk
+         */
         public byte[] getData() {
             return data;
         }
 
+        /**
+         * @return the size of this chunk
+         */
         public int size() {
             return data.length;
         }
