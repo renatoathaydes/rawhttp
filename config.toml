@@ -8,7 +8,7 @@ publishDir = "../public"
     footerText = "RawHTTP - a HTTP library for the JVM"
 
 [[params.mainMenu]]
-    link = "/rawhttp/rawhttp"
+    link = "/rawhttp/in-5-minutes"
     text = "RawHTTP in 5 minutes"
 
 [[params.mainMenu]]
