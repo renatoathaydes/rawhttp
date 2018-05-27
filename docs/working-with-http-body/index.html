@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+    <meta name="description" content="Call me Sam, a theme for Hugo.">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="https://renatoathaydes.github.io/rawhttp">
+    
+    <meta name="twitter:image" content="https://renatoathaydes.github.io/rawhttp/tn.png">
+    <meta name="twitter:title" property="og:title" itemprop="title name" content="RawHTTP">
+    <meta name="twitter:description" property="og:description" itemprop="description" content="Call me Sam, a theme for Hugo.">
+    <meta name="og:type" content="website">
+    <meta name="og:url" content="https://renatoathaydes.github.io/rawhttp">
+    <meta name="og:image" itemprop="image primaryImageOfPage" content="https://renatoathaydes.github.io/rawhttp/tn.png">
+    
+    <title>RawHTTP</title>
+    <link rel="shortcut icon" href="https://renatoathaydes.github.io/rawhttp/sam.ico" id="favicon">
+    <link rel="stylesheet" href="https://renatoathaydes.github.io/rawhttp/css/style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Didact+Gothic">
+    
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    
+    
+
+</head>
+
+</html>
+<body><div class="wrap"><div class="section" id="title">Working with message body</div><div class="section" id="content">
+
+<p>RawHTTP makes it easy to replace the body of a HTTP message, changing the relevant headers as appropriate.</p>
+
+<h3 id="set-body-from-string">Set body from String</h3>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
+
+RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
+RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
+    <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
+RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
+    <span style="color:#66d9ef">new</span> StringBody<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello RawHTTP&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span>
+
+System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>requestWithBody<span style="color:#f92672">.</span><span style="color:#a6e22e">eagerly</span><span style="color:#f92672">());</span></code></pre></div>
+
+<p>Prints:</p>
+
+<pre><code>POST /hello HTTP/1.1
+Host: example.com
+Content-Type: text/plain
+Content-Length: 13
+
+Hello RawHTTP
+</code></pre>
+
+<h3 id="set-body-from-file">Set body from File</h3>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
+
+RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
+RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
+    <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
+RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
+    <span style="color:#66d9ef">new</span> FileBody<span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> File<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hello.request&#34;</span><span style="color:#f92672">),</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div></p>
+
+<h3 id="set-body-from-byte-array">Set body from byte array</h3>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
+
+<span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> bytes <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello RawHTTP&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getBytes</span><span style="color:#f92672">();</span>
+
+RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
+RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
+    <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
+RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
+    <span style="color:#66d9ef">new</span> BytesBody<span style="color:#f92672">(</span>bytes<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div></p>
+
+<h3 id="set-body-from-inputstream-chunked">Set body from InputStream (chunked)</h3>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
+
+InputStream stream <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ByteArrayInputStream<span style="color:#f92672">(</span>
+    <span style="color:#e6db74">&#34;Hello RawHTTTP&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getBytes</span><span style="color:#f92672">());</span>
+<span style="color:#66d9ef">int</span> chunkSize <span style="color:#f92672">=</span> 4<span style="color:#f92672">;</span>
+
+RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
+RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
+    <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
+RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
+    <span style="color:#66d9ef">new</span> ChunkedBody<span style="color:#f92672">(</span>stream<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">,</span> chunkSize<span style="color:#f92672">));</span></code></pre></div></p>
+
+<p>The <code>InputStream</code> is read lazily as the body of the HTTP message is consumed by a reader.</p>
+
+<p>The header <code>Transfer-Encoding: chunked</code> is set, and the body is encoded accordingly.</p>
+
+<hr>
+
+<p><a href="/rawhttp/docs">Index</a> <a href="/rawhttp/docs/mistakes-rawhttp-fixes-up">Next: Mistakes RawHttp fixes up</a></p>
+</div><div class="section bottom-menu"><hr/><p><a href="/rawhttp/rawhttp">RawHTTP in 5 minutes</a>
+
+
+&#183; <a href="/rawhttp/docs">Documentation</a>
+&#183; <a href="/rawhttp/rawhttp-modules">Modules</a>
+&#183; <a href="/rawhttp/about">About</a>
+
+&#183; <a href="https://renatoathaydes.github.io/rawhttp"></a></p></div><div class="section footer">RawHTTP - a HTTP library for the JVM</div></div></body>

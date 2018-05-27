@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+    <meta name="description" content="Call me Sam, a theme for Hugo.">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="https://renatoathaydes.github.io/rawhttp">
+    
+    <meta name="twitter:image" content="https://renatoathaydes.github.io/rawhttp/tn.png">
+    <meta name="twitter:title" property="og:title" itemprop="title name" content="RawHTTP">
+    <meta name="twitter:description" property="og:description" itemprop="description" content="Call me Sam, a theme for Hugo.">
+    <meta name="og:type" content="website">
+    <meta name="og:url" content="https://renatoathaydes.github.io/rawhttp">
+    <meta name="og:image" itemprop="image primaryImageOfPage" content="https://renatoathaydes.github.io/rawhttp/tn.png">
+    
+    <title>RawHTTP</title>
+    <link rel="shortcut icon" href="https://renatoathaydes.github.io/rawhttp/sam.ico" id="favicon">
+    <link rel="stylesheet" href="https://renatoathaydes.github.io/rawhttp/css/style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Didact+Gothic">
+    
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    
+    
+
+</head>
+
+</html>
+<body><div class="wrap"><div class="section" id="title">RawHTTP CLI</div><div class="section" id="content">
+
+<p>The <code>rawhttp-cli</code> module is a CLI (command-line interface) that can send HTTP requests and serve
+local files via a RawHTTP server.</p>
+
+<h2 id="download">Download</h2>
+
+<pre><code>curl -sSfL https://jcenter.bintray.com/c/rawhttp/rawhttp-cli/1.0.0/rawhttp-cli-1.0.0.jar -o rawhttp.jar
+</code></pre>
+
+<h2 id="usage">Usage</h2>
+
+<p>Use <code>rawhttp send</code> to send HTTP requests.</p>
+
+<p>Use <code>rawhttp serve</code> to serve a local directory via HTTP.</p>
+
+<p>To see the help screen, run <code>rawhttp help</code>.</p>
+
+<hr>
+
+<h3 id="using-the-send-command">Using the <code>send</code> command</h3>
+
+<p>The <code>send</code> command has the purpose of sending out HTTP requests.
+It prints the full HTTP response (including status line, headers, body) to <code>stdout</code>.</p>
+
+<p>Usage:</p>
+
+<p><code>rawhttp send [options]</code></p>
+
+<p>Options:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">* -f --file &lt;file&gt;
+      read request from a file
+* -t --text &lt;request-text&gt;
+      read request as text
+* -p --print-body-only
+      print response body only
+* -b --body-text &lt;text&gt;
+      replace message body with the text
+* -g --body-file &lt;text&gt;
+      replace message body with the file</code></pre></div>
+
+<h4 id="send-a-http-request-from-a-file">Send a HTTP request from a file</h4>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp send -f my-request.req</code></pre></div>
+
+<p>Running this command will print the full HTTP response to stdout.</p>
+
+<p>You can send the HTTP response to another file:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp send my-request.req &gt; my-response.res</code></pre></div>
+
+<h4 id="send-a-http-request-from-text">Send a HTTP request from text</h4>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp send -t <span style="color:#e6db74">&#34;
+</span><span style="color:#e6db74">GET http://example.com/hello
+</span><span style="color:#e6db74">User-Agent: my-client
+</span><span style="color:#e6db74">Accept: text/html&#34;</span></code></pre></div>
+
+<h4 id="send-a-http-request-from-stdin">Send a HTTP request from stdin</h4>
+
+<p>If neither the <code>-t</code> nor the <code>-f</code> options are used, the request is read from <code>stdin</code>.</p>
+
+<p>Just start typing:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp send
+&gt; GET http://example.com/hello
+&gt; User-Agent: my-client
+&gt; Accept: text/html
+&gt;</code></pre></div>
+
+<p>You can also pipe the request from another command:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cat my-request.req | rawhttp send</code></pre></div>
+
+<h4 id="use-a-file-as-message-body">Use a file as message body</h4>
+
+<p>Assuming a JSON file called <code>body.json</code> exists in the working directory:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp send --body-file body.json -t <span style="color:#e6db74">&#34;
+</span><span style="color:#e6db74">POST http://example.com/hello
+</span><span style="color:#e6db74">Accept: application/json
+</span><span style="color:#e6db74">Content-Type: application/json
+</span><span style="color:#e6db74">&#34;</span></code></pre></div>
+
+<hr>
+
+<h3 id="using-the-serve-command">Using the <code>serve</code> command</h3>
+
+<p>The <code>serve</code> command starts up a HTTP server to serve the contents of a directory.</p>
+
+<p>Paths may match a file name with or without its extension.
+If more than one file exists with the same name but different extensions, the server attempts
+to use the request <code>Accept</code> header to disambiguate.</p>
+
+<p>Usage:</p>
+
+<p><code>rawhttp serve &lt;dir&gt; [options]</code></p>
+
+<p>Options:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">* -l --log-requests
+      log requests received by the server
+* -m --media-types &lt;file&gt;
+      use custom Media-Type mappings
+* -p --port &lt;port-number&gt;
+      the port to listen on</code></pre></div>
+
+<h4 id="serve-files-from-a-local-directory">Serve files from a local directory</h4>
+
+<p>To serve the local directory <code>public/</code> on the default port:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp serve public/</code></pre></div>
+
+<p>Enable a request logger (prints to stdout):</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp serve public/ -l</code></pre></div>
+
+<p>Use a different port, say 8082:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp serve public/ -p <span style="color:#ae81ff">8082</span></code></pre></div>
+
+<h4 id="provide-custom-media-type-mapping">Provide custom media-type mapping</h4>
+
+<p>The CLI HTTP Server, by default, maps only a few common file extensions to a proper
+<a href="http://www.iana.org/assignments/media-types/media-types.xhtml">Media Type</a>.</p>
+
+<p>To override or just provide extra mappings, start the server with a <code>--media-types</code> flag:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">rawhttp serve public/ --media-types my-media-types.properties</code></pre></div>
+
+<p>A properties file with mappings should contain entries where the key is a file extension,
+ and the value a media-type. It might look something like this:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-properties" data-lang="properties">sql: application/sql
+soap+xml: application/soap+xml
+ac3: audio/ac3
+3gpp: video/3gpp
+mpeg: video/mpeg4-generic</code></pre></div>
+
+<p>Unmapped file extensions result in the <code>Content-Type</code> header being set to <code>application/octet-stream</code>.</p>
+
+<hr>
+
+<p><a href="/rawhttp/rawhttp-modules">Modules</a> <a href="/rawhttp/rawhttp-modules/http-components">HTTP Components</a></p>
+</div><div class="section bottom-menu"><hr/><p><a href="/rawhttp/rawhttp">RawHTTP in 5 minutes</a>
+
+
+&#183; <a href="/rawhttp/docs">Documentation</a>
+&#183; <a href="/rawhttp/rawhttp-modules">Modules</a>
+&#183; <a href="/rawhttp/about">About</a>
+
+&#183; <a href="https://renatoathaydes.github.io/rawhttp"></a></p></div><div class="section footer">RawHTTP - a HTTP library for the JVM</div></div></body>

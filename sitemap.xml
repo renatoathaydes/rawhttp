@@ -3,15 +3,57 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/get-started/</loc>
+    <lastmod>2018-05-10T19:02:44+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/low-level-api/</loc>
+    <lastmod>2018-05-10T14:25:00+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/mistakes-rawhttp-fixes-up/</loc>
+    <lastmod>2018-05-10T14:24:00+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/working-with-http-body/</loc>
+    <lastmod>2018-05-10T14:02:50+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/http-client/</loc>
+    <lastmod>2018-05-10T14:02:44+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/docs/http-server/</loc>
+    <lastmod>2018-05-10T14:02:44+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/cli/</loc>
+    <lastmod>2017-05-11T19:20:11+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/http-components/</loc>
+    <lastmod>2017-05-11T19:20:11+02:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://renatoathaydes.github.io/rawhttp/about/</loc>
   </url>
   
   <url>
     <loc>https://renatoathaydes.github.io/rawhttp/docs/</loc>
+    <lastmod>2018-05-10T19:02:44+02:00</lastmod>
   </url>
   
   <url>
     <loc>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/</loc>
+    <lastmod>2017-05-11T19:20:11+02:00</lastmod>
   </url>
   
   <url>
@@ -25,6 +67,7 @@
   
   <url>
     <loc>https://renatoathaydes.github.io/rawhttp/</loc>
+    <lastmod>2018-05-10T19:02:44+02:00</lastmod>
     <priority>0</priority>
   </url>
   
