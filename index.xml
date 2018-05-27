@@ -17,8 +17,8 @@
       <pubDate>Thu, 10 May 2018 19:02:44 +0200</pubDate>
       
       <guid>https://renatoathaydes.github.io/rawhttp/docs/get-started/</guid>
-      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;rawhttp:rawhttp-core:2.0&amp;#39;
-Download the jar with curl curl https://github.com/renatoathaydes/rawhttp   Index Next: Low Level API</description>
+      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;com.athaydes.rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;com.athaydes.rawhttp:rawhttp-core:2.0&amp;#39;
+Download the jar with curl curl https://jcenter.bintray.com/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar   Index Next: Low Level API</description>
     </item>
     
     <item>
@@ -114,10 +114,10 @@ One of the &amp;ldquo;simplest&amp;rdquo; Java server micro-frameworks around, S
     
     <item>
       <title></title>
-      <link>https://renatoathaydes.github.io/rawhttp/rawhttp/</link>
+      <link>https://renatoathaydes.github.io/rawhttp/in-5-minutes/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://renatoathaydes.github.io/rawhttp/rawhttp/</guid>
+      <guid>https://renatoathaydes.github.io/rawhttp/in-5-minutes/</guid>
       <description>RawHTTP in 5 minutes RawHTTP is a Java library that makes it easy to work with HTTP 1.0 and 1.1.
 It has ZERO dependencies.
 You might want to use it if you need a stripped-down-to-basics HTTP client or server.

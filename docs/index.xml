@@ -17,8 +17,8 @@
       <pubDate>Thu, 10 May 2018 19:02:44 +0200</pubDate>
       
       <guid>https://renatoathaydes.github.io/rawhttp/docs/get-started/</guid>
-      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;rawhttp:rawhttp-core:2.0&amp;#39;
-Download the jar with curl curl https://github.com/renatoathaydes/rawhttp   Index Next: Low Level API</description>
+      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;com.athaydes.rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;com.athaydes.rawhttp:rawhttp-core:2.0&amp;#39;
+Download the jar with curl curl https://jcenter.bintray.com/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar   Index Next: Low Level API</description>
     </item>
     
     <item>
