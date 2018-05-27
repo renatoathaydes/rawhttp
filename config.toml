@@ -2,20 +2,20 @@ baseURL = "https://renatoathaydes.github.io/rawhttp"
 languageCode = "en-us"
 title = "RawHTTP"
 theme = "sam"
-publishDir = "../docs"
+publishDir = "../public"
 
 [[params.mainMenu]]
-    link = "/rawhttp"
+    link = "/rawhttp/rawhttp"
     text = "RawHTTP in 5 minutes"
 
 [[params.mainMenu]]
-    link = "/docs"
+    link = "/rawhttp/docs"
     text = "Documentation"
 
 [[params.mainMenu]]
-    link = "/rawhttp-modules"
+    link = "/rawhttp/rawhttp-modules"
     text = "Modules"
 
 [[params.mainMenu]]
-    link = "/about"
+    link = "/rawhttp/about"
     text = "About"

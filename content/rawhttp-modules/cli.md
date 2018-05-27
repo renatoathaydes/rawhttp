@@ -9,7 +9,9 @@ local files via a RawHTTP server.
 
 ## Download
 
-TODO
+```
+curl -sSfL https://jcenter.bintray.com/c/rawhttp/rawhttp-cli/1.0.0/rawhttp-cli-1.0.0.jar -o rawhttp.jar
+```
 
 ## Usage
 
@@ -26,14 +28,24 @@ To see the help screen, run `rawhttp help`.
 The `send` command has the purpose of sending out HTTP requests.
 It prints the full HTTP response (including status line, headers, body) to `stdout`.
 
+Usage:
+
+`rawhttp send [options]`
+
 Options:
 
-* `-f` `--file` <file>
+{{< highlight shell >}}
+* -f --file <file>
       read request from a file
-* `-p` `--print-body`
+* -t --text <request-text>
+      read request as text
+* -p --print-body-only
       print response body only
-* `-b` `--body` <file>
-      replace message body with contents of a file
+* -b --body-text <text>
+      replace message body with the text
+* -g --body-file <text>
+      replace message body with the file
+{{< / highlight >}}
 
 #### Send a HTTP request from a file
 
@@ -43,22 +55,36 @@ rawhttp send -f my-request.req
 
 Running this command will print the full HTTP response to stdout.
 
-You can send that to another file:
+You can send the HTTP response to another file:
 
 {{< highlight bash >}}
 rawhttp send my-request.req > my-response.res
 {{< / highlight >}}
 
-#### Send a HTTP request from stdin
+#### Send a HTTP request from text
 
 {{< highlight bash >}}
-rawhttp send "
+rawhttp send -t "
 GET http://example.com/hello
 User-Agent: my-client
 Accept: text/html"
 {{< / highlight >}}
 
-You can also pipe a request from another command:
+#### Send a HTTP request from stdin
+
+If neither the `-t` nor the `-f` options are used, the request is read from `stdin`.
+
+Just start typing:
+
+{{< highlight bash >}}
+rawhttp send
+> GET http://example.com/hello
+> User-Agent: my-client
+> Accept: text/html
+>
+{{< / highlight >}}
+
+You can also pipe the request from another command:
 
 {{< highlight bash >}}
 cat my-request.req | rawhttp send
@@ -69,11 +95,11 @@ cat my-request.req | rawhttp send
 Assuming a JSON file called `body.json` exists in the working directory:
 
 {{< highlight bash >}}
-rawhttp send "
+rawhttp send --body-file body.json -t "
 POST http://example.com/hello
 Accept: application/json
 Content-Type: application/json
-" --body body.json
+"
 {{< / highlight >}}
 
 <hr>
@@ -86,12 +112,20 @@ Paths may match a file name with or without its extension.
 If more than one file exists with the same name but different extensions, the server attempts
 to use the request `Accept` header to disambiguate.
 
+Usage:
+
+`rawhttp serve <dir> [options]`
+
 Options:
 
-* `-l` `--log-requests`
+{{< highlight shell >}}
+* -l --log-requests
       log requests received by the server
-* `-m` `--media-types` <file>
+* -m --media-types <file>
       use custom Media-Type mappings
+* -p --port <port-number>
+      the port to listen on
+{{< / highlight >}}
 
 #### Serve files from a local directory
 

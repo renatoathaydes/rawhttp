@@ -10,7 +10,7 @@ draft: true
 
 {{< highlight xml >}}
 <dependency>
-    <groupId>com.athaydes.rawhttp</groupId>
+    <groupId>rawhttp</groupId>
     <artifactId>rawhttp-core</artifactId>
     <version>2.0</version>
 </dependency>
@@ -19,7 +19,7 @@ draft: true
 ### Gradle
 
 {{< highlight groovy >}}
-dependency 'com.athaydes.rawhttp:rawhttp-core:2.0'
+dependency 'rawhttp:rawhttp-core:2.0'
 {{< / highlight >}}
 
 ### Download the jar with curl

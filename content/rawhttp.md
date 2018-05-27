@@ -10,12 +10,12 @@ You might want to use it if you need a stripped-down-to-basics HTTP client or se
 
 RawHTTP allows you to write raw HTTP messages by hand, with just a little extra support to avoid mistakes.
 
-The main class in the library is `com.athaydes.rawhttp.core.RawHttp`.
+The main class in the library is `RawHttp`.
 
 You can use it to create a HTTP request:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -30,7 +30,7 @@ HTTP version (so `HTTP/1.1` is used), and specify a full URL on the first line
 (the mandatory `Host` header is added automatically):
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -42,7 +42,7 @@ RawHttpRequest request = http.parseRequest(
 You can also create a HTTP response:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 import java.time.*;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
@@ -69,12 +69,12 @@ request.writeTo(socket.getOutputStream());
 
 <hr>
 
-If you prefer, you can also use the `com.athaydes.rawhttp.core.client.TcpRawHttpClient` class to send requests
+If you prefer, you can also use the `TcpRawHttpClient` class to send requests
 without managing sockets yourself:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.client.*;
+import rawhttp.core.*;
+import rawhttp.core.client.*;
 
 TcpRawHttpClient client = new TcpRawHttpClient();
 RawHttp http = new RawHttp();
@@ -82,11 +82,11 @@ RawHttpRequest request = http.parseRequest("...");
 RawHttpResponse<?> response = client.send(request);
 {{< / highlight >}}
 
-If it's a server you're after, use `com.athaydes.rawhttp.core.server.TcpRawHttpServer`:
+If it's a server you're after, use `TcpRawHttpServer`:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.server.*;
+import rawhttp.core.*;
+import rawhttp.core.server.*;
 
 RawHttpServer server = new TcpRawHttpServer(8086);
 RawHttp http = new RawHttp();

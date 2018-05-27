@@ -9,8 +9,8 @@ RawHTTP makes it easy to replace the body of a HTTP message, changing the releva
 ### Set body from String
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.body.*;
+import rawhttp.core.*;
+import rawhttp.core.body.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -35,21 +35,21 @@ Hello RawHTTP
 ### Set body from File
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.body.*;
+import rawhttp.core.*;
+import rawhttp.core.body.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
     "POST http://example.com/hello");
 RawHttpRequest requestWithBody = request.withBody(
-    new FileBody(new File("hello.request"), "text/plain", true));
+    new FileBody(new File("hello.request"), "text/plain"));
 {{< / highlight >}}
 
 ### Set body from byte array
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.body.*;
+import rawhttp.core.*;
+import rawhttp.core.body.*;
 
 byte[] bytes = "Hello RawHTTP".getBytes();
 
@@ -63,8 +63,8 @@ RawHttpRequest requestWithBody = request.withBody(
 ### Set body from InputStream (chunked)
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.body.*;
+import rawhttp.core.*;
+import rawhttp.core.body.*;
 
 InputStream stream = new ByteArrayInputStream(
     "Hello RawHTTTP".getBytes());

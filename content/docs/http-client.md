@@ -9,8 +9,8 @@ draft: true
 To make it easier to send HTTP requests, you can use a `TcpRawHttpClient`:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.client.*;
+import rawhttp.core.*;
+import rawhttp.core.client.*;
 
 TcpRawHttpClient client = new TcpRawHttpClient();
 RawHttp http = new RawHttp();
@@ -27,10 +27,10 @@ client.close();
 ### Configuring a HTTP client
 
 To configure a HTTP client, use the constructor that takes an instance of
-`com.athaydes.rawhttp.core.client.TcpRawHttpClient.TcpRawHttpClientOptions`:
+`TcpRawHttpClient.TcpRawHttpClientOptions`:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.client.*;
+import rawhttp.core.client.*;
 
 TcpRawHttpClient client = new TcpRawHttpClient(new TcpRawHttpClient.TcpRawHttpClientOptions() {
     @Override

@@ -14,7 +14,7 @@ line separators must be `CRLF`, or `\r\n`.
 However, by default, `RawHttp` allows a simple `\n` to be used:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -27,7 +27,7 @@ RawHttpRequest request = http.parseRequest(
 For simplicity, the HTTP version can be omitted from HTTP messages, in which case `HTTP/1.1` is used:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -41,7 +41,7 @@ The `Host` header is mandatory in HTTP requests. But `RawHttp` allows specifying
 which makes it automatically add a `Host` header to the request in case it's missing:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -56,7 +56,7 @@ new-line for the sake of robustness and historical reasons.
 `RawHttp` will do that by default:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
@@ -72,7 +72,7 @@ The `RawHttp` class has a constructor which takes a `RawHttpOptions` instance, a
 mentioned above to be turned off:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 
 RawHttp strictHttp = new RawHttp(RawHttpOptions.newBuilder()
             .doNotAllowNewLineWithoutReturn()

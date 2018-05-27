@@ -10,8 +10,8 @@ Even though you can write a simple HTTP server using only a `ServerSocket` and `
 responses, RawHTTP also offers a simple server implementation that makes things easier:
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
-import com.athaydes.rawhttp.core.server.*;
+import rawhttp.core.*;
+import rawhttp.core.server.*;
 
 RawHttpServer server = new TcpRawHttpServer(8086);
 RawHttp http = new RawHttp();
@@ -32,7 +32,7 @@ server.stop();
 
 As with the HTTP client, to configure a HTTP server, pass the options into the constructor.
 
-An example implementation of `com.athaydes.rawhttp.core.server.TcpRawHttpServer.TcpRawHttpServerOptions`:
+An example implementation of `TcpRawHttpServer.TcpRawHttpServerOptions`:
 
 {{< highlight java >}}
 class ExampleTcpRawHttpServerOptions implements TcpRawHttpServer.TcpRawHttpServerOptions {

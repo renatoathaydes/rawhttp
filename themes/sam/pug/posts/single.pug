@@ -1,0 +1,38 @@
+| {{ partial "head.html" . }}
+
+body
+    .wrap
+        .section#title
+            | {{ .Title }}
+        .section#content
+            | {{ .Date.Format (.Site.Params.dateForm | default "Mon Jan 02, 2006") }} &#183; {{ .WordCount }} words
+            |
+            | {{ with .Params.tags }}
+            div
+                | {{ range . }}
+                span#tag
+                    a(href!='{{ "tags/" | absURL }}{{ . | urlize }}') {{.}}
+                | {{ end }}
+            | {{ end }}
+            hr
+            | {{ .Content }}
+        .section.bottom-menu
+            hr
+            p
+                a(href='{{ .Section | relURL }}') back
+                | {{ if .Site.Params.mainMenu }}
+                |  &#183;
+                | {{ range first 1 .Site.Params.mainMenu }}
+                a(href='{{ .link }}') {{ .text }}
+                | {{ end }}
+                | {{ if ( gt ( len .Site.Params.mainMenu ) 1 ) }}
+                | {{ range after 1 .Site.Params.mainMenu }}
+                | &#183; 
+                a(href='{{ .link }}') {{ .text }}
+                | {{ end }}
+                | {{ end }}
+                | &#183; 
+                a(href='{{.Site.BaseURL}}') {{ .Site.Params.homepage }}
+                | {{ end }}
+        .section.footer
+            | {{ partial "footer.html" . }}

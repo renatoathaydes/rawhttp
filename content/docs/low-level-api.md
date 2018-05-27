@@ -7,7 +7,7 @@ draft: true
 ### Send a GET request
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 import java.net.Socket;
 
 RawHttp http = new RawHttp();
@@ -24,7 +24,7 @@ request.writeTo(socket.getOutputStream());
 ### Send a POST request with a body
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 import java.net.Socket;
 
 String jsonBody = "{ \"hello\": true, \"raw_http\": \"2.0\" }";
@@ -79,7 +79,7 @@ assertEquals(asList("Host", "User-Agent", "Content-Length", "Content-Type", "Acc
 ### Listen for HTTP requests (as a server)
 
 {{< highlight java >}}
-import com.athaydes.rawhttp.core.*;
+import rawhttp.core.*;
 import java.net.ServerSocket;
 
 ServerSocket serverSocket = new ServerSocket(8082);
