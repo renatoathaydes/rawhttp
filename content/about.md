@@ -97,7 +97,7 @@ customized.
 All objects are immutable, so mutator methods always return a new object rather than change the receiver.
 This is done very efficiently, so performance is not compromised.
 
-Check [RawHTTP in 5 minutes](/rawhttp) for a quick overview, or head to the [documentation](/docs) for more details.
+Check [RawHTTP in 5 minutes](/rawhttp/rawhttp) for a quick overview, or head to the [documentation](/rawhttp/docs) for more details.
 
 ## Source code
 

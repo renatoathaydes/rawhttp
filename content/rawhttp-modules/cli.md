@@ -1,7 +1,7 @@
 ---
 title: "RawHTTP CLI"
 date: 2017-05-11T19:20:11+02:00
-draft: true
+draft: false
 ---
 
 The `rawhttp-cli` module is a CLI (command-line interface) that can send HTTP requests and serve
@@ -173,4 +173,4 @@ Unmapped file extensions result in the `Content-Type` header being set to `appli
 
 <hr>
 
-[Modules](/rawhttp-modules) [HTTP Components](/rawhttp-modules/http-components)
+[Modules](/rawhttp/rawhttp-modules) [HTTP Components](/rawhttp/rawhttp-modules/http-components)

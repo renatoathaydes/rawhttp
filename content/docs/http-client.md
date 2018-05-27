@@ -1,7 +1,7 @@
 ---
 title: "HTTP Client"
 date: 2018-05-10T14:02:44+02:00
-draft: true
+draft: false
 ---
 
 ### Using a HTTP client
@@ -86,4 +86,4 @@ class SafeHttpClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions 
 
 <hr>
 
-[Index](/docs) [Next: HTTP Server](/docs/http-server)
+[Index](/rawhttp/docs) [Next: HTTP Server](/rawhttp/docs/http-server)

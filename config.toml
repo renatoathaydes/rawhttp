@@ -4,6 +4,9 @@ title = "RawHTTP"
 theme = "sam"
 publishDir = "../public"
 
+[params]
+    footerText = "RawHTTP - a HTTP library for the JVM"
+
 [[params.mainMenu]]
     link = "/rawhttp/rawhttp"
     text = "RawHTTP in 5 minutes"

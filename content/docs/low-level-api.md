@@ -1,7 +1,7 @@
 ---
 title: "Low level API"
 date: 2018-05-10T14:25:00+02:00
-draft: true
+draft: false
 ---
 
 ### Send a GET request
@@ -111,4 +111,4 @@ response.writeTo(client.getOutputStream());
 
 <hr>
 
-[Index](/docs) [Next: Working with message body](/docs/working-with-http-body)
+[Index](/rawhttp/docs) [Next: Working with message body](/rawhttp/docs/working-with-http-body)

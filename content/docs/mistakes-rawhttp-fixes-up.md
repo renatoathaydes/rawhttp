@@ -1,7 +1,7 @@
 ---
 title: "Mistakes RawHttp fixes up"
 date: 2018-05-10T14:24:00+02:00
-draft: true
+draft: false
 ---
 
 By default, `RawHttp` will fix the following common mistakes when parsing a HTTP message:
@@ -84,4 +84,4 @@ RawHttp strictHttp = new RawHttp(RawHttpOptions.newBuilder()
 
 <hr>
 
-[Index](/docs) [Next: HTTP Client](/docs/http-client)
+[Index](/rawhttp/docs) [Next: HTTP Client](/rawhttp/docs/http-client)

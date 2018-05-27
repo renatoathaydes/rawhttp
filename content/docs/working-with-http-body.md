@@ -1,7 +1,7 @@
 ---
 title: "Working with message body"
 date: 2018-05-10T14:02:50+02:00
-draft: true
+draft: false
 ---
 
 RawHTTP makes it easy to replace the body of a HTTP message, changing the relevant headers as appropriate.
@@ -83,4 +83,4 @@ The header `Transfer-Encoding: chunked` is set, and the body is encoded accordin
 
 <hr>
 
-[Index](/docs) [Next: Mistakes RawHttp fixes up](/docs/mistakes-rawhttp-fixes-up)
+[Index](/rawhttp/docs) [Next: Mistakes RawHttp fixes up](/rawhttp/docs/mistakes-rawhttp-fixes-up)

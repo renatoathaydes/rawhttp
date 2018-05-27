@@ -1,7 +1,7 @@
 ---
 title: "Get Started"
 date: 2018-05-10T19:02:44+02:00
-draft: true
+draft: false
 ---
 
 ## Add a dependency on RawHTTP
@@ -30,4 +30,4 @@ curl https://github.com/renatoathaydes/rawhttp
 
 <hr>
 
-[Index](/docs) [Next: Low Level API](/docs/low-level-api)
+[Index](/rawhttp/docs) [Next: Low Level API](/rawhttp/docs/low-level-api)

@@ -100,7 +100,7 @@ server.start(request -> {
 Easy!
 
 Besides the core RawHTTP library itself, the RawHTTP project also includes a
-[few related modules](/rawhttp-modules),
-including a [CLI](/rawhttp-modules/cli) (command-line interface).
+[few related modules](/rawhttp/rawhttp-modules),
+including a [CLI](/rawhttp/rawhttp-modules/cli) (command-line interface).
 
-To start using RawHTTP, head to the [Get Started](/docs/get-started) page.
+To start using RawHTTP, head to the [Get Started](/rawhttp/docs/get-started) page.
