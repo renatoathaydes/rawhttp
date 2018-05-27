@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>RawHTTP</title>
+    <link>https://renatoathaydes.github.io/rawhttp/</link>
+    <description>Recent content on RawHTTP</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://renatoathaydes.github.io/rawhttp/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title></title>
+      <link>https://renatoathaydes.github.io/rawhttp/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://renatoathaydes.github.io/rawhttp/about/</guid>
+      <description>About RawHTTP Motivation RawHTTP was created by Renato Athaydes after he realized just how complex Java HTTP clients and servers were, when in reality, HTTP itself is pretty simple.
+Imagine that you just wanted to fire up a little microservice with a couple of REST endpoints.
+One of the &amp;ldquo;simplest&amp;rdquo; Java server micro-frameworks around, SparkJava, lets you do that, but it takes all of these things with it:
+\--- com.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://renatoathaydes.github.io/rawhttp/rawhttp/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://renatoathaydes.github.io/rawhttp/rawhttp/</guid>
+      <description>RawHTTP in 5 minutes RawHTTP is a Java library that makes it easy to work with HTTP 1.0 and 1.1.
+It has ZERO dependencies.
+You might want to use it if you need a stripped-down-to-basics HTTP client or server.
+How does it work? RawHTTP allows you to write raw HTTP messages by hand, with just a little extra support to avoid mistakes.
+The main class in the library is RawHttp.</description>
+    </item>
+    
+  </channel>
+</rss>
