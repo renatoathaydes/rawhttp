@@ -12,7 +12,6 @@ import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.ChunkedBodyContents;
 import rawhttp.core.body.ChunkedBodyParser;
 import rawhttp.core.body.InputStreamChunkDecoder;
-import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
 
 import static com.athaydes.rawhttp.duplex.MessageSender.PLAIN_TEXT_HEADERS;
@@ -22,13 +21,13 @@ import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
 public class RawHttpDuplex {
 
     private final RawHttpResponse<Void> okResponse;
-    private final RawHttpClient<?> client;
+    private final TcpRawHttpClient client;
 
     public RawHttpDuplex() {
-        this(new TcpRawHttpClient());
+        this(new TcpRawHttpClient(new DuplexClientOptions()));
     }
 
-    public RawHttpDuplex(RawHttpClient<?> client) {
+    public RawHttpDuplex(TcpRawHttpClient client) {
         this.okResponse = new RawHttp().parseResponse("200 OK");
         this.client = client;
     }
@@ -42,6 +41,7 @@ public class RawHttpDuplex {
                 .withBody(new StreamedChunkedBody(sender.getChunkStream())));
 
         if (response.getStatusCode() != 200) {
+            client.close();
             throw new RuntimeException("Server response status code is not 200: " + response.getStatusCode());
         }
 
@@ -107,6 +107,7 @@ public class RawHttpDuplex {
                 }
             } catch (Exception e) {
                 handler.onError(e);
+                sender.close();
             }
         }).start();
     }
