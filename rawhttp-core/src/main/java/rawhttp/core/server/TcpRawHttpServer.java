@@ -37,10 +37,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             .with("Server", "RawHTTP")
             .build();
 
-    public static final RawHttp STRICT_HTTP = new RawHttp(RawHttpOptions.newBuilder()
-            .doNotAllowNewLineWithoutReturn()
-            .doNotInsertHostHeaderIfMissing()
-            .build());
+    public static final RawHttp STRICT_HTTP = new RawHttp(RawHttpOptions.strict());
 
     private static final DateHeaderProvider DATE_HEADER_PROVIDER = new DateHeaderProvider(Duration.ofSeconds(1));
 
@@ -120,7 +117,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          */
         default ExecutorService getExecutorService() {
             final AtomicInteger threadCount = new AtomicInteger(1);
-            return Executors.newCachedThreadPool(runnable -> {
+            return Executors.newFixedThreadPool(25, runnable -> {
                 Thread t = new Thread(runnable);
                 t.setDaemon(true);
                 t.setName("tcp-rawhttp-server-client-" + threadCount.incrementAndGet());

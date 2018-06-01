@@ -44,6 +44,17 @@ public class RawHttpOptions {
     }
 
     /**
+     * @return an instance of {@link RawHttpOptions} that is as strict as the HTTP specification. It will not,
+     * for example, allow LF without a CR character, or insert a Host header in a request when it's missing.
+     */
+    public static RawHttpOptions strict() {
+        return RawHttpOptions.newBuilder()
+                .doNotAllowNewLineWithoutReturn()
+                .doNotInsertHostHeaderIfMissing()
+                .build();
+    }
+
+    /**
      * @return whether or not a Host header should be automatically inserted in
      * {@link RawHttpRequest} if missing. The host is obtained from the
      * {@link RequestLine#getUri()}, if possible.

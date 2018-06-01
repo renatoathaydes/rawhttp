@@ -16,7 +16,7 @@ import rawhttp.core.errors.InvalidHttpResponse;
  * Parser of HTTP messages' metadata lines, i.e. start-line and header fields.
  * <p>
  * All methods that take a {@link InputStream} will close the stream immediately when
- * an error is detected. This avoids the possibility of hanged connections due to imcompletely
+ * an error is detected. This avoids the possibility of hanged connections due to incompletely
  * consuming malformed HTTP messages.
  */
 public final class HttpMetadataParser {
@@ -24,6 +24,13 @@ public final class HttpMetadataParser {
     private static final Pattern statusCodePattern = Pattern.compile("\\d{3}");
 
     private final RawHttpOptions options;
+
+    /**
+     * @return a strict HTTP metadata parser (uses {@link RawHttpOptions#strict()}.
+     */
+    public static HttpMetadataParser createStrictHttpMetadataParser() {
+        return new HttpMetadataParser(RawHttpOptions.strict());
+    }
 
     /**
      * Create an instance of {@link HttpMetadataParser}.
@@ -109,7 +116,7 @@ public final class HttpMetadataParser {
      * @param inputStream providing the status-line
      * @return the status-line
      * @throws InvalidHttpResponse if the status-line is invalid
-     * @throws IOException if an error occurs while consuming the stream
+     * @throws IOException         if an error occurs while consuming the stream
      */
     public StatusLine parseStatusLine(InputStream inputStream) throws IOException {
         return buildStatusLine(parseMetadataLine(inputStream, 1,
