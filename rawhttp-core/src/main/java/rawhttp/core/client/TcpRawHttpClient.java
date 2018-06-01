@@ -2,11 +2,15 @@ package rawhttp.core.client;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
 import rawhttp.core.HttpVersion;
@@ -72,7 +76,17 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             }
             throw e;
         }
-        request.writeTo(socket.getOutputStream());
+
+        OutputStream outputStream = socket.getOutputStream();
+
+        options.getExecutorService().submit(() -> {
+            try {
+                request.writeTo(outputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
         return options.onResponse(socket, request.getUri(),
                 rawHttp.parseResponse(socket.getInputStream()));
     }
@@ -109,6 +123,22 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
          */
         RawHttpResponse<Void> onResponse(
                 Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException;
+
+        /**
+         * @return executor service to use to run send the full request body.
+         * <p>
+         * By sending the request's body asynchronously, it is possible to send more than
+         * one request to a server without waiting for each response to be downloaded first.
+         */
+        default ExecutorService getExecutorService() {
+            final AtomicInteger threadCount = new AtomicInteger(1);
+            return Executors.newFixedThreadPool(4, runnable -> {
+                Thread t = new Thread(runnable);
+                t.setDaemon(true);
+                t.setName("tcp-rawhttp-client-" + threadCount.incrementAndGet());
+                return t;
+            });
+        }
 
         @Override
         default void close() throws IOException {
