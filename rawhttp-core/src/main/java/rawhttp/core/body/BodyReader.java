@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.OptionalLong;
 import rawhttp.core.Writable;
@@ -144,6 +145,33 @@ public abstract class BodyReader implements Writable, Closeable {
                 cl -> Optional.empty(),
                 chunked -> Optional.of(chunked.getContents(asStream())),
                 ct -> Optional.empty());
+    }
+
+    /**
+     * Get a lazy stream of chunks if the message body is chunked, or empty otherwise.
+     * <p>
+     * The last chunk is always the empty chunk, so once the empty chunk is received,
+     * trying to consume another chunk will result in an error.
+     *
+     * @return lazy stream of chunks if the message body is chunked, or empty otherwise.
+     * @throws IOException if an error occurs while consuming the body
+     */
+    public Optional<Iterator<ChunkedBodyContents.Chunk>> asChunkStream() throws IOException {
+        BodyConsumer consumer = framedBody.getBodyConsumer();
+        if (consumer instanceof BodyConsumer.ChunkedBodyConsumer) {
+            try {
+                return Optional.of(((BodyConsumer.ChunkedBodyConsumer) consumer)
+                        .consumeLazily(asStream()));
+            } catch (RuntimeException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof IOException) {
+                    throw (IOException) cause;
+                }
+                throw e;
+            }
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**

@@ -20,7 +20,7 @@ import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
  */
 public class ChunkedBody extends HttpMessageBody {
 
-    private final InputStream stream;
+    protected final InputStream stream;
     private final int chunkLength;
     private final HttpMetadataParser metadataParser;
 

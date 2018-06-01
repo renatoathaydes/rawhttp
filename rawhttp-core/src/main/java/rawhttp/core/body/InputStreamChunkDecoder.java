@@ -3,6 +3,7 @@ package rawhttp.core.body;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import rawhttp.core.RawHttpHeaders;
 
 /**
@@ -21,6 +22,15 @@ public class InputStreamChunkDecoder extends InputStream {
     public InputStreamChunkDecoder(ChunkedBodyParser parser, InputStream inputStream) {
         this.parser = parser;
         this.inputStream = inputStream;
+    }
+
+    /**
+     * @return this InputStream as an iterator over the chunks of the message body.
+     * <p>
+     * The chunks are consumed lazily.
+     */
+    public Iterator<ChunkedBodyContents.Chunk> asIterator() {
+        return parser.readLazily(inputStream);
     }
 
     /**

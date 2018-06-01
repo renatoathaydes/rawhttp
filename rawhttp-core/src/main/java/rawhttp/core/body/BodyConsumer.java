@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Iterator;
 
 /**
  * The consumer of a HTTP message body associated with a specific type of {@link FramedBody}.
@@ -102,6 +103,19 @@ public abstract class BodyConsumer {
                     trailer -> {
                         // ignore trailer
                     });
+        }
+
+        /**
+         * Consume the given stream lazily, one chunk at a time.
+         * <p>
+         * The last chunk is always the empty chunk, so once the empty chunk is received,
+         * trying to consume another chunk will result in an error.
+         *
+         * @param inputStream supplying a chunked body
+         * @return lazy iterator of chunks
+         */
+        public Iterator<ChunkedBodyContents.Chunk> consumeLazily(InputStream inputStream) {
+            return bodyParser.readLazily(inputStream);
         }
 
     }

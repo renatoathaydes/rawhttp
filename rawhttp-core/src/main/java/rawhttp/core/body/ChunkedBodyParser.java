@@ -2,6 +2,8 @@ package rawhttp.core.body;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import rawhttp.core.HttpMetadataParser;
@@ -25,6 +27,41 @@ public final class ChunkedBodyParser {
     public ChunkedBodyParser(HttpMetadataParser metadataParser) {
         this.metadataParser = metadataParser;
         this.allowNewLineWithoutReturn = metadataParser.getOptions().allowNewLineWithoutReturn();
+    }
+
+    /**
+     * Consume the given inputStream lazily.
+     *
+     * @param inputStream stream providing a chunked body
+     * @return lazy iterator over the body chunks
+     */
+    public Iterator<ChunkedBodyContents.Chunk> readLazily(InputStream inputStream) {
+        return new Iterator<ChunkedBodyContents.Chunk>() {
+            boolean hasMoreChunks = true;
+
+            @Override
+            public boolean hasNext() {
+                return hasMoreChunks;
+            }
+
+            @Override
+            public ChunkedBodyContents.Chunk next() {
+                if (!hasMoreChunks) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    ChunkedBodyContents.Chunk chunk = readNextChunk(inputStream);
+                    hasMoreChunks = chunk.size() > 0;
+                    if (!hasMoreChunks) {
+                        // throw away the trailer-part
+                        readTrailer(inputStream);
+                    }
+                    return chunk;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 
     /**

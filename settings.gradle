@@ -1,8 +1,8 @@
 pluginManagement {
     resolutionStrategy {
         eachPlugin {
-            if ( requested.id.id == 'org.jetbrains.kotlin.jvm' ) {
-                useModule( "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion" )
+            if (requested.id.id == 'org.jetbrains.kotlin.jvm') {
+                useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
             }
         }
     }
@@ -13,5 +13,6 @@ include 'rawhttp-core',
         'rawhttp-httpcomponents',
         'samples',
         'rawhttp-cli',
-        'rawhttp-cli-tests'
+        'rawhttp-cli-tests',
+        'rawhttp-duplex'
 
