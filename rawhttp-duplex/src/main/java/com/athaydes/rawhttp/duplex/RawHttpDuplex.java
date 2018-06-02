@@ -3,8 +3,12 @@ package com.athaydes.rawhttp.duplex;
 import com.athaydes.rawhttp.duplex.body.StreamedChunkedBody;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import rawhttp.core.RawHttp;
@@ -46,14 +50,17 @@ import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
  */
 public class RawHttpDuplex {
 
+    private static final Duration DEFAULT_PING_PERIOD = Duration.ofSeconds(5);
+
     private final RawHttpResponse<Void> okResponse;
     private final TcpRawHttpClient client;
+    private final Duration pingPeriod;
 
     /**
      * Create a new instance of {@link RawHttpDuplex} using the default configuration.
      */
     public RawHttpDuplex() {
-        this(new TcpRawHttpClient(new DuplexClientOptions()));
+        this(new TcpRawHttpClient(new DuplexClientOptions()), DEFAULT_PING_PERIOD);
     }
 
     /**
@@ -62,8 +69,21 @@ public class RawHttpDuplex {
      * @param client used to connect to a server
      */
     public RawHttpDuplex(TcpRawHttpClient client) {
+        this(client, DEFAULT_PING_PERIOD);
+    }
+
+    /**
+     * Create a new instance of {@link RawHttpDuplex} that uses the given client to connect to a remote server.
+     *
+     * @param client     used to connect to a server
+     * @param pingPeriod the period between pings.
+     *                   <p>
+     *                   Pings are used to keep socket reads from timing out.
+     */
+    public RawHttpDuplex(TcpRawHttpClient client, Duration pingPeriod) {
         this.okResponse = new RawHttp().parseResponse("200 OK");
         this.client = client;
+        this.pingPeriod = pingPeriod;
     }
 
     /**
@@ -156,7 +176,12 @@ public class RawHttpDuplex {
         return okResponse.withBody(new StreamedChunkedBody(sender.getChunkStream()));
     }
 
-    private void startMessageLoop(Iterator<ChunkedBodyContents.Chunk> chunkReceiver, MessageSender sender, MessageHandler handler) {
+    private void startMessageLoop(Iterator<ChunkedBodyContents.Chunk> chunkReceiver,
+                                  MessageSender sender,
+                                  MessageHandler handler) {
+        final ScheduledExecutorService pinger = Executors.newSingleThreadScheduledExecutor();
+        pinger.scheduleAtFixedRate(sender::ping, pingPeriod.toMillis(), pingPeriod.toMillis(), TimeUnit.MILLISECONDS);
+
         new Thread(() -> {
             try {
                 while (chunkReceiver.hasNext()) {
@@ -186,6 +211,8 @@ public class RawHttpDuplex {
                 }
                 handler.onError(error);
                 sender.close();
+            } finally {
+                pinger.shutdown();
             }
         }).start();
     }
