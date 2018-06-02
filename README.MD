@@ -1,8 +1,11 @@
 # RawHTTP
 
-[ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-core/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-core/_latestVersion)
-[ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-cli/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-cli/_latestVersion)
-[ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-duplex/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-duplex/_latestVersion)
+| Module Name | Latest Version |
+|-------------| :--------------:|
+| rawhttp-core | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-core/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-core/_latestVersion) |
+| rawhttp-cli | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-cli/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-cli/_latestVersion) |
+| rawhttp-duplex | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-duplex/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-duplex/_latestVersion) |
+
 
 A library to make it easy to deal with raw HTTP 1.1, as defined by [RFC-7230](https://tools.ietf.org/html/rfc7230),
 and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
