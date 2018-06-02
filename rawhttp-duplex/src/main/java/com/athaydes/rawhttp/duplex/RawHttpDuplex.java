@@ -138,6 +138,7 @@ public class RawHttpDuplex {
      *                      infinite stream of chunks, each representing a message from the client.
      * @param createHandler callback that takes a message sender that can be used to send out messages, and returns a
      *                      message handler receives messages from the remote.
+     * @return response to be sent to the client to initiate duplex communication.
      */
     public RawHttpResponse<Void> accept(RawHttpRequest request,
                                         Function<MessageSender, MessageHandler> createHandler) {
@@ -160,6 +161,7 @@ public class RawHttpDuplex {
      * @param incomingMessageStream stream of text messages being received from a client.
      * @param createHandler         callback that takes a message sender that can be used to send out messages, and returns a
      *                              message handler receives messages from the remote.
+     * @return response to be sent to the client to initiate duplex communication.
      */
     public RawHttpResponse<Void> acceptText(Stream<String> incomingMessageStream,
                                             Function<MessageSender, MessageHandler> createHandler) {
@@ -176,6 +178,7 @@ public class RawHttpDuplex {
      * @param incomingMessageStream stream of messages being received from a client.
      * @param createHandler         callback that takes a message sender that can be used to send out messages, and returns a
      *                              message handler receives messages from the remote.
+     * @return response to be sent to the client to initiate duplex communication.
      */
     public RawHttpResponse<Void> accept(Iterator<Chunk> incomingMessageStream,
                                         Function<MessageSender, MessageHandler> createHandler) {
