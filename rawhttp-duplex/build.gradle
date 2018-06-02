@@ -14,6 +14,8 @@ repositories {
     mavenLocal()
 }
 
+configurations.create('exampleApp')
+
 dependencies {
     compile project(':rawhttp-core')
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
@@ -21,4 +23,21 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin'
     }
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    exampleApp project(':rawhttp-core')
+    exampleApp "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+task chatAppFatJar(type: Jar) {
+    dependsOn 'compileTestKotlin'
+    manifest {
+        attributes 'Main-Class': 'Chat_exampleKt'
+    }
+
+    archiveName = 'chat-app.jar'
+
+    from jar
+    from compileTestKotlin
+    from { configurations.exampleApp.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

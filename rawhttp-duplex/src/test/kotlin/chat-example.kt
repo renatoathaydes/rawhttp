@@ -115,6 +115,7 @@ object ChatClient {
                     }
 
                     override fun onTextMessage(message: String) {
+                        println()
                         println(message)
                         prompt()
                     }
