@@ -1,7 +1,9 @@
 package com.athaydes.rawhttp.duplex;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,13 +17,19 @@ import rawhttp.core.body.ChunkedBodyContents;
  */
 public final class MessageSender {
 
-    static final RawHttpHeaders PLAIN_TEXT_HEADERS = RawHttpHeaders.newBuilder()
-            .with("Content-Type", "text/plain")
+    private static final String PLAIN_TEXT = "text/plain";
+
+    static final RawHttpHeaders PLAIN_TEXT_HEADER = RawHttpHeaders.newBuilder()
+            .with("Content-Type", PLAIN_TEXT)
+            .build();
+
+    static final RawHttpHeaders UTF8_HEADER = RawHttpHeaders.newBuilder()
+            .with("Charset", "UTF-8")
             .build();
 
     static final byte[] PING_MESSAGE = new byte[]{'\n'};
 
-    private final LinkedBlockingDeque<Object> messages = new LinkedBlockingDeque<>(10);
+    private final LinkedBlockingDeque<Message> messages = new LinkedBlockingDeque<>(10);
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean gotStream = new AtomicBoolean(false);
 
@@ -34,13 +42,31 @@ public final class MessageSender {
      * @param message the text message
      */
     public void sendTextMessage(String message) {
+        sendTextMessage(message, RawHttpHeaders.empty());
+    }
+
+    /**
+     * Send a text message.
+     * <p>
+     * The message should not be empty because sending an empty chunk would signal the end of the transmission.
+     * For this reason, an empty message is turned into a "ping" (see {@link MessageSender#ping()} message.
+     *
+     * @param message    the text message
+     * @param extensions chunk extensions.
+     *                   <p>
+     *                   Each message is wrapped into a chunk. The provided extensions are attached to the chunk
+     *                   wrapping the given message.
+     */
+    public void sendTextMessage(String message, RawHttpHeaders extensions) {
         if (isClosed.get()) {
             throw new IllegalStateException("Sender has been closed");
         }
         if (message.isEmpty()) {
             ping();
         } else {
-            messages.addLast(message);
+            RawHttpHeaders plainTextExtensions = withPlainTextExtension(extensions);
+            Charset charset = extractCharset(plainTextExtensions);
+            messages.addLast(new Message(message.getBytes(charset), plainTextExtensions));
         }
     }
 
@@ -53,13 +79,29 @@ public final class MessageSender {
      * @param message the binary message
      */
     public void sendBinaryMessage(byte[] message) {
+        sendBinaryMessage(message, RawHttpHeaders.empty());
+    }
+
+    /**
+     * Send a binary message.
+     * <p>
+     * The message should not be empty because sending an empty chunk would signal the end of the transmission.
+     * For this reason, an empty message is turned into a "ping" (see {@link MessageSender#ping()} message.
+     *
+     * @param message    the binary message
+     * @param extensions chunk extensions.
+     *                   <p>
+     *                   Each message is wrapped into a chunk. The provided extensions are attached to the chunk
+     *                   wrapping the given message.
+     */
+    public void sendBinaryMessage(byte[] message, RawHttpHeaders extensions) {
         if (isClosed.get()) {
             throw new IllegalStateException("Sender has been closed");
         }
         if (message.length == 0) {
             ping();
         } else {
-            messages.addLast(message);
+            messages.addLast(new Message(message, extensions));
         }
     }
 
@@ -80,7 +122,7 @@ public final class MessageSender {
      */
     public void close() {
         if (!isClosed.getAndSet(true)) {
-            messages.addLast(new byte[0]);
+            messages.addLast(new Message(new byte[0], RawHttpHeaders.empty()));
         }
     }
 
@@ -102,7 +144,7 @@ public final class MessageSender {
                 if (!hasMoreChunks) {
                     throw new IllegalStateException("No more chunks are available");
                 }
-                Object message = null;
+                Message message = null;
                 while (message == null) {
                     try {
                         message = messages.poll(5, TimeUnit.MINUTES);
@@ -110,18 +152,41 @@ public final class MessageSender {
                         throw new RuntimeException(e);
                     }
                 }
-                ChunkedBodyContents.Chunk chunk;
-                if (message instanceof byte[]) {
-                    chunk = new ChunkedBodyContents.Chunk(RawHttpHeaders.empty(), (byte[]) message);
-                } else if (message instanceof String) {
-                    chunk = new ChunkedBodyContents.Chunk(PLAIN_TEXT_HEADERS, ((String) message).getBytes(StandardCharsets.UTF_8));
-                } else {
-                    throw new IllegalStateException("Unknown message type: " + message);
-                }
+                ChunkedBodyContents.Chunk chunk = new ChunkedBodyContents.Chunk(
+                        message.extensions, message.data);
+
                 hasMoreChunks = chunk.size() > 0;
                 return chunk;
             }
         };
     }
 
+    private static Charset extractCharset(RawHttpHeaders extensions) {
+        String charset = extensions.getFirst("Charset").orElse("UTF-8");
+        try {
+            return Charset.forName(charset);
+        } catch (Exception e) {
+            return StandardCharsets.UTF_8;
+        }
+    }
+
+    private static RawHttpHeaders withPlainTextExtension(RawHttpHeaders extensions) {
+        RawHttpHeaders result = extensions.and(PLAIN_TEXT_HEADER);
+        Optional<String> charset = result.getFirst("Charset");
+        if (!charset.isPresent() || !Charset.isSupported(charset.get())) {
+            result = result.and(UTF8_HEADER);
+        }
+        return result;
+    }
+
+    private static class Message {
+
+        final byte[] data;
+        final RawHttpHeaders extensions;
+
+        public Message(byte[] data, RawHttpHeaders extensions) {
+            this.data = data;
+            this.extensions = extensions;
+        }
+    }
 }

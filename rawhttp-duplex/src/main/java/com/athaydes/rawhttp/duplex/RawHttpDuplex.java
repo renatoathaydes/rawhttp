@@ -3,6 +3,8 @@ package com.athaydes.rawhttp.duplex;
 import com.athaydes.rawhttp.duplex.body.StreamedChunkedBody;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -12,15 +14,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
-import rawhttp.core.body.ChunkedBodyContents;
+import rawhttp.core.body.ChunkedBodyContents.Chunk;
 import rawhttp.core.body.ChunkedBodyParser;
 import rawhttp.core.body.InputStreamChunkDecoder;
 import rawhttp.core.client.TcpRawHttpClient;
 
 import static com.athaydes.rawhttp.duplex.MessageSender.PING_MESSAGE;
-import static com.athaydes.rawhttp.duplex.MessageSender.PLAIN_TEXT_HEADERS;
+import static com.athaydes.rawhttp.duplex.MessageSender.PLAIN_TEXT_HEADER;
+import static com.athaydes.rawhttp.duplex.MessageSender.UTF8_HEADER;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
 
@@ -32,7 +36,7 @@ import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
  * while the {@code accept} methods should be used within
  * a HTTP server to handle requests from a client.
  * <p>
- * The way duplex communication is achieved using only HTTP/1.1 standard mechanisms is as follows:
+ * The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:
  *
  * <ul>
  * <li>The server listens for requests to start duplex communication.</li>
@@ -44,9 +48,13 @@ import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
  * In other words, a single request/response is used to bootstrap communications. Both the request and the response
  * have effectively infinite chunked bodies where each chunk represents a message.
  * <p>
- * Because each chunk may contain "extensions", {@link RawHttpDuplex} sends a single extension to idenfity text
- * messages: {@code Content-Type: text/plain}. If the chunk does not contain this extension, then it is considered
+ * {@link RawHttpDuplex} sends a single extension parameter to idenfity text
+ * messages: {@code Content-Type: text/plain} (notice that each chunk may contain "extensions").
+ * If the chunk does not contain this extension, then it is considered
  * to be a binary message.
+ * <p>
+ * Each side of a connection pings the other every 5 seconds, by default, to avoid the TCP socket timing out.
+ * To use a different ping period, use the {@link RawHttpDuplex#RawHttpDuplex(TcpRawHttpClient, Duration)} constructor.
  */
 public class RawHttpDuplex {
 
@@ -133,7 +141,7 @@ public class RawHttpDuplex {
      */
     public RawHttpResponse<Void> accept(RawHttpRequest request,
                                         Function<MessageSender, MessageHandler> createHandler) {
-        final Iterator<ChunkedBodyContents.Chunk> receivedChunkStream = request.getBody()
+        final Iterator<Chunk> receivedChunkStream = request.getBody()
                 .flatMap((b) -> {
                     try {
                         return b.asChunkStream();
@@ -155,8 +163,9 @@ public class RawHttpDuplex {
      */
     public RawHttpResponse<Void> acceptText(Stream<String> incomingMessageStream,
                                             Function<MessageSender, MessageHandler> createHandler) {
+        final RawHttpHeaders plainTextHeaders = PLAIN_TEXT_HEADER.and(UTF8_HEADER);
         return accept(incomingMessageStream.map(text ->
-                        new ChunkedBodyContents.Chunk(PLAIN_TEXT_HEADERS, text.getBytes(UTF_8))).iterator(),
+                        new Chunk(plainTextHeaders, text.getBytes(UTF_8))).iterator(),
                 createHandler);
     }
 
@@ -168,7 +177,7 @@ public class RawHttpDuplex {
      * @param createHandler         callback that takes a message sender that can be used to send out messages, and returns a
      *                              message handler receives messages from the remote.
      */
-    public RawHttpResponse<Void> accept(Iterator<ChunkedBodyContents.Chunk> incomingMessageStream,
+    public RawHttpResponse<Void> accept(Iterator<Chunk> incomingMessageStream,
                                         Function<MessageSender, MessageHandler> createHandler) {
         MessageSender sender = new MessageSender();
         MessageHandler handler = createHandler.apply(sender);
@@ -176,7 +185,7 @@ public class RawHttpDuplex {
         return okResponse.withBody(new StreamedChunkedBody(sender.getChunkStream()));
     }
 
-    private void startMessageLoop(Iterator<ChunkedBodyContents.Chunk> chunkReceiver,
+    private void startMessageLoop(Iterator<Chunk> chunkReceiver,
                                   MessageSender sender,
                                   MessageHandler handler) {
         final ScheduledExecutorService pinger = Executors.newSingleThreadScheduledExecutor();
@@ -185,17 +194,19 @@ public class RawHttpDuplex {
         new Thread(() -> {
             try {
                 while (chunkReceiver.hasNext()) {
-                    ChunkedBodyContents.Chunk chunk = chunkReceiver.next();
+                    Chunk chunk = chunkReceiver.next();
                     if (chunk.size() == 0) {
                         break;
                     }
-                    String contentType = chunk.getExtensions().getFirst("Content-Type").orElse("");
+                    final RawHttpHeaders extensions = chunk.getExtensions();
+                    final String contentType = extensions.getFirst("Content-Type").orElse("");
                     if (contentType.equalsIgnoreCase("text/plain")) {
-                        handler.onTextMessage(new String(chunk.getData()));
+                        Charset charset = getCharset(extensions);
+                        handler.onTextMessage(new String(chunk.getData(), charset), chunk.getExtensions());
                     } else {
                         byte[] message = chunk.getData();
                         if (!Arrays.equals(message, PING_MESSAGE)) {
-                            handler.onBinaryMessage(chunk.getData());
+                            handler.onBinaryMessage(chunk.getData(), chunk.getExtensions());
                         }
                     }
                 }
@@ -215,6 +226,19 @@ public class RawHttpDuplex {
                 pinger.shutdown();
             }
         }).start();
+    }
+
+    private static Charset getCharset(RawHttpHeaders extensions) {
+        String charsetValue = extensions.getFirst("Charset").orElse("UTF-8");
+        Charset charset;
+        if (Charset.isSupported(charsetValue)) {
+            charset = Charset.forName(charsetValue);
+        } else {
+            System.err.println("Received text message with unsupported charset: " + charsetValue +
+                    ". Will try to use UTF-8 instead.");
+            charset = StandardCharsets.UTF_8;
+        }
+        return charset;
     }
 
 }
