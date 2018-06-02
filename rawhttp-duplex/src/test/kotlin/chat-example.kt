@@ -66,13 +66,15 @@ object ChatServer {
 
     object Responses {
         val methodNotAllowed: EagerHttpResponse<Void> = http.parseResponse(
-                """HTTP/1.1 405 Method Not Allowed
-               Allow: POST
-            """.trimIndent()).eagerly()
+                """
+                HTTP/1.1 405 Method Not Allowed
+                Allow: POST
+                """.trimIndent()).eagerly()
 
         val notFound: EagerHttpResponse<Void> = http.parseResponse(
-                """HTTP/1.1 404 Not Found
-            """.trimIndent())
+                """
+                HTTP/1.1 404 Not Found
+                """.trimIndent())
                 .withBody(StringBody("Resource not found.\n" +
                         "To enter the chat, use 'POST /your-name'")).eagerly()
     }
