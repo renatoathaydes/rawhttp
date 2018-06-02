@@ -8,6 +8,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.body.ChunkedBodyContents;
 
+/**
+ * A sender of messages.
+ * <p>
+ * Used by a client to send messages to a server.
+ */
 public final class MessageSender {
 
     static final RawHttpHeaders PLAIN_TEXT_HEADERS = RawHttpHeaders.newBuilder()
@@ -18,6 +23,11 @@ public final class MessageSender {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean gotStream = new AtomicBoolean(false);
 
+    /**
+     * Send a text message.
+     *
+     * @param message the text message
+     */
     public void sendTextMessage(String message) {
         if (isClosed.get()) {
             throw new IllegalStateException("Sender has been closed");
@@ -28,6 +38,11 @@ public final class MessageSender {
         messages.addLast(message);
     }
 
+    /**
+     * Send a binary message.
+     *
+     * @param message the binary message
+     */
     public void sendBinaryMessage(byte[] message) {
         if (isClosed.get()) {
             throw new IllegalStateException("Sender has been closed");
@@ -38,6 +53,9 @@ public final class MessageSender {
         messages.addLast(message);
     }
 
+    /**
+     * Close the connection.
+     */
     public void close() {
         if (!isClosed.getAndSet(true)) {
             messages.addLast(new byte[0]);

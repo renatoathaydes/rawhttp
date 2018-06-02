@@ -13,6 +13,11 @@ import rawhttp.core.body.LazyBodyReader;
 
 import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
 
+/**
+ * Extension of {@link ChunkedBody} that takes a potentially lazy iterator of
+ * {@link rawhttp.core.body.ChunkedBodyContents.Chunk}s instead of an {@link InputStream}
+ * as source of data.
+ */
 public class StreamedChunkedBody extends ChunkedBody {
 
     public StreamedChunkedBody(Iterator<ChunkedBodyContents.Chunk> chunkStream) {
