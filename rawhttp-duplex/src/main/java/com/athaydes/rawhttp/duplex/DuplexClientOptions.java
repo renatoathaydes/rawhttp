@@ -10,7 +10,7 @@ import rawhttp.core.client.TcpRawHttpClient;
 final class DuplexClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions {
 
     private final TcpRawHttpClient.TcpRawHttpClientOptions defaultOptions = new TcpRawHttpClient.DefaultOptions();
-    int socketTimeout = 15 * 60 * 1_000;
+    int socketTimeout = 60 * 1_000;
 
     @Override
     public Socket getSocket(URI uri) {
