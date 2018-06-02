@@ -35,7 +35,7 @@ class RawHttpDuplexSocketTimeoutTest {
         val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 }))
         shouldThrow<SocketTimeoutException> {
             val errorQueue = LinkedBlockingDeque<Throwable>(1)
-            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex"), { sender ->
+            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex"), { _ ->
                 object : MessageHandler {
                     override fun onError(error: Throwable) {
                         errorQueue.push(error)
@@ -83,7 +83,7 @@ class RawHttpDuplexSocketTimeoutTest {
         server.start { request ->
             println("Accepting request\n$request")
             // whatever request comes in, we start a duplex connection
-            Optional.of(duplex.accept(request, { sender ->
+            Optional.of(duplex.accept(request, { _ ->
                 object : MessageHandler {
                     override fun onTextMessage(message: String) {
                         serverMessages.add(message)

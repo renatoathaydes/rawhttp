@@ -16,8 +16,8 @@ import kotlin.text.Charsets.UTF_8
 
 fun startSparkServer() {
     Spark.port(8082)
-    Spark.get("/hello", "text/plain") { req, res -> "Hello" }
-    Spark.post("/repeat", "text/plain") { req, res ->
+    Spark.get("/hello", "text/plain") { _, _ -> "Hello" }
+    Spark.post("/repeat", "text/plain") { req, _ ->
         val count = req.queryParamOrDefault("count", "10").toInt()
         val text = req.queryParamOrDefault("text", "x")
         text.repeat(count)
