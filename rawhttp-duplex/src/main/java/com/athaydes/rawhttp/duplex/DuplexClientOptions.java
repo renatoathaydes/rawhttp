@@ -8,13 +8,15 @@ import rawhttp.core.RawHttpResponse;
 import rawhttp.core.client.TcpRawHttpClient;
 
 final class DuplexClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions {
+
     private final TcpRawHttpClient.TcpRawHttpClientOptions defaultOptions = new TcpRawHttpClient.DefaultOptions();
+    int socketTimeout = 15 * 60 * 1_000;
 
     @Override
     public Socket getSocket(URI uri) {
         Socket socket = defaultOptions.getSocket(uri);
         try {
-            socket.setSoTimeout(15 * 60 * 1_000);
+            socket.setSoTimeout(socketTimeout);
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
