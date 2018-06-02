@@ -19,12 +19,17 @@ public final class MessageSender {
             .with("Content-Type", "text/plain")
             .build();
 
+    static final byte[] PING_MESSAGE = new byte[]{'\n'};
+
     private final LinkedBlockingDeque<Object> messages = new LinkedBlockingDeque<>(10);
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean gotStream = new AtomicBoolean(false);
 
     /**
      * Send a text message.
+     * <p>
+     * The message should not be empty because sending an empty chunk would signal the end of the transmission.
+     * For this reason, an empty message is turned into a "ping" (see {@link MessageSender#ping()} message.
      *
      * @param message the text message
      */
@@ -33,13 +38,17 @@ public final class MessageSender {
             throw new IllegalStateException("Sender has been closed");
         }
         if (message.isEmpty()) {
-            message = "\n";
+            ping();
+        } else {
+            messages.addLast(message);
         }
-        messages.addLast(message);
     }
 
     /**
      * Send a binary message.
+     * <p>
+     * The message should not be empty because sending an empty chunk would signal the end of the transmission.
+     * For this reason, an empty message is turned into a "ping" (see {@link MessageSender#ping()} message.
      *
      * @param message the binary message
      */
@@ -48,9 +57,22 @@ public final class MessageSender {
             throw new IllegalStateException("Sender has been closed");
         }
         if (message.length == 0) {
-            message = new byte['\n'];
+            ping();
+        } else {
+            messages.addLast(message);
         }
-        messages.addLast(message);
+    }
+
+    /**
+     * Ping the receiver.
+     * <p>
+     * This method may be useful to avoid the connection timing out during long periods of inactivity.
+     * <p>
+     * Ping is implemented by sending a single new-line (LF) character to the receiver, which is supposed
+     * to ignore such message.
+     */
+    public void ping() {
+        sendBinaryMessage(PING_MESSAGE);
     }
 
     /**

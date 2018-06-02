@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.duplex;
 import com.athaydes.rawhttp.duplex.body.StreamedChunkedBody;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -14,6 +15,7 @@ import rawhttp.core.body.ChunkedBodyParser;
 import rawhttp.core.body.InputStreamChunkDecoder;
 import rawhttp.core.client.TcpRawHttpClient;
 
+import static com.athaydes.rawhttp.duplex.MessageSender.PING_MESSAGE;
 import static com.athaydes.rawhttp.duplex.MessageSender.PLAIN_TEXT_HEADERS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
@@ -166,7 +168,10 @@ public class RawHttpDuplex {
                     if (contentType.equalsIgnoreCase("text/plain")) {
                         handler.onTextMessage(new String(chunk.getData()));
                     } else {
-                        handler.onBinaryMessage(chunk.getData());
+                        byte[] message = chunk.getData();
+                        if (!Arrays.equals(message, PING_MESSAGE)) {
+                            handler.onBinaryMessage(chunk.getData());
+                        }
                     }
                 }
                 try {
@@ -175,7 +180,11 @@ public class RawHttpDuplex {
                     handler.onClose();
                 }
             } catch (Exception e) {
-                handler.onError(e);
+                Throwable error = e;
+                if (e.getCause() instanceof IOException) {
+                    error = e.getCause();
+                }
+                handler.onError(error);
                 sender.close();
             }
         }).start();

@@ -4,6 +4,8 @@ plugins {
 }
 
 version '0.1.0-SNAPSHOT'
+description 'rawhttp-duplex provides a mechanism for full duplex communications based on the ' +
+        'HTTP/1.1 chunked transfer-encoding.'
 
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
@@ -23,6 +25,7 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin'
     }
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
 
     exampleApp project(':rawhttp-core')
     exampleApp "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
