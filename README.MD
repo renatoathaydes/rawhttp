@@ -14,6 +14,10 @@ and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
  [blog post](https://sites.google.com/a/athaydes.com/renato-athaydes/posts/announcingrawhttp-ajvmlibraryforhandlingrawhttp)
  I wrote about it!
 
+For more documentation, [visit the website](https://renatoathaydes.github.io/rawhttp).
+
+## Introduction
+
 HTTP is really simple in 99.9% of cases.
 
 For example, the raw HTTP request you would make to fetch a resource from a web server looks like this:
