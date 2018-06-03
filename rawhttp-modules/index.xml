@@ -6,10 +6,22 @@
     <description>Recent content on RawHTTP</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 11 May 2017 19:20:11 +0200</lastBuildDate>
+    <lastBuildDate>Sun, 03 Jun 2018 12:40:11 +0200</lastBuildDate>
     
 	<atom:link href="https://renatoathaydes.github.io/rawhttp/rawhttp-modules/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>RawHTTP Duplex</title>
+      <link>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/duplex/</link>
+      <pubDate>Sun, 03 Jun 2018 12:40:11 +0200</pubDate>
+      
+      <guid>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/duplex/</guid>
+      <description>The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
+The entry point of the library is the com.athaydes.rawhttp.duplex.RawHttpDuplex class.
+Its connect methods are used from a client to connect to a server, while the accept methods should be used within a HTTP server to handle requests from a client.
+The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:</description>
+    </item>
     
     <item>
       <title>RawHTTP CLI</title>
