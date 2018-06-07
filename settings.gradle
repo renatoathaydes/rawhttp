@@ -1,6 +1,18 @@
-rootProject.name = 'rawhttp'
+pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'org.jetbrains.kotlin.jvm') {
+                useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+            }
+        }
+    }
+}
 
+rootProject.name = 'rawhttp'
 include 'rawhttp-core',
         'rawhttp-httpcomponents',
-        'samples'
+        'samples',
+        'rawhttp-cli',
+        'rawhttp-cli-tests',
+        'rawhttp-duplex'
 

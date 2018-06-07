@@ -1,11 +1,22 @@
 # RawHTTP
 
+| Module Name | Latest Version |
+|-------------| :--------------:|
+| rawhttp-core | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-core/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-core/_latestVersion) |
+| rawhttp-cli | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-cli/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-cli/_latestVersion) |
+| rawhttp-duplex | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-duplex/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-duplex/_latestVersion) |
+
+
 A library to make it easy to deal with raw HTTP 1.1, as defined by [RFC-7230](https://tools.ietf.org/html/rfc7230),
 and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
 
 > For details about using RawHTTP and the motivation for this project, see the
  [blog post](https://sites.google.com/a/athaydes.com/renato-athaydes/posts/announcingrawhttp-ajvmlibraryforhandlingrawhttp)
  I wrote about it!
+
+For more documentation, [visit the website](https://renatoathaydes.github.io/rawhttp).
+
+## Introduction
 
 HTTP is really simple in 99.9% of cases.
 
@@ -115,7 +126,7 @@ Even though it's quite simple to implement your own HTTP client by using the `Ra
 requests and responses (which can then be transmitted via Sockets), RawHTTP offers a simple HTTP client definition
 (and implementation) that makes it a little bit more convenient to consume HTTP APIs.
 
-Here's the [`RawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/RawHttpClient.java) interface:
+Here's the [`RawHttpClient`](rawhttp-core/src/main/java/rawhttp/core/client/RawHttpClient.java) interface:
 
 ```java
 public interface RawHttpClient<Response> {
@@ -125,7 +136,7 @@ public interface RawHttpClient<Response> {
 
 The `Response` type parameter allows implementations to expose their own type for HTTP Responses, if needed.
 
-In the core module, a simple implementation is provided: [`TcpRawHttpClient`](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/client/TcpRawHttpClient.java).
+In the core module, a simple implementation is provided: [`TcpRawHttpClient`](rawhttp-core/src/main/java/rawhttp/core/client/TcpRawHttpClient.java).
 
 Example usage:
 
@@ -141,7 +152,7 @@ Other implementations are available in separate modules:
 
 * `RawHttpComponentsClient` - based on HttpComponents's HttpClient.
 
-> Requires the `com.athaydes.rawhttp:rawhttp-httpcomponents` module.
+> Requires the `rawhttp:rawhttp-httpcomponents` module.
 
 You can use this if you need support for external specifications, such as
 cookies ([RFC-6265](https://tools.ietf.org/html/rfc6265)), or basic-auth, for example.
@@ -159,7 +170,7 @@ RawHttpClient<?> client = new RawHttpComponentsClient(httpClient);
 
 ## HTTP server
 
-RawHTTP also contains a [package](rawhttp-core/src/main/java/com/athaydes/rawhttp/core/server) defining a few types
+RawHTTP also contains a [package](rawhttp-core/src/main/java/rawhttp/core/server) defining a few types
 that describe a simple HTTP server.
 
 The main type is the interface `RawHttpServer`, which uses a `Router` to route HTTP requests, returning a HTTP response.
@@ -181,21 +192,21 @@ server.start { req ->
                 "GET" ->
                     http.parseResponse("HTTP/1.1 200 OK\n" +
                             "Content-Type: text/plain"
-                    ).replaceBody(StringBody("Hello RawHTTP!"))
+                    ).withBody(StringBody("Hello RawHTTP!"))
                 else ->
                     http.parseResponse("HTTP/1.1 405 Method Not Allowed\n" +
                             "Content-Type: text/plain"
-                    ).replaceBody(StringBody("Sorry, can't handle this method"))
+                    ).withBody(StringBody("Sorry, can't handle this method"))
             }
         else ->
             http.parseResponse("HTTP/1.1 404 Not Found\n" +
                     "Content-Type: text/plain"
-            ).replaceBody(StringBody("Content was not found"))
+            ).withBody(StringBody("Content was not found"))
     }
 }
 ```
 
 ## Samples
 
-Several samples showing how to use RawHTTP, including all [examples](samples/src/test/java/com/athaydes/rawhttp/samples/JavaSample.java)
+Several samples showing how to use RawHTTP, including all [examples](samples/src/test/java/rawhttp/samples/JavaSample.java)
 in this page, can be found in the [samples](samples) project.

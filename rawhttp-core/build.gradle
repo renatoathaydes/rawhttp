@@ -8,21 +8,30 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.61"
-    id "maven"
+    id 'java'
+    id "org.jetbrains.kotlin.jvm"
+    id 'maven'
 }
 
-group = 'com.athaydes.rawhttp'
 description = 'RawHTTP core module'
-version '1.1.0'
+version '2.0-beta2'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
 
 dependencies {
-    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.61"
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
+    testCompile "org.jetbrains.kotlin:kotlin-test"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
     testCompile "io.kotlintest:kotlintest:2.0.7"
     testCompile 'com.sparkjava:spark-core:2.7.1'
 }
@@ -40,10 +49,10 @@ task javadocJar(type: Jar) {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.athaydes.rawhttp.core.cli.RawHttpCli',
-                'Implementation-Version': version,
+        attributes 'Implementation-Version': version,
                 'Implementation-Name': 'RawHTTP Core',
-                'Implementation-Vendor': 'Renato Athaydes'
+                'Implementation-Vendor': 'Renato Athaydes',
+                'Automatic-Module-Name': 'rawhttp.core'
     }
 }
 
@@ -61,7 +70,7 @@ configure(install.repositories.mavenInstaller) {
         packaging 'jar'
         description project.description
 
-        url 'https://github.com/renatoathaydes/rawhttp'
+        url 'https://renatoathaydes.github.io/rawhttp'
 
         scm {
             connection 'git@github.com:renatoathaydes/rawhttp.git'
@@ -99,7 +108,7 @@ bintray {
         licenses = ['Apache-2.0']
         desc = project.description
         vcsUrl = 'https://github.com/renatoathaydes/rawhttp.git'
-        websiteUrl = 'https://github.com/renatoathaydes/rawhttp'
+        websiteUrl = 'https://renatoathaydes.github.io/rawhttp'
         issueTrackerUrl = 'https://github.com/renatoathaydes/rawhttp/issues'
         labels = ['http', 'java', 'http-parser']
         publicDownloadNumbers = true

@@ -1,0 +1,154 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6"
+    }
+}
+
+plugins {
+    id 'java'
+    id "org.jetbrains.kotlin.jvm"
+    id 'maven'
+}
+
+version '0.1.0'
+description 'rawhttp-duplex provides a mechanism for full duplex communications based on the ' +
+        'HTTP/1.1 chunked transfer-encoding.'
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+configurations.create('exampleApp')
+
+dependencies {
+    compile project(':rawhttp-core')
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompile "io.kotlintest:kotlintest:2.0.7", {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
+
+    exampleApp project(':rawhttp-core')
+    exampleApp "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+task chatAppFatJar(type: Jar) {
+    dependsOn 'compileTestKotlin'
+    manifest {
+        attributes 'Main-Class': 'Chat_exampleKt'
+    }
+
+    archiveName = 'chat-app.jar'
+
+    from jar
+    from compileTestKotlin
+    from { configurations.exampleApp.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'rawhttp.duplex',
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'Renato Athaydes',
+                'Automatic-Module-Name': 'rawhttp.duplex'
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    classifier "sources"
+    extension "jar"
+}
+
+task javadocJar(type: Jar) {
+    classifier "javadoc"
+    from javadoc
+}
+
+/* Publishing config */
+
+artifacts {
+    archives chatAppFatJar, javadocJar, sourcesJar
+}
+
+// add all the info required by Maven Central to the pom
+configure(install.repositories.mavenInstaller) {
+    pom.project {
+        inceptionYear '2018'
+        name project.name
+        packaging 'jar'
+        description project.description
+
+        url 'https://renatoathaydes.github.io/rawhttp'
+
+        scm {
+            connection 'git@github.com:renatoathaydes/rawhttp.git'
+            developerConnection 'git@github.com:renatoathaydes/rawhttp.git'
+            url 'https://github.com/renatoathaydes/rawhttp'
+        }
+
+        licenses {
+            license {
+                name 'The Apache License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+
+        developers {
+            developer {
+                id 'renatoathaydes'
+                name 'Renato Athaydes'
+                email 'renato@athaydes.com'
+            }
+        }
+    }
+}
+
+apply plugin: 'com.jfrog.bintray'
+
+bintray {
+    user = project.hasProperty("bintrayUserName") ? bintrayUserName : null
+    key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : null
+    configurations = ['archives']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = 'rawhttp-duplex'
+        licenses = ['Apache-2.0']
+        desc = project.description
+        vcsUrl = 'https://github.com/renatoathaydes/rawhttp.git'
+        websiteUrl = 'https://renatoathaydes.github.io/rawhttp/rawhttp-modules/duplex'
+        issueTrackerUrl = 'https://github.com/renatoathaydes/rawhttp/issues'
+        labels = ['http', 'java', 'duplex']
+        publicDownloadNumbers = true
+
+        //noinspection GroovyAssignabilityCheck
+        version {
+            name = project.version
+            vcsTag = project.version
+            gpg {
+                sign = true
+            }
+            mavenCentralSync {
+                sync = true
+                user = project.hasProperty("ossrhUsername") ? ossrhUsername : null
+                password = project.hasProperty("ossrhPassword") ? ossrhPassword : null
+                close = '1' // '0' to NOT close
+            }
+        }
+    }
+
+}
+
+bintrayUpload.dependsOn build, sourcesJar, chatAppFatJar
