@@ -81,7 +81,7 @@ A `RawHttpResponse`, just like a `RawHttpRequest` can be written to a `File`'s, 
 or any other `OutpuStream`:
 
 ```java
-try (FileOutputStream out = new FileOutputStream(responseFile)) {
+try (OutputStream out = Files.newOutputStream(responseFile.toPath())) {
     response.writeTo(out);
 }
 ```

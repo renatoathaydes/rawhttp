@@ -1,8 +1,8 @@
 package rawhttp.samples;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -140,7 +140,7 @@ public class JavaSample {
         assertTrue(response.getBody().isPresent());
 
         File responseFile = Files.createTempFile("rawhttp", ".http").toFile();
-        try (FileOutputStream out = new FileOutputStream(responseFile)) {
+        try (OutputStream out = Files.newOutputStream(responseFile.toPath())) {
             response.writeTo(out);
         }
 

@@ -2,10 +2,10 @@ package rawhttp.core;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.nio.file.Files;
 import java.util.List;
 import javax.annotation.Nullable;
 import rawhttp.core.body.BodyDecoder;
@@ -93,7 +93,7 @@ public class RawHttp {
      * @throws IOException        if a problem occurs reading the file
      */
     public final RawHttpRequest parseRequest(File file) throws IOException {
-        try (FileInputStream stream = new FileInputStream(file)) {
+        try (InputStream stream = Files.newInputStream(file.toPath())) {
             return parseRequest(stream).eagerly();
         }
     }
@@ -164,7 +164,7 @@ public class RawHttp {
      * @throws IOException         if a problem occurs reading the file
      */
     public final RawHttpResponse<Void> parseResponse(File file) throws IOException {
-        try (FileInputStream stream = new FileInputStream(file)) {
+        try (InputStream stream = Files.newInputStream(file.toPath())) {
             return parseResponse(stream, null).eagerly();
         }
     }

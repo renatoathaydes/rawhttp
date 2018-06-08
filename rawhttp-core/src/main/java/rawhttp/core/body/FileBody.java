@@ -2,8 +2,8 @@ package rawhttp.core.body;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.OptionalLong;
 import javax.annotation.Nullable;
 
@@ -62,8 +62,8 @@ public class FileBody extends HttpMessageBody {
         try {
             return new LazyBodyReader(
                     new FramedBody.ContentLength(getBodyDecoder(), file.length()),
-                    new BufferedInputStream(new FileInputStream(file)));
-        } catch (FileNotFoundException e) {
+                    new BufferedInputStream(Files.newInputStream(file.toPath())));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

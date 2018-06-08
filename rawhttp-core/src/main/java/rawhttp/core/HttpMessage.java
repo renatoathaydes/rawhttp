@@ -100,8 +100,9 @@ public abstract class HttpMessage implements Writable {
         getHeaders().writeTo(out);
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
-            BodyReader bodyReader = body.get();
-            bodyReader.writeTo(out, bufferSize);
+            try(BodyReader bodyReader = body.get()) {
+                bodyReader.writeTo(out, bufferSize);
+            }
         }
     }
 

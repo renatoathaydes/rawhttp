@@ -1,9 +1,10 @@
 package rawhttp.cli;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Optional;
 import java.util.Properties;
 import rawhttp.core.RawHttp;
@@ -148,7 +149,7 @@ public class Main {
     }
 
     private static CliError sendRequestFromFile(File file, RequestRunOptions options) {
-        try (FileInputStream fileStream = new FileInputStream(file)) {
+        try (InputStream fileStream = Files.newInputStream(file.toPath())) {
             return sendRequest(HTTP.parseRequest(fileStream), options);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
