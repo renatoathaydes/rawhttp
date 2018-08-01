@@ -84,7 +84,9 @@ public class Main {
                         "  rawhttp serve <directory> [options]\n" +
                         "\n" +
                         "Help Command Usage:\n" +
-                        "  rawhttp help send|serve\n");
+                        "  rawhttp help send|serve\n" +
+                        "\n" +
+                        "Detailed documentation at https://renatoathaydes.github.io/rawhttp\n");
                 break;
             case SEND:
                 System.out.println("\n" +
@@ -104,8 +106,8 @@ public class Main {
                         "      print response body only\n" +
                         "  * -b --body-text <text>\n" +
                         "      replace message body with the text\n" +
-                        "  * -g --body-file <text>\n" +
-                        "      replace message body with the file\n" +
+                        "  * -g --body-file <file>\n" +
+                        "      replace message body with the contents of the file\n" +
                         "\n" +
                         "If no -f or -t options are given, a HTTP request is read from sysin.\n");
                 break;
