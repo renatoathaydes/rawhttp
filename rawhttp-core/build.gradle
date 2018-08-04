@@ -3,7 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0"
     }
 }
 
@@ -97,9 +97,11 @@ configure(install.repositories.mavenInstaller) {
 
 apply plugin: 'com.jfrog.bintray'
 
+final rawHttpGradle = new RawHttpGradle(project)
+
 bintray {
-    user = project.hasProperty("bintrayUserName") ? bintrayUserName : null
-    key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : null
+    user = rawHttpGradle.getGradleProperty("bintrayUserName")
+    key = rawHttpGradle.getGradleProperty("bintrayApiKey")
     configurations = ['archives']
     publish = true
     pkg {
@@ -122,8 +124,8 @@ bintray {
             }
             mavenCentralSync {
                 sync = true
-                user = project.hasProperty("ossrhUsername") ? ossrhUsername : null
-                password = project.hasProperty("ossrhPassword") ? ossrhPassword : null
+                user = rawHttpGradle.getGradleProperty("ossrhUsername")
+                password = rawHttpGradle.getGradleProperty("ossrhPassword")
                 close = '1' // '0' to NOT close
             }
         }
