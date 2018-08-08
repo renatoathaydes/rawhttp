@@ -4,6 +4,9 @@ import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.body.encoding.HttpMessageDecoder;
 import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
 /**
  * Options that can be used to configure an instance of {@link RawHttp}.
  *
@@ -17,17 +20,20 @@ public class RawHttpOptions {
     private final boolean insertHttpVersionIfMissing;
     private final boolean allowNewLineWithoutReturn;
     private final boolean ignoreLeadingEmptyLine;
+    private final HttpHeadersOptions httpHeadersOptions;
     private final HttpBodyEncodingRegistry encodingRegistry;
 
     private RawHttpOptions(boolean insertHostHeaderIfMissing,
                            boolean insertHttpVersionIfMissing,
                            boolean allowNewLineWithoutReturn,
                            boolean ignoreLeadingEmptyLine,
+                           HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
         this.insertHttpVersionIfMissing = insertHttpVersionIfMissing;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
+        this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
 
@@ -86,6 +92,13 @@ public class RawHttpOptions {
     }
 
     /**
+     * @return options for parsing HTTP headers
+     */
+    public HttpHeadersOptions getHttpHeadersOptions() {
+        return httpHeadersOptions;
+    }
+
+    /**
      * @return the encoding registry to use to encode/decode HTTP message bodies
      */
     public HttpBodyEncodingRegistry getEncodingRegistry() {
@@ -100,14 +113,51 @@ public class RawHttpOptions {
     }
 
     /**
+     * Options regarding HTTP headers parsing.
+     */
+    public static final class HttpHeadersOptions {
+        private final int maxHeaderNameLength;
+        private final int maxHeaderValueLength;
+        private final Consumer<RawHttpHeaders> headersValidator;
+
+        public static final HttpHeadersOptions DEFAULT = new HttpHeadersOptions(1000, 4000);
+
+        public HttpHeadersOptions(int maxHeaderNameLength,
+                                  int maxHeaderValueLength,
+                                  Consumer<RawHttpHeaders> headersValidator) {
+            this.maxHeaderNameLength = maxHeaderNameLength;
+            this.maxHeaderValueLength = maxHeaderValueLength;
+            this.headersValidator = headersValidator;
+        }
+
+        public HttpHeadersOptions(int maxHeaderNameLength, int maxHeaderValueLength) {
+            this(maxHeaderNameLength, maxHeaderValueLength, ignore -> {
+            });
+        }
+
+        public int getMaxHeaderNameLength() {
+            return maxHeaderNameLength;
+        }
+
+        public int getMaxHeaderValueLength() {
+            return maxHeaderValueLength;
+        }
+
+        public Consumer<RawHttpHeaders> getHeadersValidator() {
+            return headersValidator;
+        }
+    }
+
+    /**
      * Builder for {@link RawHttpOptions}.
      */
-    public static class Builder {
+    public static final class Builder {
 
         private boolean insertHostHeaderIfMissing = true;
         private boolean allowNewLineWithoutReturn = true;
         private boolean ignoreLeadingEmptyLine = true;
         private boolean insertHttpVersionIfMissing = true;
+        private HttpHeadersOptions httpHeadersOptions = HttpHeadersOptions.DEFAULT;
         private HttpBodyEncodingRegistry encodingRegistry;
 
         /**
@@ -179,6 +229,17 @@ public class RawHttpOptions {
         }
 
         /**
+         * Use the given options when parsing HTTP headers.
+         *
+         * @param httpHeadersOptions HTTP headers options
+         * @return this
+         */
+        public Builder withHttpHeadersOptions(HttpHeadersOptions httpHeadersOptions) {
+            this.httpHeadersOptions = Objects.requireNonNull(httpHeadersOptions);
+            return this;
+        }
+
+        /**
          * Use a custom implementation of {@link HttpBodyEncodingRegistry}.
          * <p>
          * This can be used to provide {@link HttpMessageDecoder} implementations
@@ -188,7 +249,7 @@ public class RawHttpOptions {
          * @return this
          */
         public Builder withEncodingRegistry(HttpBodyEncodingRegistry encodingRegistry) {
-            this.encodingRegistry = encodingRegistry;
+            this.encodingRegistry = Objects.requireNonNull(encodingRegistry);
             return this;
         }
 
@@ -202,7 +263,7 @@ public class RawHttpOptions {
                     : encodingRegistry;
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, registry);
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, httpHeadersOptions, registry);
         }
 
     }

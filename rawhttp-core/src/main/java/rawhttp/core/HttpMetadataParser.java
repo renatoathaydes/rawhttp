@@ -1,16 +1,18 @@
 package rawhttp.core;
 
+import rawhttp.core.errors.InvalidHttpRequest;
+import rawhttp.core.errors.InvalidHttpResponse;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.AbstractMap;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
-import rawhttp.core.errors.InvalidHttpRequest;
-import rawhttp.core.errors.InvalidHttpResponse;
 
 /**
  * Parser of HTTP messages' metadata lines, i.e. start-line and header fields.
@@ -55,7 +57,7 @@ public final class HttpMetadataParser {
      */
     public RawHttpHeaders parseHeaders(InputStream inputStream,
                                        BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        return buildHeaders(parseHeaderLines(inputStream, createError), createError).build();
+        return buildHeaders(inputStream, createError).build();
     }
 
     /**
@@ -66,7 +68,7 @@ public final class HttpMetadataParser {
      * @throws IOException if an error occurs while consuming the stream
      */
     public RequestLine parseRequestLine(InputStream inputStream) throws IOException {
-        return buildRequestLine(parseMetadataLine(inputStream, 1,
+        return buildRequestLine(parseStartLine(inputStream,
                 InvalidHttpRequest::new, options.ignoreLeadingEmptyLine()));
     }
 
@@ -119,7 +121,7 @@ public final class HttpMetadataParser {
      * @throws IOException         if an error occurs while consuming the stream
      */
     public StatusLine parseStatusLine(InputStream inputStream) throws IOException {
-        return buildStatusLine(parseMetadataLine(inputStream, 1,
+        return buildStatusLine(parseStartLine(inputStream,
                 InvalidHttpResponse::new, options.ignoreLeadingEmptyLine()));
     }
 
@@ -192,52 +194,21 @@ public final class HttpMetadataParser {
     }
 
     private RawHttpHeaders.Builder buildHeaders(
-            List<String> lines,
-            BiFunction<String, Integer, RuntimeException> createError) {
+            InputStream stream,
+            BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilderSkippingValidation();
         int lineNumber = 2;
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty()) {
-                break;
-            }
-            String[] parts = line.split(":\\s?", 2);
-            if (parts.length != 2) {
-                throw createError.apply("Invalid header: missing the ':' separator", lineNumber);
-            }
-
-            // only validate the header name here because the header value is already validated
-            // when reading the lines from the stream.
-            OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(parts[0]);
-            if (illegalIndex.isPresent()) {
-                throw createError.apply("Illegal character in header name at index " + illegalIndex.getAsInt(), lineNumber);
-            }
-            builder.with(parts[0], parts[1]);
+        Map.Entry<String, String> header;
+        while ((header = parseHeaderField(stream, lineNumber, createError)) != null) {
+            builder.with(header.getKey(), header.getValue());
             lineNumber++;
         }
-
         return builder;
     }
 
-    private List<String> parseHeaderLines(InputStream inputStream,
-                                          BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        List<String> metadataLines = new ArrayList<>();
-        int lineNumber = 2;
-        String line;
-        while (true) {
-            line = parseMetadataLine(inputStream, lineNumber, createError, false);
-            if (line.isEmpty()) break;
-            metadataLines.add(line);
-            lineNumber++;
-        }
-
-        return metadataLines;
-    }
-
-    private String parseMetadataLine(InputStream inputStream,
-                                     int lineNumber,
-                                     BiFunction<String, Integer, RuntimeException> createError,
-                                     boolean skipLeadingNewLine) throws IOException {
+    private String parseStartLine(InputStream inputStream,
+                                  BiFunction<String, Integer, RuntimeException> createError,
+                                  boolean skipLeadingNewLine) throws IOException {
         StringBuilder metadataBuilder = new StringBuilder();
         final boolean allowNewLineWithoutReturn = options.allowNewLineWithoutReturn();
         int b;
@@ -253,7 +224,7 @@ public final class HttpMetadataParser {
                     break;
                 } else {
                     inputStream.close();
-                    throw createError.apply("Illegal character after return", lineNumber);
+                    throw createError.apply("Illegal character after return", 1);
                 }
             } else if (b == '\n') {
                 if (skipLeadingNewLine) {
@@ -262,7 +233,7 @@ public final class HttpMetadataParser {
                 }
                 if (!allowNewLineWithoutReturn) {
                     inputStream.close();
-                    throw createError.apply("Illegal new-line character without preceding return", lineNumber);
+                    throw createError.apply("Illegal new-line character without preceding return", 1);
                 }
 
                 // unexpected, but let's accept new-line without returns
@@ -272,13 +243,93 @@ public final class HttpMetadataParser {
                 if (FieldValues.isAllowedInVCHARs(c)) {
                     metadataBuilder.append(c);
                 } else {
-                    throw createError.apply("Illegal character in HTTP message metadata", lineNumber);
+                    throw createError.apply("Illegal character in HTTP start line", 1);
                 }
             }
             skipLeadingNewLine = false;
         }
 
         return metadataBuilder.toString();
+    }
+
+    @Nullable
+    private Map.Entry<String, String> parseHeaderField(InputStream inputStream,
+                                                       int lineNumber,
+                                                       BiFunction<String, Integer, RuntimeException> createError)
+            throws IOException {
+        int b = inputStream.read();
+
+        if (b == '\r') {
+            // expect new-line
+            int next = inputStream.read();
+            if (next < 0 || next == '\n') {
+                return null; // end of headers stream
+            }
+        }
+
+        final boolean allowNewLineWithoutReturn = options.allowNewLineWithoutReturn();
+
+        if (b == '\n') {
+            if (allowNewLineWithoutReturn) {
+                return null; // end of headers stream
+            } else {
+                inputStream.close();
+                throw createError.apply("Illegal new-line character", lineNumber);
+            }
+        }
+        if (b < 0) {
+            throw createError.apply("Early EOF, HTTP message incomplete", lineNumber);
+        }
+
+        String headerName = "";
+        boolean parsingValue = false;
+        StringBuilder metadataBuilder = new StringBuilder();
+
+        do {
+            char c = (char) b;
+            if (!parsingValue) {
+                if (c == ':') {
+                    headerName = metadataBuilder.toString();
+                    if (headerName.isEmpty()) {
+                        throw createError.apply("Header name is missing", lineNumber);
+                    }
+                    metadataBuilder.delete(0, headerName.length() - 1);
+                    parsingValue = true;
+                } else if (FieldValues.isAllowedInTokens(c)) {
+                    metadataBuilder.append(c);
+                } else {
+                    throw createError.apply("Illegal character in HTTP header name", lineNumber);
+                }
+            } else { // parsing header value
+                if (c == '\r') {
+                    // expect new-line
+                    int next = inputStream.read();
+                    if (next < 0 || next == '\n') {
+                        break;
+                    } else {
+                        inputStream.close();
+                        throw createError.apply("Illegal character after return", lineNumber);
+                    }
+                } else if (c == '\n') {
+                    if (!allowNewLineWithoutReturn) {
+                        inputStream.close();
+                        throw createError.apply("Illegal new-line character without preceding return", 1);
+                    }
+
+                    // unexpected, but let's accept new-line without returns
+                    break;
+                } else {
+                    if (FieldValues.isAllowedInVCHARs(c)) {
+                        metadataBuilder.append(c);
+                    } else {
+                        throw createError.apply("Illegal character in HTTP start line", 1);
+                    }
+                }
+            }
+        } while ((b = inputStream.read()) >= 0);
+
+        String headerValue = metadataBuilder.toString().trim();
+        return new AbstractMap.SimpleEntry<>(headerName, headerValue);
     }
 
     private static URI createUri(String part) {
