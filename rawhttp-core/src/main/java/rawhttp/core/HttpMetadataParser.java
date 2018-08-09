@@ -197,7 +197,7 @@ public final class HttpMetadataParser {
             InputStream stream,
             BiFunction<String, Integer, RuntimeException> createError) throws IOException {
         RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilderSkippingValidation();
-        int lineNumber = 2;
+        int lineNumber = 1;
         Map.Entry<String, String> header;
         while ((header = parseHeaderField(stream, lineNumber, createError)) != null) {
             builder.with(header.getKey(), header.getValue());
@@ -313,16 +313,16 @@ public final class HttpMetadataParser {
                 } else if (c == '\n') {
                     if (!allowNewLineWithoutReturn) {
                         inputStream.close();
-                        throw createError.apply("Illegal new-line character without preceding return", 1);
+                        throw createError.apply("Illegal new-line character without preceding return", lineNumber);
                     }
 
                     // unexpected, but let's accept new-line without returns
                     break;
                 } else {
-                    if (FieldValues.isAllowedInVCHARs(c)) {
+                    if (c == '\t' || FieldValues.isAllowedInVCHARs(c)) {
                         metadataBuilder.append(c);
                     } else {
-                        throw createError.apply("Illegal character in HTTP start line", 1);
+                        throw createError.apply("Illegal character in HTTP header value", lineNumber);
                     }
                 }
             }
