@@ -278,7 +278,7 @@ public final class HttpMetadataParser {
             }
         }
         if (b < 0) {
-            throw createError.apply("Early EOF, HTTP message incomplete", lineNumber);
+            return null; // EOF
         }
 
         String headerName = "";
@@ -293,7 +293,7 @@ public final class HttpMetadataParser {
                     if (headerName.isEmpty()) {
                         throw createError.apply("Header name is missing", lineNumber);
                     }
-                    metadataBuilder.delete(0, headerName.length() - 1);
+                    metadataBuilder.delete(0, headerName.length());
                     parsingValue = true;
                 } else if (FieldValues.isAllowedInTokens(c)) {
                     metadataBuilder.append(c);
