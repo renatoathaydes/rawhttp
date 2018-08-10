@@ -4,8 +4,9 @@ import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.body.encoding.HttpMessageDecoder;
 import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry;
 
-import java.util.Objects;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Options that can be used to configure an instance of {@link RawHttp}.
@@ -157,7 +158,7 @@ public class RawHttpOptions {
         private boolean allowNewLineWithoutReturn = true;
         private boolean ignoreLeadingEmptyLine = true;
         private boolean insertHttpVersionIfMissing = true;
-        private HttpHeadersOptions httpHeadersOptions = HttpHeadersOptions.DEFAULT;
+        private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
         /**
@@ -229,14 +230,12 @@ public class RawHttpOptions {
         }
 
         /**
-         * Use the given options when parsing HTTP headers.
+         * Get a builder of {@link HttpHeadersOptions} to use with this object.
          *
-         * @param httpHeadersOptions HTTP headers options
          * @return this
          */
-        public Builder withHttpHeadersOptions(HttpHeadersOptions httpHeadersOptions) {
-            this.httpHeadersOptions = Objects.requireNonNull(httpHeadersOptions);
-            return this;
+        public HttpHeadersOptionsBuilder withHttpHeadersOptions() {
+            return httpHeadersOptionsBuilder;
         }
 
         /**
@@ -249,7 +248,7 @@ public class RawHttpOptions {
          * @return this
          */
         public Builder withEncodingRegistry(HttpBodyEncodingRegistry encodingRegistry) {
-            this.encodingRegistry = Objects.requireNonNull(encodingRegistry);
+            this.encodingRegistry = requireNonNull(encodingRegistry);
             return this;
         }
 
@@ -263,7 +262,51 @@ public class RawHttpOptions {
                     : encodingRegistry;
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, httpHeadersOptions, registry);
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, httpHeadersOptionsBuilder.getOptions(), registry);
+        }
+
+        public class HttpHeadersOptionsBuilder {
+
+            private HttpHeadersOptions options = HttpHeadersOptions.DEFAULT;
+
+            /**
+             * Set the maximum header name length allowed.
+             *
+             * @param length maximum allowed
+             * @return this
+             */
+            public HttpHeadersOptionsBuilder withMaxHeaderNameLength(int length) {
+                options = new HttpHeadersOptions(length,
+                        options.maxHeaderValueLength, options.headersValidator);
+                return this;
+            }
+
+            /**
+             * Set the maximum header value length allowed.
+             *
+             * @param length maximum allowed
+             * @return this
+             */
+            public HttpHeadersOptionsBuilder withMaxHeaderValueLength(int length) {
+                options = new HttpHeadersOptions(options.maxHeaderNameLength,
+                        length, options.headersValidator);
+                return this;
+            }
+
+            public HttpHeadersOptionsBuilder withValidator(Consumer<RawHttpHeaders> validator) {
+                requireNonNull(validator, "Validator must not be null");
+                options = new HttpHeadersOptions(options.maxHeaderNameLength,
+                        options.maxHeaderValueLength, validator);
+                return this;
+            }
+
+            public Builder done() {
+                return Builder.this;
+            }
+
+            private HttpHeadersOptions getOptions() {
+                return options;
+            }
         }
 
     }

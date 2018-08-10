@@ -57,7 +57,9 @@ public final class HttpMetadataParser {
      */
     public RawHttpHeaders parseHeaders(InputStream inputStream,
                                        BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        return buildHeaders(inputStream, createError).build();
+        RawHttpHeaders headers = buildHeaders(inputStream, createError).build();
+        options.getHttpHeadersOptions().getHeadersValidator().accept(headers);
+        return headers;
     }
 
     /**
@@ -284,8 +286,11 @@ public final class HttpMetadataParser {
         String headerName = "";
         boolean parsingValue = false;
         StringBuilder metadataBuilder = new StringBuilder();
+        int length = 0;
+        int lengthLimit = options.getHttpHeadersOptions().getMaxHeaderNameLength();
 
         do {
+            length++;
             char c = (char) b;
             if (!parsingValue) {
                 if (c == ':') {
@@ -295,10 +300,19 @@ public final class HttpMetadataParser {
                     }
                     metadataBuilder.delete(0, headerName.length());
                     parsingValue = true;
-                } else if (FieldValues.isAllowedInTokens(c)) {
-                    metadataBuilder.append(c);
+                    length = -1;
+                    lengthLimit = options.getHttpHeadersOptions().getMaxHeaderValueLength();
+                } else if (c == '\n' || c == '\r') {
+                    throw createError.apply("Invalid header: missing the ':' separator", lineNumber);
                 } else {
-                    throw createError.apply("Illegal character in HTTP header name", lineNumber);
+                    if (length > lengthLimit) {
+                        throw createError.apply("Header name is too long", lineNumber);
+                    }
+                    if (FieldValues.isAllowedInTokens(c)) {
+                        metadataBuilder.append(c);
+                    } else {
+                        throw createError.apply("Illegal character in HTTP header name", lineNumber);
+                    }
                 }
             } else { // parsing header value
                 if (c == '\r') {
@@ -319,6 +333,9 @@ public final class HttpMetadataParser {
                     // unexpected, but let's accept new-line without returns
                     break;
                 } else {
+                    if (length > lengthLimit) {
+                        throw createError.apply("Header value is too long", lineNumber);
+                    }
                     if (FieldValues.isAllowedInHeaderValue(c)) {
                         metadataBuilder.append(c);
                     } else {

@@ -88,7 +88,7 @@ class HttpMetadataParserTest {
 
         forAll(badNames.asTable()) { badName ->
             val error = shouldThrow<InvalidHttpHeader> {
-                val headers = parser.parseHeaders("$badName: value".byteInputStream(), errorCreator)
+                val headers = parser.parseHeaders("$badName: value".byteInputStream(charset = Charsets.ISO_8859_1), errorCreator)
                 print("Should have failed: $headers")
             }
 
@@ -100,10 +100,11 @@ class HttpMetadataParserTest {
     @Test
     fun canParseWeirdHeaderValues() {
         val weirdValues = listOf("A!", "#H", "$$$", "4%0", "&X", "'A'", "*Y", "A+B", "A..", "A^", "X_Y", "`a", "X|Y",
-                "~", "(abc)", "[hi]", "a, b, c", "<html>", "A;{b}", "A???", "@2@", "1;a=b;c=d", "z\tx")
+                "~", "(abc)", "[hi]", "a, b, c", "<html>", "A;{b}", "A???", "@2@", "1;a=b;c=d", "z\tx",
+                "\u00DEbc", "ab\u00FFc", "p\u00E3o")
 
         forAll(weirdValues.asTable()) { weirdValue ->
-            val headers = parser.parseHeaders("A: $weirdValue".byteInputStream(), errorCreator)
+            val headers = parser.parseHeaders("A: $weirdValue".byteInputStream(charset = Charsets.ISO_8859_1), errorCreator)
             headers.asMap().size shouldBe 1
             headers["A"] shouldEqual listOf(weirdValue)
         }
@@ -111,17 +112,149 @@ class HttpMetadataParserTest {
 
     @Test
     fun cannotParseInvalidHeaderValues() {
-        val badValues = listOf("ÅB", "Ä", "ão", "日本語")
+        val badValues = listOf("hi\u007F", "ab\u0000c")
 
         forAll(badValues.asTable()) { badValue ->
             val error = shouldThrow<InvalidHttpHeader> {
-                val headers = parser.parseHeaders("A: $badValue".byteInputStream(), errorCreator)
+                val headers = parser.parseHeaders("A: $badValue".byteInputStream(charset = Charsets.ISO_8859_1), errorCreator)
                 print("Should have failed: $headers")
             }
 
             error.message!! should include("Illegal character in HTTP header value")
             error.message!! should endWith("(1)") // line number
         }
+    }
+
+    @Test
+    fun headerNameMustNotContainWhitespace() {
+        val allHeaders = """
+            Date: Thu, 9 Aug 2018 17:42:09 GMT
+            Server : RawHTTP
+            Cache-Control: no-cache
+        """.trimIndent()
+
+        val error = shouldThrow<InvalidHttpHeader> {
+            val headers = parser.parseHeaders(allHeaders.byteInputStream(), errorCreator)
+            print("Should have failed: $headers")
+        }
+
+        error.message!! should include("Illegal character in HTTP header name")
+        error.message!! should endWith("(2)") // line number
+    }
+
+    @Test
+    fun canLimitHeaderNameLength() {
+        val lowMaxHeaderNameLimitParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .withHttpHeadersOptions()
+                .withMaxHeaderNameLength(6)
+                .done().build())
+
+        val examples = table(
+                headers("Header Name", "Should pass"),
+                row("X", true),
+                row("Conten", true),
+                row("Content", false),
+                row("Content-Type", false),
+                row("AVERYLARGEHEADERNAMEWHICHMUSTNOTBEACCEPTED", false)
+        )
+
+        forAll(examples) { headerName, shouldPass ->
+            val parse = {
+                lowMaxHeaderNameLimitParser.parseHeaders(
+                        "$headerName: OK".byteInputStream(), errorCreator)
+            }
+            if (shouldPass) {
+                val headers = parse()
+                headers.asMap().size shouldBe 1
+                headers[headerName] shouldEqual listOf("OK")
+            } else {
+                val error = shouldThrow<InvalidHttpHeader> {
+                    val headers = parse()
+                    print("Should have failed: $headers")
+                }
+                error.message!! shouldBe "Header name is too long(1)"
+            }
+        }
+    }
+
+    @Test
+    fun canLimitHeaderValueLength() {
+        val lowMaxHeaderNameLimitParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .withHttpHeadersOptions()
+                .withMaxHeaderValueLength(6)
+                .done().build())
+
+        val examples = table(
+                headers("Header Value", "Should pass"),
+                row("X", true),
+                row("Conten", true),
+                row("Content", false),
+                row("Content-Type", false),
+                row("AVERYLARGEHEADERNAMEWHICHMUSTNOTBEACCEPTED", false)
+        )
+
+        forAll(examples) { headerValue, shouldPass ->
+            val parse = {
+                lowMaxHeaderNameLimitParser.parseHeaders(
+                        "Header: $headerValue".byteInputStream(), errorCreator)
+            }
+            if (shouldPass) {
+                val headers = parse()
+                headers.asMap().size shouldBe 1
+                headers["Header"] shouldEqual listOf(headerValue)
+            } else {
+                val error = shouldThrow<InvalidHttpHeader> {
+                    val headers = parse()
+                    print("Should have failed: $headers")
+                }
+                error.message!! shouldBe "Header value is too long(1)"
+            }
+        }
+    }
+
+    @Test
+    fun canValidateHeaders() {
+        val nonDuplicatesAllowedParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .withHttpHeadersOptions()
+                .withValidator { headers ->
+                    val names = mutableSetOf<String>()
+                    headers.forEach { name, _ ->
+                        val isDuplicate = !names.add(name)
+                        if (isDuplicate) {
+                            throw InvalidHttpHeader("Duplicate header: $name")
+                        }
+                    }
+                }
+                .done()
+                .build())
+
+        // duplicate headers should FAIL
+        val duplicateHeaders = """
+            Date: Thu, 9 Aug 2018 17:42:09 GMT
+            Server: RawHTTP
+            X-Color: red
+            X-Color: blue
+        """.trimIndent()
+
+        val error = shouldThrow<InvalidHttpHeader> {
+            val headers = nonDuplicatesAllowedParser.parseHeaders(duplicateHeaders.byteInputStream(), errorCreator)
+            print("Should have failed: $headers")
+        }
+
+        error.message shouldEqual "Duplicate header: X-Color"
+
+        // non-duplicate headers should PASS
+        val allHeaders = """
+            Date: Thu, 9 Aug 2018 17:42:09 GMT
+            Server: RawHTTP
+            X-Color: red
+            Y-Color: blue
+        """.trimIndent()
+
+        val headers = nonDuplicatesAllowedParser.parseHeaders(allHeaders.byteInputStream(), errorCreator)
+
+        // make sure the parsing worked
+        headers.asMap().keys shouldEqual setOf("DATE", "SERVER", "X-COLOR", "Y-COLOR")
     }
 
     private fun <E> List<E>.asTable(name: String = "value"): Table1<E> {

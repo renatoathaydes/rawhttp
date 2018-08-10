@@ -121,7 +121,7 @@ class HttpHeadersTest : StringSpec({
             RawHttpHeaders.newBuilder()
                     .with("ABC(D)", "aaa").build()
         }
-        error.message shouldEqual "Invalid header name (contains illegal character at index 3): ABC(D)"
+        error.message shouldEqual "Invalid header name (contains illegal character at index 3)"
     }
 
     "Header names may contain invalid characters if skipping validation" {
@@ -134,9 +134,9 @@ class HttpHeadersTest : StringSpec({
     "Header values must not contain invalid characters" {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder()
-                    .with("Hello", "hallå").build()
+                    .with("Hello", "hal\u007Fl").build()
         }
-        error.message shouldEqual "Invalid header value (contains illegal character at index 4): hallå"
+        error.message shouldEqual "Invalid header value (contains illegal character at index 3)"
     }
 
     "Header values may contain invalid characters if skipping validation" {
@@ -181,15 +181,15 @@ class HttpHeadersTest : StringSpec({
             RawHttpHeaders.newBuilder().with("A:B", "aaa")
         }
 
-        error.message shouldBe "Invalid header name (contains illegal character at index 1): A:B"
+        error.message shouldBe "Invalid header name (contains illegal character at index 1)"
     }
 
     "Header values are validated by default" {
         val error = shouldThrow<InvalidHttpHeader> {
-            RawHttpHeaders.newBuilder().with("A", "abc+åäö")
+            RawHttpHeaders.newBuilder().with("A", "abc+\u0000eedd")
         }
 
-        error.message shouldBe "Invalid header value (contains illegal character at index 4): abc+åäö"
+        error.message shouldBe "Invalid header value (contains illegal character at index 4)"
     }
 
     "Header names are NOT validated if asked" {

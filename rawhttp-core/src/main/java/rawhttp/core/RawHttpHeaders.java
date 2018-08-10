@@ -351,7 +351,7 @@ public class RawHttpHeaders implements Writable {
                 char c = headerNameChars[i];
                 if (validateHeaders && !FieldValues.isAllowedInTokens(c)) {
                     throw new InvalidHttpHeader("Invalid header name (contains illegal character at index " +
-                            i + "): " + headerName);
+                            i + ")");
                 }
                 upperCaseHeaderNameChars[i] = toUppercaseAscii(c);
             }
@@ -360,7 +360,7 @@ public class RawHttpHeaders implements Writable {
                 OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInHeaderValue(value);
                 if (illegalIndex.isPresent()) {
                     throw new InvalidHttpHeader("Invalid header value (contains illegal character at index " +
-                            illegalIndex.getAsInt() + "): " + value);
+                            illegalIndex.getAsInt() + ")");
                 }
             }
             headersByCapitalizedName.computeIfAbsent(upperCaseHeaderName,
@@ -381,12 +381,12 @@ public class RawHttpHeaders implements Writable {
                 OptionalInt illegalNameChar = FieldValues.indexOfNotAllowedInTokens(headerName);
                 if (illegalNameChar.isPresent()) {
                     throw new InvalidHttpHeader("Invalid header name (contains illegal character at index " +
-                            illegalNameChar.getAsInt() + "): " + headerName);
+                            illegalNameChar.getAsInt() + ")");
                 }
                 OptionalInt illegalValueChar = FieldValues.indexOfNotAllowedInHeaderValue(value);
                 if (illegalValueChar.isPresent()) {
                     throw new InvalidHttpHeader("Invalid header value (contains illegal character at index " +
-                            illegalValueChar.getAsInt() + "): " + value);
+                            illegalValueChar.getAsInt() + ")");
                 }
             }
             String key = toUppercaseAscii(headerName);

@@ -1,13 +1,5 @@
 package rawhttp.core;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.nio.file.Files;
-import java.util.List;
-import javax.annotation.Nullable;
 import rawhttp.core.body.BodyDecoder;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.FramedBody;
@@ -15,6 +7,15 @@ import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
 import rawhttp.core.errors.InvalidMessageFrame;
+
+import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.nio.file.Files;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -122,7 +123,9 @@ public class RawHttp {
     public RawHttpRequest parseRequest(InputStream inputStream,
                                        @Nullable InetAddress senderAddress) throws IOException {
         RequestLine requestLine = metadataParser.parseRequestLine(inputStream);
-        RawHttpHeaders originalHeaders = metadataParser.parseHeaders(inputStream, InvalidHttpRequest::new);
+        RawHttpHeaders originalHeaders = metadataParser.parseHeaders(inputStream, (message, lineNumber) ->
+                // add 1 to the line number to correct for the start-line
+                new InvalidHttpRequest(message, lineNumber + 1));
         RawHttpHeaders.Builder modifiableHeaders = RawHttpHeaders.newBuilder(originalHeaders);
 
         // do a little cleanup to make sure the request is actually valid
@@ -196,7 +199,9 @@ public class RawHttp {
     public RawHttpResponse<Void> parseResponse(InputStream inputStream,
                                                @Nullable RequestLine requestLine) throws IOException {
         StatusLine statusLine = metadataParser.parseStatusLine(inputStream);
-        RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, InvalidHttpResponse::new);
+        RawHttpHeaders headers = metadataParser.parseHeaders(inputStream, (message, lineNumber) ->
+                // add 1 to the line number to correct for the start-line
+                new InvalidHttpResponse(message, lineNumber + 1));
 
         @Nullable BodyReader bodyReader = responseHasBody(statusLine, requestLine)
                 ? createBodyReader(inputStream, statusLine, headers)
