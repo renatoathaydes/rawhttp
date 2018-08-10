@@ -75,28 +75,31 @@ class FieldValuesTests : StringSpec({
                 row("application/json+scim"),
                 row("read write"),
                 row("q=0.1,x=b,a:c"),
+                row("Hötorget"),
+                row("Åsa"),
+                row("pão"),
+                row("água"),
+                row("Paralelepípedo"),
+                row("Piauí"),
                 // just use every acceptable character in a single String
                 row(String((' '..'~').toList().toCharArray()))
         )
         forAll(myTable) { text ->
-            FieldValues.indexOfNotAllowedInVCHARs(text).orElse(-1) shouldBe -1
+            FieldValues.indexOfNotAllowedInHeaderValue(text).orElse(-1) shouldBe -1
         }
     }
 
-    "Invalid VCHARS" {
+    "Invalid Header Values" {
         val myTable = table(
                 headers("Invalid VCHAR", "index"),
-                row("Hötorget", 1),
-                row("Åsa", 0),
-                row("pão", 1),
-                row("água", 0),
-                row("Paralelepípedo", 9),
-                row("Piauí", 4),
                 row(("\u001f").toString(), 0),
-                row(("\u007f").toString(), 0)
+                row(("abc\u001fdef").toString(), 3),
+                row(("1234567\u001f").toString(), 7),
+                row(("\u007fboo").toString(), 0),
+                row(("boo\u007fbar").toString(), 3)
         )
         forAll(myTable) { text, index ->
-            FieldValues.indexOfNotAllowedInVCHARs(text).orElse(-1) shouldBe index
+            FieldValues.indexOfNotAllowedInHeaderValue(text).orElse(-1) shouldBe index
         }
     }
 

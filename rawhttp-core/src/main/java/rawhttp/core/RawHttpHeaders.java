@@ -357,7 +357,7 @@ public class RawHttpHeaders implements Writable {
             }
             final String upperCaseHeaderName = new String(upperCaseHeaderNameChars);
             if (validateHeaders) {
-                OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInVCHARs(value);
+                OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInHeaderValue(value);
                 if (illegalIndex.isPresent()) {
                     throw new InvalidHttpHeader("Invalid header value (contains illegal character at index " +
                             illegalIndex.getAsInt() + "): " + value);
@@ -383,7 +383,7 @@ public class RawHttpHeaders implements Writable {
                     throw new InvalidHttpHeader("Invalid header name (contains illegal character at index " +
                             illegalNameChar.getAsInt() + "): " + headerName);
                 }
-                OptionalInt illegalValueChar = FieldValues.indexOfNotAllowedInVCHARs(value);
+                OptionalInt illegalValueChar = FieldValues.indexOfNotAllowedInHeaderValue(value);
                 if (illegalValueChar.isPresent()) {
                     throw new InvalidHttpHeader("Invalid header value (contains illegal character at index " +
                             illegalValueChar.getAsInt() + "): " + value);

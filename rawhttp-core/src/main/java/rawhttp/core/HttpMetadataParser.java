@@ -240,7 +240,7 @@ public final class HttpMetadataParser {
                 break;
             } else {
                 char c = (char) b;
-                if (FieldValues.isAllowedInVCHARs(c)) {
+                if (c == ' ' || FieldValues.isAllowedInVCHARs(c)) {
                     metadataBuilder.append(c);
                 } else {
                     throw createError.apply("Illegal character in HTTP start line", 1);
@@ -319,7 +319,7 @@ public final class HttpMetadataParser {
                     // unexpected, but let's accept new-line without returns
                     break;
                 } else {
-                    if (c == '\t' || FieldValues.isAllowedInVCHARs(c)) {
+                    if (FieldValues.isAllowedInHeaderValue(c)) {
                         metadataBuilder.append(c);
                     } else {
                         throw createError.apply("Illegal character in HTTP header value", lineNumber);

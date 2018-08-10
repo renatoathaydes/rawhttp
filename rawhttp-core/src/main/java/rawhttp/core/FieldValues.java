@@ -4,6 +4,11 @@ import java.util.OptionalInt;
 
 /**
  * A utility class containing static methods which can check what kind of field-value a String may have.
+ * <p>
+ * VCHAR is defined in <a href="https://tools.ietf.org/html/rfc5234#appendix-B.1">RFC-5234</a>.
+ * <p>
+ * token and obs-text are defined on <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">Section 3.2.6</a>
+ * of the HTTP/1.1 specification.
  */
 public final class FieldValues {
 
@@ -49,19 +54,19 @@ public final class FieldValues {
     }
 
     /**
-     * Check if the given value is allowed in a VCHAR field-value.
+     * Check if the given value is allowed in a header field value.
      * <p>
-     * If it is, an empty value is returned, otherwise, the index of the first character that is not allowed in a VCHAR
+     * If it is, an empty value is returned, otherwise, the index of the first character that is not allowed
      * is returned.
      *
      * @param value to check
      * @return the index of the first character in the given value which is not allowed in a VCHAR field-value, if any.
      */
-    public static OptionalInt indexOfNotAllowedInVCHARs(String value) {
+    public static OptionalInt indexOfNotAllowedInHeaderValue(String value) {
         final char[] chars = value.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
-            if (!isAllowedInVCHARs(c)) {
+            if (!isAllowedInHeaderValue(c)) {
                 return OptionalInt.of(i);
             }
         }
@@ -73,7 +78,22 @@ public final class FieldValues {
      * @return true if the given char is allowed in VCHAR field-values, false otherwise.
      */
     public static boolean isAllowedInVCHARs(char c) {
-        return c > 31 && c < 127;
+        return c >= 0x21 && c <= 0x7e;
     }
 
+    /**
+     * @param c character
+     * @return true if the given char is allowed in obs-text, false otherwise.
+     */
+    public static boolean isAllowedInObsText(char c) {
+        return c >= 0x80 && c <= 0xff;
+    }
+
+    /**
+     * @param c character
+     * @return true if the given char is allowed in a header value, false otherwise.
+     */
+    public static boolean isAllowedInHeaderValue(char c) {
+        return c == ' ' || c == '\t' || isAllowedInVCHARs(c) || isAllowedInObsText(c);
+    }
 }
