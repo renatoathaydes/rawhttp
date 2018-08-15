@@ -1,6 +1,14 @@
 package rawhttp.core.server;
 
-import java.io.Closeable;
+import rawhttp.core.EagerHttpResponse;
+import rawhttp.core.HttpVersion;
+import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpHeaders;
+import rawhttp.core.RawHttpOptions;
+import rawhttp.core.RawHttpRequest;
+import rawhttp.core.RawHttpResponse;
+import rawhttp.core.errors.InvalidHttpRequest;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -13,14 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import rawhttp.core.EagerHttpResponse;
-import rawhttp.core.HttpVersion;
-import rawhttp.core.RawHttp;
-import rawhttp.core.RawHttpHeaders;
-import rawhttp.core.RawHttpOptions;
-import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
-import rawhttp.core.errors.InvalidHttpRequest;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -94,7 +94,7 @@ public class TcpRawHttpServer implements RawHttpServer {
     /**
      * Configuration options for {@link TcpRawHttpServer}.
      */
-    public interface TcpRawHttpServerOptions extends Closeable {
+    public interface TcpRawHttpServerOptions {
 
         /**
          * Create a server socket for the server to use.
@@ -115,7 +115,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          * @return executor service to use to run client-serving {@link Runnable}s. Each {@link Runnable} runs until
          * the connection with the client is closed or lost.
          */
-        default ExecutorService getExecutorService() {
+        default ExecutorService createExecutorService() {
             final AtomicInteger threadCount = new AtomicInteger(1);
             return Executors.newFixedThreadPool(25, runnable -> {
                 Thread t = new Thread(runnable);
@@ -172,9 +172,6 @@ public class TcpRawHttpServer implements RawHttpServer {
             return response;
         }
 
-        @Override
-        default void close() throws IOException {
-        }
     }
 
     private static class RouterAndSocket {
@@ -190,7 +187,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             this.router = router;
             this.socket = options.getServerSocket();
             this.http = options.getRawHttp();
-            this.executorService = options.getExecutorService();
+            this.executorService = options.createExecutorService();
             this.options = options;
 
             start();
@@ -306,12 +303,6 @@ public class TcpRawHttpServer implements RawHttpServer {
                 throw new RuntimeException(e);
             } finally {
                 executorService.shutdown();
-
-                try {
-                    options.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
 
