@@ -31,9 +31,9 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             framedBody should beOfType<ContentLength>()
             isChunked shouldBe false
-            asString(Charsets.UTF_8) shouldBe body
+            asRawString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
 
@@ -45,9 +45,9 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             framedBody should beOfType<ContentLength>()
             isChunked shouldBe false
-            asString(Charsets.UTF_8) shouldBe body
+            asRawString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
 
@@ -59,9 +59,9 @@ class EagerBodyReaderTest : StringSpec({
         reader.run {
             framedBody shouldBe CloseTerminated(noOpDecoder)
             isChunked shouldBe false
-            asString(Charsets.UTF_8) shouldBe body
+            asRawString(Charsets.UTF_8) shouldBe body
             asChunkedBodyContents() should notBePresent()
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
         }
     }
 
@@ -90,8 +90,8 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs body
-            asString(Charsets.UTF_8) shouldBe "8\r\nHi there\r\n0\r\n\r\n"
+            asRawBytes() shouldHaveSameElementsAs body
+            asRawString(Charsets.UTF_8) shouldBe "8\r\nHi there\r\n0\r\n\r\n"
             decodeBody() shouldHaveSameElementsAs "Hi there".toByteArray()
             decodeBodyToString(UTF_8) shouldBe "Hi there"
         }
@@ -125,8 +125,8 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
-            asString(Charsets.UTF_8) shouldBe body
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawString(Charsets.UTF_8) shouldBe body
             decodeBody() shouldHaveSameElementsAs "1234598".toByteArray()
             decodeBodyToString(UTF_8) shouldBe "1234598"
         }
@@ -160,8 +160,8 @@ class EagerBodyReaderTest : StringSpec({
 
                 it.trailerHeaders shouldEqual emptyRawHttpHeaders()
             }
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
-            asString(UTF_8) shouldBe body
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawString(UTF_8) shouldBe body
             decodeBody() shouldHaveSameElementsAs byteArrayOf()
             decodeBodyToString(UTF_8) shouldBe ""
         }
@@ -195,8 +195,8 @@ class EagerBodyReaderTest : StringSpec({
                         .with("Bye", "true")
                         .build()
             }
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
-            asString(Charsets.UTF_8) shouldBe body
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawString(Charsets.UTF_8) shouldBe body
             decodeBody() shouldHaveSameElementsAs "98".toByteArray()
             decodeBodyToString(UTF_8) shouldBe "98"
         }

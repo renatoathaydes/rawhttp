@@ -54,7 +54,7 @@ public class RawHttpComponentsClient implements RawHttpClient<CloseableHttpRespo
                 request.getHeaders().get(name).forEach(value ->
                         builder.addHeader(new BasicHeader(name, value))));
 
-        request.getBody().ifPresent(b -> builder.setEntity(new InputStreamEntity(b.asStream())));
+        request.getBody().ifPresent(b -> builder.setEntity(new InputStreamEntity(b.asRawStream())));
 
         CloseableHttpResponse response = httpClient.execute(builder.build());
 

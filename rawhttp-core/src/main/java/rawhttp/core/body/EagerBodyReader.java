@@ -49,7 +49,7 @@ public final class EagerBodyReader extends BodyReader {
     }
 
     @Override
-    public byte[] asBytes() {
+    public byte[] asRawBytes() {
         return rawBytes;
     }
 
@@ -72,13 +72,13 @@ public final class EagerBodyReader extends BodyReader {
     }
 
     @Override
-    public InputStream asStream() {
+    public InputStream asRawStream() {
         return new ByteArrayInputStream(rawBytes);
     }
 
     /**
      * @return the body of the HTTP message in String format, using the {@link StandardCharsets#UTF_8} encoding.
-     * @see #asString(Charset)
+     * @see #asRawString(Charset)
      */
     @Override
     public String toString() {

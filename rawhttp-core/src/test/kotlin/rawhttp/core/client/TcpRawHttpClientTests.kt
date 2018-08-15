@@ -55,7 +55,7 @@ class TcpRawHttp10ClientTest : StringSpec() {
             TcpRawHttpClient().send(RawHttp().parseRequest(
                     "GET http://localhost:8083/say-hi HTTP/1.0")).eagerly().run {
                 body should bePresent {
-                    it.asString(UTF_8) shouldBeOneOf setOf("Hi there", "{ \"message\": \"Hi there\" }")
+                    it.asRawString(UTF_8) shouldBeOneOf setOf("Hi there", "{ \"message\": \"Hi there\" }")
                 }
             }
         }
@@ -66,7 +66,7 @@ class TcpRawHttp10ClientTest : StringSpec() {
                             "Host: localhost:8083\r\n" +
                             "Accept: text/plain")).eagerly().run {
                 body should bePresent {
-                    it.asString(UTF_8) shouldBe "Hi there"
+                    it.asRawString(UTF_8) shouldBe "Hi there"
                 }
             }
         }
@@ -81,7 +81,7 @@ class TcpRawHttp10ClientTest : StringSpec() {
                             "\r\n" +
                             "hello world")).eagerly().run {
                 body should bePresent {
-                    it.asString(UTF_8) shouldBe "hello world"
+                    it.asRawString(UTF_8) shouldBe "hello world"
                 }
             }
         }

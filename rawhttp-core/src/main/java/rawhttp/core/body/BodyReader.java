@@ -46,7 +46,7 @@ public abstract class BodyReader implements Writable, Closeable {
      * <p>
      * Notice that the stream may be closed if this {@link BodyReader} is closed.
      */
-    public abstract InputStream asStream();
+    public abstract InputStream asRawStream();
 
     /**
      * @return the length of the raw message body if known without consuming it first.
@@ -80,7 +80,7 @@ public abstract class BodyReader implements Writable, Closeable {
      * @see BodyReader#writeDecodedTo(OutputStream, int)
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        framedBody.getBodyConsumer().consumeInto(asStream(), out, bufferSize);
+        framedBody.getBodyConsumer().consumeInto(asRawStream(), out, bufferSize);
     }
 
     /**
@@ -112,7 +112,7 @@ public abstract class BodyReader implements Writable, Closeable {
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
         DecodingOutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
-        framedBody.getBodyConsumer().consumeDataInto(asStream(), decodedStream, bufferSize);
+        framedBody.getBodyConsumer().consumeDataInto(asRawStream(), decodedStream, bufferSize);
         decodedStream.finishDecoding();
     }
 
@@ -124,8 +124,8 @@ public abstract class BodyReader implements Writable, Closeable {
      * {@link #decodeBody()} or {@link #decodeBodyToString(Charset)}.
      * @throws IOException if an error occurs while consuming the message body
      */
-    public byte[] asBytes() throws IOException {
-        return framedBody.getBodyConsumer().consume(asStream());
+    public byte[] asRawBytes() throws IOException {
+        return framedBody.getBodyConsumer().consume(asRawStream());
     }
 
     /**
@@ -143,7 +143,7 @@ public abstract class BodyReader implements Writable, Closeable {
     public Optional<ChunkedBodyContents> asChunkedBodyContents() throws IOException {
         return framedBody.use(
                 cl -> Optional.empty(),
-                chunked -> Optional.of(chunked.getContents(asStream())),
+                chunked -> Optional.of(chunked.getContents(asRawStream())),
                 ct -> Optional.empty());
     }
 
@@ -161,7 +161,7 @@ public abstract class BodyReader implements Writable, Closeable {
         if (consumer instanceof BodyConsumer.ChunkedBodyConsumer) {
             try {
                 return Optional.of(((BodyConsumer.ChunkedBodyConsumer) consumer)
-                        .consumeLazily(asStream()));
+                        .consumeLazily(asRawStream()));
             } catch (RuntimeException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof IOException) {
@@ -185,8 +185,8 @@ public abstract class BodyReader implements Writable, Closeable {
      * @return String representing the raw HTTP message's body.
      * @throws IOException if an error occurs while consuming the message body
      */
-    public String asString(Charset charset) throws IOException {
-        return new String(asBytes(), charset);
+    public String asRawString(Charset charset) throws IOException {
+        return new String(asRawBytes(), charset);
     }
 
     /**

@@ -66,7 +66,7 @@ class KotlinSamples {
             if (body.get().isChunked) {
                 assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo("Hello"))
             } else {
-                assertThat(body.get().asString(UTF_8), equalTo("Hello"))
+                assertThat(body.get().asRawString(UTF_8), equalTo("Hello"))
             }
         }
     }
@@ -91,7 +91,7 @@ class KotlinSamples {
             if (body.get().isChunked) {
                 assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo(expectedBody))
             } else {
-                assertThat(body.get().asString(UTF_8), equalTo(expectedBody))
+                assertThat(body.get().asRawString(UTF_8), equalTo(expectedBody))
             }
         }
     }

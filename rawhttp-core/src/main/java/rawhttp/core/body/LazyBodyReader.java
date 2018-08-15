@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * to become "consumed". After this reader has been "consumed", the methods which would otherwise consume
  * the stream associated with this reader will throw an {@link IllegalStateException} if called. Doing this
  * avoids reading data accidentally, which may cause errors or a hanging connection. An exception
- * to this is the {@link #asStream()} method - see the Javadocs for this method for details.
+ * to this is the {@link #asRawStream()} method - see the Javadocs for this method for details.
  *
  * @see #eager()
  */
@@ -50,9 +50,9 @@ public final class LazyBodyReader extends BodyReader {
     }
 
     @Override
-    public byte[] asBytes() throws IOException {
+    public byte[] asRawBytes() throws IOException {
         markConsumed();
-        return super.asBytes();
+        return super.asRawBytes();
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class LazyBodyReader extends BodyReader {
      * Notice that the stream may be closed if this {@link BodyReader} is closed.
      */
     @Override
-    public InputStream asStream() {
+    public InputStream asRawStream() {
         return inputStream;
     }
 

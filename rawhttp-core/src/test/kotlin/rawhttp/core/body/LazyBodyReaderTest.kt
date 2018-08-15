@@ -91,7 +91,7 @@ class LazyBodyReaderTest : StringSpec({
 
         // verify raw bytes
         createReader().run {
-            asBytes() shouldHaveSameElementsAs body
+            asRawBytes() shouldHaveSameElementsAs body
         }
 
         // verify writing
@@ -135,7 +135,7 @@ class LazyBodyReaderTest : StringSpec({
 
         // verify raw bytes
         createReader().run {
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
         }
 
         // verify writing
@@ -179,7 +179,7 @@ class LazyBodyReaderTest : StringSpec({
 
         // verify raw bytes
         createReader().run {
-            asBytes() shouldHaveSameElementsAs body.toByteArray()
+            asRawBytes() shouldHaveSameElementsAs body.toByteArray()
         }
 
         // verify writing

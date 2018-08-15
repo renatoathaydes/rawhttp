@@ -118,7 +118,7 @@ public class RawHttpDuplex {
             throw new RuntimeException("Server response status code is not 200: " + response.getStatusCode());
         }
 
-        InputStream responseStream = response.getBody().map(b -> b.isChunked() ? b.asStream() : null)
+        InputStream responseStream = response.getBody().map(b -> b.isChunked() ? b.asRawStream() : null)
                 .orElseThrow(() ->
                         new IllegalStateException("HTTP response does not contain a chunked body"));
 

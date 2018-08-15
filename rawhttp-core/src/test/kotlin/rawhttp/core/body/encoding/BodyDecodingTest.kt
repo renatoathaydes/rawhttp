@@ -33,7 +33,7 @@ class BodyDecodingTest {
 
         actualDecodedBody shouldBe "This file should be compressed with GZip.\n"
 
-        val actualEncodedBody = response.body.map { it.asBytes() }.orElse(ByteArray(0))
+        val actualEncodedBody = response.body.map { it.asRawBytes() }.orElse(ByteArray(0))
 
         actualEncodedBody shouldHaveSameElementsAs gzippedFileBytes
     }
@@ -57,7 +57,7 @@ class BodyDecodingTest {
 
         actualDecodedBody shouldBe "This file should be compressed with GZip.\n"
 
-        val actualEncodedBody = response.body.map { it.asBytes() }.orElse(ByteArray(0))
+        val actualEncodedBody = response.body.map { it.asRawBytes() }.orElse(ByteArray(0))
 
         val chunkedZippedFileBytes = InputStreamChunkEncoder(ByteArrayInputStream(gzippedFileBytes), 8).readBytes()
 
@@ -89,7 +89,7 @@ class BodyDecodingTest {
 
         actualDecodedBody shouldBe plainTextBody
 
-        val actualEncodedBody = response.body.map { it.asBytes() }.orElse(ByteArray(0))
+        val actualEncodedBody = response.body.map { it.asRawBytes() }.orElse(ByteArray(0))
 
         actualEncodedBody shouldHaveSameElementsAs chunkedThenGzippedBodyBytes
     }

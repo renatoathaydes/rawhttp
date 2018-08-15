@@ -87,7 +87,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         assertThat(response.statusCode, equalTo(200))
         assertTrue(response.body.isPresent)
-        assertThat(response.body.get().asBytes(), equalTo(someFileInWorkDir.readBytes()))
+        assertThat(response.body.get().asRawBytes(), equalTo(someFileInWorkDir.readBytes()))
     }
 
     @Test
@@ -119,13 +119,13 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         assertThat(mp3response.statusCode, equalTo(200))
         assertTrue(mp3response.body.isPresent)
-        assertThat(mp3response.body.get().asBytes(), equalTo(mp3File.readBytes()))
+        assertThat(mp3response.body.get().asRawBytes(), equalTo(mp3File.readBytes()))
         assertThat(mp3response.headers["Content-Type"], equalTo(listOf("music/mp3")))
 
         // verify that the standard mappings are still used
         assertThat(jsonResponse.statusCode, equalTo(200))
         assertTrue(jsonResponse.body.isPresent)
-        assertThat(jsonResponse.body.get().asBytes(), equalTo(jsonFile.readBytes()))
+        assertThat(jsonResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
         assertThat(jsonResponse.headers["Content-Type"], equalTo(listOf("application/json")))
     }
 
@@ -151,7 +151,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(200))
         assertTrue(response.body.isPresent)
-        assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Hello RawHTTP!"))
+        assertThat(response.body.get().asRawString(Charsets.UTF_8), equalTo("Hello RawHTTP!"))
 
         // log format follows the Common Log Format - https://en.wikipedia.org/wiki/Common_Log_Format
         val dateRegex = Regex("[0-9.:]+ \\[(?<date>.+)] \".+\" \\d{3} \\d+").toPattern()
@@ -205,7 +205,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(404))
         assertTrue(response.body.isPresent)
-        assertThat(response.body.get().asString(Charsets.UTF_8), equalTo("Resource was not found."))
+        assertThat(response.body.get().asRawString(Charsets.UTF_8), equalTo("Resource was not found."))
     }
 
     @Test
@@ -237,12 +237,12 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat("Server returned unexpected status code\n$handle",
                 jsonResponse.statusCode, equalTo(200))
         assertTrue(jsonResponse.body.isPresent)
-        assertThat(jsonResponse.body.get().asString(Charsets.UTF_8), equalTo(jsonFile.readText()))
+        assertThat(jsonResponse.body.get().asRawString(Charsets.UTF_8), equalTo(jsonFile.readText()))
 
         assertThat("Server returned unexpected status code\n$handle",
                 xmlResponse.statusCode, equalTo(200))
         assertTrue(xmlResponse.body.isPresent)
-        assertThat(xmlResponse.body.get().asString(Charsets.UTF_8), equalTo(xmlFile.readText()))
+        assertThat(xmlResponse.body.get().asRawString(Charsets.UTF_8), equalTo(xmlFile.readText()))
     }
 
 }

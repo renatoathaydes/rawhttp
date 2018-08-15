@@ -60,7 +60,7 @@ class RawHttpServerTests {
 
             response.statusCode shouldBe 200
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+                it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         } finally {
             httpClient.close()

@@ -17,7 +17,7 @@ class ChunkedBodyTest : StringSpec({
         body.toBodyReader().eager().should {
             it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
-            it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
+            it.asRawString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 2
                 it.chunks[0].data shouldHaveSameElementsAs "Hi".toByteArray()
@@ -36,7 +36,7 @@ class ChunkedBodyTest : StringSpec({
         body.toBodyReader().eager().should {
             it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
-            it.asString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
+            it.asRawString(Charsets.US_ASCII) shouldEqual "2\r\nHi\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 2
                 it.chunks[0].data shouldHaveSameElementsAs "Hi".toByteArray()
@@ -54,7 +54,7 @@ class ChunkedBodyTest : StringSpec({
         body.toBodyReader().eager().should {
             it.framedBody should beOfType<FramedBody.Chunked>()
             it.isChunked shouldBe true
-            it.asString(Charsets.US_ASCII) shouldEqual "4\r\nHell\r\n4\r\no wo\r\n3\r\nrld\r\n0\r\n\r\n"
+            it.asRawString(Charsets.US_ASCII) shouldEqual "4\r\nHell\r\n4\r\no wo\r\n3\r\nrld\r\n0\r\n\r\n"
             it.asChunkedBodyContents() should bePresent {
                 it.chunks.size shouldBe 4
                 it.chunks[0].data shouldHaveSameElementsAs "Hell".toByteArray()

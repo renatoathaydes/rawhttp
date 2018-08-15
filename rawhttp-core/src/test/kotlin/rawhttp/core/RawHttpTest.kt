@@ -90,8 +90,8 @@ class SimpleHttpRequestTests : StringSpec({
                     "CONTENT-LENGTH" to listOf("48"),
                     "ACCEPT" to listOf("text/html"))
             body should bePresent {
-                it.asString(UTF_8) shouldEqual expectedBody
-                it.asBytes().size shouldEqual 48
+                it.asRawString(UTF_8) shouldEqual expectedBody
+                it.asRawBytes().size shouldEqual 48
             }
         }
     }
@@ -138,8 +138,8 @@ class SimpleHttpRequestTests : StringSpec({
                         "Cy1LQyPzT7gUM3A josP5Nne89rWCD9 QrKxhczapyUSch4 E4qqihxkujRPqEu toCyI5eKEnvVbfn " +
                         "ldCLQWSoA7RLYRZ E8x3TY7EqFJpmLP iulp9YqVZj. END KEYBASE SALTPACK ENCRYPTED MESSAGE."
 
-                it.asString(UTF_8) shouldEqual expectedBody
-                it.asBytes().size shouldEqual 765
+                it.asRawString(UTF_8) shouldEqual expectedBody
+                it.asRawBytes().size shouldEqual 765
             }
         }
     }
@@ -208,7 +208,7 @@ class SimpleHttpResponseTests : StringSpec({
             toString() shouldEqual "HTTP/1.1 200 OK\r\nServer: Apache\r\n\r\nHello World!"
             headers.asMap() shouldEqual mapOf("SERVER" to listOf("Apache"))
             body should bePresent {
-                it.asString(UTF_8) shouldEqual "Hello World!"
+                it.asRawString(UTF_8) shouldEqual "Hello World!"
             }
         }
     }
@@ -257,7 +257,7 @@ class SimpleHttpResponseTests : StringSpec({
                     "CONTENT-TYPE" to listOf("application/json")
             )
             body should bePresent {
-                it.asString(UTF_8) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
+                it.asRawString(UTF_8) shouldEqual "{\n  \"hello\": \"world\",\n  \"number\": 123\n}"
             }
         }
     }
@@ -281,7 +281,7 @@ class SimpleHttpResponseTests : StringSpec({
                     "CONTENT-TYPE" to listOf("application/json"),
                     "CONTENT-LENGTH" to listOf("50"))
             body should bePresent {
-                it.asString(UTF_8) shouldEqual expectedBody
+                it.asRawString(UTF_8) shouldEqual expectedBody
             }
         }
     }

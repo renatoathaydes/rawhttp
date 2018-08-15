@@ -72,7 +72,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response.statusCode shouldBe 200
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+                it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         }
 
@@ -82,7 +82,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response.statusCode shouldBe 200
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+                it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
 
             sleep(500)
@@ -91,7 +91,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response2.statusCode shouldBe 200
             response2.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
+                it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         }
 
@@ -101,7 +101,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response.statusCode shouldBe 405
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Sorry, can't handle this method"
+                it.asRawString(Charsets.UTF_8) shouldBe "Sorry, can't handle this method"
             }
         }
 
@@ -111,7 +111,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
             response.statusCode shouldBe 404
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Content was not found"
+                it.asRawString(Charsets.UTF_8) shouldBe "Content was not found"
             }
         }
 
@@ -123,7 +123,7 @@ class TcpRawHttpServerTests : StringSpec() {
             response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
+                it.asRawString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
             }
         }
 
@@ -135,7 +135,7 @@ class TcpRawHttpServerTests : StringSpec() {
             response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
+                it.asRawString(Charsets.UTF_8) shouldBe "A Server Error has occurred."
             }
         }
 
@@ -147,7 +147,7 @@ class TcpRawHttpServerTests : StringSpec() {
             response.headers shouldHave validDateHeader()
             response.headers["Content-Type"] shouldBe listOf("text/plain")
             response.body should bePresent {
-                it.asString(Charsets.UTF_8) shouldBe "Resource was not found."
+                it.asRawString(Charsets.UTF_8) shouldBe "Resource was not found."
             }
         }
 

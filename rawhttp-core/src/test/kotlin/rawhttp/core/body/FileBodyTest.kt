@@ -26,7 +26,7 @@ class FileBodyTest : StringSpec({
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "HOST" to listOf("localhost"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -45,7 +45,7 @@ class FileBodyTest : StringSpec({
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "HOST" to listOf("localhost"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -62,7 +62,7 @@ class FileBodyTest : StringSpec({
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "SERVER" to listOf("Apache"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -80,7 +80,7 @@ class FileBodyTest : StringSpec({
             headers.asMap() shouldEqual mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
