@@ -13,7 +13,7 @@ plugins {
     id 'maven'
 }
 
-version '0.1.0'
+version rawHttpDuplexVersion
 description 'rawhttp-duplex provides a mechanism for full duplex communications based on the ' +
         'HTTP/1.1 chunked transfer-encoding.'
 
