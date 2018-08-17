@@ -60,7 +60,9 @@ public class BodyDecoder {
 
         if (decoders.isEmpty()) {
             return decoderStream;
-        } else if (decoders.get(decoders.size() - 1).encodingName().equalsIgnoreCase("chunked")) {
+        }
+
+        if (decoders.get(decoders.size() - 1).encodingName().equalsIgnoreCase("chunked")) {
             // when the chunked encoding is used to frame the message, we don't need to to decode its contents
             decoders.remove(decoders.size() - 1);
         }

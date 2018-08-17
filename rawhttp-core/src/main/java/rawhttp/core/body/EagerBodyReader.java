@@ -1,13 +1,13 @@
 package rawhttp.core.body;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * An eager implementation of {@link BodyReader}.
@@ -24,7 +24,7 @@ public final class EagerBodyReader extends BodyReader {
     /**
      * Create an {@link EagerBodyReader}.
      *
-     * @param framedBody    the framed body
+     * @param framedBody  the framed body
      * @param inputStream providing the body. The body is consumed immediately
      * @throws IOException if the inputStream throws
      */
