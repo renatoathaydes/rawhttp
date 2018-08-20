@@ -100,9 +100,11 @@ configure(install.repositories.mavenInstaller) {
 
 apply plugin: 'com.jfrog.bintray'
 
+final rawHttpGradle = new RawHttpGradle(project)
+
 bintray {
-    user = project.hasProperty("bintrayUserName") ? bintrayUserName : null
-    key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : null
+    user = rawHttpGradle.getGradleProperty("bintrayUserName")
+    key = rawHttpGradle.getGradleProperty("bintrayApiKey")
     configurations = ['archives']
     publish = true
     pkg {
