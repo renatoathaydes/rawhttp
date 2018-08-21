@@ -250,8 +250,13 @@ public class TcpRawHttpServer implements RawHttpServer {
                         serverWillCloseConnection = !serverShouldPersistConnection;
                     }
 
-                    RawHttpResponse<?> response = route(request);
-                    response.writeTo(client.getOutputStream());
+                    RawHttpResponse<?> response = null;
+                    try {
+                        response = route(request);
+                        response.writeTo(client.getOutputStream());
+                    } finally {
+                        closeBodyOf(response);
+                    }
                 } catch (Exception e) {
                     if (!(e instanceof SocketException)) {
                         // only print stack trace if this is not due to a client closing the connection
@@ -310,6 +315,18 @@ public class TcpRawHttpServer implements RawHttpServer {
             Integer statusCode = response.getStatusCode();
             Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = options.autoHeadersSupplier(statusCode);
             return autoHeadersSupplier.map(s -> response.withHeaders(s.get())).orElse(response);
+        }
+
+        private static void closeBodyOf(RawHttpResponse<?> response) {
+            if (response != null) {
+                response.getBody().ifPresent(b -> {
+                    try {
+                        b.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
         }
 
     }
