@@ -11,7 +11,7 @@ RUN native-image -jar ${APP_NAME}.jar --static
 
 # Create minimal executable image with the native rawhttp command
 
-FROM debian:stable-slim
+FROM busybox:glibc
 
 COPY --from=rawhttp-native /app/rawhttp rawhttp
 
