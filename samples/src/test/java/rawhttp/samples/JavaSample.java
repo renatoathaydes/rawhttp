@@ -1,12 +1,5 @@
 package rawhttp.samples;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.URI;
-import java.nio.file.Files;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -25,6 +18,14 @@ import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
 import rawhttp.httpcomponents.RawHttpComponentsClient;
 import spark.Spark;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URI;
+import java.nio.file.Files;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -95,8 +96,7 @@ public class JavaSample {
         try (TcpRawHttpClient client = new TcpRawHttpClient()) {
             EagerHttpResponse<?> rawResponse = client.send(request).eagerly();
             rawHttpStatusCode = rawResponse.getStatusCode();
-            rawHttpContentType = rawResponse.getHeaders().get(HttpHeaders.CONTENT_TYPE)
-                    .iterator().next().split(";")[0];
+            rawHttpContentType = rawResponse.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE).orElse("");
             rawHttpResponseBody = rawResponse.getBody().map(EagerBodyReader::toString)
                     .orElseThrow(() -> new RuntimeException("No body"));
         } catch (IOException e) {
