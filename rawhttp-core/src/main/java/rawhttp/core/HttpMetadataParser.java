@@ -93,8 +93,8 @@ public final class HttpMetadataParser {
      * <p>
      * This method does not verify nor performs any encoding/decoding.
      * <p>
-     * Entries are separated with a '&' character, and each entry may be split into a key-value pair
-     * with the '=' character as a separator. If no '=' character is found, the whole entry is taken
+     * Entries are separated with a {@code &} character, and each entry may be split into a key-value pair
+     * with the {@code =} character as a separator. If no {@code =} character is found, the whole entry is taken
      * to be a key without value.
      *
      * @param queryString query string to parse
