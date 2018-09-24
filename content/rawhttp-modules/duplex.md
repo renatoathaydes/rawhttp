@@ -11,6 +11,44 @@ The entry point of the library is the `com.athaydes.rawhttp.duplex.RawHttpDuplex
 Its `connect` methods are used from a client to connect to a server,
 while the `accept` methods should be used within a HTTP server to handle requests from a client.
 
+Example code on the server:
+
+{{< highlight kotlin >}}
+import rawhttp.core.*
+import com.athaydes.rawhttp.duplex.*
+import rawhttp.core.server.TcpRawHttpServer;
+
+val http = RawHttp()
+val duplex = RawHttpDuplex()
+val server = TcpRawHttpServer(8082)
+
+server.start { request ->
+    // call duplex.accept() to return a response that can do duplex communication 
+    Optional.of(duplex.accept(request, { sender ->
+        object : MessageHandler {
+            override fun onTextMessage(message: String) { /* handle text message */ }      
+            override fun onBinaryMessage(message: ByteArray, headers: RawHttpHeaders) { /* handle binary message */ }
+            override fun onClose() { /* handle closed connection */ }
+        }
+    }))
+}
+{{< / highlight >}}
+
+Example code on the client:
+
+{{< highlight kotlin >}}
+import rawhttp.core.*
+import com.athaydes.rawhttp.duplex.*
+import rawhttp.core.server.TcpRawHttpServer;
+
+val http = RawHttp()
+val duplex = RawHttpDuplex()
+
+duplex.connect(http.parseRequest("POST http://localhost:8082/connect"), { sender ->
+    object : MessageHandler { /* same API as on the server */ }
+}
+{{< / highlight >}}
+
 The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:
 
 * The server listens for requests to start duplex communication.
