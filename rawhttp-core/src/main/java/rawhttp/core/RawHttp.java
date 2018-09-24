@@ -22,8 +22,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * The main class of the raw-http library.
  * <p>
- * Instances of this class can parse HTTP requests and responses, as well as their subsets such as
- * the start-line and headers.
+ * Instances of this class can parse HTTP requests and responses.
+ * <p>
+ * Subsets of HTTP messages, such as the start-line and headers, are parsed using
+ * a {link {@link HttpMetadataParser}}.
  * <p>
  * To use a default instance, which is not 100% raw (it fixes up new-lines and request's Host headers, for example)
  * use the default constructor, otherwise, call {@link #RawHttp(RawHttpOptions)} with the appropriate options.
