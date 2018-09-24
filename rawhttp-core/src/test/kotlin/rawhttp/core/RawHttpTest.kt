@@ -61,6 +61,17 @@ class SimpleHttpRequestTests : StringSpec({
         }
     }
 
+    "Uses request-line URI Host instead of Host header to identify target server if both are given" {
+        RawHttp().parseRequest("GET http://favorite.host/hello\nHost: www.example.com").eagerly().run {
+            method shouldBe "GET"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
+            uri shouldEqual URI.create("http://favorite.host/hello")
+            toString() shouldBe "GET /hello HTTP/1.1\r\nHost: www.example.com\r\n\r\n"
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("www.example.com"))
+            body should notBePresent()
+        }
+    }
+
     "Request can have a body" {
         RawHttp().parseRequest("""
             POST http://host.com/myresource/123456

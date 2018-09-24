@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.URI;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -329,7 +330,8 @@ public class RawHttp {
 
     private RequestLine verifyHost(RequestLine requestLine, RawHttpHeaders.Builder headers) {
         List<String> hostHeaderValues = headers.get("Host");
-        @Nullable String requestLineHost = requestLine.getUri().getHost();
+        URI requestLineUri = requestLine.getUri();
+        @Nullable String requestLineHost = requestLineUri.getHost();
         if (hostHeaderValues.isEmpty()) {
             if (!options.insertHostHeaderIfMissing()) {
                 throw new InvalidHttpRequest("Host header is missing", 1);
@@ -341,10 +343,7 @@ public class RawHttp {
             }
             return requestLine;
         } else if (hostHeaderValues.size() == 1) {
-            if (requestLineHost != null) {
-                throw new InvalidHttpRequest("Host specified both in Host header and in request line", 1);
-            }
-            try {
+            if (requestLineHost == null) try {
                 RequestLine newRequestLine = requestLine.withHost(hostHeaderValues.iterator().next());
                 // cleanup the host header
                 headers.overwrite("Host", newRequestLine.getUri().getHost());
@@ -352,6 +351,12 @@ public class RawHttp {
             } catch (IllegalArgumentException e) {
                 int lineNumber = headers.getLineNumberAt("Host", 0);
                 throw new InvalidHttpRequest("Invalid host header: " + e.getMessage(), lineNumber);
+            }
+            else {
+                // both host header and requestLineHost are present, allow both even if conflicting
+                // because proxies, for example, are supposed to ignore the Host header in such cases,
+                // which is what we do here.
+                return requestLine;
             }
         } else {
             int lineNumber = headers.getLineNumberAt("Host", 1);
