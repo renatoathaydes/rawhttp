@@ -9,6 +9,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.BiFunction;
@@ -83,6 +86,34 @@ public final class HttpMetadataParser {
      */
     public RequestLine parseRequestLine(String statusLine) {
         return buildRequestLine(statusLine);
+    }
+
+    /**
+     * Parses the provided query String into a {@link Map}.
+     * <p>
+     * This method does not verify nor performs any encoding/decoding.
+     * <p>
+     * Entries are separated with a '&' character, and each entry may be split into a key-value pair
+     * with the '=' character as a separator. If no '=' character is found, the whole entry is taken
+     * to be a key without value.
+     *
+     * @param queryString query string to parse
+     * @return Map containing the query parameters
+     */
+    public Map<String, List<String>> parseQueryString(String queryString) {
+        if (queryString.isEmpty()) {
+            return new HashMap<>(1);
+        }
+        Map<String, List<String>> result = new HashMap<>(8);
+        String[] queryStringParts = queryString.split("&");
+        for (String queryStringPart : queryStringParts) {
+            String[] entry = queryStringPart.split("=", 2);
+            List<String> values = result.computeIfAbsent(entry[0], k -> new ArrayList<>(1));
+            if (entry.length == 2) {
+                values.add(entry[1]);
+            }
+        }
+        return result;
     }
 
     private RequestLine buildRequestLine(String requestLine) {

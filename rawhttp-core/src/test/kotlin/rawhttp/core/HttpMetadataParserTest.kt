@@ -257,6 +257,26 @@ class HttpMetadataParserTest {
         headers.asMap().keys shouldEqual setOf("DATE", "SERVER", "X-COLOR", "Y-COLOR")
     }
 
+    @Test
+    fun canParseQueryStrings() {
+        val table = table(headers("Query String", "Expected query parameters"),
+                row("", mapOf()),
+                row("&", mapOf()),
+                row("=", mapOf("" to listOf(""))),
+                row("hello", mapOf("hello" to listOf<String>())),
+                row("hello=", mapOf("hello" to listOf(""))),
+                row("hello=true", mapOf("hello" to listOf("true"))),
+                row("a=1&b=2", mapOf("a" to listOf("1"), "b" to listOf("2"))),
+                row("a=1&a=2&b=3&a=4", mapOf("a" to listOf("1", "2", "4"), "b" to listOf("3"))),
+                row("hello=hi there", mapOf("hello" to listOf("hi there"))),
+                row("hello there=hi", mapOf("hello there" to listOf("hi"))))
+
+        forAll(table) { queryString, expectedParameters ->
+            val parameters = parser.parseQueryString(queryString)
+            parameters shouldEqual expectedParameters
+        }
+    }
+
     private fun <E> List<E>.asTable(name: String = "value"): Table1<E> {
         val rows = map { row(it) }.toTypedArray()
         return table(headers(name), *rows)
