@@ -210,3 +210,5 @@ server.start { req ->
 
 Several samples showing how to use RawHTTP, including all [examples](samples/src/test/java/rawhttp/samples/JavaSample.java)
 in this page, can be found in the [samples](samples) project.
+
+The `rawhttp-duplex` module has its own sample, a [chat application](rawhttp-duplex/src/test/kotlin/chat-example.kt).
