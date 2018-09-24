@@ -21,7 +21,7 @@ object ChatServer {
 
     class ChatHandler(val name: String, val sender: MessageSender) : MessageHandler {
         init {
-            clientByName.put(name, this)
+            clientByName[name] = this
             tellOthers("$name joined...")
         }
 
@@ -54,9 +54,9 @@ object ChatServer {
                     Optional.of(Responses.notFound)
                 } else {
                     println("Accepting $name to chatroom")
-                    Optional.of(duplex.accept(request, { sender ->
+                    Optional.of(duplex.accept(request) { sender ->
                         ChatHandler(name, sender)
-                    }))
+                    })
                 }
             } else {
                 Optional.of(Responses.methodNotAllowed)
@@ -91,7 +91,7 @@ object ChatClient {
         val executor = Executors.newSingleThreadExecutor()
 
         try {
-            duplex.connect(http.parseRequest("POST http://localhost:$port/$name"), { sender ->
+            duplex.connect(http.parseRequest("POST http://localhost:$port/$name")) { sender ->
                 object : MessageHandler, Runnable {
 
                     init {
@@ -127,7 +127,7 @@ object ChatClient {
                         executor.shutdown()
                     }
                 }
-            })
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             running.set(false)
