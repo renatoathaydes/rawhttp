@@ -7,6 +7,7 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldThrow
+import io.kotlintest.properties.Row8
 import io.kotlintest.properties.Table1
 import io.kotlintest.properties.forAll
 import io.kotlintest.properties.headers
@@ -14,6 +15,8 @@ import io.kotlintest.properties.row
 import io.kotlintest.properties.table
 import org.junit.Test
 import rawhttp.core.errors.InvalidHttpHeader
+
+typealias UriExample = Row8<String, String?, String?, String?, Int, String?, String?, String?>
 
 class HttpMetadataParserTest {
 
@@ -255,6 +258,42 @@ class HttpMetadataParserTest {
 
         // make sure the parsing worked
         headers.asMap().keys shouldEqual setOf("DATE", "SERVER", "X-COLOR", "Y-COLOR")
+    }
+
+    @Test
+    fun canParseURIs() {
+        val table = table(
+                headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
+                UriExample("hi", "http", null, "hi", -1, "", null, null),
+                UriExample("hi.com", "http", null, "hi.com", -1, "", null, null),
+                UriExample("hi.com:80", "http", null, "hi.com", 80, "", null, null),
+                UriExample("https://hi.com:80/", "https", null, "hi.com", 80, "/", null, null),
+                UriExample("hi.com/hello", "http", null, "hi.com", -1, "/hello", null, null),
+                UriExample("hi?", "http", null, "hi", -1, "", "", null),
+                UriExample("hi?abc", "http", null, "hi", -1, "", "abc", null),
+                UriExample("hi?a b", "http", null, "hi", -1, "", "a%20b", null),
+                UriExample("hi#", "http", null, "hi", -1, "", null, ""),
+                UriExample("hi#def", "http", null, "hi", -1, "", null, "def"),
+                UriExample("hi#d^f", "http", null, "hi", -1, "", null, "d%5Ef"),
+                UriExample("hi#a?b", "http", null, "hi", -1, "", null, "a?b"),
+                UriExample("hi?a#d", "http", null, "hi", -1, "", "a", "d"),
+                UriExample("hi?a!#d@f", "http", null, "hi", -1, "", "a!", "d@f"),
+                UriExample("x://admin@hello", "x", "admin", "hello", -1, "", null, null),
+                UriExample("x://admin:pass@hello.com/hi?boo&bar#abc", "x", "admin:pass", "hello.com", -1, "/hi", "boo&bar", "abc"),
+                UriExample("https://admin:pass@hello:8443/hi?boo&bar#abc", "https", "admin:pass", "hello", 8443, "/hi", "boo&bar", "abc")
+        )
+
+        forAll(table) { uriSpec, scheme, userInfo, host, port, path, query, fragment ->
+            println(uriSpec)
+            val uri = parser.parseUri(uriSpec)
+            uri.scheme shouldEqual scheme
+            uri.userInfo shouldEqual userInfo
+            uri.host shouldEqual host
+            uri.port shouldEqual port
+            uri.path shouldEqual path
+            uri.rawQuery shouldEqual query
+            uri.rawFragment shouldEqual fragment
+        }
     }
 
     @Test

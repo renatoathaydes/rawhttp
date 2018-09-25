@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 public final class HttpMetadataParser {
 
     private static final Pattern statusCodePattern = Pattern.compile("\\d{3}");
+    private static final Pattern uriWithScheme = Pattern.compile("[a-zA-Z][a-zA-Z+\\-.]*://.*");
+//    private static final Pattern uriPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     private final RawHttpOptions options;
 
@@ -128,7 +130,7 @@ public final class HttpMetadataParser {
                 throw new InvalidHttpRequest("Invalid method name: illegal character at index " +
                         illegalIndex.getAsInt(), 1);
             }
-            URI uri = createUri(parts[1]);
+            URI uri = parseUri(parts[1]);
             HttpVersion httpVersion = options.insertHttpVersionIfMissing()
                     ? HttpVersion.HTTP_1_1 : null;
             if (parts.length == 3) try {
@@ -380,16 +382,67 @@ public final class HttpMetadataParser {
         return new AbstractMap.SimpleEntry<>(headerName, headerValue);
     }
 
-    private static URI createUri(String part) {
-        if (!part.startsWith("http")) {
-            part = "http://" + part;
+    /**
+     * Parses the given URI specification.
+     * <p>
+     * If no scheme is given, {@code http} is used.
+     * <p>
+     * Unlike {@link URI#create(String)}, this method allows illegal characters to appear in the text as long as
+     * they don't interfere with splitting the URI into its separate components. This means that it's not
+     * necessary to escape characters which are not used as URI component separators, considering the fact that URIs
+     * are parsed using a "first-match-wins" strategy.
+     *
+     * @param uri the URI specification to parse
+     * @return parsed URI
+     */
+    public URI parseUri(String uri) {
+        final String scheme, userInfo, host, path, query, fragment;
+        final int port;
+        if (!uriWithScheme.matcher(uri).matches()) {
+            // no scheme was given, default to http
+            uri = "http://" + uri;
         }
-        URI uri;
+        // String guaranteed to start with <scheme>://
+        int schemeEndIndex = uri.indexOf(':');
+        int hierPartStart = schemeEndIndex + 3;
+        scheme = uri.substring(0, schemeEndIndex);
+
+        int queryStartIndex = uri.indexOf('?', hierPartStart);
+        int fragmentStartIndex = uri.indexOf('#', (queryStartIndex < 0) ? hierPartStart : queryStartIndex);
+        query = (queryStartIndex < 0)
+                ? null
+                : uri.substring(queryStartIndex + 1, (fragmentStartIndex < 0) ? uri.length() : fragmentStartIndex);
+        fragment = (fragmentStartIndex < 0)
+                ? null
+                : uri.substring(fragmentStartIndex + 1);
+
+        String hierPart = uri.substring(hierPartStart,
+                (query != null) ? queryStartIndex : (fragment != null) ? fragmentStartIndex : uri.length());
+
+        int pathStart = hierPart.indexOf('/');
+        path = (pathStart < 0) ? null : hierPart.substring(pathStart);
+        int userInfoEnd = hierPart.indexOf('@');
+        userInfo = (userInfoEnd < 0) ? null : hierPart.substring(0, userInfoEnd);
+        int portStartIndex;
+        if (userInfo == null) {
+            portStartIndex = hierPart.lastIndexOf(':');
+        } else {
+            portStartIndex = hierPart.substring(userInfoEnd + 1).lastIndexOf(':');
+            if (portStartIndex >= 0) {
+                portStartIndex += userInfoEnd + 1;
+            }
+        }
+        int lastIndexBeforePath = (path == null) ? hierPart.length() : pathStart;
+        host = hierPart.substring((userInfo == null) ? 0 : userInfoEnd + 1,
+                (portStartIndex < 0)
+                        ? lastIndexBeforePath
+                        : portStartIndex);
+        port = (portStartIndex < 0) ? -1 : Integer.parseInt(hierPart.substring(portStartIndex + 1, lastIndexBeforePath));
+
         try {
-            uri = new URI(part);
+            return new URI(scheme, userInfo, host, port, path, query, fragment);
         } catch (URISyntaxException e) {
             throw new InvalidHttpRequest("Invalid URI: " + e.getMessage(), 1);
         }
-        return uri;
     }
 }
