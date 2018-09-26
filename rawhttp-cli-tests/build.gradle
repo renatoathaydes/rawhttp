@@ -16,7 +16,10 @@ compileKotlin {
 test {
     systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
     dependsOn ':rawhttp-cli:fatJar'
-    testLogging.showStandardStreams = true
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
 }
 
 dependencies {
