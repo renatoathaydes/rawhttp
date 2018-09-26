@@ -27,8 +27,7 @@ import java.util.regex.Pattern;
 public final class HttpMetadataParser {
 
     private static final Pattern statusCodePattern = Pattern.compile("\\d{3}");
-    private static final Pattern uriWithScheme = Pattern.compile("[a-zA-Z][a-zA-Z+\\-.]*://.*");
-//    private static final Pattern uriPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    private static final Pattern uriWithSchemePattern = Pattern.compile("[a-zA-Z][a-zA-Z+\\-.]*://.*");
 
     private final RawHttpOptions options;
 
@@ -398,7 +397,7 @@ public final class HttpMetadataParser {
     public URI parseUri(String uri) {
         final String scheme, userInfo, host, path, query, fragment;
         final int port;
-        if (!uriWithScheme.matcher(uri).matches()) {
+        if (!uriWithSchemePattern.matcher(uri).matches()) {
             // no scheme was given, default to http
             uri = "http://" + uri;
         }
@@ -423,21 +422,17 @@ public final class HttpMetadataParser {
         path = (pathStart < 0) ? null : hierPart.substring(pathStart);
         int userInfoEnd = hierPart.indexOf('@');
         userInfo = (userInfoEnd < 0) ? null : hierPart.substring(0, userInfoEnd);
-        int portStartIndex;
-        if (userInfo == null) {
-            portStartIndex = hierPart.lastIndexOf(':');
-        } else {
-            portStartIndex = hierPart.substring(userInfoEnd + 1).lastIndexOf(':');
-            if (portStartIndex >= 0) {
-                portStartIndex += userInfoEnd + 1;
-            }
+        Map.Entry<String, String> hostAndPort = parseHostAndPort(
+                hierPart.substring(
+                        (userInfo == null) ? 0 : userInfoEnd + 1,
+                        (path == null) ? hierPart.length() : pathStart));
+        host = hostAndPort.getKey();
+        String portString = hostAndPort.getValue();
+        try {
+            port = (portString.isEmpty()) ? -1 : Integer.parseInt(portString);
+        } catch (NumberFormatException e) {
+            throw new InvalidHttpRequest("Invalid port: " + portString, 1);
         }
-        int lastIndexBeforePath = (path == null) ? hierPart.length() : pathStart;
-        host = hierPart.substring((userInfo == null) ? 0 : userInfoEnd + 1,
-                (portStartIndex < 0)
-                        ? lastIndexBeforePath
-                        : portStartIndex);
-        port = (portStartIndex < 0) ? -1 : Integer.parseInt(hierPart.substring(portStartIndex + 1, lastIndexBeforePath));
 
         try {
             return new URI(scheme, userInfo, host, port, path, query, fragment);
@@ -445,4 +440,28 @@ public final class HttpMetadataParser {
             throw new InvalidHttpRequest("Invalid URI: " + e.getMessage(), 1);
         }
     }
+
+    private static Map.Entry<String, String> parseHostAndPort(String text) {
+        StringBuilder hostPart = new StringBuilder(text.length());
+        StringBuilder portPart = new StringBuilder(5);
+        boolean parsingPort = false;
+        boolean parsingIP = false;
+        char[] chars = text.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            if (!parsingIP && c == '[' && i == 0) {
+                parsingIP = true;
+            } else if (!parsingIP && c == ':') {
+                parsingPort = true;
+            } else if (parsingIP && c == ']') {
+                parsingIP = false;
+                parsingPort = true;
+            } else {
+                (parsingPort ? portPart : hostPart).append(c);
+            }
+        }
+
+        return new AbstractMap.SimpleImmutableEntry<>(hostPart.toString(), portPart.toString());
+    }
+
 }

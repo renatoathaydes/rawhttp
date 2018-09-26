@@ -280,11 +280,17 @@ class HttpMetadataParserTest {
                 UriExample("hi?a!#d@f", "http", null, "hi", -1, "", "a!", "d@f"),
                 UriExample("x://admin@hello", "x", "admin", "hello", -1, "", null, null),
                 UriExample("x://admin:pass@hello.com/hi?boo&bar#abc", "x", "admin:pass", "hello.com", -1, "/hi", "boo&bar", "abc"),
-                UriExample("https://admin:pass@hello:8443/hi?boo&bar#abc", "https", "admin:pass", "hello", 8443, "/hi", "boo&bar", "abc")
+                UriExample("https://admin:pass@hello:8443/hi?boo&bar#abc", "https", "admin:pass", "hello", 8443, "/hi", "boo&bar", "abc"),
+                UriExample("http://0.0.0.0:8080", "http", null, "0.0.0.0", 8080, "", null, null),
+                UriExample("0.0.0.0:8080", "http", null, "0.0.0.0", 8080, "", null, null),
+                UriExample("renato:pass@192.168.0.1:83", "http", "renato:pass", "192.168.0.1", 83, "", null, null),
+                UriExample("[2001:db8:85a3:0:0:8a2e:370:7334]", "http", null, "[2001:db8:85a3:0:0:8a2e:370:7334]", -1, "", null, null),
+                UriExample("[::8a2e:370:7334]:43", "http", null, "[::8a2e:370:7334]", 43, "", null, null),
+                UriExample("ftp://user:pass@[::8a2e:370:7334]/hi?ho", "ftp", "user:pass", "[::8a2e:370:7334]", -1, "/hi", "ho", null),
+                UriExample("ftp://[::8a2e:370:7334]#ho", "ftp", null, "[::8a2e:370:7334]", -1, "", null, "ho")
         )
 
         forAll(table) { uriSpec, scheme, userInfo, host, port, path, query, fragment ->
-            println(uriSpec)
             val uri = parser.parseUri(uriSpec)
             uri.scheme shouldEqual scheme
             uri.userInfo shouldEqual userInfo
