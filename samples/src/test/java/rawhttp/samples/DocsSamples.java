@@ -144,7 +144,7 @@ public class DocsSamples {
 
         RawHttpRequest request = http.parseRequest("GET /\r\nHost: localhost");
 
-        Socket socket = new Socket(InetAddress.getLocalHost(), 8082);
+        Socket socket = new Socket(InetAddress.getLoopbackAddress(), 8082);
         request.writeTo(socket.getOutputStream());
 
         // get the response
@@ -250,7 +250,7 @@ public class DocsSamples {
 
         RawHttpRequest request = http.parseRequest("GET /\r\nHost: localhost");
 
-        Socket socket = new Socket(InetAddress.getLocalHost(), 8086);
+        Socket socket = new Socket(InetAddress.getLoopbackAddress(), 8086);
         request.writeTo(socket.getOutputStream());
 
         // get the response

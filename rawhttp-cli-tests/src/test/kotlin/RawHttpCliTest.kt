@@ -73,7 +73,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         val response = try {
             sendHttpRequest("""
-            GET http://localhost:8080/${someFileInWorkDir.name}
+            GET http://0.0.0.0:8080/${someFileInWorkDir.name}
             Accept: */*
             """.trimIndent()).eagerly()
         } catch (e:AssertionError){
@@ -105,10 +105,10 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         val (mp3response, jsonResponse) = try {
             sendHttpRequest("""
-            GET http://localhost:8080/${mp3File.name}
+            GET http://0.0.0.0:8080/${mp3File.name}
             Accept: */*
             """.trimIndent()).eagerly() to sendHttpRequest("""
-            GET http://localhost:8080/${jsonFile.name}
+            GET http://0.0.0.0:8080/${jsonFile.name}
             Accept: */*
             """.trimIndent()).eagerly()
         } finally {
@@ -139,7 +139,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         val response = try {
             sendHttpRequest("""
-            GET http://localhost:8080/${someFile.name}
+            GET http://0.0.0.0:8080/${someFile.name}
             Accept: */*
             """.trimIndent()).eagerly()
         } finally {
@@ -193,7 +193,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         val response = try {
             sendHttpRequest("""
-            GET http://localhost:8080/../${parentDirFile.name}
+            GET http://0.0.0.0:8080/../${parentDirFile.name}
             Accept: */*
             """.trimIndent()).eagerly()
         } finally {
@@ -221,11 +221,11 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         val (jsonResponse, xmlResponse) = try {
             sendHttpRequest("""
-            GET http://localhost:8080/hello
+            GET http://0.0.0.0:8080/hello
             Accept: application/json
             """.trimIndent()).eagerly() to
                     sendHttpRequest("""
-            GET http://localhost:8080/hello
+            GET http://0.0.0.0:8080/hello
             Accept: text/xml
             """.trimIndent()).eagerly()
         } finally {
