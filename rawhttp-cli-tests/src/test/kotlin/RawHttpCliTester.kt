@@ -164,13 +164,21 @@ abstract class RawHttpCliTester {
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
             assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE))
-            assertThat(handle.err, equalTo(""))
+            assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
             assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE))
-            assertThat(handle.err, equalTo(""))
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertNoSysErrOutput(handle: ProcessHandle) {
+            var errOut = handle.err
+            if (errOut.startsWith("Picked up _JAVA_OPTIONS")) {
+                errOut = errOut.lines().drop(1).joinToString("\n")
+            }
+            assertThat(errOut, equalTo(""))
         }
 
         fun sendHttpRequest(request: String): RawHttpResponse<*> {

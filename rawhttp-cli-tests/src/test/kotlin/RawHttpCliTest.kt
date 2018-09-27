@@ -19,7 +19,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         fun assertHelpOptOutput(handle: ProcessHandle) {
             val exitValue = handle.waitForEndAndGetStatus()
             assertThat(exitValue, equalTo(0))
-            assertThat(handle.err, equalTo(""))
+            assertNoSysErrOutput(handle)
             assertThat(handle.out, startsWith("=============== RawHTTP CLI ==============="))
         }
 
@@ -179,7 +179,7 @@ class RawHttpCliTest : RawHttpCliTester() {
                 parsedLogDate.isBefore(LocalDateTime.now().plusSeconds(5)) &&
                         parsedLogDate.isAfter(LocalDateTime.now().minusSeconds(10)))
 
-        assertThat(handle.err, equalTo(""))
+        assertNoSysErrOutput(handle)
     }
 
     @Test
