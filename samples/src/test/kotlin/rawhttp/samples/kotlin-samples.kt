@@ -9,24 +9,39 @@ import org.junit.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.client.TcpRawHttpClient
 import spark.Spark
-import java.lang.Thread.sleep
+import java.io.IOException
 import java.net.Socket
 import java.net.URI
 import kotlin.text.Charsets.UTF_8
 
+val testPort = 8082
+
 fun startSparkServer() {
-    Spark.port(8082)
+    Spark.port(testPort)
     Spark.get("/hello", "text/plain") { _, _ -> "Hello" }
     Spark.post("/repeat", "text/plain") { req, _ ->
         val count = req.queryParamOrDefault("count", "10").toInt()
         val text = req.queryParamOrDefault("text", "x")
         text.repeat(count)
     }
-    sleep(150L)
 }
 
 fun stopSparkServer() {
     Spark.stop()
+}
+
+fun waitForPortToBeTaken(port: Int) {
+    for (it in 1..5) {
+        try {
+            val socket = Socket("localhost", port)
+            socket.close()
+            return
+        } catch (e: IOException) {
+            println("Port 8092 not taken yet, waiting...")
+            Thread.sleep(100L)
+        }
+    }
+    throw AssertionError("Port $port was not taken within the timeout")
 }
 
 class KotlinSamples {
@@ -36,7 +51,7 @@ class KotlinSamples {
         @JvmStatic
         fun setup() {
             startSparkServer()
-            sleep(250L)
+            waitForPortToBeTaken(testPort)
         }
 
         @AfterClass
@@ -48,15 +63,15 @@ class KotlinSamples {
 
     @Test
     fun simpleRawHTTPKotlinSample() {
-        val req = RawHttp().parseRequest("GET /hello\r\nHost: localhost:8082").eagerly().run {
+        val req = RawHttp().parseRequest("GET /hello\r\nHost: localhost:$testPort").eagerly().run {
             assertThat(method, equalTo("GET"))
-            assertThat(uri, equalTo(URI.create("http://localhost:8082/hello")))
+            assertThat(uri, equalTo(URI.create("http://localhost:$testPort/hello")))
             assertThat(headers["Host"], equalTo(listOf("localhost")))
             this
         }
 
         // send request to the Spark server
-        val socket = Socket("localhost", 8082)
+        val socket = Socket("localhost", testPort)
         req.writeTo(socket.getOutputStream())
 
         // check the response
@@ -78,7 +93,7 @@ class KotlinSamples {
         val req = RawHttp().parseRequest("""
                 POST /repeat?text=helloKotlin&count=1000
                 User-Agent: RawHTTP
-                Host: localhost:8082""".trimIndent())
+                Host: localhost:$testPort""".trimIndent())
 
         val res = client.send(req)
 
