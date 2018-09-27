@@ -16,6 +16,7 @@ import rawhttp.core.RawHttpRequest;
 import rawhttp.core.body.EagerBodyReader;
 import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
+import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.httpcomponents.RawHttpComponentsClient;
 import spark.Spark;
 
@@ -31,14 +32,17 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static rawhttp.samples.Kotlin_samplesKt.waitForPortToBeTaken;
 
 public class JavaSample {
 
+    private static final int PORT = 8083;
+
     @BeforeClass
     public static void startServer() throws Exception {
-        Spark.port(8082);
+        Spark.port(PORT);
         Spark.get("/hello", "text/plain", (req, res) -> "Hello");
-        Thread.sleep(150L);
+        waitForPortToBeTaken(PORT);
     }
 
     @AfterClass
@@ -111,7 +115,7 @@ public class JavaSample {
     @Test
     public void usingRawHttpWithHttpComponents() throws IOException {
         RawHttpClient<?> client = new RawHttpComponentsClient();
-        RawHttpRequest request = new RawHttp().parseRequest("GET localhost:8082/hello HTTP/1.0");
+        RawHttpRequest request = new RawHttp().parseRequest(String.format("GET localhost:%d/hello HTTP/1.0", PORT));
         EagerHttpResponse<?> response = client.send(request).eagerly();
 
         assertThat(response.getStatusCode(), is(200));
@@ -152,8 +156,8 @@ public class JavaSample {
     public void goingRawWithoutFancyClient() throws IOException {
         RawHttp rawHttp = new RawHttp();
 
-        RawHttpRequest request = rawHttp.parseRequest("GET localhost:8082/hello HTTP/1.0");
-        Socket socket = new Socket("localhost", 8082);
+        RawHttpRequest request = rawHttp.parseRequest(String.format("GET localhost:%d/hello HTTP/1.0", PORT));
+        Socket socket = new Socket("localhost", PORT);
         request.writeTo(socket.getOutputStream());
 
         EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
@@ -166,37 +170,49 @@ public class JavaSample {
     @Test
     public void rudimentaryHttpServerCalledFromHttpComponentsClient() throws Exception {
         RawHttp http = new RawHttp();
-        ServerSocket server = new ServerSocket(8083);
+        ServerSocket server = new ServerSocket(8084);
 
         new Thread(() -> {
-            try {
-                Socket client = server.accept();
-                RawHttpRequest request = http.parseRequest(client.getInputStream());
-                System.out.println("REQUEST:\n" + request);
-                if (request.getUri().getPath().equals("/saysomething")) {
-                    http.parseResponse("HTTP/1.1 200 OK\n" +
-                            "Content-Type: text/plain\n" +
-                            "Content-Length: 9\n" +
-                            "\n" +
-                            "something").writeTo(client.getOutputStream());
-                } else {
-                    http.parseResponse("HTTP/1.1 404 Not Found\n" +
-                            "Content-Type: text/plain\n" +
-                            "Content-Length: 0\n" +
-                            "\n").writeTo(client.getOutputStream());
+            while (true) {
+                try {
+                    Socket client = server.accept();
+                    RawHttpRequest request = http.parseRequest(client.getInputStream());
+                    System.out.println("REQUEST:\n" + request);
+                    if (request.getUri().getPath().equals("/saysomething")) {
+                        http.parseResponse("HTTP/1.1 200 OK\n" +
+                                "Content-Type: text/plain\n" +
+                                "Content-Length: 9\n" +
+                                "\n" +
+                                "something").writeTo(client.getOutputStream());
+                    } else {
+                        http.parseResponse("HTTP/1.1 404 Not Found\n" +
+                                "Content-Type: text/plain\n" +
+                                "Content-Length: 0\n" +
+                                "\n").writeTo(client.getOutputStream());
+                    }
+
+                } catch (InvalidHttpRequest e) {
+                    //noinspection StatementWithEmptyBody
+                    if ("No content".equalsIgnoreCase(e.getMessage())) {
+                        // heartbeat, ignore
+                    } else {
+                        e.printStackTrace();
+                        break;
+                    }
+                } catch (IOException e) {
+                    // stopped
+                    break;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }).start();
 
         // let the server start
-        Thread.sleep(150L);
+        waitForPortToBeTaken(8084);
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
         HttpUriRequest httpRequest = RequestBuilder.get()
-                .setUri(URI.create("http://localhost:8083/saysomething"))
+                .setUri(URI.create("http://localhost:8084/saysomething"))
                 .build();
 
         try {
