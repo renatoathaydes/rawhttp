@@ -11,7 +11,6 @@ import java.util.ArrayList
 import java.util.Arrays.asList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.stream.Stream
 
 class RawHttpDuplexTest {
 
@@ -24,7 +23,7 @@ class RawHttpDuplexTest {
         val errors = ArrayList<Throwable>()
         val closeLatch = CountDownLatch(1)
 
-        val response = duplex.acceptText(Stream.of("received message", "")) { sender ->
+        val response = duplex.acceptText(listOf("received message", "").iterator()) { sender ->
             object : MessageHandler {
                 init {
                     sender.sendTextMessage("hello duplex")

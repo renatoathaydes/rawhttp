@@ -1,6 +1,15 @@
 package com.athaydes.rawhttp.duplex;
 
 import com.athaydes.rawhttp.duplex.body.StreamedChunkedBody;
+import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpHeaders;
+import rawhttp.core.RawHttpRequest;
+import rawhttp.core.RawHttpResponse;
+import rawhttp.core.body.ChunkedBodyContents.Chunk;
+import rawhttp.core.body.ChunkedBodyParser;
+import rawhttp.core.body.InputStreamChunkDecoder;
+import rawhttp.core.client.TcpRawHttpClient;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -12,15 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import rawhttp.core.RawHttp;
-import rawhttp.core.RawHttpHeaders;
-import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
-import rawhttp.core.body.ChunkedBodyContents.Chunk;
-import rawhttp.core.body.ChunkedBodyParser;
-import rawhttp.core.body.InputStreamChunkDecoder;
-import rawhttp.core.client.TcpRawHttpClient;
 
 import static com.athaydes.rawhttp.duplex.MessageSender.PING_MESSAGE;
 import static com.athaydes.rawhttp.duplex.MessageSender.PLAIN_TEXT_HEADER;
@@ -163,12 +163,9 @@ public class RawHttpDuplex {
      *                              message handler receives messages from the remote.
      * @return response to be sent to the client to initiate duplex communication.
      */
-    public RawHttpResponse<Void> acceptText(Stream<String> incomingMessageStream,
+    public RawHttpResponse<Void> acceptText(Iterator<String> incomingMessageStream,
                                             Function<MessageSender, MessageHandler> createHandler) {
-        final RawHttpHeaders plainTextHeaders = PLAIN_TEXT_HEADER.and(UTF8_HEADER);
-        return accept(incomingMessageStream.map(text ->
-                        new Chunk(plainTextHeaders, text.getBytes(UTF_8))).iterator(),
-                createHandler);
+        return accept(new TextToChunkIterator(incomingMessageStream), createHandler);
     }
 
     /**
@@ -242,6 +239,28 @@ public class RawHttpDuplex {
             charset = StandardCharsets.UTF_8;
         }
         return charset;
+    }
+
+    private static class TextToChunkIterator implements Iterator<Chunk> {
+
+        static final RawHttpHeaders plainTextHeaders = PLAIN_TEXT_HEADER.and(UTF8_HEADER);
+
+        private final Iterator<String> textIterator;
+
+        TextToChunkIterator(Iterator<String> textIterator) {
+            this.textIterator = textIterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return textIterator.hasNext();
+        }
+
+        @Override
+        public Chunk next() {
+            String text = textIterator.next();
+            return new Chunk(plainTextHeaders, text.getBytes(UTF_8));
+        }
     }
 
 }
