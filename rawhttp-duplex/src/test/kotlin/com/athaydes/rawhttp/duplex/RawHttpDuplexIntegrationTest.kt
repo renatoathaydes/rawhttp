@@ -33,7 +33,7 @@ class RawHttpDuplexIntegrationTest {
         val receivedBinaryMessages = ArrayList<ByteArray>()
         val latch = CountDownLatch(2)
 
-        duplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex"), { sender ->
+        duplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
             object : MessageHandler {
                 init {
                     // immediately send a text message to the server
@@ -56,7 +56,7 @@ class RawHttpDuplexIntegrationTest {
                     latch.countDown()
                 }
             }
-        })
+        }
 
         if (!latch.await(5, TimeUnit.SECONDS)) {
             throw AssertionError("Messages not received within the timeout")
@@ -73,7 +73,7 @@ class RawHttpDuplexIntegrationTest {
         server.start { request ->
             println("Accepting request\n$request")
             // whatever request comes in, we start a duplex connection
-            Optional.of(duplex.accept(request, { sender ->
+            Optional.of(duplex.accept(request) { sender ->
                 object : MessageHandler {
                     override fun onTextMessage(message: String) {
                         sender.sendTextMessage("Message: $message")
@@ -85,7 +85,7 @@ class RawHttpDuplexIntegrationTest {
                         sender.sendBinaryMessage(response)
                     }
                 }
-            }))
+            })
         }
         Thread.sleep(250L)
         return server

@@ -35,13 +35,13 @@ class RawHttpDuplexSocketTimeoutTest {
         val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 }))
         shouldThrow<SocketTimeoutException> {
             val errorQueue = LinkedBlockingDeque<Throwable>(1)
-            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex"), { _ ->
+            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { _ ->
                 object : MessageHandler {
                     override fun onError(error: Throwable) {
                         errorQueue.push(error)
                     }
                 }
-            })
+            }
             val throwable = errorQueue.poll(500, TimeUnit.MILLISECONDS)
             if (throwable != null) throw throwable
         }
@@ -55,7 +55,7 @@ class RawHttpDuplexSocketTimeoutTest {
         val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 150 }))
         val errorQueue = LinkedBlockingDeque<Throwable>(1)
 
-        shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex"), { sender ->
+        shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
             var counter = 3
             scheduler.scheduleAtFixedRate({
                 sender.ping()
@@ -70,7 +70,7 @@ class RawHttpDuplexSocketTimeoutTest {
                     errorQueue.push(error)
                 }
             }
-        })
+        }
 
         val throwable = errorQueue.poll(500, TimeUnit.MILLISECONDS)
         if (throwable != null) throw throwable
@@ -83,7 +83,7 @@ class RawHttpDuplexSocketTimeoutTest {
         server.start { request ->
             println("Accepting request\n$request")
             // whatever request comes in, we start a duplex connection
-            Optional.of(duplex.accept(request, { _ ->
+            Optional.of(duplex.accept(request) { _ ->
                 object : MessageHandler {
                     override fun onTextMessage(message: String) {
                         serverMessages.add(message)
@@ -93,7 +93,7 @@ class RawHttpDuplexSocketTimeoutTest {
                         serverMessages.add(message)
                     }
                 }
-            }))
+            })
         }
         Thread.sleep(250L)
         return server

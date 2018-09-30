@@ -24,7 +24,7 @@ class RawHttpDuplexTest {
         val errors = ArrayList<Throwable>()
         val closeLatch = CountDownLatch(1)
 
-        val response = duplex.acceptText(Stream.of("received message", ""), { sender ->
+        val response = duplex.acceptText(Stream.of("received message", "")) { sender ->
             object : MessageHandler {
                 init {
                     sender.sendTextMessage("hello duplex")
@@ -47,7 +47,7 @@ class RawHttpDuplexTest {
                 }
 
             }
-        })
+        }
 
         if (!closeLatch.await(5, TimeUnit.SECONDS)) {
             throw AssertionError("Did not close handler within timeout")
