@@ -186,8 +186,9 @@ abstract class RawHttpCliTester {
             var failedConnectionAttempts = 0
             while (failedConnectionAttempts < 10) {
                 try {
-                    val client = TcpRawHttpClient()
-                    response = client.send(RawHttp().parseRequest(request)).eagerly(false)
+                    response = TcpRawHttpClient().use {client ->
+                         client.send(RawHttp().parseRequest(request)).eagerly(false)
+                    }
                     break
                 } catch (e: IOException) {
                     failedConnectionAttempts++
