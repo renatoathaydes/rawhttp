@@ -63,9 +63,7 @@ public class RawHttpDuplex {
     private static final Duration DEFAULT_PING_PERIOD = Duration.ofSeconds(5);
 
     private final RawHttpResponse<Void> okResponse;
-    private final RawHttpClient<?> client;
-    private final Duration pingPeriod;
-    private final ScheduledExecutorService pinger;
+    private final RawHttpDuplexOptions options;
 
     /**
      * Create a new instance of {@link RawHttpDuplex} using the default configuration.
@@ -92,7 +90,7 @@ public class RawHttpDuplex {
      *                   Pings are used to keep socket reads from timing out.
      */
     public RawHttpDuplex(RawHttpClient<?> client, Duration pingPeriod) {
-        this(new RawHttpDuplexOptions(client, pingPeriod));
+        this(RawHttpDuplexOptions.newBuilder().withClient(client).withPingPeriod(pingPeriod).build());
     }
 
     /**
@@ -105,9 +103,7 @@ public class RawHttpDuplex {
      */
     public RawHttpDuplex(RawHttpDuplexOptions options) {
         this.okResponse = new RawHttp().parseResponse("200 OK");
-        this.client = options.getClient();
-        this.pingPeriod = options.getPingPeriod();
-        this.pinger = options.getPingScheduler();
+        this.options = options;
     }
 
     /**
@@ -123,8 +119,9 @@ public class RawHttpDuplex {
      */
     public void connect(RawHttpRequest request, Function<MessageSender, MessageHandler> createHandler)
             throws IOException {
-        MessageSender sender = new MessageSender();
+        MessageSender sender = new MessageSender(options.createMessageQueue());
         MessageHandler handler = createHandler.apply(sender);
+        RawHttpClient<?> client = options.getClient();
 
         RawHttpResponse<?> response = client.send(request
                 .withBody(new StreamedChunkedBody(sender.getChunkStream())));
@@ -197,7 +194,7 @@ public class RawHttpDuplex {
      */
     public RawHttpResponse<Void> accept(Iterator<Chunk> incomingMessageStream,
                                         Function<MessageSender, MessageHandler> createHandler) {
-        MessageSender sender = new MessageSender();
+        MessageSender sender = new MessageSender(options.createMessageQueue());
         MessageHandler handler = createHandler.apply(sender);
         startMessageLoop(incomingMessageStream, sender, handler);
         return okResponse.withBody(new StreamedChunkedBody(sender.getChunkStream()));
@@ -206,7 +203,11 @@ public class RawHttpDuplex {
     private void startMessageLoop(Iterator<Chunk> chunkReceiver,
                                   MessageSender sender,
                                   MessageHandler handler) {
-        pinger.scheduleAtFixedRate(sender::ping, pingPeriod.toMillis(), pingPeriod.toMillis(), TimeUnit.MILLISECONDS);
+        long pingPeriod = options.getPingPeriod().toMillis();
+        ScheduledExecutorService pinger = options.getPingScheduler();
+
+        pinger.scheduleAtFixedRate(sender::ping,
+                pingPeriod, pingPeriod, TimeUnit.MILLISECONDS);
 
         new Thread(() -> {
             try {
