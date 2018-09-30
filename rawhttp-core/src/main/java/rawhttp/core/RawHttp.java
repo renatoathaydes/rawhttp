@@ -14,9 +14,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -319,6 +323,38 @@ public class RawHttp {
         boolean hasNoBody = startsWith(1, statusCode) || statusCode == 204 || statusCode == 304;
 
         return !hasNoBody;
+    }
+
+    /**
+     * Wait for the given port to be taken before proceeding.
+     * <p>
+     * This is useful for waiting for a server to claim a port, for example, or to just check if the port is
+     * already taken before attempting to use it.
+     * <p>
+     * A {@link Socket} will be created to connect to the given port on the loop-back address. If the port is taken,
+     * the socket will be immediately closed and this method returns successfully, otherwise, after a short pause,
+     * the socket will be created again and the process repeats until the given timeout expires.
+     *
+     * @param port    expected to be taken
+     * @param timeout to wait for
+     * @throws TimeoutException if the port was not taken within the timeout
+     */
+    public static void waitForPortToBeTaken(int port, Duration timeout) throws TimeoutException {
+        Instant expireTime = Instant.now().plus(timeout);
+        while (Instant.now().isBefore(expireTime)) {
+            try {
+                Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
+                socket.close();
+                return;
+            } catch (IOException e) {
+                try {
+                    Thread.sleep(100L);
+                } catch (InterruptedException e1) {
+                    throw new RuntimeException(e1);
+                }
+            }
+        }
+        throw new TimeoutException("Port $port was not taken within the timeout");
     }
 
     private static boolean startsWith(int firstDigit, int statusCode) {

@@ -5,29 +5,15 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttp
+import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.bePresent
 import rawhttp.core.shouldBeOneOf
 import spark.Spark.get
 import spark.Spark.port
 import spark.Spark.post
 import spark.Spark.stop
-import java.io.IOException
-import java.net.Socket
 import java.nio.charset.StandardCharsets.UTF_8
-
-fun waitForPortToBeTaken(port: Int) {
-    for (it in 1..5) {
-        try {
-            val socket = Socket("localhost", port)
-            socket.close()
-            return
-        } catch (e: IOException) {
-            println("Port 8092 not taken yet, waiting...")
-            Thread.sleep(100L)
-        }
-    }
-    throw AssertionError("Port $port was not taken within the timeout")
-}
+import java.time.Duration
 
 fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     println("Starting Spark for spec: $spec")
@@ -36,7 +22,7 @@ fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     get("/say-hi", "application/json") { _, _ -> "{ \"message\": \"Hi there\" }" }
     post("/echo", "text/plain") { req, _ -> req.body() }
 
-    waitForPortToBeTaken(8083)
+    waitForPortToBeTaken(8083, Duration.ofSeconds(2))
     println("Spark is on")
     runTest()
 

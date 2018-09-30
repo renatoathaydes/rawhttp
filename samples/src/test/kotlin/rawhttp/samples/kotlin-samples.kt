@@ -9,12 +9,12 @@ import org.junit.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.client.TcpRawHttpClient
 import spark.Spark
-import java.io.IOException
 import java.net.Socket
 import java.net.URI
+import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
-val testPort = 8082
+const val testPort = 8082
 
 fun startSparkServer() {
     Spark.port(testPort)
@@ -30,20 +30,6 @@ fun stopSparkServer() {
     Spark.stop()
 }
 
-fun waitForPortToBeTaken(port: Int) {
-    for (it in 1..5) {
-        try {
-            val socket = Socket("localhost", port)
-            socket.close()
-            return
-        } catch (e: IOException) {
-            println("Port 8092 not taken yet, waiting...")
-            Thread.sleep(100L)
-        }
-    }
-    throw AssertionError("Port $port was not taken within the timeout")
-}
-
 class KotlinSamples {
 
     companion object {
@@ -51,7 +37,7 @@ class KotlinSamples {
         @JvmStatic
         fun setup() {
             startSparkServer()
-            waitForPortToBeTaken(testPort)
+            RawHttp.waitForPortToBeTaken(testPort, Duration.ofSeconds(4))
         }
 
         @AfterClass

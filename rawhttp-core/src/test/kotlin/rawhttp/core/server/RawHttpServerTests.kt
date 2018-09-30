@@ -4,11 +4,12 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import org.junit.Test
 import rawhttp.core.RawHttp
+import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
-import rawhttp.core.client.waitForPortToBeTaken
 import java.net.ServerSocket
+import java.time.Duration
 import java.util.concurrent.Executors
 
 class RawHttpServerTests {
@@ -16,11 +17,11 @@ class RawHttpServerTests {
     @Test
     fun ServerCanHandleHttpClientRequest() {
         val http = RawHttp()
-        val executor = Executors.newCachedThreadPool({ r ->
+        val executor = Executors.newCachedThreadPool { r ->
             val thread = Thread(r, "tcp-raw-http-server-test")
             thread.isDaemon = true
             thread
-        })
+        }
 
         executor.execute {
             val serverSocket = ServerSocket(8092)
@@ -50,7 +51,7 @@ class RawHttpServerTests {
             }
         }
 
-        waitForPortToBeTaken(8092)
+        waitForPortToBeTaken(8092, Duration.ofSeconds(2))
 
         val httpClient = TcpRawHttpClient()
 

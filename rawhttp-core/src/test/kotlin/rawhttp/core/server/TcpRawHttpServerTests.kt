@@ -7,14 +7,15 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldHave
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttp
+import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
-import rawhttp.core.client.waitForPortToBeTaken
 import rawhttp.core.validDateHeader
 import java.lang.Thread.sleep
 import java.net.Socket
 import java.net.SocketException
+import java.time.Duration
 import java.util.Optional
 
 class TcpRawHttpServerTests : StringSpec() {
@@ -57,7 +58,7 @@ class TcpRawHttpServerTests : StringSpec() {
 
     override fun interceptSpec(context: Spec, spec: () -> Unit) {
         startServer()
-        waitForPortToBeTaken(8093)
+        waitForPortToBeTaken(8093, Duration.ofSeconds(2))
         try {
             spec()
         } finally {

@@ -27,12 +27,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static rawhttp.samples.Kotlin_samplesKt.waitForPortToBeTaken;
 
 public class JavaSample {
 
@@ -42,7 +42,7 @@ public class JavaSample {
     public static void startServer() throws Exception {
         Spark.port(PORT);
         Spark.get("/hello", "text/plain", (req, res) -> "Hello");
-        waitForPortToBeTaken(PORT);
+        RawHttp.waitForPortToBeTaken(PORT, Duration.ofSeconds(2));
     }
 
     @AfterClass
@@ -207,7 +207,7 @@ public class JavaSample {
         }).start();
 
         // let the server start
-        waitForPortToBeTaken(8084);
+        RawHttp.waitForPortToBeTaken(8084, Duration.ofSeconds(2));
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
