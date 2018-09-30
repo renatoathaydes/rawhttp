@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -66,6 +65,7 @@ public class RawHttpDuplex {
     private final RawHttpResponse<Void> okResponse;
     private final RawHttpClient<?> client;
     private final Duration pingPeriod;
+    private final ScheduledExecutorService pinger;
 
     /**
      * Create a new instance of {@link RawHttpDuplex} using the default configuration.
@@ -107,6 +107,7 @@ public class RawHttpDuplex {
         this.okResponse = new RawHttp().parseResponse("200 OK");
         this.client = options.getClient();
         this.pingPeriod = options.getPingPeriod();
+        this.pinger = options.getPingScheduler();
     }
 
     /**
@@ -205,7 +206,6 @@ public class RawHttpDuplex {
     private void startMessageLoop(Iterator<Chunk> chunkReceiver,
                                   MessageSender sender,
                                   MessageHandler handler) {
-        final ScheduledExecutorService pinger = Executors.newSingleThreadScheduledExecutor();
         pinger.scheduleAtFixedRate(sender::ping, pingPeriod.toMillis(), pingPeriod.toMillis(), TimeUnit.MILLISECONDS);
 
         new Thread(() -> {
@@ -242,7 +242,7 @@ public class RawHttpDuplex {
             } finally {
                 pinger.shutdown();
             }
-        }).start();
+        }, toString()).start();
     }
 
     private static Charset getCharset(RawHttpHeaders extensions) {
