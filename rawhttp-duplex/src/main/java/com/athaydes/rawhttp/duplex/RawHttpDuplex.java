@@ -8,8 +8,10 @@ import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.ChunkedBodyContents.Chunk;
 import rawhttp.core.body.ChunkedBodyParser;
 import rawhttp.core.body.InputStreamChunkDecoder;
+import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -54,14 +56,15 @@ import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
  * to be a binary message.
  * <p>
  * Each side of a connection pings the other every 5 seconds, by default, to avoid the TCP socket timing out.
- * To use a different ping period, use the {@link RawHttpDuplex#RawHttpDuplex(TcpRawHttpClient, Duration)} constructor.
+ * To use a different ping period, use either the {@link RawHttpDuplex#RawHttpDuplex(RawHttpClient, Duration)}
+ * or the {@link RawHttpDuplex#RawHttpDuplex(RawHttpDuplexOptions)} constructors.
  */
 public class RawHttpDuplex {
 
     private static final Duration DEFAULT_PING_PERIOD = Duration.ofSeconds(5);
 
     private final RawHttpResponse<Void> okResponse;
-    private final TcpRawHttpClient client;
+    private final RawHttpClient<?> client;
     private final Duration pingPeriod;
 
     /**
@@ -76,7 +79,7 @@ public class RawHttpDuplex {
      *
      * @param client used to connect to a server
      */
-    public RawHttpDuplex(TcpRawHttpClient client) {
+    public RawHttpDuplex(RawHttpClient<?> client) {
         this(client, DEFAULT_PING_PERIOD);
     }
 
@@ -88,10 +91,22 @@ public class RawHttpDuplex {
      *                   <p>
      *                   Pings are used to keep socket reads from timing out.
      */
-    public RawHttpDuplex(TcpRawHttpClient client, Duration pingPeriod) {
+    public RawHttpDuplex(RawHttpClient<?> client, Duration pingPeriod) {
+        this(new RawHttpDuplexOptions(client, pingPeriod));
+    }
+
+    /**
+     * Create a new instance of {@link RawHttpDuplex} that uses the given options.
+     * <p>
+     * This is the most general constructor, as {@link RawHttpDuplexOptions} can provide all options other constructors
+     * accept.
+     *
+     * @param options to use for this instance
+     */
+    public RawHttpDuplex(RawHttpDuplexOptions options) {
         this.okResponse = new RawHttp().parseResponse("200 OK");
-        this.client = client;
-        this.pingPeriod = pingPeriod;
+        this.client = options.getClient();
+        this.pingPeriod = options.getPingPeriod();
     }
 
     /**
@@ -114,7 +129,9 @@ public class RawHttpDuplex {
                 .withBody(new StreamedChunkedBody(sender.getChunkStream())));
 
         if (response.getStatusCode() != 200) {
-            client.close();
+            if (client instanceof Closeable) {
+                ((Closeable) client).close();
+            }
             throw new RuntimeException("Server response status code is not 200: " + response.getStatusCode());
         }
 
