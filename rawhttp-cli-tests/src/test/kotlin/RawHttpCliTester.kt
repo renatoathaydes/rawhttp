@@ -173,6 +173,15 @@ abstract class RawHttpCliTester {
             assertNoSysErrOutput(handle)
         }
 
+        fun assertSuccessRequestIsLoggedThenSuccessResponse(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+
+            // there should be a new-line between the request and the response,
+            // plus 2 new-lines to indicate the end of the request
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_REQUEST + "\n\n\n" + SUCCESS_HTTP_RESPONSE))
+            assertNoSysErrOutput(handle)
+        }
+
         fun assertNoSysErrOutput(handle: ProcessHandle) {
             var errOut = handle.err
             if (errOut.startsWith("Picked up _JAVA_OPTIONS")) {
@@ -186,8 +195,8 @@ abstract class RawHttpCliTester {
             var failedConnectionAttempts = 0
             while (failedConnectionAttempts < 10) {
                 try {
-                    response = TcpRawHttpClient().use {client ->
-                         client.send(RawHttp().parseRequest(request)).eagerly(false)
+                    response = TcpRawHttpClient().use { client ->
+                        client.send(RawHttp().parseRequest(request)).eagerly(false)
                     }
                     break
                 } catch (e: IOException) {

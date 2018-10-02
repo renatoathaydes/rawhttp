@@ -194,6 +194,45 @@ public class OptionsParserTest {
     }
 
     @Test
+    public void canParseSendRequestWithRequestLoggingOption() throws OptionsException {
+        String[][] examples = new String[][]{
+                {"send", "-t", "hello", "-l"}, {"send", "--log-request", "--file", "hi"}
+        };
+
+        for (String[] example : examples) {
+            String exampleText = Arrays.toString(example);
+
+            Options options = OptionsParser.parse(example);
+
+            String result = options.run(
+                    c -> c.run(o -> "sysin",
+                            (f, o) -> "" + o.logRequest,
+                            (t, o) -> "" + o.logRequest),
+                    s -> "server", h -> "help");
+            assertEquals("Example: " + exampleText,
+                    "true", result);
+        }
+
+        String[][] noLogExamples = new String[][]{
+                {"send", "-t", "hello"}, {"send", "--file", "hi"}
+        };
+
+        for (String[] example : noLogExamples) {
+            String exampleText = Arrays.toString(example);
+
+            Options options = OptionsParser.parse(example);
+
+            String result = options.run(
+                    c -> c.run(o -> "sysin",
+                            (f, o) -> "" + o.logRequest,
+                            (t, o) -> "" + o.logRequest),
+                    s -> "server", h -> "help");
+            assertEquals("Example: " + exampleText,
+                    "false", result);
+        }
+    }
+
+    @Test
     public void cannotParseSendRequestTextOptionMissingMandatoryArg() {
         String[][] examples = new String[][]{
                 {"send", "-t"}, {"send", "--text"},
@@ -408,10 +447,11 @@ public class OptionsParserTest {
                 new AssertionError("Request body is not present"));
         assertEquals(new File("BODY"), requestBody.run(f -> f, t -> null));
         assertTrue(result.options.printBodyOnly);
+        assertFalse(result.options.logRequest);
         assertEquals("REQ", result.requestText);
         assertNull(result.requestFile);
 
-        options = OptionsParser.parse(new String[]{"send", "-f", "REQ", "-p", "-g", "b.js"});
+        options = OptionsParser.parse(new String[]{"send", "-f", "REQ", "-p", "-g", "b.js", "-l"});
         clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -424,10 +464,11 @@ public class OptionsParserTest {
                 new AssertionError("Request body is not present"));
         assertEquals(new File("b.js"), requestBody.run(f -> f, t -> null));
         assertTrue(result.options.printBodyOnly);
+        assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("REQ"), result.requestFile);
 
-        options = OptionsParser.parse(new String[]{"send", "--body-file", "body.js", "--file", "file.req"});
+        options = OptionsParser.parse(new String[]{"send", "--log-request", "--body-file", "body.js", "--file", "file.req"});
         clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -440,6 +481,7 @@ public class OptionsParserTest {
                 new AssertionError("Request body is not present"));
         assertEquals(new File("body.js"), requestBody.run(f -> f, t -> null));
         assertFalse(result.options.printBodyOnly);
+        assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file.req"), result.requestFile);
 
@@ -456,10 +498,11 @@ public class OptionsParserTest {
                 new AssertionError("Request body is not present"));
         assertEquals("Hello", requestBody.run(f -> null, t -> t));
         assertFalse(result.options.printBodyOnly);
+        assertFalse(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);
 
-        options = OptionsParser.parse(new String[]{"send", "--body-file", "my.body", "--file", "file2.req"});
+        options = OptionsParser.parse(new String[]{"send", "--body-file", "my.body", "-l", "--file", "file2.req"});
         clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -472,6 +515,7 @@ public class OptionsParserTest {
                 new AssertionError("Request body is not present"));
         assertEquals(new File("my.body"), requestBody.run(f -> f, t -> null));
         assertFalse(result.options.printBodyOnly);
+        assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);
     }

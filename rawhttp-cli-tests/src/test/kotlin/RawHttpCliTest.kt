@@ -13,7 +13,6 @@ import java.util.Locale
 
 class RawHttpCliTest : RawHttpCliTester() {
 
-
     @Test
     fun canPrintHelp() {
         fun assertHelpOptOutput(handle: ProcessHandle) {
@@ -49,6 +48,12 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canLogRequestFromTextArgument() {
+        val handle = runCli("send", "-l", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
     fun serverReturns404OnNonExistentResource() {
         val handle = runCli("send", "-t", NOT_FOUND_HTTP_REQUEST)
         assertOutputIs404Response(handle)
@@ -64,6 +69,15 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canLogRequestFromFile() {
+        val tempFile = File.createTempFile(javaClass.name, "request")
+        tempFile.writeText(SUCCESS_HTTP_REQUEST)
+
+        val handle = runCli("send", "-f", tempFile.absolutePath, "--log-request")
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
     fun canServeLocalDirectory() {
         val workDir = File(".")
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
@@ -76,7 +90,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             GET http://0.0.0.0:8080/${someFileInWorkDir.name}
             Accept: */*
             """.trimIndent()).eagerly()
-        } catch (e:AssertionError){
+        } catch (e: AssertionError) {
             println(handle)
             throw e
         } finally {
