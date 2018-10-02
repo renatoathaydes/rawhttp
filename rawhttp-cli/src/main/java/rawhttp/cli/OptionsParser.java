@@ -58,10 +58,12 @@ final class RequestBody {
 final class RequestRunOptions {
     private final RequestBody requestBody;
     final boolean printBodyOnly;
+    final boolean logRequest;
 
-    RequestRunOptions(RequestBody requestBody, boolean printBodyOnly) {
+    RequestRunOptions(RequestBody requestBody, boolean printBodyOnly, boolean logRequest) {
         this.requestBody = requestBody;
         this.printBodyOnly = printBodyOnly;
+        this.logRequest = logRequest;
     }
 
     public Optional<RequestBody> getRequestBody() {
@@ -196,6 +198,8 @@ final class OptionsParser {
         String requestText = null;
         RequestBody requestBody = null;
         boolean printBodyOnly = false;
+        boolean logRequest = false;
+
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
             switch (arg) {
@@ -263,12 +267,16 @@ final class OptionsParser {
                 case "--print-body-only":
                     printBodyOnly = true;
                     break;
+                case "-l":
+                case "--log-request":
+                    logRequest = true;
+                    break;
                 default:
                     throw new OptionsException("Unrecognized option: " + arg);
             }
         }
 
-        RequestRunOptions options = new RequestRunOptions(requestBody, printBodyOnly);
+        RequestRunOptions options = new RequestRunOptions(requestBody, printBodyOnly, logRequest);
         ClientOptions clientOptions;
         if (requestFile != null) {
             clientOptions = ClientOptions.withFile(requestFile, options);

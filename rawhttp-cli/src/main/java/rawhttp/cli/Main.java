@@ -1,12 +1,5 @@
 package rawhttp.cli;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Optional;
-import java.util.Properties;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
@@ -17,6 +10,14 @@ import rawhttp.core.client.TcpRawHttpClient;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Optional;
+import java.util.Properties;
 
 public class Main {
 
@@ -104,6 +105,8 @@ public class Main {
                         "      read request as text\n" +
                         "  * -p --print-body-only\n" +
                         "      print response body only\n" +
+                        "  * -l --log-request\n" +
+                        "      log the request\n" +
                         "  * -b --body-text <text>\n" +
                         "      replace message body with the text\n" +
                         "  * -g --body-file <file>\n" +
@@ -174,6 +177,16 @@ public class Main {
                 }
             }
             request = request.withBody(requestBody);
+        }
+
+        if (options.logRequest) {
+            try {
+                request = request.eagerly();
+                request.writeTo(System.out);
+                System.out.println();
+            } catch (IOException e) {
+                System.err.println("Error logging request to sysout: " + e);
+            }
         }
 
         try (TcpRawHttpClient client = new TcpRawHttpClient()) {
