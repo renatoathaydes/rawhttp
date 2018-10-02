@@ -1,11 +1,12 @@
 package rawhttp.cli;
 
+import org.junit.Test;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -167,17 +168,7 @@ public class OptionsParserTest {
                 {"send", "-p", "-f"}, {"send", "--body-file", "my-file", "--file"}
         };
 
-        for (String[] example : examples) {
-            String exampleText = Arrays.toString(example);
-            try {
-                OptionsParser.parse(example);
-                fail("Did not fail to parse example: " + exampleText);
-            } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText, "Missing argument for " +
-                        example[example.length - 1] +
-                        " flag", e.getMessage());
-            }
-        }
+        assertMissingArgumentError(examples);
     }
 
     @Test
@@ -209,19 +200,7 @@ public class OptionsParserTest {
                 {"send", "-b", "b", "-t"}, {"send", "--body-file", "b", "-p", "--text"}
         };
 
-        for (String[] example : examples) {
-            String exampleText = Arrays.toString(example);
-
-            try {
-                OptionsParser.parse(example);
-                fail("Did not fail to parse example: " + exampleText);
-            } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "Missing argument for " +
-                                example[example.length - 1] +
-                                " flag", e.getMessage());
-            }
-        }
+        assertMissingArgumentError(examples);
     }
 
     @Test
@@ -287,17 +266,7 @@ public class OptionsParserTest {
                 {"send", "-p", "-b"}, {"send", "--file", "my-file", "--body-file"}
         };
 
-        for (String[] example : examples) {
-            String exampleText = Arrays.toString(example);
-            try {
-                OptionsParser.parse(example);
-                fail("Did not fail to parse example: " + exampleText);
-            } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText, "Missing argument for " +
-                        example[example.length - 1] +
-                        " flag", e.getMessage());
-            }
-        }
+        assertMissingArgumentError(examples);
     }
 
     @Test
@@ -307,17 +276,7 @@ public class OptionsParserTest {
                 {"send", "-p", "-b"}, {"send", "--file", "my-file", "--body-text"}
         };
 
-        for (String[] example : examples) {
-            String exampleText = Arrays.toString(example);
-            try {
-                OptionsParser.parse(example);
-                fail("Did not fail to parse example: " + exampleText);
-            } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText, "Missing argument for " +
-                        example[example.length - 1] +
-                        " flag", e.getMessage());
-            }
-        }
+        assertMissingArgumentError(examples);
     }
 
     @Test
@@ -682,6 +641,20 @@ public class OptionsParserTest {
         assertExampleFails.accept(new String[]{"send", "."}, ".");
         assertExampleFails.accept(new String[]{"send", "-z"}, "-z");
         assertExampleFails.accept(new String[]{"send", "-p", "-f", "file", "-z", "-p"}, "-z");
+    }
+
+    private static void assertMissingArgumentError(String[][] examples) {
+        for (String[] example : examples) {
+            String exampleText = Arrays.toString(example);
+            try {
+                OptionsParser.parse(example);
+                fail("Did not fail to parse example: " + exampleText);
+            } catch (OptionsException e) {
+                assertEquals("Example: " + exampleText, "Missing argument for " +
+                        example[example.length - 1] +
+                        " flag", e.getMessage());
+            }
+        }
     }
 
 }
