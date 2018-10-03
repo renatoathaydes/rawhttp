@@ -50,6 +50,11 @@ abstract class RawHttpCliTester {
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
 
+        const val SUCCESS_LOGGED_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
+                "Host: localhost\r\n" +
+                "Accept: */*\r\n" +
+                "User-Agent: RawHTTP"
+
         const val NOT_FOUND_HTTP_REQUEST = "GET /does/not/exist HTTP/1.1\r\n" +
                 "Host: localhost:8083\r\n" +
                 "Accept: */*\r\n" +
@@ -178,7 +183,7 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_REQUEST + "\n\n\n" + SUCCESS_HTTP_RESPONSE))
+            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE))
             assertNoSysErrOutput(handle)
         }
 
