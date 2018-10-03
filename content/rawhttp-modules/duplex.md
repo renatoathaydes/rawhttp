@@ -11,7 +11,7 @@ The entry point of the library is the `com.athaydes.rawhttp.duplex.RawHttpDuplex
 Its `connect` methods are used from a client to connect to a server,
 while the `accept` methods should be used within a HTTP server to handle requests from a client.
 
-Example code on the server:
+Example Kotlin code on the server:
 
 {{< highlight kotlin >}}
 import rawhttp.core.*
@@ -38,7 +38,9 @@ server.start { request ->
 }
 {{< / highlight >}}
 
-Example code on the client:
+<hr/>
+
+Example Kotlin code on the client:
 
 {{< highlight kotlin >}}
 import rawhttp.core.*
@@ -52,6 +54,8 @@ duplex.connect(http.parseRequest("POST http://localhost:8082/connect"), { sender
     object : MessageHandler { /* same API as on the server */ }
 }
 {{< / highlight >}}
+
+## How duplex works
 
 The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:
 
@@ -78,7 +82,7 @@ To use a different ping period, use the {@link RawHttpDuplex#RawHttpDuplex(TcpRa
 ## Demo
 
 As is mandatory for duplex communication implementations,
-a [Chat Demo application](https://github.com/renatoathaydes/rawhttp/blob/back-to-java8/rawhttp-duplex/src/test/kotlin/chat-example.kt)
+a [Chat Demo application](https://github.com/renatoathaydes/rawhttp/blob/master/rawhttp-duplex/src/test/kotlin/chat-example.kt)
 was written in Kotlin to demonstrate usage of this library.
 
 The video below shows it in action:

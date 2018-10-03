@@ -93,7 +93,7 @@ RawHttp http = new RawHttp();
 
 server.start(request -> {
     RawHttpResponse<?> response = http.parseResponse(...);
-    return response;
+    return Optional.of(response);
 });
 {{< / highlight >}}
 

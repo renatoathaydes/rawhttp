@@ -30,7 +30,9 @@ It prints the full HTTP response (including status line, headers, body) to `stdo
 
 Usage:
 
-`rawhttp send [options]`
+```
+rawhttp send [options]
+```
 
 Options:
 
@@ -41,6 +43,8 @@ Options:
       read request as text
 * -p --print-body-only
       print response body only
+* -l --log-request
+      log the request
 * -b --body-text <text>
       replace message body with the text
 * -g --body-file <text>
