@@ -27,5 +27,8 @@ cd site/
 hugo || exit 1
 cd ..
 
-#echo "Updating gh-pages branch"
-#cd public && git add --all && git commit -m "Publishing to gh-pages"
+if [ "$1" = "-d" ]
+then
+    echo "Updating gh-pages branch and deploying website"
+    cd public && git add --all && git commit -m "Publishing to gh-pages" && git push
+fi
