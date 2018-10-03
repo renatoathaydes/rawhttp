@@ -19,6 +19,6 @@ git worktree prune
 rm -rf .git/worktrees/site/
 
 echo "Checking out site branch into site/"
-git worktree add -B site site origin/site
+git worktree add -B site site origin/site || exit 1
 
 echo "Done!"
