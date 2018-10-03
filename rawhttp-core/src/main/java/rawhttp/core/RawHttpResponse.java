@@ -1,10 +1,11 @@
 package rawhttp.core;
 
-import java.io.IOException;
-import java.util.Optional;
-import javax.annotation.Nullable;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.HttpMessageBody;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * A HTTP Response.
@@ -113,8 +114,14 @@ public class RawHttpResponse<Response> extends HttpMessage {
 
     @Override
     public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
+        return withHeaders(headers, true);
+    }
+
+    @Override
+    public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers, boolean append) {
         return new RawHttpResponse<>(libResponse, request, statusLine,
-                getHeaders().and(headers), getBody().orElse(null));
+                append ? getHeaders().and(headers) : headers.and(getHeaders()),
+                getBody().orElse(null));
     }
 
     /**

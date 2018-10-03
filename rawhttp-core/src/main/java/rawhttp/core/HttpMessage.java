@@ -1,11 +1,12 @@
 package rawhttp.core;
 
+import rawhttp.core.body.BodyReader;
+import rawhttp.core.body.HttpMessageBody;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import rawhttp.core.body.BodyReader;
-import rawhttp.core.body.HttpMessageBody;
 
 /**
  * A HTTP message, which can be either a request or a response.
@@ -61,6 +62,15 @@ public abstract class HttpMessage implements Writable {
     public abstract HttpMessage withHeaders(RawHttpHeaders headers);
 
     /**
+     * Create a copy of this HTTP message, adding/replacing the provided headers.
+     *
+     * @param headers to add/replace
+     * @param append  to append the given headers, as opposed to prepend them
+     * @return copy of this HTTP message with the provided headers
+     */
+    public abstract HttpMessage withHeaders(RawHttpHeaders headers, boolean append);
+
+    /**
      * @return the body of this HTTP message, if any.
      */
     public Optional<? extends BodyReader> getBody() {
@@ -100,7 +110,7 @@ public abstract class HttpMessage implements Writable {
         getHeaders().writeTo(out);
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
-            try(BodyReader bodyReader = body.get()) {
+            try (BodyReader bodyReader = body.get()) {
                 bodyReader.writeTo(out, bufferSize);
             }
         }

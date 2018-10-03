@@ -1,12 +1,13 @@
 package rawhttp.core;
 
+import rawhttp.core.body.BodyReader;
+import rawhttp.core.body.HttpMessageBody;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import rawhttp.core.body.BodyReader;
-import rawhttp.core.body.HttpMessageBody;
 
 /**
  * A HTTP Request.
@@ -76,8 +77,13 @@ public class RawHttpRequest extends HttpMessage {
 
     @Override
     public RawHttpRequest withHeaders(RawHttpHeaders headers) {
+        return withHeaders(headers, true);
+    }
+
+    @Override
+    public RawHttpRequest withHeaders(RawHttpHeaders headers, boolean append) {
         return new RawHttpRequest(requestLine,
-                getHeaders().and(headers),
+                append ? getHeaders().and(headers) : headers.and(getHeaders()),
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));
     }

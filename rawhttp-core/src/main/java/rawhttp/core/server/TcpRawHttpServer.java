@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -142,24 +141,12 @@ public class TcpRawHttpServer implements RawHttpServer {
         }
 
         /**
-         * Returns a supplier of HTTP headers for responses with the given status code.
-         * <p>
-         * By default, the server inserts a "Server: RawHTTP" header and an appropriate "Date" header in all responses
-         * (notice that the HTTP specification recommends adding the "Date" header to all responses, but that's not
-         * mandatory).
-         *
-         * @param statusCode the status code of the HTTP response
-         * @return a supplier of HTTP headers.
-         */
-        default Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(@SuppressWarnings("unused") int statusCode) {
-            return Optional.of(() -> getCurrentDateHeader().and(SERVER_HEADER));
-        }
-
-        /**
          * Callback that will be called every time the server receives a HTTP request, but before it sends out a
          * HTTP response.
          * <p>
          * The actual response the client will see is the one returned by this method.
+         * <p>
+         * By default, this method adds "Date" and "Server" headers (the latter with the value of "RawHTTP").
          *
          * @param request  received by the server
          * @param response the server routed to. Normally, this callback should return this response with possibly
@@ -169,7 +156,7 @@ public class TcpRawHttpServer implements RawHttpServer {
          */
         default RawHttpResponse<Void> onResponse(RawHttpRequest request, RawHttpResponse<Void> response)
                 throws IOException {
-            return response;
+            return response.withHeaders(getCurrentDateHeader().and(SERVER_HEADER));
         }
 
     }
@@ -298,7 +285,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                 response = options.serverErrorResponse(request).orElseGet(() ->
                         HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion()));
             }
-            return options.onResponse(request, withAutoHeaders(response));
+            return options.onResponse(request, response);
         }
 
         void stop() {
@@ -309,12 +296,6 @@ public class TcpRawHttpServer implements RawHttpServer {
             } finally {
                 executorService.shutdown();
             }
-        }
-
-        private RawHttpResponse<Void> withAutoHeaders(RawHttpResponse<Void> response) {
-            Integer statusCode = response.getStatusCode();
-            Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier = options.autoHeadersSupplier(statusCode);
-            return autoHeadersSupplier.map(s -> response.withHeaders(s.get())).orElse(response);
         }
 
         private static void closeBodyOf(RawHttpResponse<?> response) {

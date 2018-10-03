@@ -1,11 +1,12 @@
 package rawhttp.core;
 
-import java.io.IOException;
-import java.util.Optional;
-import javax.annotation.Nullable;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.ChunkedBodyContents;
 import rawhttp.core.body.EagerBodyReader;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.Optional;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
@@ -86,10 +87,15 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
     @Override
     public EagerHttpResponse<Response> withHeaders(RawHttpHeaders headers) {
+        return withHeaders(headers, true);
+    }
+
+    @Override
+    public EagerHttpResponse<Response> withHeaders(RawHttpHeaders headers, boolean append) {
         return new EagerHttpResponse<>(getLibResponse().orElse(null),
                 getRequest().orElse(null),
                 getStartLine(),
-                getHeaders().and(headers),
+                append ? getHeaders().and(headers) : headers.and(getHeaders()),
                 getBody().orElse(null));
     }
 
