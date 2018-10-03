@@ -2,7 +2,7 @@
 
 DIR=$(dirname "$0")
 
-cd $DIR/..
+cd $DIR/
 
 if [[ $(git status -s) ]]
 then
@@ -23,7 +23,9 @@ echo "Removing existing files"
 rm -rf public/*
 
 echo "Generating site"
-hugo
+cd site/
+hugo || exit 1
+cd ..
 
-echo "Updating gh-pages branch"
-cd public && git add --all && git commit -m "Publishing to gh-pages"
+#echo "Updating gh-pages branch"
+#cd public && git add --all && git commit -m "Publishing to gh-pages"
