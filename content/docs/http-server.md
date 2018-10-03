@@ -48,7 +48,7 @@ class ExampleTcpRawHttpServerOptions implements TcpRawHttpServer.TcpRawHttpServe
     }
 
     @Override
-    public ExecutorService getExecutorService() {
+    public ExecutorService createExecutorService() {
         return Executors.newCachedThreadPool();
     }
 
@@ -63,14 +63,9 @@ class ExampleTcpRawHttpServerOptions implements TcpRawHttpServer.TcpRawHttpServe
     }
 
     @Override
-    public Optional<Supplier<RawHttpHeaders>> autoHeadersSupplier(int statusCode) {
-        // TODO add standard HTTP response headers, like "Server" and "Date"
-        return Optional.empty();
-    }
-
-    @Override
     public RawHttpResponse<Void> onResponse(RawHttpRequest request, RawHttpResponse<Void> response) {
         // TODO this is a good place to log the request and response
+        // or add standard HTTP response headers, like "Server" and "Date"
         return response;
     }
 
