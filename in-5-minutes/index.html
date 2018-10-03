@@ -93,10 +93,10 @@ RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style
 
 <p>To send out the HTTP message, just write it to an <code>OutputStream</code>.</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> java.net.Socket<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> java.net.Socket<span style="color:#f92672">;</span>
 
 Socket socket <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Socket<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;headers.jsontest.com&#34;</span><span style="color:#f92672">,</span> 80<span style="color:#f92672">);</span>
-request<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div></p>
+request<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div>
 
 <hr>
 
@@ -121,7 +121,7 @@ RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">ne
 
 server<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">(</span>request <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
     RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseResponse</span><span style="color:#f92672">(...);</span>
-    <span style="color:#66d9ef">return</span> response<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">return</span> Optional<span style="color:#f92672">.</span><span style="color:#a6e22e">of</span><span style="color:#f92672">(</span>response<span style="color:#f92672">);</span>
 <span style="color:#f92672">});</span></code></pre></div>
 
 <p>Easy!</p>

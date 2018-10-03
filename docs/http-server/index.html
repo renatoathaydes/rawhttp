@@ -55,7 +55,7 @@ server<span style="color:#f92672">.</span><span style="color:#a6e22e">start</spa
 
 <p>Stop the server once you don&rsquo;t need it anymore:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">server<span style="color:#f92672">.</span><span style="color:#a6e22e">stop</span><span style="color:#f92672">();</span></code></pre></div></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">server<span style="color:#f92672">.</span><span style="color:#a6e22e">stop</span><span style="color:#f92672">();</span></code></pre></div>
 
 <h3 id="configuring-a-http-server">Configuring a HTTP server</h3>
 
@@ -76,7 +76,7 @@ server<span style="color:#f92672">.</span><span style="color:#a6e22e">start</spa
     <span style="color:#f92672">}</span>
 
     <span style="color:#a6e22e">@Override</span>
-    <span style="color:#66d9ef">public</span> ExecutorService <span style="color:#a6e22e">getExecutorService</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">public</span> ExecutorService <span style="color:#a6e22e">createExecutorService</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
         <span style="color:#66d9ef">return</span> Executors<span style="color:#f92672">.</span><span style="color:#a6e22e">newCachedThreadPool</span><span style="color:#f92672">();</span>
     <span style="color:#f92672">}</span>
 
@@ -91,14 +91,9 @@ server<span style="color:#f92672">.</span><span style="color:#a6e22e">start</spa
 </span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
 
     <span style="color:#a6e22e">@Override</span>
-    <span style="color:#66d9ef">public</span> Optional<span style="color:#f92672">&lt;</span>Supplier<span style="color:#f92672">&lt;</span>RawHttpHeaders<span style="color:#f92672">&gt;&gt;</span> <span style="color:#a6e22e">autoHeadersSupplier</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> statusCode<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-        <span style="color:#75715e">// TODO add standard HTTP response headers, like &#34;Server&#34; and &#34;Date&#34;
-</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> Optional<span style="color:#f92672">.</span><span style="color:#a6e22e">empty</span><span style="color:#f92672">();</span>
-    <span style="color:#f92672">}</span>
-
-    <span style="color:#a6e22e">@Override</span>
     <span style="color:#66d9ef">public</span> RawHttpResponse<span style="color:#f92672">&lt;</span>Void<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">onResponse</span><span style="color:#f92672">(</span>RawHttpRequest request<span style="color:#f92672">,</span> RawHttpResponse<span style="color:#f92672">&lt;</span>Void<span style="color:#f92672">&gt;</span> response<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
         <span style="color:#75715e">// TODO this is a good place to log the request and response
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// or add standard HTTP response headers, like &#34;Server&#34; and &#34;Date&#34;
 </span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> response<span style="color:#f92672">;</span>
     <span style="color:#f92672">}</span>
 

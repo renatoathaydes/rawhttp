@@ -20,7 +20,8 @@
       <description>The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
 The entry point of the library is the com.athaydes.rawhttp.duplex.RawHttpDuplex class.
 Its connect methods are used from a client to connect to a server, while the accept methods should be used within a HTTP server to handle requests from a client.
-The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:</description>
+Example Kotlin code on the server:
+import rawhttp.core.* import com.athaydes.rawhttp.duplex.* import rawhttp.</description>
     </item>
     
     <item>

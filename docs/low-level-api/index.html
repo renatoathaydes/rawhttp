@@ -54,7 +54,7 @@ request<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</
 
 <h3 id="send-a-post-request-with-a-body">Send a POST request with a body</h3>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import</span> java.net.Socket<span style="color:#f92672">;</span>
 
 String jsonBody <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;{ \&#34;hello\&#34;: true, \&#34;raw_http\&#34;: \&#34;2.0\&#34; }&#34;</span><span style="color:#f92672">;</span>
@@ -70,26 +70,26 @@ RawHttpRequest request <span style="color:#f92672">=</span> http<span style="col
     jsonBody<span style="color:#f92672">);</span>
 
 Socket socket <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Socket<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;httpbin.org&#34;</span><span style="color:#f92672">,</span> 80<span style="color:#f92672">);</span>
-request<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div></p>
+request<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div>
 
 <h3 id="read-a-response">Read a response</h3>
 
 <p>&hellip; continues from the previous example:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseResponse</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getInputStream</span><span style="color:#f92672">()).</span><span style="color:#a6e22e">eagerly</span><span style="color:#f92672">();</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseResponse</span><span style="color:#f92672">(</span>socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getInputStream</span><span style="color:#f92672">()).</span><span style="color:#a6e22e">eagerly</span><span style="color:#f92672">();</span>
 System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;RESPONSE:\n&#34;</span> <span style="color:#f92672">+</span> response<span style="color:#f92672">);</span>
 
 assertEquals<span style="color:#f92672">(</span>200<span style="color:#f92672">,</span> response<span style="color:#f92672">.</span><span style="color:#a6e22e">getStatusCode</span><span style="color:#f92672">());</span>
 assertTrue<span style="color:#f92672">(</span>response<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">().</span><span style="color:#a6e22e">isPresent</span><span style="color:#f92672">());</span>
 
 String textBody <span style="color:#f92672">=</span> response<span style="color:#f92672">.</span><span style="color:#a6e22e">getBody</span><span style="color:#f92672">().</span><span style="color:#a6e22e">get</span><span style="color:#f92672">().</span><span style="color:#a6e22e">decodeBodyToString</span><span style="color:#f92672">(</span>UTF_8<span style="color:#f92672">);</span>
-assertTrue<span style="color:#f92672">(</span>textBody<span style="color:#f92672">.</span><span style="color:#a6e22e">contains</span><span style="color:#f92672">(</span>jsonBody<span style="color:#f92672">.</span><span style="color:#a6e22e">replaceAll</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">)));</span></code></pre></div></p>
+assertTrue<span style="color:#f92672">(</span>textBody<span style="color:#f92672">.</span><span style="color:#a6e22e">contains</span><span style="color:#f92672">(</span>jsonBody<span style="color:#f92672">.</span><span style="color:#a6e22e">replaceAll</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">)));</span></code></pre></div>
 
 <h3 id="check-headers-in-both-request-or-response">Check headers (in both request or response)</h3>
 
 <p>&hellip; continues from the previous examples:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">assertEquals<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;application/json&#34;</span><span style="color:#f92672">,</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">assertEquals<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;application/json&#34;</span><span style="color:#f92672">,</span>
     request<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeaders</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getFirst</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Accept&#34;</span><span style="color:#f92672">).</span><span style="color:#a6e22e">orElse</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">));</span>
 
 assertEquals<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;application/json&#34;</span><span style="color:#f92672">,</span>
@@ -99,23 +99,23 @@ assertEquals<span style="color:#f92672">(</span>asList<span style="color:#f92672
     response<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeaders</span><span style="color:#f92672">().</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Content-Type&#34;</span><span style="color:#f92672">));</span>
 
 assertEquals<span style="color:#f92672">(</span>asList<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Host&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;User-Agent&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Content-Length&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Content-Type&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Accept&#34;</span><span style="color:#f92672">),</span>
-    request<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeaders</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getHeaderNames</span><span style="color:#f92672">());</span></code></pre></div></p>
+    request<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeaders</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getHeaderNames</span><span style="color:#f92672">());</span></code></pre></div>
 
 <h3 id="listen-for-http-requests-as-a-server">Listen for HTTP requests (as a server)</h3>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import</span> java.net.ServerSocket<span style="color:#f92672">;</span>
 
 ServerSocket serverSocket <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ServerSocket<span style="color:#f92672">(</span>8082<span style="color:#f92672">);</span>
 RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
 Socket client <span style="color:#f92672">=</span> serverSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">accept</span><span style="color:#f92672">();</span>
-RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>client<span style="color:#f92672">.</span><span style="color:#a6e22e">getInputStream</span><span style="color:#f92672">());</span></code></pre></div></p>
+RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>client<span style="color:#f92672">.</span><span style="color:#a6e22e">getInputStream</span><span style="color:#f92672">());</span></code></pre></div>
 
 <h3 id="respond-to-a-http-request">Respond to a HTTP request</h3>
 
 <p>&hellip; continues from the previous example:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> java.time.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> java.time.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import static</span> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME<span style="color:#f92672">;</span>
 
 String body <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello RawHTTP!&#34;</span><span style="color:#f92672">;</span>
@@ -128,7 +128,7 @@ RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style
     <span style="color:#e6db74">&#34;Date: &#34;</span> <span style="color:#f92672">+</span> dateString <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;\r\n&#34;</span> <span style="color:#f92672">+</span>
     <span style="color:#e6db74">&#34;\r\n&#34;</span> <span style="color:#f92672">+</span>
     body<span style="color:#f92672">);</span>
-response<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>client<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div></p>
+response<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>client<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">());</span></code></pre></div>
 
 <hr>
 

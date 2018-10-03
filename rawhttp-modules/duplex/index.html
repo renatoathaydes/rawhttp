@@ -44,6 +44,48 @@
 <p>Its <code>connect</code> methods are used from a client to connect to a server,
 while the <code>accept</code> methods should be used within a HTTP server to handle requests from a client.</p>
 
+<p>Example Kotlin code on the server:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">import</span> rawhttp.core.*
+<span style="color:#66d9ef">import</span> com.athaydes.rawhttp.duplex.*
+<span style="color:#66d9ef">import</span> rawhttp.core.server.TcpRawHttpServer;
+
+<span style="color:#66d9ef">val</span> http = RawHttp()
+<span style="color:#66d9ef">val</span> duplex = RawHttpDuplex()
+<span style="color:#66d9ef">val</span> server = TcpRawHttpServer(<span style="color:#ae81ff">8082</span>)
+
+server.start { request -&gt;
+    <span style="color:#75715e">// TODO check the request is a POST to the /connect path!
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// call duplex.accept() to return a response that can initiate duplex communication
+</span><span style="color:#75715e"></span>    Optional.of(duplex.accept(request, { sender -&gt;
+        <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">MessageHandler</span> {
+            <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onTextMessage</span>(message: String) {
+                <span style="color:#75715e">// handle text message 
+</span><span style="color:#75715e"></span>                sender.sendTextMessage(<span style="color:#e6db74">&#34;Hi there! You sent this: $message&#34;</span>)
+            }      
+            <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onBinaryMessage</span>(message: ByteArray, headers: RawHttpHeaders) { <span style="color:#75715e">/* handle binary message */</span> }
+            <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onClose</span>() { <span style="color:#75715e">/* handle closed connection */</span> }
+        }
+    }))
+}</code></pre></div>
+
+<hr/>
+
+<p>Example Kotlin code on the client:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">import</span> rawhttp.core.*
+<span style="color:#66d9ef">import</span> com.athaydes.rawhttp.duplex.*
+<span style="color:#66d9ef">import</span> rawhttp.core.server.TcpRawHttpServer;
+
+<span style="color:#66d9ef">val</span> http = RawHttp()
+<span style="color:#66d9ef">val</span> duplex = RawHttpDuplex()
+
+duplex.connect(http.parseRequest(<span style="color:#e6db74">&#34;POST http://localhost:8082/connect&#34;</span>), { sender -&gt;
+    <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">MessageHandler</span> { <span style="color:#75715e">/* same API as on the server */</span> }
+}</code></pre></div>
+
+<h2 id="how-duplex-works">How duplex works</h2>
+
 <p>The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:</p>
 
 <ul>
@@ -71,7 +113,7 @@ To use a different ping period, use the {@link RawHttpDuplex#RawHttpDuplex(TcpRa
 <h2 id="demo">Demo</h2>
 
 <p>As is mandatory for duplex communication implementations,
-a <a href="https://github.com/renatoathaydes/rawhttp/blob/back-to-java8/rawhttp-duplex/src/test/kotlin/chat-example.kt">Chat Demo application</a>
+a <a href="https://github.com/renatoathaydes/rawhttp/blob/master/rawhttp-duplex/src/test/kotlin/chat-example.kt">Chat Demo application</a>
 was written in Kotlin to demonstrate usage of this library.</p>
 
 <p>The video below shows it in action:</p>

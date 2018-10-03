@@ -51,7 +51,7 @@ RawHttpResponse<span style="color:#f92672">&lt;?&gt;</span> response <span style
 
 <p>The client keeps connections alive if possible, so after you&rsquo;re done with it, close it:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">client<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span></code></pre></div></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">client<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span></code></pre></div>
 
 <h3 id="configuring-a-http-client">Configuring a HTTP client</h3>
 
@@ -82,7 +82,7 @@ TcpRawHttpClient client <span style="color:#f92672">=</span> <span style="color:
 <p>Example implementation of <code>TcpRawHttpClientOptions</code> which only allows HTTPS connections
 and always forces HTTP responses to be consumed fully, including its body, by calling <code>response.eagerly()</code>:</p>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SafeHttpClientOptions</span> <span style="color:#66d9ef">implements</span> TcpRawHttpClient<span style="color:#f92672">.</span><span style="color:#a6e22e">TcpRawHttpClientOptions</span> <span style="color:#f92672">{</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SafeHttpClientOptions</span> <span style="color:#66d9ef">implements</span> TcpRawHttpClient<span style="color:#f92672">.</span><span style="color:#a6e22e">TcpRawHttpClientOptions</span> <span style="color:#f92672">{</span>
     <span style="color:#a6e22e">@Override</span>
     <span style="color:#66d9ef">public</span> Socket <span style="color:#a6e22e">getSocket</span><span style="color:#f92672">(</span>URI uri<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
         String host <span style="color:#f92672">=</span> uri<span style="color:#f92672">.</span><span style="color:#a6e22e">getHost</span><span style="color:#f92672">();</span>
@@ -107,7 +107,7 @@ and always forces HTTP responses to be consumed fully, including its body, by ca
     <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">close</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
         <span style="color:#75715e">// TODO the client was closed, perform cleanup
 </span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
-<span style="color:#f92672">}</span></code></pre></div></p>
+<span style="color:#f92672">}</span></code></pre></div>
 
 <hr>
 

@@ -64,18 +64,18 @@ Hello RawHTTP
 
 <h3 id="set-body-from-file">Set body from File</h3>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
 
 RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">();</span>
 RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
     <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
 RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
-    <span style="color:#66d9ef">new</span> FileBody<span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> File<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hello.request&#34;</span><span style="color:#f92672">),</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div></p>
+    <span style="color:#66d9ef">new</span> FileBody<span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> File<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hello.request&#34;</span><span style="color:#f92672">),</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div>
 
 <h3 id="set-body-from-byte-array">Set body from byte array</h3>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
 
 <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> bytes <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello RawHTTP&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getBytes</span><span style="color:#f92672">();</span>
@@ -84,11 +84,11 @@ RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">ne
 RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
     <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
 RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
-    <span style="color:#66d9ef">new</span> BytesBody<span style="color:#f92672">(</span>bytes<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div></p>
+    <span style="color:#66d9ef">new</span> BytesBody<span style="color:#f92672">(</span>bytes<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">));</span></code></pre></div>
 
 <h3 id="set-body-from-inputstream-chunked">Set body from InputStream (chunked)</h3>
 
-<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
 <span style="color:#f92672">import</span> rawhttp.core.body.*<span style="color:#f92672">;</span>
 
 InputStream stream <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ByteArrayInputStream<span style="color:#f92672">(</span>
@@ -99,7 +99,7 @@ RawHttp http <span style="color:#f92672">=</span> <span style="color:#66d9ef">ne
 RawHttpRequest request <span style="color:#f92672">=</span> http<span style="color:#f92672">.</span><span style="color:#a6e22e">parseRequest</span><span style="color:#f92672">(</span>
     <span style="color:#e6db74">&#34;POST http://example.com/hello&#34;</span><span style="color:#f92672">);</span>
 RawHttpRequest requestWithBody <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">withBody</span><span style="color:#f92672">(</span>
-    <span style="color:#66d9ef">new</span> ChunkedBody<span style="color:#f92672">(</span>stream<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">,</span> chunkSize<span style="color:#f92672">));</span></code></pre></div></p>
+    <span style="color:#66d9ef">new</span> ChunkedBody<span style="color:#f92672">(</span>stream<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;text/plain&#34;</span><span style="color:#f92672">,</span> chunkSize<span style="color:#f92672">));</span></code></pre></div>
 
 <p>The <code>InputStream</code> is read lazily as the body of the HTTP message is consumed by a reader.</p>
 
