@@ -23,10 +23,14 @@ val duplex = RawHttpDuplex()
 val server = TcpRawHttpServer(8082)
 
 server.start { request ->
-    // call duplex.accept() to return a response that can do duplex communication 
+    // TODO check the request is a POST to the /connect path!
+    // call duplex.accept() to return a response that can initiate duplex communication
     Optional.of(duplex.accept(request, { sender ->
         object : MessageHandler {
-            override fun onTextMessage(message: String) { /* handle text message */ }      
+            override fun onTextMessage(message: String) {
+                // handle text message 
+                sender.sendTextMessage("Hi there! You sent this: $message")
+            }      
             override fun onBinaryMessage(message: ByteArray, headers: RawHttpHeaders) { /* handle binary message */ }
             override fun onClose() { /* handle closed connection */ }
         }
