@@ -4,14 +4,16 @@ import io.kotlintest.matchers.shouldBe
 import org.junit.After
 import org.junit.Test
 import rawhttp.core.RawHttp
+import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.server.RawHttpServer
 import rawhttp.core.server.TcpRawHttpServer
+import java.time.Duration
 import java.util.Arrays
 import java.util.Optional
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-const val port = 8084
+const val port = 8087
 
 class RawHttpDuplexIntegrationTest {
 
@@ -87,7 +89,7 @@ class RawHttpDuplexIntegrationTest {
                 }
             })
         }
-        Thread.sleep(250L)
+        waitForPortToBeTaken(port, Duration.ofSeconds(5))
         return server
     }
 }
