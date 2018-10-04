@@ -31,10 +31,10 @@ import rawhttp.core.* import com.athaydes.rawhttp.duplex.* import rawhttp.</desc
       
       <guid>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/cli/</guid>
       <description>The rawhttp-cli module is a CLI (command-line interface) that can send HTTP requests and serve local files via a RawHTTP server.
-Download curl -sSfL https://jcenter.bintray.com/c/rawhttp/rawhttp-cli/1.0.0/rawhttp-cli-1.0.0.jar -o rawhttp.jar  Usage Use rawhttp send to send HTTP requests.
+Download curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.0/rawhttp-cli-1.0-all.jar -o rawhttp.jar  Usage Use rawhttp send to send HTTP requests.
 Use rawhttp serve to serve a local directory via HTTP.
 To see the help screen, run rawhttp help.
- Using the send command The send command has the purpose of sending out HTTP requests.</description>
+ Using the send command The send command has the purpose of sending out HTTP requests. It prints the full HTTP response (including status line, headers, body) to stdout.</description>
     </item>
     
     <item>
