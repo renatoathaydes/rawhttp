@@ -6,10 +6,12 @@ import io.kotlintest.matchers.shouldThrow
 import org.junit.After
 import org.junit.Test
 import rawhttp.core.RawHttp
+import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.server.RawHttpServer
 import rawhttp.core.server.TcpRawHttpServer
 import java.net.SocketTimeoutException
+import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
@@ -81,7 +83,6 @@ class RawHttpDuplexSocketTimeoutTest {
     private fun startServer(): RawHttpServer {
         val server = TcpRawHttpServer(port)
         server.start { request ->
-            println("Accepting request\n$request")
             // whatever request comes in, we start a duplex connection
             Optional.of(duplex.accept(request) { _ ->
                 object : MessageHandler {
@@ -95,7 +96,7 @@ class RawHttpDuplexSocketTimeoutTest {
                 }
             })
         }
-        Thread.sleep(250L)
+        waitForPortToBeTaken(port, Duration.ofSeconds(5))
         return server
     }
 }
