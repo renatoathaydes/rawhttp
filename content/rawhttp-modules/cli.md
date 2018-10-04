@@ -10,7 +10,7 @@ local files via a RawHTTP server.
 ## Download
 
 ```
-curl -sSfL https://jcenter.bintray.com/c/rawhttp/rawhttp-cli/1.0.0/rawhttp-cli-1.0.0.jar -o rawhttp.jar
+curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.0/rawhttp-cli-1.0-all.jar -o rawhttp.jar
 ```
 
 ## Usage

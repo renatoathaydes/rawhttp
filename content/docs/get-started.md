@@ -25,7 +25,7 @@ dependency 'com.athaydes.rawhttp:rawhttp-core:2.0'
 ### Download the jar with curl
 
 ```
-curl https://jcenter.bintray.com/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar
+curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar
 ```
 
 <hr>
