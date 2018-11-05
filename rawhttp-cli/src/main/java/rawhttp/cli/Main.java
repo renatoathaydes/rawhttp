@@ -133,7 +133,9 @@ public class Main {
                         "  * -m --media-types <file>\n" +
                         "      use custom Media-Type mappings\n" +
                         "  * -p --port <port-number>\n" +
-                        "      the port to listen on\n");
+                        "      the port to listen on\n" +
+                        "  * -r --root-path <path>\n" +
+                        "      the path to use as the root path (not incl. in file path, only URL)\n");
                 break;
             default:
                 return new CliError(ErrorCode.UNEXPECTED_ERROR, "Help option is not covered: " + options);
@@ -228,9 +230,9 @@ public class Main {
             } catch (IOException e) {
                 return new CliError(ErrorCode.IO_EXCEPTION, "Could not read media-types file: " + e.getMessage());
             }
-            server.start(new CliServerRouter(options.dir, mediaTypeProperties));
+            server.start(new CliServerRouter(options.dir, options.rootPath, mediaTypeProperties));
         } else {
-            server.start(new CliServerRouter(options.dir));
+            server.start(new CliServerRouter(options.dir, options.rootPath));
         }
         return null;
     }

@@ -15,14 +15,16 @@ final class ServerOptions {
     final File dir;
     final int port;
     final boolean logRequests;
+    final String rootPath;
     private final File mediaTypesFile;
 
     ServerOptions(File dir, int port, boolean logRequests,
-                  File mediaTypesFile) {
+                  File mediaTypesFile, String rootPath) {
         this.dir = dir;
         this.port = port;
         this.logRequests = logRequests;
         this.mediaTypesFile = mediaTypesFile;
+        this.rootPath = rootPath;
     }
 
     public Optional<File> getMediaTypesFile() {
@@ -296,6 +298,8 @@ final class OptionsParser {
         boolean logRequests = false;
         File mediaTypesFile = null;
         Integer port = null;
+        String rootPath = "";
+
         for (int i = 2; i < args.length; i++) {
             String arg = args[i];
             switch (arg) {
@@ -331,6 +335,15 @@ final class OptionsParser {
                         throw new OptionsException("Missing argument for " + arg + " flag");
                     }
                     break;
+                case "-r":
+                case "--root-path":
+                    if (i + 1 < args.length) {
+                        rootPath = args[i + 1];
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
                 default:
                     throw new OptionsException("Unrecognized option: " + arg);
             }
@@ -341,7 +354,8 @@ final class OptionsParser {
                         ? ServerOptions.DEFAULT_SERVER_PORT
                         : port,
                         logRequests,
-                        mediaTypesFile));
+                        mediaTypesFile,
+                        rootPath));
     }
 
 }
