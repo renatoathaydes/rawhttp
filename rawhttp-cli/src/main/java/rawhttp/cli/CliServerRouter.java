@@ -36,6 +36,7 @@ final class CliServerRouter implements Router {
         _mimeMapping.put("ico", "image/x-icon");
         _mimeMapping.put("pdf", "application/pdf");
         _mimeMapping.put("css", "text/css");
+        _mimeMapping.put("svg", "image/svg+xml");
 
         mimeByFileExtension = Collections.unmodifiableMap(_mimeMapping);
     }
