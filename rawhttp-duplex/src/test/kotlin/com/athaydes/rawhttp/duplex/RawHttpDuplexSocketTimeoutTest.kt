@@ -84,7 +84,7 @@ class RawHttpDuplexSocketTimeoutTest {
         val server = TcpRawHttpServer(port)
         server.start { request ->
             // whatever request comes in, we start a duplex connection
-            Optional.of(duplex.accept(request) { _ ->
+            Optional.of(duplex.accept(request) {
                 object : MessageHandler {
                     override fun onTextMessage(message: String) {
                         serverMessages.add(message)
