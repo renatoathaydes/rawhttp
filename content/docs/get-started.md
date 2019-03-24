@@ -12,20 +12,20 @@ draft: false
 <dependency>
     <groupId>com.athaydes.rawhttp</groupId>
     <artifactId>rawhttp-core</artifactId>
-    <version>2.0</version>
+    <version>2.1</version>
 </dependency>
 {{< / highlight >}}
 
 ### Gradle
 
 {{< highlight groovy >}}
-dependency 'com.athaydes.rawhttp:rawhttp-core:2.0'
+dependency 'com.athaydes.rawhttp:rawhttp-core:2.1'
 {{< / highlight >}}
 
 ### Download the jar with curl
 
 ```
-curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar
+curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-core/2.1/rawhttp-core-2.1.jar -o rawhttp.jar
 ```
 
 <hr>

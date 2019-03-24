@@ -82,6 +82,27 @@ RawHttp strictHttp = new RawHttp(RawHttpOptions.newBuilder()
             .build());
 {{< / highlight >}}
 
+
+### Allowing unescaped URIs
+
+By default, RawHTTP is strict when parsing URIs. However, you can make it lenient so that you don't need to escape
+all forbidden characters (e.g. whitespaces don't need to be given as `%20`).
+
+{{< highlight java >}}
+import rawhttp.core.*;
+
+RawHttp lenientUriOptions = new RawHttp(RawHttpOptions.newBuilder()
+            .allowIllegalStartLineCharacters()
+            .build());
+{{< / highlight >}}
+
+With this enabled, you can give URIs more easily:
+
+```
+GET https://www.example.com/name=Joe Doe&age=43 HTTP/1.1
+Accept: text/html
+```
+
 <hr>
 
 [Index](/rawhttp/docs) [Next: HTTP Client](/rawhttp/docs/http-client)
