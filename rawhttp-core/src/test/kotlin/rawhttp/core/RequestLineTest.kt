@@ -43,16 +43,40 @@ class RequestLineTest : StringSpec({
         }
     }
 
+    "Can parse legal request-line (allow illegal characters)" {
+        val illegalCharParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .allowIllegalStartLineCharacters()
+                .build())
+
+        val table = table(
+                headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
+                row("GET /hi there HTTP/1.1", HttpVersion.HTTP_1_1, "GET", "/hi%20there", "GET /hi%20there HTTP/1.1"))
+
+        forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
+            try {
+                illegalCharParser.parseRequestLine(requestLine).run {
+                    httpVersion shouldBe expectedVersion
+                    method shouldBe expectedMethod
+                    uri.rawPath shouldBe expectedPath
+                    toString() shouldBe expectedString
+                }
+            } catch (e: InvalidHttpRequest) {
+                fail(e.toString())
+            }
+        }
+    }
+
     "Cannot parse illegal request-line (allow missing HTTP version)" {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
                 row("/", "Invalid request line"),
                 row("GET", "Invalid request line"),
-                row("POST  ", "Invalid request line"),
-                row("POST  / HTTP/1.1", "Invalid request line"),
-                row("/Hi /", "Invalid method name: illegal character at index 0"),
-                row("POST /hi HTTP/1.2", "Invalid HTTP version"),
-                row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
+                row("POST ", "Missing request target"),
+                row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
+                row("/Hi /", "Invalid method name: illegal character at index 0: '/Hi'"),
+                row("POST /hi HTTP/1.2", "Unknown HTTP version"),
+                row("POST /hi HTTP/1.2 HTTP/1.1",
+                        "Invalid request target: Illegal character in path at index 3: '/hi HTTP/1.2'"))
 
         forAll(table) { requestLine, expectedError ->
             val error = shouldThrow<InvalidHttpRequest> { metadataParser.parseRequestLine(requestLine) }
@@ -66,6 +90,8 @@ class RequestLineTest : StringSpec({
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
                 row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0"),
+                row("GET /hello?field=encoded%20value HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello",
+                        "GET /hello?field=encoded%20value HTTP/1.0"),
                 row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0"))
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
@@ -87,14 +113,17 @@ class RequestLineTest : StringSpec({
                 row("", "No content"),
                 row("/", "Invalid request line"),
                 row("GET", "Invalid request line"),
-                row("POST  ", "Invalid request line"),
-                row("POST  / HTTP/1.1", "Invalid request line"),
+                row("POST  ", "Unknown HTTP version"),
+                row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
                 row("GET /", "Missing HTTP version"),
                 row("POST /hello", "Missing HTTP version"),
-                row("/Hi / HTTP/1.1", "Invalid method name: illegal character at index 0"),
-                row("GÅ / HTTP/1.1", "Invalid method name: illegal character at index 1"),
-                row("POST /hi HTTP/1.2", "Invalid HTTP version"),
-                row("POST /hi HTTP/1.2 HTTP/1.1", "Invalid request line"))
+                row("/Hi / HTTP/1.1", "Invalid method name: illegal character at index 0: '/Hi'"),
+                row("GÅ / HTTP/1.1", "Invalid method name: illegal character at index 1: 'GÅ'"),
+                row("GET /hello?field=encoded value HTTP/1.0",
+                        "Invalid request target: Illegal character in query at index 20: '/hello?field=encoded value'"),
+                row("POST /hi HTTP/1.2", "Unknown HTTP version"),
+                row("POST /hi HTTP/1.2 HTTP/1.1",
+                        "Invalid request target: Illegal character in path at index 3: '/hi HTTP/1.2'"))
 
         forAll(table) { requestLine, expectedError ->
             val error = shouldThrow<InvalidHttpRequest> { strictMetadataParser.parseRequestLine(requestLine) }

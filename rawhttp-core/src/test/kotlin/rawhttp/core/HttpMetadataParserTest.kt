@@ -261,7 +261,7 @@ class HttpMetadataParserTest {
     }
 
     @Test
-    fun canParseURIs() {
+    fun canParseURIsLenient() {
         val table = table(
                 headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
                 UriExample("hi", "http", null, "hi", -1, "", null, null),
@@ -290,8 +290,12 @@ class HttpMetadataParserTest {
                 UriExample("ftp://[::8a2e:370:7334]#ho", "ftp", null, "[::8a2e:370:7334]", -1, "", null, "ho")
         )
 
+        val lenientParser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .allowIllegalStartLineCharacters()
+                .build())
+
         forAll(table) { uriSpec, scheme, userInfo, host, port, path, query, fragment ->
-            val uri = parser.parseUri(uriSpec)
+            val uri = lenientParser.parseUri(uriSpec)
             uri.scheme shouldEqual scheme
             uri.userInfo shouldEqual userInfo
             uri.host shouldEqual host

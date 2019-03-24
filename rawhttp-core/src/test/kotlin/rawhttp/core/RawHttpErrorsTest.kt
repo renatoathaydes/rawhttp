@@ -17,7 +17,7 @@ class RawHttpErrorsTest : StringSpec({
                 row("", 0, "No content"),
                 row("    ", 1, "Invalid request line"),
                 row("POST", 1, "Invalid request line"),
-                row("A B C D", 1, "Invalid request line"),
+                row("A B C D", 1, "Unknown HTTP version"),
                 row("GET / HTTP/1.1\r\nINVALID\r\n", 2, "Invalid header: missing the ':' separator"),
                 row("GET / HTTP/1.1\r\nAccept: all\r\nINVALID\r\n", 3, "Invalid header: missing the ':' separator"),
                 row("GET / HTTP/1.1\r\nAccept: all\r\n", 1, "Host not given either in request line or Host header"),

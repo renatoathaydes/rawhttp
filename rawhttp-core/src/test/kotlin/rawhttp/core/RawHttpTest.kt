@@ -50,6 +50,18 @@ class SimpleHttpRequestTests : StringSpec({
         }
     }
 
+    "Can parse encoded HTTP Request query" {
+        RawHttp().parseRequest("GET /hello?field=encoded%20value HTTP/1.0\nHost: www.example.com").eagerly().run {
+            method shouldBe "GET"
+            startLine.httpVersion shouldBe HttpVersion.HTTP_1_0
+            uri.path shouldBe "/hello"
+            uri.query shouldBe "field=encoded value"
+            toString() shouldBe "GET /hello?field=encoded%20value HTTP/1.0\r\nHost: www.example.com\r\n\r\n"
+            headers.asMap() shouldEqual mapOf("HOST" to listOf("www.example.com"))
+            body should notBePresent()
+        }
+    }
+
     "Uses Host header to identify target server if missing from method line" {
         RawHttp().parseRequest("GET /hello\nHost: www.example.com").eagerly().run {
             method shouldBe "GET"
