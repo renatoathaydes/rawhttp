@@ -1,6 +1,7 @@
 package rawhttp.cli;
 
 import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.FileBody;
@@ -38,7 +39,9 @@ public class Main {
         IO_EXCEPTION // 4
     }
 
-    private static final RawHttp HTTP = new RawHttp();
+    private static final RawHttp HTTP = new RawHttp(RawHttpOptions.newBuilder()
+            .allowIllegalStartLineCharacters()
+            .build());
 
     public static void main(String[] args) {
         CliError error;
