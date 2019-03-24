@@ -582,6 +582,27 @@ public class OptionsParserTest {
     }
 
     @Test
+    public void canParseServeWithRootPathOption() throws OptionsException {
+        String[][] examples = new String[][]{
+                {"serve", "boo", "-r", "abc"}, {"serve", "another/path", "--root-path", "/def/ghi"}
+        };
+
+        for (String[] example : examples) {
+            String exampleText = Arrays.toString(example);
+
+            Options options = OptionsParser.parse(example);
+
+            ServerOptions result = options.run(c -> null, s -> s, h -> null);
+
+            File expectedDir = new File(example[1]);
+            assertEquals("Example: " + exampleText, expectedDir, result.dir);
+
+            assertNotNull("Parsed server options. Example: " + exampleText, result);
+            assertEquals("Example: " + exampleText, example[3], result.rootPath);
+        }
+    }
+
+    @Test
     public void canParseServeWithMediaTypesOption() throws OptionsException {
         String[][] examples = new String[][]{
                 {"serve", "boo", "-m", "MEDIA"},
@@ -606,7 +627,7 @@ public class OptionsParserTest {
 
     @Test
     public void canParseServerOptionWithAllArgs() throws OptionsException {
-        Options options = OptionsParser.parse(new String[]{"serve", "something", "-p", "33", "-l"});
+        Options options = OptionsParser.parse(new String[]{"serve", "something", "-p", "33", "-l", "-r", "/hi"});
         ServerOptions result = options.run(c -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
@@ -614,8 +635,9 @@ public class OptionsParserTest {
         assertEquals(new File("something"), result.dir);
         assertEquals(33, result.port);
         assertFalse(result.getMediaTypesFile().isPresent());
+        assertEquals("/hi", result.rootPath);
 
-        options = OptionsParser.parse(new String[]{"serve", "my/files", "-p", "44", "--log-requests"});
+        options = OptionsParser.parse(new String[]{"serve", "my/files", "-p", "44", "--log-requests", "--root-path", "ho"});
         result = options.run(c -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
@@ -623,6 +645,7 @@ public class OptionsParserTest {
         assertEquals(new File("my/files"), result.dir);
         assertEquals(44, result.port);
         assertFalse(result.getMediaTypesFile().isPresent());
+        assertEquals("ho", result.rootPath);
 
         options = OptionsParser.parse(new String[]{"serve", "/abs/path", "--log-requests", "-p", "55"});
         result = options.run(c -> null, s -> s, h -> null);
@@ -632,8 +655,10 @@ public class OptionsParserTest {
         assertEquals(new File("/abs/path"), result.dir);
         assertEquals(55, result.port);
         assertFalse(result.getMediaTypesFile().isPresent());
+        assertEquals("", result.rootPath);
 
-        options = OptionsParser.parse(new String[]{"serve", "/temp", "-l", "--port", "66", "--media-types", "media.properties"});
+        options = OptionsParser.parse(new String[]{"serve", "/temp", "-l", "-r", "/abc/def",
+                "--port", "66", "--media-types", "media.properties"});
         result = options.run(c -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
@@ -642,6 +667,7 @@ public class OptionsParserTest {
         assertEquals(66, result.port);
         assertEquals(new File("media.properties"), result.getMediaTypesFile().orElseThrow(() ->
                 new AssertionError("Media Types file is not present")));
+        assertEquals("/abc/def", result.rootPath);
     }
 
     @Test
@@ -663,6 +689,15 @@ public class OptionsParserTest {
                         "the --port option can only be used once", e.getMessage());
             }
         }
+    }
+
+    @Test
+    public void cannotParseServeRootPathOptionMissingMandatoryArg() {
+        String[][] examples = new String[][]{
+                {"serve", "a", "-r"}, {"serve", "b", "-l", "--root-path"},
+        };
+
+        assertMissingArgumentError(examples);
     }
 
     @Test

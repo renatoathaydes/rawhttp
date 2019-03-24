@@ -36,29 +36,41 @@ final class CliServerRouter implements Router {
         _mimeMapping.put("ico", "image/x-icon");
         _mimeMapping.put("pdf", "application/pdf");
         _mimeMapping.put("css", "text/css");
+        _mimeMapping.put("svg", "image/svg+xml");
 
         mimeByFileExtension = Collections.unmodifiableMap(_mimeMapping);
     }
 
     private final FileLocator fileLocator;
+    private final PathReader pathReader;
 
-    CliServerRouter(File rootDir) {
-        this.fileLocator = new FileLocator(rootDir, mimeByFileExtension);
+    CliServerRouter(File rootDir, String rootPath) {
+        this(rootDir, rootPath, mimeByFileExtension);
     }
 
-    CliServerRouter(File rootDir, Properties mediaTypes) {
+    CliServerRouter(File rootDir, String rootPath, Properties mediaTypes) {
+        this(rootDir, rootPath, convertToMap(mediaTypes));
+    }
+
+    private CliServerRouter(File rootDir, String rootPath, Map<String, String> mimeMapping) {
+        this.fileLocator = new FileLocator(rootDir, mimeMapping);
+        this.pathReader = rootPath.isEmpty() ? new StandardPathReader() : new ContextPathReader(rootPath);
+    }
+
+    private static Map<String, String> convertToMap(Properties mediaTypes) {
         Map<String, String> mimeMapping = new HashMap<>(mimeByFileExtension);
         mediaTypes.forEach((ext, mime) -> mimeMapping.put(ext.toString(), mime.toString()));
-        this.fileLocator = new FileLocator(rootDir, mimeMapping);
+        return mimeMapping;
     }
 
     @Override
     public Optional<RawHttpResponse<?>> route(RawHttpRequest request) {
         final Optional<RawHttpResponse<?>> response;
         if (request.getMethod().equals("GET")) {
-            String path = request.getStartLine().getUri()
-                    .normalize().getPath()
-                    .replaceAll(DIR_BACK_PATTERN, "");
+            String path = pathReader.readPath(request);
+            if (path == null) {
+                return Optional.empty();
+            }
 
             // provide the index.html file at the root path
             if (path.isEmpty() || path.equals("/")) {
@@ -75,6 +87,39 @@ final class CliServerRouter implements Router {
             response = Optional.of(HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion()));
         }
         return response;
+    }
+
+    private interface PathReader {
+        /**
+         * @param request the received request
+         * @return the path to use to look up for a resource, or null if the path was definitely
+         * not mapped to a resource.
+         */
+        default String readPath(RawHttpRequest request) {
+            return request.getStartLine().getUri().normalize()
+                    .getPath().replaceAll(DIR_BACK_PATTERN, "");
+        }
+    }
+
+    private static final class StandardPathReader implements PathReader {
+    }
+
+    private static final class ContextPathReader implements PathReader {
+        private final String rootPath;
+
+        ContextPathReader(String rootPath) {
+            this.rootPath = rootPath.startsWith("/") ? rootPath : "/" + rootPath;
+        }
+
+        @Override
+        public String readPath(RawHttpRequest request) {
+            String path = PathReader.super.readPath(request);
+            if (!path.startsWith(rootPath)) {
+                return null;
+            } else {
+                return path.substring(rootPath.length());
+            }
+        }
     }
 
 }

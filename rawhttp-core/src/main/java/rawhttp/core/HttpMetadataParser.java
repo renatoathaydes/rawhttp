@@ -121,29 +121,45 @@ public final class HttpMetadataParser {
         if (requestLine.isEmpty()) {
             throw new InvalidHttpRequest("No content", 0);
         }
-        String[] parts = requestLine.split("\\s");
-        if (parts.length == 2 || parts.length == 3) {
-            String method = parts[0];
-            OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(method);
-            if (illegalIndex.isPresent()) {
-                throw new InvalidHttpRequest("Invalid method name: illegal character at index " +
-                        illegalIndex.getAsInt(), 1);
-            }
-            URI uri = parseUri(parts[1]);
-            HttpVersion httpVersion = options.insertHttpVersionIfMissing()
-                    ? HttpVersion.HTTP_1_1 : null;
-            if (parts.length == 3) try {
-                httpVersion = HttpVersion.parse(parts[2]);
-            } catch (IllegalArgumentException e) {
-                throw new InvalidHttpRequest("Invalid HTTP version", 1);
-            }
-            if (httpVersion == null) {
-                throw new InvalidHttpRequest("Missing HTTP version", 1);
-            }
-            return new RequestLine(method, uri, httpVersion);
-        } else {
+        int firstSpace = requestLine.indexOf(' ');
+        if (firstSpace <= 0) {
             throw new InvalidHttpRequest("Invalid request line", 1);
         }
+        String method = requestLine.substring(0, firstSpace);
+        OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(method);
+        if (illegalIndex.isPresent()) {
+            throw new InvalidHttpRequest(
+                    String.format("Invalid method name: illegal character at index %d: '%s'",
+                            illegalIndex.getAsInt(), method), 1);
+        }
+
+        int lastSpace = requestLine.lastIndexOf(' ');
+        String uriPart;
+        HttpVersion httpVersion;
+        if (firstSpace == lastSpace) {
+            if (!options.insertHttpVersionIfMissing()) {
+                throw new InvalidHttpRequest("Missing HTTP version", 1);
+            }
+
+            // assume HTTP version missing, so all we have left is a path
+            uriPart = requestLine.substring(firstSpace + 1);
+            httpVersion = HttpVersion.HTTP_1_1;
+        } else {
+            uriPart = requestLine.substring(firstSpace + 1, lastSpace);
+            try {
+                httpVersion = HttpVersion.parse(requestLine.substring(lastSpace + 1));
+            } catch (IllegalArgumentException e) {
+                throw new InvalidHttpRequest(e.getMessage(), 1);
+            }
+        }
+
+        if (uriPart.trim().isEmpty()) {
+            throw new InvalidHttpRequest("Missing request target", 1);
+        }
+
+        URI uri = parseUri(uriPart);
+
+        return new RequestLine(method, uri, httpVersion);
     }
 
     /**
@@ -386,21 +402,42 @@ public final class HttpMetadataParser {
      * <p>
      * If no scheme is given, {@code http} is used.
      * <p>
-     * Unlike {@link URI#create(String)}, this method allows illegal characters to appear in the text as long as
+     * If {@link RawHttpOptions#allowIllegalStartLineCharacters()} is {@code true}, then
+     * this method allows illegal characters to appear in the text as long as
      * they don't interfere with splitting the URI into its separate components. This means that it's not
      * necessary to escape characters which are not used as URI component separators, considering the fact that URIs
      * are parsed using a "first-match-wins" strategy.
+     * <p>
+     * Otherwise, this method simply uses {@link URI#URI(String)} to parse the URI (i.e. it follows RFC-2396 strictly).
      *
      * @param uri the URI specification to parse
      * @return parsed URI
      */
     public URI parseUri(String uri) {
+        String schemeUri = uriWithSchema(uri);
+        try {
+            if (options.allowIllegalStartLineCharacters()) {
+                return parseUriLenient(schemeUri);
+            } else {
+                return new URI(schemeUri);
+            }
+        } catch (URISyntaxException e) {
+            if (e.getReason().startsWith("Illegal character in ")) {
+                int startIndex = schemeUri.length() - uri.length();
+                int index = e.getIndex() - startIndex;
+                throw new InvalidHttpRequest(
+                        String.format("Invalid request target: %s at index %d: '%s'", e.getReason(), index, uri), 1);
+            } else {
+                throw new InvalidHttpRequest(
+                        String.format("Invalid request target: %s", e.getReason()), 1);
+            }
+        }
+    }
+
+    private static URI parseUriLenient(String uri) throws URISyntaxException {
         final String scheme, userInfo, host, path, query, fragment;
         final int port;
-        if (!uriWithSchemePattern.matcher(uri).matches()) {
-            // no scheme was given, default to http
-            uri = "http://" + uri;
-        }
+
         // String guaranteed to start with <scheme>://
         int schemeEndIndex = uri.indexOf(':');
         int hierPartStart = schemeEndIndex + 3;
@@ -434,11 +471,15 @@ public final class HttpMetadataParser {
             throw new InvalidHttpRequest("Invalid port: " + portString, 1);
         }
 
-        try {
-            return new URI(scheme, userInfo, host, port, path, query, fragment);
-        } catch (URISyntaxException e) {
-            throw new InvalidHttpRequest("Invalid URI: " + e.getMessage(), 1);
+        return new URI(scheme, userInfo, host, port, path, query, fragment);
+    }
+
+    private static String uriWithSchema(String uri) {
+        if (!uriWithSchemePattern.matcher(uri).matches()) {
+            // no scheme was given, default to http
+            uri = "http://" + uri;
         }
+        return uri;
     }
 
     private static Map.Entry<String, String> parseHostAndPort(String text) {

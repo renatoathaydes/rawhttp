@@ -7,13 +7,14 @@ import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.server.RawHttpServer
 import rawhttp.core.server.TcpRawHttpServer
+import java.net.ServerSocket
 import java.time.Duration
 import java.util.Arrays
 import java.util.Optional
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-const val port = 8087
+val port = ServerSocket(0).apply { close() }.localPort
 
 class RawHttpDuplexIntegrationTest {
 

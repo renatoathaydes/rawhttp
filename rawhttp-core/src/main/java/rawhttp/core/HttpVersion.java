@@ -42,7 +42,7 @@ public enum HttpVersion {
             case "HTTP/2":
                 return HTTP_2;
             default:
-                throw new IllegalArgumentException("Unknown HTTP version");
+                    throw new IllegalArgumentException("Unknown HTTP version");
         }
     }
 

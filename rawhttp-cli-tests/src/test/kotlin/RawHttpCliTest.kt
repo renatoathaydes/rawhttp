@@ -105,6 +105,49 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canServeLocalDirectoryFromCustomRootPath() {
+        val workDir = File(".")
+        val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
+                ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
+        var contextPath = "some/example"
+
+        val handle = runCli("serve", ".", "-r", contextPath)
+
+        val response = try {
+            sendHttpRequest("""
+            GET http://0.0.0.0:8080/$contextPath/${someFileInWorkDir.name}
+            Accept: */*
+            """.trimIndent()).eagerly()
+        } catch (e: AssertionError) {
+            println(handle)
+            handle.sendStopSignalToRawHttpServer()
+            throw e
+        }
+
+        val responseToStandardPath = try {
+            sendHttpRequest("""
+            GET http://0.0.0.0:8080/${someFileInWorkDir.name}
+            Accept: */*
+            """.trimIndent()).eagerly()
+        } catch (e: AssertionError) {
+            println(handle)
+            throw e
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat(response.statusCode, equalTo(200))
+        assertTrue(response.body.isPresent)
+        assertThat(response.body.get().asRawBytes(), equalTo(someFileInWorkDir.readBytes()))
+
+        assertThat(responseToStandardPath.statusCode, equalTo(404))
+        assertTrue(responseToStandardPath.body.isPresent)
+        assertThat(responseToStandardPath.body.get().asRawString(Charsets.UTF_8), equalTo("Resource was not found."))
+    }
+
+    @Test
     fun canServeResourceUsingCustomMediaTypes() {
         val tempDir = createTempDir(javaClass.name)
         val mp3File = File(tempDir, "resource.mp3")

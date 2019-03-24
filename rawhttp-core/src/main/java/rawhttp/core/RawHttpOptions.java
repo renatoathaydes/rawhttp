@@ -21,6 +21,7 @@ public class RawHttpOptions {
     private final boolean insertHttpVersionIfMissing;
     private final boolean allowNewLineWithoutReturn;
     private final boolean ignoreLeadingEmptyLine;
+    private final boolean allowIllegalStartLineCharacters;
     private final HttpHeadersOptions httpHeadersOptions;
     private final HttpBodyEncodingRegistry encodingRegistry;
 
@@ -28,12 +29,14 @@ public class RawHttpOptions {
                            boolean insertHttpVersionIfMissing,
                            boolean allowNewLineWithoutReturn,
                            boolean ignoreLeadingEmptyLine,
+                           boolean allowIllegalStartLineCharacters,
                            HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
         this.insertHttpVersionIfMissing = insertHttpVersionIfMissing;
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
+        this.allowIllegalStartLineCharacters = allowIllegalStartLineCharacters;
         this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
@@ -90,6 +93,13 @@ public class RawHttpOptions {
      */
     public boolean ignoreLeadingEmptyLine() {
         return ignoreLeadingEmptyLine;
+    }
+
+    /**
+     * @return whether or not to allow illegal characters in the start line.
+     */
+    public boolean allowIllegalStartLineCharacters() {
+        return allowIllegalStartLineCharacters;
     }
 
     /**
@@ -158,6 +168,7 @@ public class RawHttpOptions {
         private boolean allowNewLineWithoutReturn = true;
         private boolean ignoreLeadingEmptyLine = true;
         private boolean insertHttpVersionIfMissing = true;
+        private boolean allowIllegalStartLineCharacters = false;
         private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
@@ -230,6 +241,24 @@ public class RawHttpOptions {
         }
 
         /**
+         * Configure {@link RawHttp} to be lenient when parsing the start-line (method line or status line).
+         * <p>
+         * This allows, for example, paths and queries in requests to contain whitespaces:
+         * <p>
+         * {@code GET http://example.com/path with /spaces?value=1 2 3 HTTP/1.1}
+         * <p>
+         * This works because RawHTTP in lenient mode can find each part of the URI using heuristics that, while not
+         * being always strictly correct, will in most cases allow for correct parsing of hand-written
+         * HTTP messages.
+         *
+         * @return this
+         */
+        public Builder allowIllegalStartLineCharacters() {
+            this.allowIllegalStartLineCharacters = true;
+            return this;
+        }
+
+        /**
          * Get a builder of {@link HttpHeadersOptions} to use with this object.
          *
          * @return this
@@ -262,7 +291,8 @@ public class RawHttpOptions {
                     : encodingRegistry;
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, httpHeadersOptionsBuilder.getOptions(), registry);
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters,
+                    httpHeadersOptionsBuilder.getOptions(), registry);
         }
 
         public class HttpHeadersOptionsBuilder {
