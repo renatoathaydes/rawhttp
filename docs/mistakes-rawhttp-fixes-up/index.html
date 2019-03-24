@@ -105,6 +105,23 @@ RawHttp strictHttp <span style="color:#f92672">=</span> <span style="color:#66d9
             <span style="color:#f92672">.</span><span style="color:#a6e22e">doNotIgnoreLeadingEmptyLine</span><span style="color:#f92672">()</span>
             <span style="color:#f92672">.</span><span style="color:#a6e22e">build</span><span style="color:#f92672">());</span></code></pre></div>
 
+<h3 id="allowing-unescaped-uris">Allowing unescaped URIs</h3>
+
+<p>By default, RawHTTP is strict when parsing URIs. However, you can make it lenient so that you don&rsquo;t need to escape
+all forbidden characters (e.g. whitespaces don&rsquo;t need to be given as <code>%20</code>).</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">import</span> rawhttp.core.*<span style="color:#f92672">;</span>
+
+RawHttp lenientUriOptions <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RawHttp<span style="color:#f92672">(</span>RawHttpOptions<span style="color:#f92672">.</span><span style="color:#a6e22e">newBuilder</span><span style="color:#f92672">()</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">allowIllegalStartLineCharacters</span><span style="color:#f92672">()</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">build</span><span style="color:#f92672">());</span></code></pre></div>
+
+<p>With this enabled, you can give URIs more easily:</p>
+
+<pre><code>GET https://www.example.com/name=Joe Doe&amp;age=43 HTTP/1.1
+Accept: text/html
+</code></pre>
+
 <hr>
 
 <p><a href="/rawhttp/docs">Index</a> <a href="/rawhttp/docs/http-client">Next: HTTP Client</a></p>

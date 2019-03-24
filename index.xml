@@ -30,7 +30,7 @@ import rawhttp.core.* import com.athaydes.rawhttp.duplex.* import rawhttp.</desc
       <pubDate>Thu, 10 May 2018 19:02:44 +0200</pubDate>
       
       <guid>https://renatoathaydes.github.io/rawhttp/docs/get-started/</guid>
-      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;com.athaydes.rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;com.athaydes.rawhttp:rawhttp-core:2.0&amp;#39; Download the jar with curl curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-core/2.0/rawhttp-core-2.0.jar -o rawhttp.jar   Index Next: Low Level API</description>
+      <description>Add a dependency on RawHTTP Maven &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;com.athaydes.rawhttp&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;rawhttp-core&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;2.1&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; Gradle dependency &amp;#39;com.athaydes.rawhttp:rawhttp-core:2.1&amp;#39; Download the jar with curl curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-core/2.1/rawhttp-core-2.1.jar -o rawhttp.jar   Index Next: Low Level API</description>
     </item>
     
     <item>
@@ -94,7 +94,7 @@ server.stop(); Configuring a HTTP server As with the HTTP client, to configure a
       
       <guid>https://renatoathaydes.github.io/rawhttp/rawhttp-modules/cli/</guid>
       <description>The rawhttp-cli module is a CLI (command-line interface) that can send HTTP requests and serve local files via a RawHTTP server.
-Download curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.0/rawhttp-cli-1.0-all.jar -o rawhttp.jar  Usage Use rawhttp send to send HTTP requests.
+Download curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.1.1/rawhttp-cli-1.1.1-all.jar -o rawhttp.jar  Usage Use rawhttp send to send HTTP requests.
 Use rawhttp serve to serve a local directory via HTTP.
 To see the help screen, run rawhttp help.
  Using the send command The send command has the purpose of sending out HTTP requests. It prints the full HTTP response (including status line, headers, body) to stdout.</description>
