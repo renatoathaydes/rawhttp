@@ -8,6 +8,7 @@ import org.junit.Ignore
 import org.junit.Test
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttpOptions
+import rawhttp.core.internal.Bool
 import rawhttp.core.shouldHaveSameElementsAs
 
 class InputStreamChunkDecoderTest {
@@ -40,6 +41,31 @@ class InputStreamChunkDecoderTest {
 
         decoderStream.readBytes() shouldHaveSameElementsAs "Wikipedia in\r\n\r\nchunks.".toByteArray()
         decoderStream.trailer.asMap() shouldBe mapOf<String, List<String>>()
+    }
+
+    @Test // see issue #9
+    fun canDecodeChunkedBodyWithTinyChunksLikeGoogleUses() {
+        val chunkedBody = "00000001\r\n_\r\n00000001;abc=def\r\n_\r\n" +
+                "0000000000000000000000000000000000000000000000000000000000000001\r\n_\r\n" +
+                "0004\r\nWiki\r\n0005\r\npedia\r\nE\r\n in\r\n\r\nchunks.\r\n0000\r\n\r\n"
+
+        val decoderStream = InputStreamChunkDecoder(chunkedBodyParser, chunkedBody.byteInputStream())
+
+        val chunkIterator = decoderStream.asIterator()
+
+        repeat(3) { index ->
+            chunkIterator.hasNext() shouldBe true
+            chunkIterator.next().let {
+                it.data shouldHaveSameElementsAs "_".toByteArray()
+                if (index == 1)
+                    it.extensions.asMap() shouldBe mapOf("ABC" to listOf("def"))
+                else
+                    it.extensions.asMap() shouldBe emptyMap<String, Any>()
+            }
+        }
+
+        decoderStream.readBytes() shouldHaveSameElementsAs "Wikipedia in\r\n\r\nchunks.".toByteArray()
+        decoderStream.trailer.asMap() shouldBe emptyMap<String, Any>()
     }
 
     @Test
@@ -107,5 +133,42 @@ class InputStreamChunkDecoderTest {
         shouldThrow<IllegalStateException> { decoderStream.readChunk() }
 
         originalStream.reader().readText() shouldBe "IGNORED"
+    }
+
+    @Test
+    fun cannotDecodeInvalidChunkSizeWithTooManyBytes() {
+        // 65 bytes long
+        val chunkedBody = "00000000000000000000000000000000000000000000000000000000000000001"
+
+        val decoderStream = InputStreamChunkDecoder(chunkedBodyParser, chunkedBody.byteInputStream())
+
+        shouldThrow<java.lang.IllegalStateException> {
+            decoderStream.readChunk()
+        }.message shouldBe "Invalid chunk-size (too many digits)"
+    }
+
+    @Test
+    fun cannotDecodeInvalidChunkSizeTooBig() {
+        // too big to fit into an int
+        val chunkedBody = "FFFFFFFF"
+
+        val decoderStream = InputStreamChunkDecoder(chunkedBodyParser, chunkedBody.byteInputStream())
+
+        shouldThrow<java.lang.IllegalStateException> {
+            decoderStream.readChunk()
+        }.message shouldBe "Invalid chunk-size (too big)"
+    }
+
+    @Test
+    fun chunkSizeIsParsedCorrectly() {
+        chunkedBodyParser.readChunkSize("0000000\n".byteInputStream(), Bool()) shouldBe 0
+        chunkedBodyParser.readChunkSize("0000001\n".byteInputStream(), Bool()) shouldBe 1
+        chunkedBodyParser.readChunkSize("000000A\n".byteInputStream(), Bool()) shouldBe 10
+        chunkedBodyParser.readChunkSize("1000000\n".byteInputStream(), Bool()) shouldBe 16_777_216
+        chunkedBodyParser.readChunkSize("abcdef\n".byteInputStream(), Bool()) shouldBe 11_259_375
+
+        // largest allowed chunk size
+        chunkedBodyParser.readChunkSize("FFFFFFF\n".byteInputStream(), Bool()) shouldBe 268_435_455
+        chunkedBodyParser.readChunkSize("00000FFFFFFF\n".byteInputStream(), Bool()) shouldBe 268_435_455
     }
 }
