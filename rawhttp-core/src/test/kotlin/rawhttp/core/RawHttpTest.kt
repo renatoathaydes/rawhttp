@@ -321,7 +321,7 @@ class SimpleHttpResponseTests : StringSpec({
         }
 
         // verify that the stream was only consumed until the empty-line after the last header
-        String(stream.readBytes(4)) shouldEqual "BODY"
+        String(stream.readBytes()) shouldEqual "BODY"
     }
 
     "Should be able to parse HTTP Response with trailing new-line as recommended for robustness" {
