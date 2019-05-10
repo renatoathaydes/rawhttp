@@ -1,15 +1,16 @@
 package rawhttp.core.body;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
 import rawhttp.core.HttpMetadataParser;
 import rawhttp.core.IOConsumer;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.errors.InvalidHttpHeader;
+import rawhttp.core.internal.Bool;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
 
@@ -72,7 +73,7 @@ public final class ChunkedBodyParser {
      * @throws IOException if an error occurs while reading the stream
      */
     public ChunkedBodyContents.Chunk readNextChunk(InputStream inputStream) throws IOException {
-        AtomicBoolean hasExtensions = new AtomicBoolean(false);
+        Bool hasExtensions = new Bool();
         int chunkSize = readChunkSize(inputStream, hasExtensions);
         if (chunkSize < 0) {
             throw new IllegalStateException("unexpected EOF, could not read chunked body");
@@ -93,7 +94,7 @@ public final class ChunkedBodyParser {
                                  IOConsumer<RawHttpHeaders> trailerConsumer) throws IOException {
         int chunkSize = 1;
         while (chunkSize > 0) {
-            AtomicBoolean hasExtensions = new AtomicBoolean(false);
+            Bool hasExtensions = new Bool();
             chunkSize = readChunkSize(inputStream, hasExtensions);
             if (chunkSize < 0) {
                 throw new IllegalStateException("unexpected EOF, could not read chunked body");
@@ -170,7 +171,7 @@ public final class ChunkedBodyParser {
     }
 
     private int readChunkSize(InputStream inputStream,
-                              AtomicBoolean hasExtensions) throws IOException {
+                              Bool hasExtensions) throws IOException {
         char[] chars = new char[4];
         int b;
         int i = 0;

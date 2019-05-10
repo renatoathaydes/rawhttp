@@ -1,5 +1,8 @@
 package rawhttp.core;
 
+import rawhttp.core.errors.InvalidHttpHeader;
+import rawhttp.core.internal.Bool;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -13,9 +16,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import rawhttp.core.errors.InvalidHttpHeader;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -391,10 +392,10 @@ public class RawHttpHeaders implements Writable {
             }
             String key = toUppercaseAscii(headerName);
             headersByCapitalizedName.put(key, new Header(value));
-            AtomicBoolean foundFirst = new AtomicBoolean(false);
+            Bool foundFirst = new Bool();
             headerNames.removeIf(name -> {
                 boolean found = name.equalsIgnoreCase(headerName);
-                if (found && foundFirst.weakCompareAndSet(false, true)) {
+                if (found && foundFirst.compareAndSet(false, true)) {
                     return false; // leave the first value
                 }
                 return found;
