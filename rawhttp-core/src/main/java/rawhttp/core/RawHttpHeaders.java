@@ -17,12 +17,14 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -60,9 +62,28 @@ public class RawHttpHeaders implements Writable {
     /**
      * @param headerName case-insensitive header name
      * @return values for the header, or the empty list if this header is not present.
+     * <p>
+     * One value is returned for each header entry with the given name. If more than one value can be
+     * provided in the same entry for this particular header (e.g. {@code Accept} can contain multiple values
+     * separated by a ','), then use {@link RawHttpHeaders#get(String, String)} to split the values.
      */
     public List<String> get(String headerName) {
         return headersByCapitalizedName.getOrDefault(headerName.toUpperCase(), NULL_HEADER).values;
+    }
+
+    /**
+     * @param headerName     case-insensitive header name
+     * @param valueSeparator separator (regular expression) used within the value of a single header entry to
+     *                       separate different values
+     * @return values for the header, or the empty list if this header is not present.
+     * <p>
+     * This method returns the values for all header entries with the given name, splitting up each entry's
+     * value if necessary using the given separator.
+     */
+    public List<String> get(String headerName, String valueSeparator) {
+        return get(headerName).stream()
+                .flatMap((v) -> Stream.of(v.split(valueSeparator)))
+                .collect(toList());
     }
 
     /**
