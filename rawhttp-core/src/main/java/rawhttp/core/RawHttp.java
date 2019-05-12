@@ -234,11 +234,11 @@ public class RawHttp {
      *                             safely determine the body type of a message
      */
     public FramedBody getFramedBody(StartLine startLine, RawHttpHeaders headers) {
-        List<String> encodings = headers.get("Transfer-Encoding");
-        BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(), encodings);
+        List<String> transferEncodings = headers.get("Transfer-Encoding", ",\\s*");
+        BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(), transferEncodings);
 
-        boolean isChunked = !encodings.isEmpty() &&
-                encodings.get(encodings.size() - 1).equalsIgnoreCase("chunked");
+        boolean isChunked = !transferEncodings.isEmpty() &&
+                transferEncodings.get(transferEncodings.size() - 1).equalsIgnoreCase("chunked");
 
         if (isChunked) {
             return new FramedBody.Chunked(bodyDecoder, metadataParser);
