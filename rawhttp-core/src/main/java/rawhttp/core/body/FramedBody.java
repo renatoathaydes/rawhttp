@@ -1,13 +1,14 @@
 package rawhttp.core.body;
 
+import rawhttp.core.HttpMetadataParser;
+import rawhttp.core.IOFunction;
+import rawhttp.core.RawHttpHeaders;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import rawhttp.core.HttpMetadataParser;
-import rawhttp.core.IOFunction;
-import rawhttp.core.RawHttpHeaders;
 
 /**
  * A framed HTTP message body.
@@ -156,7 +157,6 @@ public abstract class FramedBody {
          */
         public Chunked(BodyDecoder bodyDecoder, HttpMetadataParser metadataParser) {
             super(bodyDecoder);
-            assert "chunked".equalsIgnoreCase(bodyDecoder.getEncodings().get(bodyDecoder.getEncodings().size() - 1));
             this.bodyParser = new ChunkedBodyParser(metadataParser);
         }
 

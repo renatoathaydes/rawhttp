@@ -76,7 +76,7 @@ public class BodyDecoder {
     }
 
     /**
-     * @return the transfer encodings applied to the body of a HTTP message
+     * @return the encodings applied to the body of a HTTP message
      */
     public List<String> getEncodings() {
         return encodings;
