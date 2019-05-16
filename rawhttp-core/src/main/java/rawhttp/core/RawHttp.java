@@ -7,6 +7,7 @@ import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
 import rawhttp.core.errors.InvalidMessageFrame;
+import rawhttp.core.internal.CollectionUtil;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -234,11 +235,14 @@ public class RawHttp {
      *                             safely determine the body type of a message
      */
     public FramedBody getFramedBody(StartLine startLine, RawHttpHeaders headers) {
-        List<String> encodings = headers.get("Transfer-Encoding");
-        BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(), encodings);
+        List<String> transferEncodings = headers.get("Transfer-Encoding", ",\\s*");
+        List<String> contentEncodings = headers.get("Content-Encoding", ",\\s*");
 
-        boolean isChunked = !encodings.isEmpty() &&
-                encodings.get(encodings.size() - 1).equalsIgnoreCase("chunked");
+        BodyDecoder bodyDecoder = new BodyDecoder(options.getEncodingRegistry(),
+                CollectionUtil.append(contentEncodings, transferEncodings));
+
+        boolean isChunked = !transferEncodings.isEmpty() &&
+                transferEncodings.get(transferEncodings.size() - 1).equalsIgnoreCase("chunked");
 
         if (isChunked) {
             return new FramedBody.Chunked(bodyDecoder, metadataParser);

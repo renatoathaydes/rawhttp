@@ -1,3 +1,5 @@
+import groovy.text.SimpleTemplateEngine
+
 buildscript {
     repositories {
         jcenter()
@@ -21,6 +23,10 @@ version = rawHttpCliVersion
 
 mainClassName = 'rawhttp.cli.Main'
 final runnableJarName = 'rawhttp.jar'
+
+final generatedJavaSources = "$buildDir/java-generated-sources"
+
+sourceSets.main.java.srcDir generatedJavaSources
 
 dependencies {
     compile project(':rawhttp-core')
@@ -47,6 +53,29 @@ task fatJar(type: Jar) {
 }
 
 ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
+
+task generateJavaSources(
+        description: 'Generates Java sources based on the java-templates directory' ) {
+    def properties = project.properties
+    def templates = fileTree( dir: 'src/main/java-templates' )
+    def destination = file( generatedJavaSources )
+
+    doLast {
+        templates.visit { item ->
+            def file = item.file
+            if ( file.isFile() ) {
+                def transformedTemplate = new SimpleTemplateEngine().createTemplate( file ).make( properties )
+                new File( destination, item.relativePath.toString() ).withWriter {
+                    transformedTemplate.writeTo it
+                }
+            } else {
+                new File( destination, item.relativePath.toString() ).mkdirs()
+            }
+        }
+    }
+}
+
+compileJava.dependsOn generateJavaSources
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource

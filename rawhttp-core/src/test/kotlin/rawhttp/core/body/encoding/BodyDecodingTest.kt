@@ -94,4 +94,35 @@ class BodyDecodingTest {
         actualEncodedBody shouldHaveSameElementsAs chunkedThenGzippedBodyBytes
     }
 
+    @Test
+    fun decodeRealHttpResponseWithChunkedTransferEncodingAndGzipContentEncoding() {
+        val plainTextBody = BodyDecodingTest::class.java.getResource("decoded-body.json").readText()
+
+        val response = RawHttp().parseResponse(
+                BodyDecodingTest::class.java.getResourceAsStream("chunked-and-gzipped-response.http"))
+
+        response.statusCode shouldBe 200
+        response.headers["Transfer-Encoding"] shouldBe listOf("chunked")
+        response.headers["Content-Encoding"] shouldBe listOf("gzip")
+
+        val actualDecodedBody = response.body.map {
+            it.decodeBodyToString(StandardCharsets.UTF_8)
+        }.orElse("NO BODY")
+
+        actualDecodedBody shouldBe plainTextBody
+    }
+
+    @Test
+    fun identityEncodingIsIgnored() {
+        val response = RawHttp().parseResponse("200 OK\nContent-Encoding: identity\nContent-Length: 5\n\nhello")
+
+        response.headers["Content-Encoding"] shouldBe listOf("identity")
+
+        val actualDecodedBody = response.body.map {
+            it.decodeBodyToString(StandardCharsets.UTF_8)
+        }.orElse("NO BODY")
+
+        actualDecodedBody shouldBe "hello"
+    }
+
 }

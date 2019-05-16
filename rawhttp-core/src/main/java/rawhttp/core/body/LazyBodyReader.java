@@ -1,11 +1,12 @@
 package rawhttp.core.body;
 
+import rawhttp.core.internal.Bool;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Lazy implementation of {@link BodyReader}.
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class LazyBodyReader extends BodyReader {
 
-    private final AtomicBoolean isConsumed = new AtomicBoolean(false);
+    private final Bool isConsumed = new Bool();
     private final InputStream inputStream;
 
     public LazyBodyReader(FramedBody framedBody,

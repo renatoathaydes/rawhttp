@@ -1,5 +1,7 @@
 package rawhttp.core.body.encoding;
 
+import rawhttp.core.internal.Bool;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
@@ -10,14 +12,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 
 final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
     private final PipedInputStream encodedBytesReceiver;
     private final PipedOutputStream encodedBytesSink;
-    private final AtomicBoolean readerRunning = new AtomicBoolean(false);
+    private final Bool readerRunning = new Bool();
     private final ExecutorService executorService;
     private final int bufferSize;
     private Future<?> readerExecution;

@@ -93,9 +93,9 @@ class RawHttpErrorsTest : StringSpec({
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
                     .build()
-            ).parseRequest("GET http://localhost\r\nTransfer-Encoding: chunked\r\n\r\n12345\r\n0\r\n\r\n").eagerly()
+            ).parseRequest("GET http://localhost\r\nTransfer-Encoding: chunked\r\n\r\n12345678\r\n0\r\n\r\n").eagerly()
         }.run {
-            message shouldBe "Invalid chunk-size (too big, more than 4 hex-digits)"
+            message shouldBe "Invalid chunk-size (too big)"
         }
     }
 
@@ -106,7 +106,7 @@ class RawHttpErrorsTest : StringSpec({
                     .build()
             ).parseRequest("GET http://localhost\r\nTransfer-Encoding: chunked\r\n\r\nERR\r\n0\r\n\r\n").eagerly()
         }.run {
-            message shouldBe "Invalid chunk-size (For input string: \"ERR\")"
+            message shouldBe "Illegal character in chunk-size: 'R'"
         }
     }
 

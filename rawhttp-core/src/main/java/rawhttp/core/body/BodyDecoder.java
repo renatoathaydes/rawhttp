@@ -1,14 +1,15 @@
 package rawhttp.core.body;
 
+import rawhttp.core.body.encoding.DecodingOutputStream;
+import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
+import rawhttp.core.body.encoding.HttpMessageDecoder;
+import rawhttp.core.errors.UnknownEncodingException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import rawhttp.core.body.encoding.DecodingOutputStream;
-import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
-import rawhttp.core.body.encoding.HttpMessageDecoder;
-import rawhttp.core.errors.UnknownEncodingException;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -38,11 +39,11 @@ public class BodyDecoder {
      * {@link UnknownEncodingException}.
      *
      * @param registry  the registry of {@link HttpMessageDecoder}s.
-     * @param encodings the encodings applied to the message body
+     * @param transferEncodings the encodings applied to the message body
      */
-    public BodyDecoder(HttpBodyEncodingRegistry registry, List<String> encodings) {
+    public BodyDecoder(HttpBodyEncodingRegistry registry, List<String> transferEncodings) {
         this.registry = registry;
-        this.encodings = encodings;
+        this.encodings = transferEncodings;
     }
 
     /**

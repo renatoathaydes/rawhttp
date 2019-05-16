@@ -43,6 +43,23 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
+    "Headers can contain multiple entries and multiple values within each entry" {
+        RawHttpHeaders.newBuilder()
+                .with("hi", "aaa, ccc")
+                .with("hi", "bbb")
+                .with("ho", "ccc xxx")
+                .with("hi", "ddd, eee,fff")
+                .build().run {
+                    get("hi") shouldEqual listOf("aaa, ccc", "bbb", "ddd, eee,fff")
+                    get("hi", ",\\s*") shouldEqual listOf("aaa", "ccc", "bbb", "ddd", "eee", "fff")
+                    get("ho") shouldEqual listOf("ccc xxx")
+                    get("ho", " ") shouldEqual listOf("ccc", "xxx")
+
+                    headerNames shouldEqual listOf("hi", "hi", "ho", "hi")
+                    uniqueHeaderNames shouldEqual setOf("HI", "HO")
+                }
+    }
+
     "Headers can be re-constructed exactly" {
         RawHttpHeaders.newBuilder()
                 .with("Content-Type", "33")
