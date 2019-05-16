@@ -1,5 +1,6 @@
 package rawhttp.cli;
 
+import com.athaydes.rawhttp.cli.Versions;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -69,6 +70,8 @@ public class Main {
     private static CliError showUsage(HelpOptions options) {
         System.out.println("=============== RawHTTP CLI ===============");
         System.out.println(" https://github.com/renatoathaydes/rawhttp");
+        System.out.println(" rawhttp-cli  version: " + Versions.CLI_VERSION);
+        System.out.println(" rawhttp-core version: " + Versions.CORE_VERSION);
         System.out.println("===========================================");
 
         switch (options) {
