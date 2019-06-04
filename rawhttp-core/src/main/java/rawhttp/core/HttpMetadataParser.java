@@ -458,7 +458,7 @@ public final class HttpMetadataParser {
         int pathStart = hierPart.indexOf('/');
         path = (pathStart < 0) ? null : hierPart.substring(pathStart);
         int userInfoEnd = hierPart.indexOf('@');
-        userInfo = (userInfoEnd < 0) ? null : hierPart.substring(0, userInfoEnd);
+        userInfo = (userInfoEnd < 0 || userInfoEnd > pathStart) ? null : hierPart.substring(0, userInfoEnd);
         Map.Entry<String, String> hostAndPort = parseHostAndPort(
                 hierPart.substring(
                         (userInfo == null) ? 0 : userInfoEnd + 1,
