@@ -26,7 +26,7 @@ jobs:
           paths:
             - ~/.gradle/caches
           key: v1-gradle-cache-{{ checksum "build.gradle" }}
-      - create_report:
+      - run:
           name: Save test results
           command: |
             mkdir -p build/test-results
