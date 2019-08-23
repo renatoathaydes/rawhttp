@@ -50,7 +50,10 @@ class RequestLineTest : StringSpec({
 
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
-                row("GET /hi there HTTP/1.1", HttpVersion.HTTP_1_1, "GET", "/hi%20there", "GET /hi%20there HTTP/1.1"))
+                row("GET /hi there HTTP/1.1", HttpVersion.HTTP_1_1, "GET", "/hi%20there", "GET /hi%20there HTTP/1.1"),
+                row("POST /api/users/test@example.com HTTP/1.1", HttpVersion.HTTP_1_1,
+                        "POST", "/api/users/test@example.com", "POST /api/users/test@example.com HTTP/1.1")
+        )
 
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {
