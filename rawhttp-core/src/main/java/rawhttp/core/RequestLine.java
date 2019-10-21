@@ -60,12 +60,19 @@ public class RequestLine implements StartLine {
             if (!host.matches("[a-z]{1,6}://.*")) {
                 host = "http://" + host;
             }
-            URI hostURI = URI.create(host);
-            URI newURI = new URI(hostURI.getScheme(),
-                    hostURI.getUserInfo(),
-                    hostURI.getHost(),
-                    hostURI.getPort(),
-                    uri.getPath(), uri.getQuery(), uri.getFragment());
+            URI hostURI = new URI(host);
+            StringBuilder sb = new StringBuilder(hostURI.toString());
+            if (uri.getRawPath() != null)
+                sb.append(uri.getRawPath());
+            if (uri.getRawQuery() != null) {
+                sb.append('?');
+                sb.append(uri.getRawQuery());
+            }
+            if (uri.getRawFragment() != null) {
+                sb.append('#');
+                sb.append(uri.getRawFragment());
+            }
+            URI newURI = new URI(sb.toString());
             return new RequestLine(method, newURI, httpVersion);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
@@ -86,18 +93,14 @@ public class RequestLine implements StartLine {
      */
     @Override
     public String toString() {
-        URI pathURI;
-        String path = uri.getPath();
+        String path = uri.getRawPath();
         if (path == null || path.trim().isEmpty()) {
             path = "/";
         }
-        try {
-            // only path and query are sent to the server
-            pathURI = new URI(null, null, null, -1, path, uri.getQuery(), null);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        if (uri.getRawQuery() != null) {
+            path += "?" + uri.getRawQuery();
         }
 
-        return method + " " + pathURI + " " + httpVersion;
+        return method + " " + path + " " + httpVersion;
     }
 }

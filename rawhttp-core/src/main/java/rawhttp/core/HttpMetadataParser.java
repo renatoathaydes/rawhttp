@@ -6,16 +6,16 @@ import rawhttp.core.errors.InvalidHttpResponse;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Parser of HTTP messages' metadata lines, i.e. start-line and header fields.
@@ -28,6 +28,7 @@ public final class HttpMetadataParser {
 
     private static final Pattern statusCodePattern = Pattern.compile("\\d{3}");
     private static final Pattern uriWithSchemePattern = Pattern.compile("[a-zA-Z][a-zA-Z+\\-.]*://.*");
+    private static final String allowedUriCharacters = "$-_.+!*'(),@";
 
     private final RawHttpOptions options;
 
@@ -470,8 +471,56 @@ public final class HttpMetadataParser {
         } catch (NumberFormatException e) {
             throw new InvalidHttpRequest("Invalid port: " + portString, 1);
         }
+        URI tempUri = new URI(scheme, userInfo, host, port, urlDecode(path), null, null);
+        String safeQuery = query == null ? "" : "?" + Arrays.stream(query.split("&"))
+                .map(s -> s.split("=", 2))
+                .peek(kv -> {
+                    kv[0] = urlEncodeIllegal(kv[0]);
+                    if (kv.length == 2) kv[1] = urlEncodeIllegal(kv[1]);
+                })
+                .map(kv -> String.join("=", kv))
+                .collect(Collectors.joining("&"));
+        String safeFragment = (fragment == null ? "" : "#" + urlEncodeIllegal(fragment));
+        return new URI(tempUri.toString() + safeQuery + safeFragment);
+    }
+    
+    private static String urlEncodeIllegal(String queryString) {
+        StringBuilder query = new StringBuilder();
+		for (int i = 0; i < queryString.length(); i++) {
+            char c = queryString.charAt(i);
+            if (c == '%' && i+2 < queryString.length()
+					&& urlDecode(queryString.substring(i, i+3)).length() == 1) {
+				query.append(queryString, i, i+3);
+                i+=2;
+			}
+            // URLEncoder replaces ' ' with '+', and we want %20
+			else if (c == ' ') {
+			    query.append("%20");
+            }
+            else if (!isAllowedChar(c)){
+                query.append(URLEncoder.encode("" + c));
+            }
+            else {
+                query.append(c);
+            }
+		}
+		return query.toString();
+    }
 
-        return new URI(scheme, userInfo, host, port, path, query, fragment);
+    private static boolean isAllowedChar(char c) {
+        return allowedUriCharacters.indexOf(c) != -1;
+    }
+    
+    private static String urlDecode(String urlPart) {
+        if (urlPart == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(urlPart, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // UTF-8 charset not available?
+            throw new RuntimeException(e);
+        }
     }
 
     private static String uriWithSchema(String uri) {
