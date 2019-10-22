@@ -74,11 +74,11 @@ class SimpleHttpRequestTests : StringSpec({
     }
 
     "Uses Host header to identify target server if missing from method line - preserve url encoding" {
-        RawHttp().parseRequest("GET /hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd\nHost: www.example.com").eagerly().run {
+        RawHttp().parseRequest("GET /hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&%7B%22json%22%3A%20null%7D\nHost: www.example.com").eagerly().run {
             method shouldBe "GET"
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
-            uri shouldEqual URI.create("http://www.example.com/hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd")
-            toString() shouldBe "GET /hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd HTTP/1.1\r\nHost: www.example.com\r\n\r\n"
+            uri shouldEqual URI.create("http://www.example.com/hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&%7B%22json%22%3A%20null%7D")
+            toString() shouldBe "GET /hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&%7B%22json%22%3A%20null%7D HTTP/1.1\r\nHost: www.example.com\r\n\r\n"
             headers.asMap() shouldEqual mapOf("HOST" to listOf("www.example.com"))
             body should notBePresent()
         }
