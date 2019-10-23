@@ -261,6 +261,31 @@ class HttpMetadataParserTest {
     }
 
     @Test
+    fun canParseURIsNonLenient() {
+        val table = table(
+                headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
+                UriExample("hi", "http", null, "hi", -1, "", null, null),
+                UriExample("/hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D", "http",
+                        null, null, -1, "/hello",
+                        "encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D", null)
+
+        )
+
+        val parser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
+        forAll(table) { uriSpec, scheme, userInfo, host, port, path, query, fragment ->
+            val uri = parser.parseUri(uriSpec)
+            uri.scheme shouldEqual scheme
+            uri.userInfo shouldEqual userInfo
+            uri.host shouldEqual host
+            uri.port shouldEqual port
+            uri.path shouldEqual path
+            uri.rawQuery shouldEqual query
+            uri.rawFragment shouldEqual fragment
+        }
+    }
+
+    @Test
     fun canParseURIsLenient() {
         val table = table(
                 headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
