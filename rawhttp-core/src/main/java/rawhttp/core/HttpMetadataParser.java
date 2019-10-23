@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -471,7 +470,7 @@ public final class HttpMetadataParser {
         } catch (NumberFormatException e) {
             throw new InvalidHttpRequest("Invalid port: " + portString, 1);
         }
-        URI tempUri = new URI(scheme, userInfo, host, port, urlDecode(path), null, null);
+        URI tempUri = new URI(scheme, userInfo, host, port, urlDecodeSafe(path), null, null);
         String safeQuery = query == null ? "" : "?" + Arrays.stream(query.split("&"))
                 .map(s -> s.split("=", 2))
                 .peek(kv -> {
@@ -480,7 +479,7 @@ public final class HttpMetadataParser {
                 })
                 .map(kv -> String.join("=", kv))
                 .collect(Collectors.joining("&"));
-        String safeFragment = (fragment == null ? "" : "#" + urlEncodeIllegal(fragment));
+        String safeFragment = fragment == null ? "" : "#" + urlEncodeIllegal(fragment);
         return new URI(tempUri.toString() + safeQuery + safeFragment);
     }
     
@@ -489,7 +488,7 @@ public final class HttpMetadataParser {
 		for (int i = 0; i < queryString.length(); i++) {
             char c = queryString.charAt(i);
             if (c == '%' && i+2 < queryString.length()
-					&& urlDecode(queryString.substring(i, i+3)).length() == 1) {
+					&& urlDecodeSafe(queryString.substring(i, i+3)).length() == 1) {
 				query.append(queryString, i, i+3);
                 i+=2;
 			}
@@ -511,7 +510,7 @@ public final class HttpMetadataParser {
         return allowedUriCharacters.indexOf(c) != -1;
     }
     
-    private static String urlDecode(String urlPart) {
+    private static String urlDecodeSafe(String urlPart) {
         if (urlPart == null) {
             return null;
         }
@@ -520,6 +519,9 @@ public final class HttpMetadataParser {
         } catch (UnsupportedEncodingException e) {
             // UTF-8 charset not available?
             throw new RuntimeException(e);
+        } catch (Exception e) {
+            // not encoded
+            return urlPart;
         }
     }
 

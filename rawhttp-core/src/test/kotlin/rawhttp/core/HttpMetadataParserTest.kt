@@ -281,6 +281,8 @@ class HttpMetadataParserTest {
                 UriExample("/user/{user-id}", "http", null, null, -1, "/user/%7Buser-id%7D", null, null),
                 UriExample("/id/{0x0}?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&another=%7B%22json%22%3A%20null%7D", "http", null, null, -1,
                         "/id/%7B0x0%7D", "encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&another=%7B%22json%22%3A%20null%7D", null),
+                UriExample("/path%20space?legal=(%26)&illegal=%-1", "http", null, null, -1, "/path%20space", "legal=(%26)&illegal=%25-1", null),
+                UriExample("/yen-%E5%86%86?gbp=%C2%A3", "http", null, null, -1, "/yen-円", "gbp=%C2%A3", null),
                 UriExample("x://admin@hello", "x", "admin", "hello", -1, "", null, null),
                 UriExample("x://admin:pass@hello.com/hi?boo&bar#abc", "x", "admin:pass", "hello.com", -1, "/hi", "boo&bar", "abc"),
                 UriExample("https://admin:pass@hello:8443/hi?boo&bar#abc", "https", "admin:pass", "hello", 8443, "/hi", "boo&bar", "abc"),
