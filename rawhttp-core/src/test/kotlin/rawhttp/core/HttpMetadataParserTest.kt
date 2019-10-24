@@ -342,8 +342,9 @@ class HttpMetadataParserTest {
                 row("hello=true", mapOf("hello" to listOf("true"))),
                 row("a=1&b=2", mapOf("a" to listOf("1"), "b" to listOf("2"))),
                 row("a=1&a=2&b=3&a=4", mapOf("a" to listOf("1", "2", "4"), "b" to listOf("3"))),
-                row("hello=hi there", mapOf("hello" to listOf("hi there"))),
-                row("hello there=hi", mapOf("hello there" to listOf("hi"))))
+                row("hello=hi%20there", mapOf("hello" to listOf("hi there"))),
+                row("hello%20there=hi&foo=a%26b", mapOf("hello there" to listOf("hi"),
+                        "foo" to listOf("a&b"))))
 
         forAll(table) { queryString, expectedParameters ->
             val parameters = parser.parseQueryString(queryString)
