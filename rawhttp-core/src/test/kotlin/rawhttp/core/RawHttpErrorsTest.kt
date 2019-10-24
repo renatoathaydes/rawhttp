@@ -24,7 +24,7 @@ class RawHttpErrorsTest : StringSpec({
                 row("GET /path HTTP/1.1", 1, "Host not given either in request line or Host header"),
                 row("GET /\r\nHost: hi.com\r\nAccept: */*\r\nHost: hi.com", 4, "More than one Host header specified"),
                 row("GET /\r\nHost: ^&^%", 2, "Invalid host header: Invalid host format: " +
-                        "Illegal character in authority at index 7: http://^&^%")
+                        "Illegal character in authority at index 7: http://^&^%/")
         )
         forAll(examples) { request, expectedLineNumber, expectedMessage ->
             shouldThrow<InvalidHttpRequest> {

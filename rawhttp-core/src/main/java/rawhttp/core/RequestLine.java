@@ -56,18 +56,36 @@ public class RequestLine implements StartLine {
      * @return a copy of this method line, but with the given host
      */
     public RequestLine withHost(String host) {
+        StringBuilder builder = new StringBuilder(uri.toString().length());
+        if (uri.getScheme() == null) {
+            builder.append("http");
+        } else {
+            builder.append(uri.getScheme());
+        }
+        builder.append("://");
+        if (uri.getRawUserInfo() != null) {
+            builder.append(uri.getRawUserInfo()).append('@');
+        }
+
+        builder.append(host);
+
+        if (uri.getPort() >= 0) {
+            builder.append(':').append(uri.getPort());
+        }
+        if (uri.getRawPath() != null) {
+            builder.append(uri.getRawPath());
+        }
+        if (uri.getRawQuery() != null) {
+            builder.append('?').append(uri.getRawQuery());
+        }
+        if (uri.getRawFragment() != null) {
+            builder.append('#').append(uri.getRawFragment());
+        }
+
         try {
-            if (!host.matches("[a-z]{1,6}://.*")) {
-                host = "http://" + host;
-            }
-            URI hostURI = URI.create(host);
-            URI newURI = new URI(hostURI.getScheme(),
-                    hostURI.getUserInfo(),
-                    hostURI.getHost(),
-                    hostURI.getPort(),
-                    uri.getPath(), uri.getQuery(), uri.getFragment());
+            URI newURI = new URI(builder.toString());
             return new RequestLine(method, newURI, httpVersion);
-        } catch (Exception e) {
+        } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
                     e.getMessage()).map(s -> ": " + s).orElse(""));
         }

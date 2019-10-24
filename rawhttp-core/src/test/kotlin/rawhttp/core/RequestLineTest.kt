@@ -159,4 +159,32 @@ class RequestLineTest {
         }
     }
 
+    @Test
+    fun requestLineWithHostPreservesEncoding() {
+        val table = table(headers("Request line", "New Host", "Path", "Decoded Query", "Raw Query"),
+                row("GET foo.com", "bar.com", "", "", ""),
+                row("GET foo.com:90", "bar.com", "", "", ""),
+                row("GET foo.com/foo", "bar.com", "/foo", "", ""),
+                row("GET foo.com/foo%20bar", "example.com", "/foo bar", "", ""),
+                row("GET foo.com/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET user@foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET https://user@foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET foo.com/foo?bar=10", "a.org", "/foo", "bar=10", "bar=10"),
+                row("GET foo.com/foo?foo%20bar", "a.org", "/foo", "foo bar", "foo%20bar"),
+                row("GET foo.com/foo%20a?foo%20bar", "a.org", "/foo a", "foo bar", "foo%20bar"),
+                row("GET foo.com/foo%20a?foo%20bar%26or&b", "a.org", "/foo a", "foo bar&or&b", "foo%20bar%26or&b"),
+                row("GET http://hello?and%26you&me", "c.org", "", "and&you&me", "and%26you&me")
+        )
+
+        forAll(table) { requestLine, newHost, expectedPath, expectedQuery, expectedRawQuery ->
+            metadataParser.parseRequestLine(requestLine).withHost(newHost).run {
+                uri.host shouldBe newHost
+                (uri.path ?: "") shouldBe expectedPath
+                (uri.query ?: "") shouldBe expectedQuery
+                (uri.rawQuery ?: "") shouldBe expectedRawQuery
+            }
+        }
+    }
+
 }
