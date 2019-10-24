@@ -140,4 +140,23 @@ class RequestLineTest {
         }
     }
 
+    @Test
+    fun canParseEncodedQueries() {
+        val table = table(headers("Request line", "raw query", "decoded query"),
+                row("GET /hi?a=1", "a=1", "a=1"),
+                row("GET /hi?a=1&b=2", "a=1&b=2", "a=1&b=2"),
+                row("GET /hi?a=hi%20w", "a=hi%20w", "a=hi w"),
+                row("GET /hi?%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D",
+                        "%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D",
+                        "//encoded?a=b&c=d&json={\"a\": null}")
+        )
+
+        forAll(table) { requestLine, expectedRawQuery, expectedDecodedQuery ->
+            metadataParser.parseRequestLine(requestLine).run {
+                uri.rawQuery shouldBe expectedRawQuery
+                uri.query shouldBe expectedDecodedQuery
+            }
+        }
+    }
+
 }
