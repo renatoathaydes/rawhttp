@@ -7,10 +7,10 @@ import io.kotlintest.properties.forAll
 import io.kotlintest.properties.headers
 import io.kotlintest.properties.row
 import io.kotlintest.properties.table
-import io.kotlintest.specs.StringSpec
+import org.junit.Test
 import rawhttp.core.errors.InvalidHttpRequest
 
-class RequestLineTest : StringSpec({
+class RequestLineTest {
 
     val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
 
@@ -20,7 +20,8 @@ class RequestLineTest : StringSpec({
             .doNotInsertHttpVersionIfMissing()
             .build())
 
-    "Can parse legal request-line (allow missing HTTP version)" {
+    @Test
+    fun canParseLegalRequestLine__allowMissingHTTPVersion() {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("GET /", HttpVersion.HTTP_1_1, "GET", "/", "GET / HTTP/1.1"),
@@ -43,7 +44,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Can parse legal request-line (allow illegal characters)" {
+    @Test
+    fun canParseLegalRequestLine__allowIllegalCharacters() {
         val illegalCharParser = HttpMetadataParser(RawHttpOptions.newBuilder()
                 .allowIllegalStartLineCharacters()
                 .build())
@@ -69,7 +71,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal request-line (allow missing HTTP version)" {
+    @Test
+    fun cannotParseIllegalRequestLine__allowMissingHTTPVersion() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
                 row("/", "Invalid request line"),
@@ -88,7 +91,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Can parse legal request-line (strict)" {
+    @Test
+    fun canParseLegalRequestLineStrict() {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
@@ -111,7 +115,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal request-line (strict)" {
+    @Test
+    fun cannotParseIllegalRequestLine__strict() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
                 row("/", "Invalid request line"),
@@ -135,4 +140,4 @@ class RequestLineTest : StringSpec({
         }
     }
 
-})
+}
