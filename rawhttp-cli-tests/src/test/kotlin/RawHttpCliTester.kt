@@ -51,7 +51,7 @@ abstract class RawHttpCliTester {
                 "User-Agent: RawHTTP"
 
         const val SUCCESS_LOGGED_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
+                "Host: localhost:8083\r\n" +
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
 
