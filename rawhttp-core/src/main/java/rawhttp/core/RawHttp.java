@@ -17,10 +17,12 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -359,6 +361,48 @@ public class RawHttp {
             }
         }
         throw new TimeoutException("Port $port was not taken within the timeout");
+    }
+
+    /**
+     * Get a new URI based on the given URI, but with the host replaced with newHost.
+     *
+     * @param uri     original URI
+     * @param newHost host to use in the returned URI
+     * @return a new URI with the host replaced
+     */
+    public static URI replaceHost(URI uri, String newHost) {
+        StringBuilder builder = new StringBuilder(uri.toString().length());
+        if (uri.getScheme() == null) {
+            builder.append("http");
+        } else {
+            builder.append(uri.getScheme());
+        }
+        builder.append("://");
+        if (uri.getRawUserInfo() != null) {
+            builder.append(uri.getRawUserInfo()).append('@');
+        }
+
+        builder.append(newHost);
+
+        if (uri.getPort() >= 0) {
+            builder.append(':').append(uri.getPort());
+        }
+        if (uri.getRawPath() != null) {
+            builder.append(uri.getRawPath());
+        }
+        if (uri.getRawQuery() != null) {
+            builder.append('?').append(uri.getRawQuery());
+        }
+        if (uri.getRawFragment() != null) {
+            builder.append('#').append(uri.getRawFragment());
+        }
+
+        try {
+            return new URI(builder.toString());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
+                    e.getMessage()).map(s -> ": " + s).orElse(""));
+        }
     }
 
     private static boolean startsWith(int firstDigit, int statusCode) {
