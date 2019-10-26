@@ -4,6 +4,10 @@ import io.kotlintest.matchers.beEmpty
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
+import io.kotlintest.properties.forAll
+import io.kotlintest.properties.headers
+import io.kotlintest.properties.row
+import io.kotlintest.properties.table
 import io.kotlintest.specs.StringSpec
 import java.io.File
 import java.net.URI
@@ -390,4 +394,30 @@ class CopyHttpResponseTests : StringSpec({
 
     }
 
+})
+
+class RawHttpStaticMethodsTest : StringSpec({
+    "Can replace host in URI" {
+        val table = table(headers("URI", "new host", "Expected URI"),
+                row("foo", "bar", "http://bar/foo"),
+                row("host/a", "bar", "http://bar/host/a"),
+                row("https://hello/world", "goodbye", "https://goodbye/world"),
+                row("http://localhost:8080", "remote", "http://remote"),
+                row("http://localhost", "remote:43", "http://remote:43"),
+                row("http://localhost:8080", "remote:33", "http://remote:33"),
+                row("https://localhost:8080/hi?there", "remote:33", "https://remote:33/hi?there"),
+                row("http:///foo%20bar/%26%28?a=1%202&b=%26%20", "localhost",
+                        "http://localhost/foo%20bar/%26%28?a=1%202&b=%26%20"),
+                row("http://foo:42/foo%20bar/%26%28?a=1%202&b=%26%20", "localhost:8080",
+                        "http://localhost:8080/foo%20bar/%26%28?a=1%202&b=%26%20"),
+                row("http://example.org#foo", "myweb.com", "http://myweb.com#foo"),
+                row("http://example.org/p/a#foo", "myweb.com", "http://myweb.com/p/a#foo"),
+                row("http://example.org/p/a?m#foo", "myweb.com", "http://myweb.com/p/a?m#foo"),
+                row("http://example.org/p/a?m#foo%20bar", "myweb.com", "http://myweb.com/p/a?m#foo%20bar")
+        )
+
+        forAll(table) { uri, newHost, expectedUri ->
+            RawHttp.replaceHost(URI.create(uri), newHost).toString() shouldBe expectedUri
+        }
+    }
 })

@@ -384,11 +384,14 @@ public class RawHttp {
 
         builder.append(newHost);
 
-        if (uri.getPort() >= 0) {
-            builder.append(':').append(uri.getPort());
-        }
         if (uri.getRawPath() != null) {
-            builder.append(uri.getRawPath());
+            String newPath = uri.getRawPath();
+            if (!newPath.isEmpty()) {
+                if (!newPath.startsWith("/")) {
+                    builder.append('/');
+                }
+                builder.append(newPath);
+            }
         }
         if (uri.getRawQuery() != null) {
             builder.append('?').append(uri.getRawQuery());
