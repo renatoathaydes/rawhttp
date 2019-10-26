@@ -51,6 +51,12 @@ public class RequestLine implements StartLine {
     }
 
     /**
+     * Copy this {@link RequestLine}, replacing the host in its URI.
+     * <p>
+     * The new host may include a port using the "host:port" syntax.
+     * <p>
+     * The new URI never maintains the old URI's port, even if the port is omitted from the new host String.
+     *
      * @param host the host to be used in the method line's URI.
      * @return a copy of this method line, but with the given host
      */

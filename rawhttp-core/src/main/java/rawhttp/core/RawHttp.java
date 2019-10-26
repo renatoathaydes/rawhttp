@@ -365,6 +365,10 @@ public class RawHttp {
 
     /**
      * Get a new URI based on the given URI, but with the host replaced with newHost.
+     * <p>
+     * The new host may include a port using the "host:port" syntax.
+     * <p>
+     * The new URI never maintains the old URI's port, even if the port is omitted from the new host String.
      *
      * @param uri     original URI
      * @param newHost host to use in the returned URI
