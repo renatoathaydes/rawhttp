@@ -86,7 +86,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         }
 
         boolean expectContinue = !request.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1) &&
-                request.getHeaders().get("Expect").contains("100-continue");
+                request.expectContinue();
 
         OutputStream outputStream = socket.getOutputStream();
         InputStream inputStream = socket.getInputStream();

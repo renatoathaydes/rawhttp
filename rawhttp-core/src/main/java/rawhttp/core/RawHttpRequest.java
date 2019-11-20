@@ -101,4 +101,11 @@ public class RawHttpRequest extends HttpMessage {
                 getSenderAddress().orElse(null));
     }
 
+    /**
+     * @return whether this request contains a {@code Expect} header with value {@code 100-continue}.
+     */
+    public boolean expectContinue() {
+        return getHeaders().get("Expect").contains("100-continue");
+    }
+
 }

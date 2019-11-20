@@ -221,6 +221,22 @@ public class TcpRawHttpServer implements RawHttpServer {
                             .map("close"::equalsIgnoreCase)
                             .orElse(false);
 
+                    RawHttpResponse<?> response = null;
+                    boolean expects100 = request.expectContinue();
+
+                    if (expects100 && !request.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)) {
+                        RawHttpResponse<Void> interimResponse = router
+                                .continueResponse(request.getStartLine(), request.getHeaders());
+                        if (interimResponse.getStatusCode() == 100) {
+                            // tell the client that we shall continue
+                            interimResponse.writeTo(client.getOutputStream());
+                        } else {
+                            // if we don't accept the request body, we must close the connection
+                            serverWillCloseConnection = true;
+                            response = interimResponse;
+                        }
+                    }
+
                     if (!serverWillCloseConnection) {
                         // https://tools.ietf.org/html/rfc7230#section-6.3
                         // If the received protocol is HTTP/1.1 (or later)
@@ -237,9 +253,10 @@ public class TcpRawHttpServer implements RawHttpServer {
                         serverWillCloseConnection = !serverShouldPersistConnection;
                     }
 
-                    RawHttpResponse<?> response = null;
                     try {
-                        response = route(request);
+                        if (response == null) {
+                            response = route(request);
+                        }
                         response.writeTo(client.getOutputStream());
                     } finally {
                         closeBodyOf(response);
