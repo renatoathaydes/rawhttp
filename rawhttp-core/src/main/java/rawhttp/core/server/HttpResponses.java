@@ -14,6 +14,7 @@ final class HttpResponses {
     private static final EagerHttpResponse<Void> NOT_FOUND_404_HTTP1_1;
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_0;
     private static final EagerHttpResponse<Void> SERVER_ERROR_500_HTTP1_1;
+    private static final EagerHttpResponse<Void> _100_CONTINUE;
 
     private static final StatusLine STATUS_404_HTTP1_0;
     private static final StatusLine STATUS_404_HTTP1_1;
@@ -55,6 +56,8 @@ final class HttpResponses {
 
         SERVER_ERROR_500_HTTP1_0 = SERVER_ERROR_500_HTTP1_1.withStatusLine(STATUS_500_HTTP1_0);
 
+        _100_CONTINUE = new EagerHttpResponse<>(null, null,
+                new StatusLine(HttpVersion.HTTP_1_1, 100, "Continue"), RawHttpHeaders.empty(), null);
     }
 
     static EagerHttpResponse<Void> getNotFoundResponse(HttpVersion httpVersion) {
@@ -71,6 +74,10 @@ final class HttpResponses {
         } else {
             return SERVER_ERROR_500_HTTP1_1;
         }
+    }
+
+    static EagerHttpResponse<Void> get100ContinueResponse() {
+        return _100_CONTINUE;
     }
 
 }

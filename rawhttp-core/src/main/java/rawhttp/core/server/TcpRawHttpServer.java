@@ -226,7 +226,8 @@ public class TcpRawHttpServer implements RawHttpServer {
 
                     if (expects100 && !request.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)) {
                         RawHttpResponse<Void> interimResponse = router
-                                .continueResponse(request.getStartLine(), request.getHeaders());
+                                .continueResponse(request.getStartLine(), request.getHeaders())
+                                .orElse(HttpResponses.get100ContinueResponse());
                         if (interimResponse.getStatusCode() == 100) {
                             // tell the client that we shall continue
                             interimResponse.writeTo(client.getOutputStream());

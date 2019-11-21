@@ -1,11 +1,9 @@
 package rawhttp.core.server;
 
-import rawhttp.core.HttpVersion;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.RequestLine;
-import rawhttp.core.StatusLine;
 
 import java.util.Optional;
 
@@ -16,9 +14,6 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface Router {
-
-    RawHttpResponse<Void> RESPONSE_100 = new RawHttpResponse<>(null, null,
-            new StatusLine(HttpVersion.HTTP_1_1, 100, "Continue"), RawHttpHeaders.empty(), null);
 
     /**
      * Route an incoming HTTP request.
@@ -40,15 +35,14 @@ public interface Router {
      * not read the request body, return a non-100 response. Otherwise, return a 100-response, in which case the
      * {@link Router#route(RawHttpRequest)} method will be invoked by the server in order to allow the ordinary
      * routing of the request to continue.
-     * <p>
-     * The default implementation return a 100-response without any headers.
      *
      * @param requestLine message request-line
      * @param headers     message headers
      * @return interim response (with 100 status code) or final response (any other status code).
+     * If an empty {@link Optional} is returned, the server returns a 100-response without any headers.
      */
-    default RawHttpResponse<Void> continueResponse(RequestLine requestLine, RawHttpHeaders headers) {
-        return RESPONSE_100;
+    default Optional<RawHttpResponse<Void>> continueResponse(RequestLine requestLine, RawHttpHeaders headers) {
+        return Optional.empty();
     }
 
 }

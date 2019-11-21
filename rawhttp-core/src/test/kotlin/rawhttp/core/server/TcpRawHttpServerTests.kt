@@ -62,10 +62,13 @@ class TcpRawHttpServerTests : StringSpec() {
             })
         }
 
-        override fun continueResponse(requestLine: RequestLine?, headers: RawHttpHeaders?): RawHttpResponse<Void> {
-            return super.continueResponse(requestLine, headers).withHeaders(RawHttpHeaders.newBuilder()
-                    .with("Accept-100", "True")
-                    .build())
+        override fun continueResponse(requestLine: RequestLine?, headers: RawHttpHeaders?):
+                Optional<RawHttpResponse<Void>> {
+            return super.continueResponse(requestLine, headers).map {
+                it.withHeaders(RawHttpHeaders.newBuilder()
+                        .with("Accept-100", "True")
+                        .build())
+            }
         }
     }
 
