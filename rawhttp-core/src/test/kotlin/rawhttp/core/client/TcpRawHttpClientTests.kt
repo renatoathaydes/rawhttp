@@ -21,7 +21,7 @@ fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     get("/say-hi", "text/plain") { _, _ -> "Hi there" }
     get("/say-hi", "application/json") { _, _ -> "{ \"message\": \"Hi there\" }" }
     post("/echo", "text/plain") { req, _ -> req.body() }
-    post("/continue", "text/plain") { req, res -> "continuing" }
+    post("/continue", "text/plain") { _, _ -> "continuing" }
 
     waitForPortToBeTaken(8083, Duration.ofSeconds(2))
     println("Spark is on")
