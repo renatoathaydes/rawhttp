@@ -109,8 +109,13 @@ public class Main {
                         "      read request from a file\n" +
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
-                        "  * -p --print-body-only\n" +
-                        "      print response body only\n" +
+                        "  * -p --print-response-mode\n" +
+                        "  *   one of: full|body|status|headers|stats\n" +
+                        "        - full: (default) print the full response\n" +
+                        "        - body: print the response body\n" +
+                        "        - status: print the response status-line\n" +
+                        "        - headers: print the response status-line and headers\n" +
+                        "        - stats: print statistics about a request\n" +
                         "  * -l --log-request\n" +
                         "      log the request\n" +
                         "  * -b --body-text <text>\n" +
@@ -199,12 +204,26 @@ public class Main {
 
         try (TcpRawHttpClient client = new TcpRawHttpClient()) {
             RawHttpResponse<Void> response = client.send(request);
-            if (options.printBodyOnly) {
-                if (response.getBody().isPresent()) {
-                    response.getBody().get().writeTo(System.out);
-                }
-            } else {
-                response.writeTo(System.out);
+            switch (options.printResponseMode) {
+                case FULL:
+                    response.writeTo(System.out);
+                    break;
+                case BODY:
+                    if (response.getBody().isPresent()) {
+                        response.getBody().get().writeTo(System.out);
+                    }
+                    break;
+                case STATUS:
+                    response.getStartLine().writeTo(System.out);
+                    break;
+                case HEADERS:
+                    response.getStartLine().writeTo(System.out);
+                    response.getHeaders().writeTo(System.out);
+                    break;
+                case STATS:
+                    // TODO generate statistics
+                    System.out.println("Stats not implemented yet");
+                    break;
             }
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());

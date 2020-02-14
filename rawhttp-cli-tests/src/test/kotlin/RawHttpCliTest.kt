@@ -54,6 +54,30 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canLogResponseFull() {
+        val handle = runCli("send", "-l", "-p", "full", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
+    fun canLogResponseStatus() {
+        val handle = runCli("send", "-p", "status", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseStatus(handle)
+    }
+
+    @Test
+    fun canLogResponseHeaders() {
+        val handle = runCli("send", "-p", "headers", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseHeaders(handle)
+    }
+
+    @Test
+    fun canLogResponseBody() {
+        val handle = runCli("send", "-p", "body", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseBody(handle)
+    }
+
+    @Test
     fun serverReturns404OnNonExistentResource() {
         val handle = runCli("send", "-t", NOT_FOUND_HTTP_REQUEST)
         assertOutputIs404Response(handle)
@@ -109,7 +133,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val workDir = File(".")
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
                 ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
-        var contextPath = "some/example"
+        val contextPath = "some/example"
 
         val handle = runCli("serve", ".", "-r", contextPath)
 
@@ -214,7 +238,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val dateRegex = Regex("[0-9.:]+ \\[(?<date>.+)] \".+\" \\d{3} \\d+").toPattern()
 
         // verify the request was logged
-        val lastOutputLine = handle.out.lines().asReversed().find { !it.isEmpty() }
+        val lastOutputLine = handle.out.lines().asReversed().find { it.isNotEmpty() } ?: "<none>"
         val match = dateRegex.matcher(lastOutputLine)
 
         if (!match.find()) {

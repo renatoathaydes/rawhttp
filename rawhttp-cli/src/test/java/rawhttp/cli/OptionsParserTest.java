@@ -165,7 +165,7 @@ public class OptionsParserTest {
     public void cannotParseSendFileOptionMissingMandatoryArg() {
         String[][] examples = new String[][]{
                 {"send", "-f"}, {"send", "--file"},
-                {"send", "-p", "-f"}, {"send", "--body-file", "my-file", "--file"}
+                {"send", "-p", "body", "-f"}, {"send", "--body-file", "my-file", "--file"}
         };
 
         assertMissingArgumentError(examples);
@@ -236,7 +236,7 @@ public class OptionsParserTest {
     public void cannotParseSendRequestTextOptionMissingMandatoryArg() {
         String[][] examples = new String[][]{
                 {"send", "-t"}, {"send", "--text"},
-                {"send", "-b", "b", "-t"}, {"send", "--body-file", "b", "-p", "--text"}
+                {"send", "-b", "b", "-t"}, {"send", "--body-file", "b", "-p", "body", "--text"}
         };
 
         assertMissingArgumentError(examples);
@@ -302,7 +302,7 @@ public class OptionsParserTest {
     public void cannotParseSendBodyFileOptionMissingMandatoryArg() {
         String[][] examples = new String[][]{
                 {"send", "-g"}, {"send", "--body-file"},
-                {"send", "-p", "-b"}, {"send", "--file", "my-file", "--body-file"}
+                {"send", "-p", "body", "-b"}, {"send", "--file", "my-file", "--body-file"}
         };
 
         assertMissingArgumentError(examples);
@@ -312,7 +312,7 @@ public class OptionsParserTest {
     public void cannotParseSendBodyTextOptionMissingMandatoryArg() {
         String[][] examples = new String[][]{
                 {"send", "-b"}, {"send", "--body-text"},
-                {"send", "-p", "-b"}, {"send", "--file", "my-file", "--body-text"}
+                {"send", "-p", "body", "-b"}, {"send", "--file", "my-file", "--body-text"}
         };
 
         assertMissingArgumentError(examples);
@@ -324,7 +324,7 @@ public class OptionsParserTest {
                 {"send", "-b", ".", "-b", "other"},
                 {"send", "--body-text", ".", "--body-text", "other"},
                 {"send", "-b", ".", "--body-text", "other"},
-                {"send", "--print-body-only", "--body-text", ".", "-b", "other"}
+                {"send", "--print-response-mode", "status", "--body-text", ".", "-b", "other"}
         };
 
         for (String[] example : examples) {
@@ -346,7 +346,7 @@ public class OptionsParserTest {
                 {"send", "-g", ".", "-g", "other"},
                 {"send", "--body-file", ".", "--body-file", "other"},
                 {"send", "-g", ".", "--body-file", "other"},
-                {"send", "--print-body-only", "--body-file", ".", "-g", "other"}
+                {"send", "--print-response-mode", "body", "--body-file", ".", "-g", "other"}
         };
 
         for (String[] example : examples) {
@@ -373,7 +373,7 @@ public class OptionsParserTest {
                 s -> null, h -> null);
         assertNotNull(result);
         assertFalse(result.getRequestBody().isPresent());
-        assertFalse(result.printBodyOnly);
+        assertEquals(result.printResponseMode, PrintResponseMode.FULL);
     }
 
     @Test
@@ -382,7 +382,7 @@ public class OptionsParserTest {
                 {"send", "-f", ".", "-f", "other"},
                 {"send", "--file", ".", "--file", "other"},
                 {"send", "-f", ".", "--file", "other"},
-                {"send", "--print-body-only", "--file", ".", "-f", "other"}
+                {"send", "--print-response-mode", "headers", "--file", ".", "-f", "other"}
         };
 
         for (String[] example : examples) {
@@ -411,7 +411,7 @@ public class OptionsParserTest {
 
         try {
             Options options = OptionsParser.parse(new String[]{
-                    "send", "--file", "file", "-p", "--text", "text.req"
+                    "send", "--file", "file", "-p", "body", "--text", "text.req"
             });
             fail("Should have failed to accept both -f and -t options together but got: " + options);
         } catch (OptionsException e) {
@@ -434,7 +434,7 @@ public class OptionsParserTest {
             }
         }
 
-        Options options = OptionsParser.parse(new String[]{"send", "-t", "REQ", "-p", "-g", "BODY"});
+        Options options = OptionsParser.parse(new String[]{"send", "-t", "REQ", "-p", "full", "-g", "BODY"});
         ClientOptions clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -446,12 +446,12 @@ public class OptionsParserTest {
         RequestBody requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("BODY"), requestBody.run(f -> f, t -> null));
-        assertTrue(result.options.printBodyOnly);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
         assertFalse(result.options.logRequest);
         assertEquals("REQ", result.requestText);
         assertNull(result.requestFile);
 
-        options = OptionsParser.parse(new String[]{"send", "-f", "REQ", "-p", "-g", "b.js", "-l"});
+        options = OptionsParser.parse(new String[]{"send", "-f", "REQ", "-p", "body", "-g", "b.js", "-l"});
         clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -463,7 +463,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("b.js"), requestBody.run(f -> f, t -> null));
-        assertTrue(result.options.printBodyOnly);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.BODY);
         assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("REQ"), result.requestFile);
@@ -480,7 +480,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("body.js"), requestBody.run(f -> f, t -> null));
-        assertFalse(result.options.printBodyOnly);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
         assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file.req"), result.requestFile);
@@ -497,7 +497,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals("Hello", requestBody.run(f -> null, t -> t));
-        assertFalse(result.options.printBodyOnly);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
         assertFalse(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);
@@ -514,7 +514,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("my.body"), requestBody.run(f -> f, t -> null));
-        assertFalse(result.options.printBodyOnly);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
         assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);
@@ -719,7 +719,7 @@ public class OptionsParserTest {
         assertExampleFails.accept(new String[]{"serve", ".", "-p", "80", "--zooo"}, "--zooo");
         assertExampleFails.accept(new String[]{"send", "."}, ".");
         assertExampleFails.accept(new String[]{"send", "-z"}, "-z");
-        assertExampleFails.accept(new String[]{"send", "-p", "-f", "file", "-z", "-p"}, "-z");
+        assertExampleFails.accept(new String[]{"send", "-p", "body", "-f", "file", "-z", "-p"}, "-z");
     }
 
     private static void assertMissingArgumentError(String[][] examples) {

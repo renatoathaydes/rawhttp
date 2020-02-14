@@ -43,14 +43,14 @@ data class ProcessHandle(val process: Process,
 abstract class RawHttpCliTester {
 
     companion object {
-        val CLI_EXECUTABLE: Array<String>
+        private val CLI_EXECUTABLE: Array<String>
 
         const val SUCCESS_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
                 "Host: localhost:8083\r\n" +
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
 
-        const val SUCCESS_LOGGED_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
+        private const val SUCCESS_LOGGED_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
                 "Host: localhost:8083\r\n" +
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
@@ -60,19 +60,19 @@ abstract class RawHttpCliTester {
                 "Accept: */*\r\n" +
                 "User-Agent: RawHTTP"
 
-        const val SUCCESS_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
+        private const val SUCCESS_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "Content-Length: 9\r\n" +
                 "\r\n" +
                 "something"
 
-        val NOT_FOUND_HTTP_RESPONSE = "HTTP/1.1 404 Not Found\r\n" +
+        private val NOT_FOUND_HTTP_RESPONSE = "HTTP/1.1 404 Not Found\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "Content-Length: 18\r\n" +
                 "\r\n" +
                 "Resource Not Found".trimIndent()
 
-        var httpServerThread: Thread? = null
+        private var httpServerThread: Thread? = null
 
         init {
             val rawhttpCliJar = tryLocateRawHttpCliJar()
@@ -184,6 +184,24 @@ abstract class RawHttpCliTester {
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
             assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE))
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertSuccessResponseStatus(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE.substring(0..16)))
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertSuccessResponseHeaders(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE.substring(0..63)))
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertSuccessResponseBody(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo("something"))
             assertNoSysErrOutput(handle)
         }
 

@@ -4,9 +4,15 @@ import java.io.File;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 enum HelpOptions {
     GENERAL, SERVE, SEND
+}
+
+enum PrintResponseMode {
+    FULL, BODY, STATUS, HEADERS, STATS
 }
 
 final class ServerOptions {
@@ -59,12 +65,12 @@ final class RequestBody {
 
 final class RequestRunOptions {
     private final RequestBody requestBody;
-    final boolean printBodyOnly;
+    final PrintResponseMode printResponseMode;
     final boolean logRequest;
 
-    RequestRunOptions(RequestBody requestBody, boolean printBodyOnly, boolean logRequest) {
+    RequestRunOptions(RequestBody requestBody, PrintResponseMode printResponseMode, boolean logRequest) {
         this.requestBody = requestBody;
-        this.printBodyOnly = printBodyOnly;
+        this.printResponseMode = printResponseMode == null ? PrintResponseMode.FULL : printResponseMode;
         this.logRequest = logRequest;
     }
 
@@ -199,7 +205,7 @@ final class OptionsParser {
         File requestFile = null;
         String requestText = null;
         RequestBody requestBody = null;
-        boolean printBodyOnly = false;
+        PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
 
         for (int i = 1; i < args.length; i++) {
@@ -266,8 +272,24 @@ final class OptionsParser {
                     }
                     break;
                 case "-p":
-                case "--print-body-only":
-                    printBodyOnly = true;
+                case "--print-response-mode":
+                    if (printResponseMode != null) {
+                        throw new OptionsException("The --print-response-mode option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        try {
+                            printResponseMode = PrintResponseMode.valueOf(args[i + 1].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            throw new OptionsException("Bad value for " + arg + " option.\n" +
+                                    "Acceptable values are " + Stream.of(PrintResponseMode.values())
+                                    .map(Enum::name)
+                                    .map(String::toLowerCase)
+                                    .collect(Collectors.joining(", ")));
+                        }
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " option");
+                    }
                     break;
                 case "-l":
                 case "--log-request":
@@ -278,7 +300,7 @@ final class OptionsParser {
             }
         }
 
-        RequestRunOptions options = new RequestRunOptions(requestBody, printBodyOnly, logRequest);
+        RequestRunOptions options = new RequestRunOptions(requestBody, printResponseMode, logRequest);
         ClientOptions clientOptions;
         if (requestFile != null) {
             clientOptions = ClientOptions.withFile(requestFile, options);
