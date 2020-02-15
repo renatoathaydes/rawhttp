@@ -95,7 +95,8 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
         RawHttpResponse<Void> response;
         if (expectContinue) {
-            ResponseWaiter responseWaiter = new ResponseWaiter(() -> rawHttp.parseResponse(inputStream));
+            ResponseWaiter responseWaiter = new ResponseWaiter(() ->
+                    rawHttp.parseResponse(inputStream, request.getStartLine()));
             try {
                 if (options.shouldContinue(responseWaiter)) {
                     //noinspection OptionalGetWithoutIsPresent (Expect continue is only valid when there is a body)
@@ -118,7 +119,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                         "request not being continued", e);
             }
         } else {
-            response = rawHttp.parseResponse(inputStream);
+            response = rawHttp.parseResponse(inputStream, request.getStartLine());
         }
 
         if (response.getStatusCode() == 100) {
@@ -126,7 +127,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             options.onResponse(socket, request.getUri(), response);
 
             return options.onResponse(socket, request.getUri(),
-                    rawHttp.parseResponse(socket.getInputStream()));
+                    rawHttp.parseResponse(socket.getInputStream(), request.getStartLine()));
         }
 
         return options.onResponse(socket, request.getUri(), response);

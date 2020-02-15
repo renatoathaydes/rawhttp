@@ -190,6 +190,24 @@ class HttpHeadersTest {
     }
 
     @Test
+    fun headerBuilderMayRemoveManyPreviousHeaders() {
+        RawHttpHeaders.newBuilder()
+                .with("hi", "aaa")
+                .with("hi", "bbb")
+                .with("ho", "ccc")
+                .with("Foo", "abc")
+                .with("Accept", "application/json")
+                .removeAll(setOf("hi", "Foo"))
+                .build().run {
+                    get("hi") shouldBe emptyList<String>()
+                    get("Foo") shouldBe emptyList<String>()
+                    get("ho") shouldEqual listOf("ccc")
+                    get("Accept") shouldEqual listOf("application/json")
+                    headerNames shouldBe listOf("ho", "Accept")
+                }
+    }
+
+    @Test
     fun headerBuilderMayOverwritePreviousValues() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")

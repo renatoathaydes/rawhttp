@@ -15,7 +15,7 @@ import java.util.concurrent.Executors
 class RawHttpServerTests {
 
     @Test
-    fun ServerCanHandleHttpClientRequest() {
+    fun serverCanHandleHttpClientRequest() {
         val http = RawHttp()
         val executor = Executors.newCachedThreadPool { r ->
             val thread = Thread(r, "tcp-raw-http-server-test")

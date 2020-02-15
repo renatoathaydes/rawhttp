@@ -6,6 +6,7 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldHave
+import io.kotlintest.matchers.shouldNot
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
@@ -40,7 +41,7 @@ class TcpRawHttpServerTests : StringSpec() {
             return Optional.ofNullable(when (req.uri.path) {
                 "/hello", "/" ->
                     when (req.method) {
-                        "GET" ->
+                        "GET", "HEAD" ->
                             http.parseResponse("HTTP/1.1 200 OK\n" +
                                     "Content-Type: text/plain"
                             ).withBody(StringBody("Hello RawHTTP!"))
@@ -101,21 +102,30 @@ class TcpRawHttpServerTests : StringSpec() {
             }
         }
 
-        "Server can handle multiple successful http client requests" {
-            val request = http.parseRequest("GET http://localhost:8093/hello")
-            val response = httpClient.send(request).eagerly()
+        "Server can handle multiple successful http client requests, including HEAD request" {
+            val getRequest = http.parseRequest("GET http://localhost:8093/hello")
+            val headRequest = http.parseRequest("HEAD http://localhost:8093/hello")
+            val response = httpClient.send(getRequest).eagerly()
 
             response.statusCode shouldBe 200
+            response.headers["Content-Length"] shouldBe listOf("14")
             response.body should bePresent {
                 it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
 
             sleep(500)
 
-            val response2 = httpClient.send(request).eagerly()
+            val response2 = httpClient.send(headRequest).eagerly()
 
             response2.statusCode shouldBe 200
-            response2.body should bePresent {
+            response2.headers["Content-Length"] shouldBe listOf("14")
+            response2.body shouldNot bePresent()
+
+            val response3 = httpClient.send(getRequest).eagerly()
+
+            response3.statusCode shouldBe 200
+            response3.headers["Content-Length"] shouldBe listOf("14")
+            response3.body should bePresent {
                 it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         }

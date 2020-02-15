@@ -68,11 +68,15 @@ public class RawHttpRequest extends HttpMessage {
     }
 
     @Override
-    public RawHttpRequest withBody(HttpMessageBody body) {
-        return new RawHttpRequest(requestLine,
-                body.headersFrom(getHeaders()),
-                body.toBodyReader(),
-                getSenderAddress().orElse(null));
+    public RawHttpRequest withBody(@Nullable HttpMessageBody body) {
+        return withBody(body, true);
+    }
+
+    @Override
+    public RawHttpRequest withBody(@Nullable HttpMessageBody body, boolean adjustHeaders) {
+        return withBody(body, adjustHeaders, (headers, bodyReader) ->
+                new RawHttpRequest(requestLine, headers, bodyReader, senderAddress));
+
     }
 
     @Override

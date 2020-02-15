@@ -107,9 +107,14 @@ public class RawHttpResponse<Response> extends HttpMessage {
     }
 
     @Override
-    public RawHttpResponse<Response> withBody(HttpMessageBody body) {
-        return new RawHttpResponse<>(libResponse, request, statusLine,
-                body.headersFrom(getHeaders()), body.toBodyReader());
+    public RawHttpResponse<Response> withBody(@Nullable HttpMessageBody body) {
+        return withBody(body, true);
+    }
+
+    @Override
+    public RawHttpResponse<Response> withBody(@Nullable HttpMessageBody body, boolean adjustHeaders) {
+        return withBody(body, adjustHeaders, (headers, bodyReader) ->
+                new RawHttpResponse<>(libResponse, request, statusLine, headers, bodyReader));
     }
 
     @Override
@@ -119,9 +124,18 @@ public class RawHttpResponse<Response> extends HttpMessage {
 
     @Override
     public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers, boolean append) {
+        RawHttpHeaders newHeaders;
+        if (append) {
+            newHeaders = getHeaders().and(headers);
+        } else {
+            // to avoid losing the values in the provided headers, we must first remove conflicting
+            // headers from our own headers.
+            RawHttpHeaders nonConflictingHeaders = RawHttpHeaders.newBuilder(getHeaders())
+                    .removeAll(headers.getUniqueHeaderNames()).build();
+            newHeaders = headers.and(nonConflictingHeaders);
+        }
         return new RawHttpResponse<>(libResponse, request, statusLine,
-                append ? getHeaders().and(headers) : headers.and(getHeaders()),
-                getBody().orElse(null));
+                newHeaders, getBody().orElse(null));
     }
 
     /**

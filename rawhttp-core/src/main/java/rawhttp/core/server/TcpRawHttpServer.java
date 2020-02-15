@@ -303,6 +303,9 @@ public class TcpRawHttpServer implements RawHttpServer {
                 response = options.serverErrorResponse(request).orElseGet(() ->
                         HttpResponses.getServerErrorResponse(request.getStartLine().getHttpVersion()));
             }
+            if (request.getMethod().equals("HEAD") && response.getBody().isPresent()) {
+                response = response.withBody(null, false);
+            }
             return options.onResponse(request, response);
         }
 

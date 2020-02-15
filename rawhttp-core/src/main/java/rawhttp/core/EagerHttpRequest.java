@@ -22,7 +22,7 @@ public class EagerHttpRequest extends RawHttpRequest {
 
     private EagerHttpRequest(RequestLine requestLine,
                              RawHttpHeaders headers,
-                             @Nullable BodyReader bodyReader,
+                             @Nullable EagerBodyReader bodyReader,
                              @Nullable InetAddress senderAddress) {
         super(requestLine, headers, bodyReader, senderAddress);
     }
@@ -53,7 +53,7 @@ public class EagerHttpRequest extends RawHttpRequest {
             if (trailingHeaders.isEmpty()) {
                 headers = request.getHeaders();
             } else {
-                headers = RawHttpHeaders.newBuilder(request.getHeaders())
+                headers = RawHttpHeaders.newBuilderSkippingValidation(request.getHeaders())
                         .merge(trailingHeaders)
                         .build();
             }

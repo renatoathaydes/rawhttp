@@ -17,6 +17,10 @@ public interface Router {
 
     /**
      * Route an incoming HTTP request.
+     * <p>
+     * Implementations are free to handle GET and HEAD requests in the same manner, as when the server
+     * responds to a HEAD request, it will never send a response body, even if the {@link Router} returns
+     * a response with a body.
      *
      * @param request HTTP request
      * @return a HTTP response to send to the client.
