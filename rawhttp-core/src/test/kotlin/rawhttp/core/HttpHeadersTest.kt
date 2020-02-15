@@ -5,12 +5,13 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldThrow
-import io.kotlintest.specs.StringSpec
+import org.junit.Test
 import rawhttp.core.errors.InvalidHttpHeader
 
-class HttpHeadersTest : StringSpec({
+class HttpHeadersTest {
 
-    "Headers are multi-value, case-insensitive" {
+    @Test
+    fun headersAreMultiValueCaseInsensitive() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -43,7 +44,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Headers can contain multiple entries and multiple values within each entry" {
+    @Test
+    fun headersCanContainMultipleEntriesAndMultipleValuesWithinEachEntry() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa, ccc")
                 .with("hi", "bbb")
@@ -60,7 +62,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Headers can be re-constructed exactly" {
+    @Test
+    fun headersCanBeReConstructedExactly() {
         RawHttpHeaders.newBuilder()
                 .with("Content-Type", "33")
                 .with("Accept", "application/json")
@@ -77,7 +80,8 @@ class HttpHeadersTest : StringSpec({
                 "Date: 22 March 2012\r\n"
     }
 
-    "Headers may be added to other headers" {
+    @Test
+    fun headersMayBeAddedToOtherHeaders() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -96,7 +100,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Headers may be built from other headers" {
+    @Test
+    fun headersMayBeBuiltFromOtherHeaders() {
         RawHttpHeaders.newBuilder(RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -114,7 +119,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Headers may be merged with other headers" {
+    @Test
+    fun headersMayBeMergedWithOtherHeaders() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -133,7 +139,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Header names must not contain invalid characters" {
+    @Test
+    fun headerNamesMustNotContainInvalidCharacters() {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder()
                     .with("ABC(D)", "aaa").build()
@@ -141,14 +148,16 @@ class HttpHeadersTest : StringSpec({
         error.message shouldEqual "Invalid header name (contains illegal character at index 3)"
     }
 
-    "Header names may contain invalid characters if skipping validation" {
+    @Test
+    fun headerNamesMayContainInvalidCharactersIfSkippingValidation() {
         RawHttpHeaders.newBuilderSkippingValidation().with("ABC(D)", "aaa").build().run {
             headerNames shouldBe listOf("ABC(D)")
             get("ABC(D)") shouldBe listOf("aaa")
         }
     }
 
-    "Header values must not contain invalid characters" {
+    @Test
+    fun headerValuesMustNotContainInvalidCharacters() {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder()
                     .with("Hello", "hal\u007Fl").build()
@@ -156,14 +165,16 @@ class HttpHeadersTest : StringSpec({
         error.message shouldEqual "Invalid header value (contains illegal character at index 3)"
     }
 
-    "Header values may contain invalid characters if skipping validation" {
+    @Test
+    fun headerValuesMayContainInvalidCharactersIfSkippingValidation() {
         RawHttpHeaders.newBuilderSkippingValidation().with("Hello", "hallå").build().run {
             headerNames shouldBe listOf("Hello")
             get("Hello") shouldBe listOf("hallå")
         }
     }
 
-    "Header builder may remove previous headers" {
+    @Test
+    fun headerBuilderMayRemovePreviousHeaders() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -178,7 +189,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Header builder may overwrite previous values" {
+    @Test
+    fun headerBuilderMayOverwritePreviousValues() {
         RawHttpHeaders.newBuilder()
                 .with("hi", "aaa")
                 .with("hi", "bbb")
@@ -193,7 +205,8 @@ class HttpHeadersTest : StringSpec({
                 }
     }
 
-    "Header names are validated by default" {
+    @Test
+    fun headerNamesAreValidatedByDefault() {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder().with("A:B", "aaa")
         }
@@ -201,7 +214,8 @@ class HttpHeadersTest : StringSpec({
         error.message shouldBe "Invalid header name (contains illegal character at index 1)"
     }
 
-    "Header values are validated by default" {
+    @Test
+    fun headerValuesAreValidatedByDefault() {
         val error = shouldThrow<InvalidHttpHeader> {
             RawHttpHeaders.newBuilder().with("A", "abc+\u0000eedd")
         }
@@ -209,12 +223,14 @@ class HttpHeadersTest : StringSpec({
         error.message shouldBe "Invalid header value (contains illegal character at index 4)"
     }
 
-    "Header names are NOT validated if asked" {
+    @Test
+    fun headerNamesAreNOTValidatedIfAsked() {
         RawHttpHeaders.newBuilderSkippingValidation().with("A:B", "aaa")
     }
 
-    "Header values are NOT validated if asked" {
+    @Test
+    fun headerValuesAreNOTValidatedIfAsked() {
         RawHttpHeaders.newBuilderSkippingValidation().with("A", "abc+åäö")
     }
 
-})
+}
