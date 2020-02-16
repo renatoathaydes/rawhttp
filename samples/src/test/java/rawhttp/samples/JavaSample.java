@@ -68,7 +68,7 @@ public class JavaSample {
             HttpUriRequest httpRequest = RequestBuilder.get()
                     .addHeader(HttpHeaders.USER_AGENT, "curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3")
                     .addHeader(HttpHeaders.ACCEPT_LANGUAGE, "en, mi")
-                    .setUri(URI.create("http://www.example.com"))
+                    .setUri(URI.create("http://ip.jsontest.com"))
                     .build();
             response = httpClient.execute(httpRequest);
 
@@ -94,7 +94,7 @@ public class JavaSample {
         RawHttpRequest request = new RawHttp().parseRequest(
                 "GET / HTTP/1.0\n" +
                         "User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3\n" +
-                        "Host: www.example.com\n" +
+                        "Host: ip.jsontest.com\n" +
                         "Accept-Language: en, mi");
 
         try (TcpRawHttpClient client = new TcpRawHttpClient()) {
@@ -130,9 +130,9 @@ public class JavaSample {
         RawHttpRequest request = rawHttp.parseRequest(
                 "GET /hello.txt HTTP/1.1\r\n" +
                         "User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3\r\n" +
-                        "Host: www.example.com\r\n" +
+                        "Host: headers.jsontest.com\r\n" +
                         "Accept-Language: en, mi");
-        Socket socket = new Socket("www.example.com", 80);
+        Socket socket = new Socket("headers.jsontest.com", 80);
         request.writeTo(socket.getOutputStream());
 
         EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
@@ -140,7 +140,7 @@ public class JavaSample {
         // call "eagerly()" in order to download the body
         System.out.println(response.eagerly());
 
-        assertThat(response.getStatusCode(), equalTo(404));
+        assertThat(response.getStatusCode(), equalTo(200));
         assertTrue(response.getBody().isPresent());
 
         File responseFile = Files.createTempFile("rawhttp", ".http").toFile();
