@@ -64,12 +64,12 @@ public abstract class HttpMessage implements Writable {
     public abstract HttpMessage withBody(@Nullable HttpMessageBody body, boolean adjustHeaders);
 
     /**
-     * Helper method to allow sub-types to easily implement {@link HttpMessage#withBody(HttpMessageBody, boolean}.
+     * Helper method to allow sub-types to easily implement {@link HttpMessage#withBody(HttpMessageBody, boolean)}.
      *
-     * @param body
-     * @param adjustHeaders
-     * @param applyHeaders
-     * @param <Self>
+     * @param body          the body or null if no body is returned
+     * @param adjustHeaders whether to "adjust" headers for the new body
+     * @param apply         create the Self type instance using the given headers and body
+     * @param <Self>        the Self type
      * @return the result of calling {@code apply} with the headers maybe adjusted for the given body.
      */
     protected <Self> Self withBody(@Nullable HttpMessageBody body,

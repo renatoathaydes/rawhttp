@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
-    private final TcpRawHttpClientOptions options;
+    protected final TcpRawHttpClientOptions options;
     private final RawHttp rawHttp;
 
     /**
@@ -133,9 +133,9 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         return options.onResponse(socket, request.getUri(), response);
     }
 
-    private Runnable requestSender(RawHttpRequest request,
-                                   OutputStream outputStream,
-                                   boolean expectContinue) {
+    protected Runnable requestSender(RawHttpRequest request,
+                                     OutputStream outputStream,
+                                     boolean expectContinue) {
         return () -> {
             try {
                 if (expectContinue) {
@@ -216,15 +216,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
          * By sending the request's body asynchronously, it is possible to send more than
          * one request to a server without waiting for each response to be downloaded first.
          */
-        default ExecutorService getExecutorService() {
-            final AtomicInteger threadCount = new AtomicInteger(1);
-            return Executors.newFixedThreadPool(4, runnable -> {
-                Thread t = new Thread(runnable);
-                t.setDaemon(true);
-                t.setName("tcp-rawhttp-client-" + threadCount.incrementAndGet());
-                return t;
-            });
-        }
+        ExecutorService getExecutorService();
 
         @Override
         default void close() throws IOException {
@@ -254,6 +246,17 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
     public static class DefaultOptions implements TcpRawHttpClientOptions {
 
         private final Map<String, Socket> socketByHost = new HashMap<>(4);
+        private final ExecutorService executorService;
+
+        public DefaultOptions() {
+            final AtomicInteger threadCount = new AtomicInteger(1);
+            this.executorService = Executors.newFixedThreadPool(4, runnable -> {
+                Thread t = new Thread(runnable);
+                t.setDaemon(true);
+                t.setName("tcp-rawhttp-client-" + threadCount.incrementAndGet());
+                return t;
+            });
+        }
 
         @Override
         public Socket getSocket(URI uri) {
@@ -286,23 +289,32 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         public RawHttpResponse<Void> onResponse(Socket socket,
                                                 URI uri,
                                                 RawHttpResponse<Void> httpResponse) throws IOException {
-            if (httpResponse.getHeaders()
-                    .getFirst("Connection")
-                    .orElse("")
-                    .equalsIgnoreCase("close") ||
-                    httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)) {
-
+            if (RawHttpResponse.shouldCloseConnectionAfter(httpResponse)) {
                 socketByHost.remove(uri.getHost());
 
                 // resolve the full response before closing the socket
-                return httpResponse.eagerly(false);
+                try {
+                    return httpResponse.eagerly(false);
+                } finally {
+                    socket.close();
+                }
             }
 
             return httpResponse;
         }
 
         @Override
+        public ExecutorService getExecutorService() {
+            return executorService;
+        }
+
+        @Override
         public void close() {
+            try {
+                executorService.shutdown();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             for (Socket socket : socketByHost.values()) {
                 try {
                     socket.close();

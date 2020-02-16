@@ -149,4 +149,23 @@ public class RawHttpResponse<Response> extends HttpMessage {
                 getHeaders(), getBody().orElse(null));
     }
 
+    /**
+     * Check whether the HTTP connection used to receive the given response needs to be closed.
+     * <p>
+     * Normally, connections should be kept alive so that a client can make several HTTP requests
+     * using the same connection, but in certain cases, that cannot be done. For example, the server
+     * may send a {@code Connection: closed} header to indicate that it does not expect the connection
+     * to be re-used by the client. In HTTP/1.0, this was always the case.
+     *
+     * @param httpResponse received from some connection
+     * @return whether the connection should be closed
+     */
+    public static boolean shouldCloseConnectionAfter(RawHttpResponse<?> httpResponse) {
+        return httpResponse.getHeaders()
+                .getFirst("Connection")
+                .orElse("")
+                .equalsIgnoreCase("close") ||
+                httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1);
+    }
+
 }
