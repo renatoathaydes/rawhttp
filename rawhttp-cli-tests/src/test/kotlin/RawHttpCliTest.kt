@@ -55,8 +55,14 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canLogResponseFull() {
-        val handle = runCli("send", "-l", "-p", "full", "-t", SUCCESS_HTTP_REQUEST)
+        val handle = runCli("send", "-l", "-p", "response", "-t", SUCCESS_HTTP_REQUEST)
         assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
+    fun canLogResponseAll() {
+        val handle = runCli("send", "-p", "all", "-t", SUCCESS_HTTP_REQUEST)
+        assertOutputIsSuccessResponseAndThenStatistics(handle)
     }
 
     @Test
@@ -66,15 +72,15 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
-    fun canLogResponseHeaders() {
-        val handle = runCli("send", "-p", "headers", "-t", SUCCESS_HTTP_REQUEST)
-        assertSuccessResponseHeaders(handle)
-    }
-
-    @Test
     fun canLogResponseBody() {
         val handle = runCli("send", "-p", "body", "-t", SUCCESS_HTTP_REQUEST)
         assertSuccessResponseBody(handle)
+    }
+
+    @Test
+    fun canLogResponseStats() {
+        val handle = runCli("send", "-p", "stats", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseStats(handle)
     }
 
     @Test

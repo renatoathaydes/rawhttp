@@ -1,6 +1,8 @@
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.AfterClass
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.BeforeClass
 import rawhttp.core.EagerHttpResponse
@@ -172,6 +174,16 @@ abstract class RawHttpCliTester {
             assertNoSysErrOutput(handle)
         }
 
+        fun assertOutputIsSuccessResponseAndThenStatistics(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            val separator = "\n---------------------------------\n"
+            val separatorIndex = handle.out.indexOf(separator)
+            assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
+            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE))
+            assertStatistics(handle.out.substring(separatorIndex + separator.length))
+            assertNoSysErrOutput(handle)
+        }
+
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
             assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE))
@@ -193,10 +205,27 @@ abstract class RawHttpCliTester {
             assertNoSysErrOutput(handle)
         }
 
-        fun assertSuccessResponseHeaders(handle: ProcessHandle) {
+        fun assertSuccessResponseStats(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE.substring(0..63)))
+            assertStatistics(handle.out)
             assertNoSysErrOutput(handle)
+        }
+
+        private fun assertStatistics(output: String) {
+            output.lines().run {
+                assertThat(size, equalTo(6))
+                assertTrue("Expected 'Connect time', got " + get(0),
+                        get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms")))
+                assertTrue("Expected 'First received byte time', got " + get(1),
+                        get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms")))
+                assertTrue("Expected 'Total response time', got " + get(2),
+                        get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms")))
+                assertTrue("Expected 'Total response time', got " + get(3),
+                        get(3).matches(Regex("Bytes received: \\d+")))
+                assertTrue("Expected 'Throughput (bytes/sec)', got " + get(4),
+                        get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+")))
+                assertEquals(get(5), "")
+            }
         }
 
         fun assertSuccessResponseBody(handle: ProcessHandle) {
@@ -256,4 +285,8 @@ abstract class RawHttpCliTester {
 
     }
 
+}
+
+private fun String.matches(regex: Regex): Boolean {
+    return regex.matchEntire(this) != null
 }

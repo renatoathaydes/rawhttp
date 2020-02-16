@@ -373,7 +373,7 @@ public class OptionsParserTest {
                 s -> null, h -> null);
         assertNotNull(result);
         assertFalse(result.getRequestBody().isPresent());
-        assertEquals(result.printResponseMode, PrintResponseMode.FULL);
+        assertEquals(result.printResponseMode, PrintResponseMode.RESPONSE);
     }
 
     @Test
@@ -382,7 +382,7 @@ public class OptionsParserTest {
                 {"send", "-f", ".", "-f", "other"},
                 {"send", "--file", ".", "--file", "other"},
                 {"send", "-f", ".", "--file", "other"},
-                {"send", "--print-response-mode", "headers", "--file", ".", "-f", "other"}
+                {"send", "--print-response-mode", "status", "--file", ".", "-f", "other"}
         };
 
         for (String[] example : examples) {
@@ -434,7 +434,7 @@ public class OptionsParserTest {
             }
         }
 
-        Options options = OptionsParser.parse(new String[]{"send", "-t", "REQ", "-p", "full", "-g", "BODY"});
+        Options options = OptionsParser.parse(new String[]{"send", "-t", "REQ", "-p", "all", "-g", "BODY"});
         ClientOptions clientOptions = options.run(c -> c, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
@@ -446,7 +446,7 @@ public class OptionsParserTest {
         RequestBody requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("BODY"), requestBody.run(f -> f, t -> null));
-        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.ALL);
         assertFalse(result.options.logRequest);
         assertEquals("REQ", result.requestText);
         assertNull(result.requestFile);
@@ -480,7 +480,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("body.js"), requestBody.run(f -> f, t -> null));
-        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.RESPONSE);
         assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file.req"), result.requestFile);
@@ -497,7 +497,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals("Hello", requestBody.run(f -> null, t -> t));
-        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.RESPONSE);
         assertFalse(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);
@@ -514,7 +514,7 @@ public class OptionsParserTest {
         requestBody = result.options.getRequestBody().orElseThrow(() ->
                 new AssertionError("Request body is not present"));
         assertEquals(new File("my.body"), requestBody.run(f -> f, t -> null));
-        assertEquals(result.options.printResponseMode, PrintResponseMode.FULL);
+        assertEquals(result.options.printResponseMode, PrintResponseMode.RESPONSE);
         assertTrue(result.options.logRequest);
         assertNull(result.requestText);
         assertEquals(new File("file2.req"), result.requestFile);

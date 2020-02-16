@@ -1,14 +1,13 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
+import rawhttp.cli.time.TimedHttpClient;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.FileBody;
 import rawhttp.core.body.HttpMessageBody;
 import rawhttp.core.body.StringBody;
-import rawhttp.core.client.TcpRawHttpClient;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
@@ -110,12 +109,12 @@ public class Main {
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
                         "  * -p --print-response-mode\n" +
-                        "  *   one of: full|body|status|headers|stats\n" +
-                        "        - full: (default) print the full response\n" +
+                        "  *   one of: response|all|body|status|stats\n" +
+                        "        - response: (default) print the full response\n" +
+                        "        - all: print the full response and statistics about the request\n" +
                         "        - body: print the response body\n" +
                         "        - status: print the response status-line\n" +
-                        "        - headers: print the response status-line and headers\n" +
-                        "        - stats: print statistics about a request\n" +
+                        "        - stats: print statistics about the request\n" +
                         "  * -l --log-request\n" +
                         "      log the request\n" +
                         "  * -b --body-text <text>\n" +
@@ -123,7 +122,14 @@ public class Main {
                         "  * -g --body-file <file>\n" +
                         "      replace message body with the contents of the file\n" +
                         "\n" +
-                        "If no -f or -t options are given, a HTTP request is read from sysin.\n");
+                        "Statistics include the following information:\n" +
+                        "  Connect time: the time it took to connect to the server (includes only the Socket::connect call).\n" +
+                        "  First received byte time (FRBT): the time between the first byte of the request being sent, and the first byte of the response being received.\n" +
+                        "  Total response time (TRT): time to receive the first byte, plus the time to download the full response.\n" +
+                        "  Bytes received: the number of bytes received from the server.\n" +
+                        "  Throughput: the total number of bytes received, divided by (TRT - FRBT) in seconds.\n" +
+                        "\n" +
+                        "If no -f or -t options are given, a HTTP request is read from stdin.\n");
                 break;
             case SERVE:
                 System.out.println("\n" +
@@ -202,29 +208,8 @@ public class Main {
             }
         }
 
-        try (TcpRawHttpClient client = new TcpRawHttpClient()) {
-            RawHttpResponse<Void> response = client.send(request);
-            switch (options.printResponseMode) {
-                case FULL:
-                    response.writeTo(System.out);
-                    break;
-                case BODY:
-                    if (response.getBody().isPresent()) {
-                        response.getBody().get().writeTo(System.out);
-                    }
-                    break;
-                case STATUS:
-                    response.getStartLine().writeTo(System.out);
-                    break;
-                case HEADERS:
-                    response.getStartLine().writeTo(System.out);
-                    response.getHeaders().writeTo(System.out);
-                    break;
-                case STATS:
-                    // TODO generate statistics
-                    System.out.println("Stats not implemented yet");
-                    break;
-            }
+        try (TimedHttpClient client = new TimedHttpClient(options.printResponseMode)) {
+            client.send(request);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }

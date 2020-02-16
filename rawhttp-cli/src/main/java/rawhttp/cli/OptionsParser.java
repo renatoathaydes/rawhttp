@@ -11,10 +11,6 @@ enum HelpOptions {
     GENERAL, SERVE, SEND
 }
 
-enum PrintResponseMode {
-    FULL, BODY, STATUS, HEADERS, STATS
-}
-
 final class ServerOptions {
     static final int DEFAULT_SERVER_PORT = 8080;
 
@@ -70,7 +66,7 @@ final class RequestRunOptions {
 
     RequestRunOptions(RequestBody requestBody, PrintResponseMode printResponseMode, boolean logRequest) {
         this.requestBody = requestBody;
-        this.printResponseMode = printResponseMode == null ? PrintResponseMode.FULL : printResponseMode;
+        this.printResponseMode = printResponseMode == null ? PrintResponseMode.RESPONSE : printResponseMode;
         this.logRequest = logRequest;
     }
 
