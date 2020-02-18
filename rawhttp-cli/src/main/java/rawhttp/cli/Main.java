@@ -1,6 +1,9 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
+import rawhttp.cli.client.HttpFileEntry;
+import rawhttp.cli.client.HttpFileParser;
+import rawhttp.cli.client.HttpFileRunner;
 import rawhttp.cli.client.RawHttpCliClient;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
@@ -12,11 +15,14 @@ import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -235,7 +241,18 @@ public class Main {
     }
 
     private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
-        System.out.println("Not implemented yet");
+        HttpFileParser parser = new HttpFileParser(HTTP);
+
+        ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("graal.js");
+
+        try (RawHttpCliClient httpClient = new RawHttpCliClient(
+                httpFileOptions.logRequest, httpFileOptions.printResponseMode)) {
+            List<HttpFileEntry> entries = parser.parse(httpFileOptions.httpFile, httpFileOptions.envFile);
+            HttpFileRunner runner = new HttpFileRunner(httpClient, scriptEngine);
+            runner.run(entries);
+        } catch (IOException e) {
+            return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
+        }
         return null;
     }
 
