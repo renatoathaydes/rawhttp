@@ -51,6 +51,7 @@ public class Main {
                             Main::sendRequestFromSysIn,
                             Main::sendRequestFromFile,
                             Main::sendRequestFromText),
+                    Main::runHttpFile,
                     Main::serve,
                     Main::showUsage);
         } catch (OptionsException e) {
@@ -79,12 +80,15 @@ public class Main {
                         "RawHTTP CLI is a utility to send and receive HTTP messages.\n" +
                         "The following sub-commands are available:\n" +
                         "\n" +
-                        "  send    - sends HTTP requests\n" +
+                        "  send    - sends a HTTP request\n" +
+                        "  run     - runs a HTTP file in the IntelliJ format.\n" +
                         "  serve   - serves the contents of a local directory via HTTP.\n" +
                         "  help    - shows this message or help for a specific sub-command.\n" +
                         "\n" +
                         "Send Command Usage:\n" +
                         "  rawhttp send [options]\n" +
+                        "Run Command Usage:\n" +
+                        "  rawhttp run <http-file> [options]\n" +
                         "\n" +
                         "Serve Command Usage:\n" +
                         "  rawhttp serve <directory> [options]\n" +
@@ -98,7 +102,7 @@ public class Main {
                 System.out.println("\n" +
                         "Send sub-command Help.\n" +
                         "\n" +
-                        "The 'send' sub-command is used to send out HTTP requests.\n" +
+                        "The 'send' sub-command is used to send out a single HTTP request.\n" +
                         "\n" +
                         "Usage:\n" +
                         "  rawhttp send [options]\n" +
@@ -108,8 +112,8 @@ public class Main {
                         "      read request from a file\n" +
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
-                        "  * -p --print-response-mode\n" +
-                        "  *   one of: response|all|body|status|stats\n" +
+                        "  * -p --print-response-mode <option>\n" +
+                        "      option is one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full response\n" +
                         "        - all: print the full response and statistics about the request\n" +
                         "        - body: print the response body\n" +
@@ -131,6 +135,30 @@ public class Main {
                         "\n" +
                         "If no -f or -t options are given, a HTTP request is read from stdin.\n");
                 break;
+            case RUN:
+                System.out.println("\n" +
+                        "Run sub-command Help.\n" +
+                        "\n" +
+                        "The 'run' sub-command executes a HTTP file as defined by Jetbrains at\n" +
+                        "\n" +
+                        "https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html\n" +
+                        "\n" +
+                        "Usage:\n" +
+                        "  rawhttp run <http-file> [options]\n" +
+                        "\n" +
+                        "Options:\n" +
+                        "  * -e --environment <json-file>\n" +
+                        "    the JSON environment file\n" +
+                        "  * -p --print-response-mode\n" +
+                        "  *   one of: response|all|body|status|stats\n" +
+                        "        - response: (default) print the full responses\n" +
+                        "        - all: print the full response and statistics about each request\n" +
+                        "        - body: print the response bodies\n" +
+                        "        - status: print the response status-lines\n" +
+                        "        - stats: print statistics about each request\n" +
+                        "  * -l --log-request\n" +
+                        "      log the request\n"
+                );
             case SERVE:
                 System.out.println("\n" +
                         "Serve sub-command Help.\n" +
@@ -160,11 +188,11 @@ public class Main {
         return null;
     }
 
-    private static CliError sendRequestFromText(String request, RequestRunOptions options) {
+    private static CliError sendRequestFromText(String request, SendRequestOptions options) {
         return sendRequest(HTTP.parseRequest(request), options);
     }
 
-    private static CliError sendRequestFromSysIn(RequestRunOptions options) {
+    private static CliError sendRequestFromSysIn(SendRequestOptions options) {
         try {
             return sendRequest(HTTP.parseRequest(System.in), options);
         } catch (IOException e) {
@@ -172,7 +200,7 @@ public class Main {
         }
     }
 
-    private static CliError sendRequestFromFile(File file, RequestRunOptions options) {
+    private static CliError sendRequestFromFile(File file, SendRequestOptions options) {
         try (InputStream fileStream = Files.newInputStream(file.toPath())) {
             return sendRequest(HTTP.parseRequest(fileStream), options);
         } catch (IOException e) {
@@ -180,7 +208,7 @@ public class Main {
         }
     }
 
-    private static CliError sendRequest(RawHttpRequest request, RequestRunOptions options) {
+    private static CliError sendRequest(RawHttpRequest request, SendRequestOptions options) {
         if (options.getRequestBody().isPresent()) {
             HttpMessageBody requestBody = options.getRequestBody().get().run(
                     FileBody::new,
@@ -213,6 +241,11 @@ public class Main {
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }
+        return null;
+    }
+
+    private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
+        System.out.println("Not implemented yet");
         return null;
     }
 

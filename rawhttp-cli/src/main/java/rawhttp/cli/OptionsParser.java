@@ -1,14 +1,13 @@
 package rawhttp.cli;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 enum HelpOptions {
-    GENERAL, SERVE, SEND
+    GENERAL, SERVE, SEND, RUN
 }
 
 final class ServerOptions {
@@ -59,12 +58,12 @@ final class RequestBody {
     }
 }
 
-final class RequestRunOptions {
+final class SendRequestOptions {
     private final RequestBody requestBody;
     final PrintResponseMode printResponseMode;
     final boolean logRequest;
 
-    RequestRunOptions(RequestBody requestBody, PrintResponseMode printResponseMode, boolean logRequest) {
+    SendRequestOptions(RequestBody requestBody, PrintResponseMode printResponseMode, boolean logRequest) {
         this.requestBody = requestBody;
         this.printResponseMode = printResponseMode == null ? PrintResponseMode.RESPONSE : printResponseMode;
         this.logRequest = logRequest;
@@ -78,40 +77,56 @@ final class RequestRunOptions {
 final class ClientOptions {
     private final File requestFile;
     private final String requestText;
-    private final RequestRunOptions requestRunOptions;
+    private final SendRequestOptions sendRequestOptions;
 
-    static ClientOptions readFromStdin(RequestRunOptions requestRunOptions) {
-        return new ClientOptions(null, null, requestRunOptions);
+    static ClientOptions readFromStdin(SendRequestOptions sendRequestOptions) {
+        return new ClientOptions(null, null, sendRequestOptions);
     }
 
-    static ClientOptions withFile(File requestFile, RequestRunOptions requestRunOptions) {
-        return new ClientOptions(requestFile, null, requestRunOptions);
+    static ClientOptions withFile(File requestFile, SendRequestOptions sendRequestOptions) {
+        return new ClientOptions(requestFile, null, sendRequestOptions);
     }
 
-    static ClientOptions withRequestText(String requestText, RequestRunOptions requestRunOptions) {
-        return new ClientOptions(null, requestText, requestRunOptions);
+    static ClientOptions withRequestText(String requestText, SendRequestOptions sendRequestOptions) {
+        return new ClientOptions(null, requestText, sendRequestOptions);
     }
 
     private ClientOptions(File requestFile,
                           String requestText,
-                          RequestRunOptions requestRunOptions) {
+                          SendRequestOptions sendRequestOptions) {
         this.requestFile = requestFile;
         this.requestText = requestText;
-        this.requestRunOptions = requestRunOptions;
+        this.sendRequestOptions = sendRequestOptions;
     }
 
-    <T> T run(Function<RequestRunOptions, T> runFromSysin,
-              BiFunction<File, RequestRunOptions, T> runFile,
-              BiFunction<String, RequestRunOptions, T> runText) {
+    <T> T run(Function<SendRequestOptions, T> runFromSysin,
+              BiFunction<File, SendRequestOptions, T> runFile,
+              BiFunction<String, SendRequestOptions, T> runText) {
         if (requestFile != null) {
-            return runFile.apply(requestFile, requestRunOptions);
+            return runFile.apply(requestFile, sendRequestOptions);
         }
         if (requestText != null) {
-            return runText.apply(requestText, requestRunOptions);
+            return runText.apply(requestText, sendRequestOptions);
         }
-        return runFromSysin.apply(requestRunOptions);
+        return runFromSysin.apply(sendRequestOptions);
     }
 
+}
+
+final class HttpFileOptions {
+    final File httpFile;
+    @Nullable
+    final File envFile;
+    final PrintResponseMode printResponseMode;
+    final boolean logRequest;
+
+    public HttpFileOptions(File httpFile, @Nullable File envFile,
+                           PrintResponseMode printResponseMode, boolean logRequest) {
+        this.httpFile = httpFile;
+        this.envFile = envFile;
+        this.printResponseMode = printResponseMode;
+        this.logRequest = logRequest;
+    }
 }
 
 final class OptionsException extends Exception {
@@ -122,34 +137,45 @@ final class OptionsException extends Exception {
 
 final class Options {
     private final ClientOptions clientOptions;
+    private final HttpFileOptions httpFileOptions;
     private final ServerOptions serverOptions;
     private final HelpOptions helpOptions;
 
     static Options justShowHelp(HelpOptions helpOptions) {
-        return new Options(null, null, helpOptions);
+        return new Options(null, null, null, helpOptions);
     }
 
     static Options withClientOptions(ClientOptions clientOptions) {
-        return new Options(clientOptions, null, null);
+        return new Options(clientOptions, null, null, null);
+    }
+
+    static Options withHttpFileOptions(HttpFileOptions httpFileOptions) {
+        return new Options(null, httpFileOptions, null, null);
     }
 
     static Options withServerOptions(ServerOptions serverOptions) {
-        return new Options(null, serverOptions, null);
+        return new Options(null, null, serverOptions, null);
     }
 
     private Options(ClientOptions clientOptions,
+                    HttpFileOptions httpFileOptions,
                     ServerOptions serverOptions,
                     HelpOptions helpOptions) {
         this.clientOptions = clientOptions;
+        this.httpFileOptions = httpFileOptions;
         this.serverOptions = serverOptions;
         this.helpOptions = helpOptions;
     }
 
     <T> T run(Function<ClientOptions, T> runClient,
+              Function<HttpFileOptions, T> runHttpFile,
               Function<ServerOptions, T> runServer,
               Function<HelpOptions, T> showHelp) {
         if (clientOptions != null) {
             return runClient.apply(clientOptions);
+        }
+        if (httpFileOptions != null) {
+            return runHttpFile.apply(httpFileOptions);
         }
         if (serverOptions != null) {
             return runServer.apply(serverOptions);
@@ -162,14 +188,14 @@ final class Options {
 
     @Override
     public String toString() {
-        return "Options{" + run(c -> c, s -> s, h -> h) + "}";
+        return "Options{" + run(c -> c, h -> h, s -> s, h -> h) + "}";
     }
 }
 
 final class OptionsParser {
 
     private static final String AVAILABLE_COMMANDS_MSG =
-            "Available commands are 'send', 'serve' and 'help'.\n" +
+            "Available commands are 'send', 'run', 'serve' and 'help'.\n" +
                     "Use the 'help' command to show more information.";
 
     static Options parse(String[] args) throws OptionsException {
@@ -180,6 +206,8 @@ final class OptionsParser {
         switch (subCommand) {
             case "send":
                 return parseSendCommand(args);
+            case "run":
+                return parseRunCommand(args);
             case "serve":
                 return parseServeCommand(args);
             case "help":
@@ -273,15 +301,7 @@ final class OptionsParser {
                         throw new OptionsException("The --print-response-mode option can only be used once");
                     }
                     if (i + 1 < args.length) {
-                        try {
-                            printResponseMode = PrintResponseMode.valueOf(args[i + 1].toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            throw new OptionsException("Bad value for " + arg + " option.\n" +
-                                    "Acceptable values are " + Stream.of(PrintResponseMode.values())
-                                    .map(Enum::name)
-                                    .map(String::toLowerCase)
-                                    .collect(Collectors.joining(", ")));
-                        }
+                        printResponseMode = PrintResponseMode.parseOption(arg, args[i + 1]);
                         i++;
                     } else {
                         throw new OptionsException("Missing argument for " + arg + " option");
@@ -296,7 +316,7 @@ final class OptionsParser {
             }
         }
 
-        RequestRunOptions options = new RequestRunOptions(requestBody, printResponseMode, logRequest);
+        SendRequestOptions options = new SendRequestOptions(requestBody, printResponseMode, logRequest);
         ClientOptions clientOptions;
         if (requestFile != null) {
             clientOptions = ClientOptions.withFile(requestFile, options);
@@ -306,6 +326,61 @@ final class OptionsParser {
             clientOptions = ClientOptions.readFromStdin(options);
         }
         return Options.withClientOptions(clientOptions);
+    }
+
+    private static Options parseRunCommand(String[] args) throws OptionsException {
+        File httpFile;
+        @Nullable File envFile = null;
+        PrintResponseMode printResponseMode = null;
+        boolean logRequest = false;
+
+        if (args.length < 2) {
+            throw new OptionsException("No http requests file provided");
+        }
+
+        httpFile = new File(args[1]);
+
+        for (int i = 2; i < args.length; i++) {
+            String arg = args[i];
+            switch (arg) {
+                case "-e":
+                case "--environment":
+                    if (envFile != null) {
+                        throw new OptionsException("the --environment option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        envFile = new File(args[i + 1]);
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-p":
+                case "--print-response-mode":
+                    if (printResponseMode != null) {
+                        throw new OptionsException("The --print-response-mode option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        printResponseMode = PrintResponseMode.parseOption(arg, args[i + 1]);
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " option");
+                    }
+                    break;
+                case "-l":
+                case "--log-request":
+                    logRequest = true;
+                    break;
+                default:
+                    throw new OptionsException("Unrecognized option: " + arg);
+            }
+        }
+
+        if (printResponseMode == null) {
+            printResponseMode = PrintResponseMode.RESPONSE;
+        }
+
+        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, envFile, printResponseMode, logRequest));
     }
 
     private static Options parseServeCommand(String[] args) throws OptionsException {

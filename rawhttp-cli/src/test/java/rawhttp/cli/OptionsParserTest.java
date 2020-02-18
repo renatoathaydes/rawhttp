@@ -33,7 +33,7 @@ public class OptionsParserTest {
 
             Options options = OptionsParser.parse(example);
 
-            HelpOptions result = options.run(c -> null, s -> null, h -> h);
+            HelpOptions result = options.run(c -> null, h -> null, s -> null, h -> h);
             assertNotNull(result);
             assertEquals("Example: " + exampleText, HelpOptions.GENERAL, result);
         }
@@ -42,27 +42,32 @@ public class OptionsParserTest {
     @Test
     public void canParseHelpOptionWithArgs() throws OptionsException {
         Options options = OptionsParser.parse(new String[]{"help", "send"});
-        HelpOptions result = options.run(c -> null, s -> null, h -> h);
+        HelpOptions result = options.run(c -> null, h -> null, s -> null, h -> h);
         assertNotNull(result);
         assertEquals(HelpOptions.SEND, result);
 
+        options = OptionsParser.parse(new String[]{"help", "run"});
+        result = options.run(c -> null, h -> null, s -> null, h -> h);
+        assertNotNull(result);
+        assertEquals(HelpOptions.RUN, result);
+
         options = OptionsParser.parse(new String[]{"help", "serve"});
-        result = options.run(c -> null, s -> null, h -> h);
+        result = options.run(c -> null, h -> null, s -> null, h -> h);
         assertNotNull(result);
         assertEquals(HelpOptions.SERVE, result);
 
         options = OptionsParser.parse(new String[]{"help", "whatever"});
-        result = options.run(c -> null, s -> null, h -> h);
+        result = options.run(c -> null, h -> null, s -> null, h -> h);
         assertNotNull(result);
         assertEquals(HelpOptions.GENERAL, result);
 
         options = OptionsParser.parse(new String[]{"help", "a", "b", "c"});
-        result = options.run(c -> null, s -> null, h -> h);
+        result = options.run(c -> null, h -> null, s -> null, h -> h);
         assertNotNull(result);
         assertEquals(HelpOptions.GENERAL, result);
 
         options = OptionsParser.parse(new String[]{"-h", "send"});
-        result = options.run(c -> null, s -> null, h -> h);
+        result = options.run(c -> null, h -> null, s -> null, h -> h);
         assertNotNull(result);
         assertEquals(HelpOptions.SEND, result);
     }
@@ -70,11 +75,13 @@ public class OptionsParserTest {
     @Test
     public void onlyOneOptionCallbackRuns() throws OptionsException {
         final AtomicInteger sendCount = new AtomicInteger(0);
+        final AtomicInteger runCount = new AtomicInteger(0);
         final AtomicInteger serveCount = new AtomicInteger(0);
         final AtomicInteger showHelpCount = new AtomicInteger(0);
 
         Consumer<Options> run = (result) ->
                 result.run(c -> sendCount.incrementAndGet(),
+                        h -> runCount.incrementAndGet(),
                         s -> serveCount.incrementAndGet(),
                         h -> showHelpCount.incrementAndGet());
 
@@ -82,6 +89,15 @@ public class OptionsParserTest {
         run.accept(result);
 
         assertEquals(1, sendCount.get());
+        assertEquals(0, runCount.get());
+        assertEquals(0, serveCount.get());
+        assertEquals(0, showHelpCount.get());
+
+        result = OptionsParser.parse(new String[]{"run", "req.http"});
+        run.accept(result);
+
+        assertEquals(1, sendCount.get());
+        assertEquals(1, runCount.get());
         assertEquals(0, serveCount.get());
         assertEquals(0, showHelpCount.get());
 
@@ -89,6 +105,7 @@ public class OptionsParserTest {
         run.accept(result);
 
         assertEquals(1, sendCount.get());
+        assertEquals(1, runCount.get());
         assertEquals(1, serveCount.get());
         assertEquals(0, showHelpCount.get());
 
@@ -96,6 +113,7 @@ public class OptionsParserTest {
         run.accept(result);
 
         assertEquals(1, sendCount.get());
+        assertEquals(1, runCount.get());
         assertEquals(1, serveCount.get());
         assertEquals(1, showHelpCount.get());
     }
@@ -104,6 +122,7 @@ public class OptionsParserTest {
     public void onlyOneClientOptionCallbackRuns() throws OptionsException {
         final AtomicInteger serveCount = new AtomicInteger(0);
         final AtomicInteger showHelpCount = new AtomicInteger(0);
+        final AtomicInteger runCount = new AtomicInteger(0);
         final AtomicInteger sysinCount = new AtomicInteger(0);
         final AtomicInteger textCount = new AtomicInteger(0);
         final AtomicInteger fileCount = new AtomicInteger(0);
@@ -112,6 +131,7 @@ public class OptionsParserTest {
                 result.run(c -> c.run(o -> sysinCount.incrementAndGet(),
                         (f, o) -> fileCount.incrementAndGet(),
                         (t, o) -> textCount.incrementAndGet()),
+                        h -> runCount.incrementAndGet(),
                         s -> serveCount.incrementAndGet(),
                         h -> showHelpCount.incrementAndGet());
 
@@ -137,6 +157,7 @@ public class OptionsParserTest {
         assertEquals(1, textCount.get());
 
         assertEquals(0, serveCount.get());
+        assertEquals(0, runCount.get());
         assertEquals(0, showHelpCount.get());
     }
 
@@ -156,7 +177,7 @@ public class OptionsParserTest {
                     c -> c.run(o -> "sysin",
                             (f, o) -> f.getName(),
                             (t, o) -> "text"),
-                    s -> "server", h -> "help");
+                    h -> "run", s -> "server", h -> "help");
             assertEquals("Example: " + exampleText, expectedFileName, result);
         }
     }
@@ -187,7 +208,7 @@ public class OptionsParserTest {
                     c -> c.run(o -> "sysin",
                             (f, o) -> "file",
                             (t, o) -> t),
-                    s -> "server", h -> "help");
+                    h -> "run ", s -> "server", h -> "help");
             assertEquals("Example: " + exampleText,
                     expectedRequestText, result);
         }
@@ -208,7 +229,7 @@ public class OptionsParserTest {
                     c -> c.run(o -> "sysin",
                             (f, o) -> "" + o.logRequest,
                             (t, o) -> "" + o.logRequest),
-                    s -> "server", h -> "help");
+                    h -> "run ", s -> "server", h -> "help");
             assertEquals("Example: " + exampleText,
                     "true", result);
         }
@@ -226,7 +247,7 @@ public class OptionsParserTest {
                     c -> c.run(o -> "sysin",
                             (f, o) -> "" + o.logRequest,
                             (t, o) -> "" + o.logRequest),
-                    s -> "server", h -> "help");
+                    h -> "run ", s -> "server", h -> "help");
             assertEquals("Example: " + exampleText,
                     "false", result);
         }
@@ -259,7 +280,7 @@ public class OptionsParserTest {
                             () -> new AssertionError("Request body was not present")),
                             (f, o) -> null,
                             (t, o) -> null),
-                    s -> null, h -> null);
+                    h -> null, s -> null, h -> null);
 
             assertNotNull("Example: " + exampleText, result);
 
@@ -287,7 +308,7 @@ public class OptionsParserTest {
                             () -> new AssertionError("Request body was not present")),
                             (f, o) -> null,
                             (t, o) -> null),
-                    s -> null, h -> null);
+                    h -> null, s -> null, h -> null);
 
             assertNotNull("Example: " + exampleText, result);
 
@@ -366,11 +387,11 @@ public class OptionsParserTest {
     public void canAcceptSendRequestTextFromStdin() throws OptionsException {
         Options options = OptionsParser.parse(new String[]{"send"});
 
-        RequestRunOptions result = options.run(
+        SendRequestOptions result = options.run(
                 c -> c.run(o -> o,
                         (f, o) -> null,
                         (t, o) -> null),
-                s -> null, h -> null);
+                h -> null, s -> null, h -> null);
         assertNotNull(result);
         assertFalse(result.getRequestBody().isPresent());
         assertEquals(result.printResponseMode, PrintResponseMode.RESPONSE);
@@ -425,9 +446,9 @@ public class OptionsParserTest {
         class Res {
             final File requestFile;
             final String requestText;
-            final RequestRunOptions options;
+            final SendRequestOptions options;
 
-            Res(File requestFile, String requestText, RequestRunOptions options) {
+            Res(File requestFile, String requestText, SendRequestOptions options) {
                 this.requestFile = requestFile;
                 this.requestText = requestText;
                 this.options = options;
@@ -435,7 +456,7 @@ public class OptionsParserTest {
         }
 
         Options options = OptionsParser.parse(new String[]{"send", "-t", "REQ", "-p", "all", "-g", "BODY"});
-        ClientOptions clientOptions = options.run(c -> c, s -> null, h -> null);
+        ClientOptions clientOptions = options.run(c -> c, h -> null, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
         Res result = clientOptions.run(
@@ -452,7 +473,7 @@ public class OptionsParserTest {
         assertNull(result.requestFile);
 
         options = OptionsParser.parse(new String[]{"send", "-f", "REQ", "-p", "body", "-g", "b.js", "-l"});
-        clientOptions = options.run(c -> c, s -> null, h -> null);
+        clientOptions = options.run(c -> c, h -> null, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
         result = clientOptions.run(
@@ -469,7 +490,7 @@ public class OptionsParserTest {
         assertEquals(new File("REQ"), result.requestFile);
 
         options = OptionsParser.parse(new String[]{"send", "--log-request", "--body-file", "body.js", "--file", "file.req"});
-        clientOptions = options.run(c -> c, s -> null, h -> null);
+        clientOptions = options.run(c -> c, h -> null, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
         result = clientOptions.run(
@@ -486,7 +507,7 @@ public class OptionsParserTest {
         assertEquals(new File("file.req"), result.requestFile);
 
         options = OptionsParser.parse(new String[]{"send", "--body-text", "Hello", "--file", "file2.req"});
-        clientOptions = options.run(c -> c, s -> null, h -> null);
+        clientOptions = options.run(c -> c, h -> null, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
         result = clientOptions.run(
@@ -503,7 +524,7 @@ public class OptionsParserTest {
         assertEquals(new File("file2.req"), result.requestFile);
 
         options = OptionsParser.parse(new String[]{"send", "--body-file", "my.body", "-l", "--file", "file2.req"});
-        clientOptions = options.run(c -> c, s -> null, h -> null);
+        clientOptions = options.run(c -> c, h -> null, s -> null, h -> null);
         assertNotNull("Parsed client options", clientOptions);
 
         result = clientOptions.run(
@@ -521,6 +542,32 @@ public class OptionsParserTest {
     }
 
     @Test
+    public void canParseRunOptionWithoutArgs() throws OptionsException {
+        Options options = OptionsParser.parse(new String[]{"run", "file.http"});
+
+        HttpFileOptions result = options.run(c -> null, h -> h, s -> null, h -> null);
+
+        assertNotNull("Parsed run options", result);
+        assertEquals(new File("file.http"), result.httpFile);
+        assertNull(result.envFile);
+        assertFalse(result.logRequest);
+        assertEquals(PrintResponseMode.RESPONSE, result.printResponseMode);
+    }
+
+    @Test
+    public void canParseRunOptionWithArgs() throws OptionsException {
+        Options options = OptionsParser.parse(new String[]{"run", "file.http", "-l", "-e", ".env", "-p", "stats"});
+
+        HttpFileOptions result = options.run(c -> null, h -> h, s -> null, h -> null);
+
+        assertNotNull("Parsed run options", result);
+        assertEquals(new File("file.http"), result.httpFile);
+        assertEquals(new File(".env"), result.envFile);
+        assertTrue(result.logRequest);
+        assertEquals(PrintResponseMode.STATS, result.printResponseMode);
+    }
+
+    @Test
     public void canParseServerOptionWithoutOptions() throws OptionsException {
         String[][] examples = new String[][]{
                 {"serve", "."}, {"serve", "my/path"}
@@ -531,7 +578,7 @@ public class OptionsParserTest {
 
             Options options = OptionsParser.parse(example);
 
-            ServerOptions result = options.run(c -> null, s -> s, h -> null);
+            ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
             assertNotNull("Parsed server options. Example: " + exampleText, result);
             assertFalse("Example: " + exampleText, result.logRequests);
@@ -547,7 +594,7 @@ public class OptionsParserTest {
     @Test
     public void canParseServerAbsolutePath() throws OptionsException {
         Options options = OptionsParser.parse(new String[]{"serve", "/temp/dir"});
-        ServerOptions result = options.run(c -> null, s -> s, h -> null);
+        ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
         assertFalse(result.logRequests);
@@ -568,7 +615,7 @@ public class OptionsParserTest {
 
             Options options = OptionsParser.parse(example);
 
-            ServerOptions result = options.run(c -> null, s -> s, h -> null);
+            ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
             assertNotNull("Parsed server options. Example: " + exampleText, result);
             assertFalse("Example: " + exampleText, result.logRequests);
@@ -592,7 +639,7 @@ public class OptionsParserTest {
 
             Options options = OptionsParser.parse(example);
 
-            ServerOptions result = options.run(c -> null, s -> s, h -> null);
+            ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
             File expectedDir = new File(example[1]);
             assertEquals("Example: " + exampleText, expectedDir, result.dir);
@@ -614,7 +661,7 @@ public class OptionsParserTest {
 
             Options options = OptionsParser.parse(example);
 
-            ServerOptions result = options.run(c -> null, s -> s, h -> null);
+            ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
             assertNotNull("Parsed server options. Example: " + exampleText, result);
             assertFalse("Example: " + exampleText, result.logRequests);
@@ -628,7 +675,7 @@ public class OptionsParserTest {
     @Test
     public void canParseServerOptionWithAllArgs() throws OptionsException {
         Options options = OptionsParser.parse(new String[]{"serve", "something", "-p", "33", "-l", "-r", "/hi"});
-        ServerOptions result = options.run(c -> null, s -> s, h -> null);
+        ServerOptions result = options.run(c -> null, h -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
         assertTrue(result.logRequests);
@@ -638,7 +685,7 @@ public class OptionsParserTest {
         assertEquals("/hi", result.rootPath);
 
         options = OptionsParser.parse(new String[]{"serve", "my/files", "-p", "44", "--log-requests", "--root-path", "ho"});
-        result = options.run(c -> null, s -> s, h -> null);
+        result = options.run(c -> null, h -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
         assertTrue(result.logRequests);
@@ -648,7 +695,7 @@ public class OptionsParserTest {
         assertEquals("ho", result.rootPath);
 
         options = OptionsParser.parse(new String[]{"serve", "/abs/path", "--log-requests", "-p", "55"});
-        result = options.run(c -> null, s -> s, h -> null);
+        result = options.run(c -> null, h -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
         assertTrue(result.logRequests);
@@ -659,7 +706,7 @@ public class OptionsParserTest {
 
         options = OptionsParser.parse(new String[]{"serve", "/temp", "-l", "-r", "/abc/def",
                 "--port", "66", "--media-types", "media.properties"});
-        result = options.run(c -> null, s -> s, h -> null);
+        result = options.run(c -> null, h -> null, s -> s, h -> null);
 
         assertNotNull("Parsed server options", result);
         assertTrue(result.logRequests);
