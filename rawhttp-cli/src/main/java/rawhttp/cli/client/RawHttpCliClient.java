@@ -1,6 +1,7 @@
-package rawhttp.cli.time;
+package rawhttp.cli.client;
 
 import rawhttp.cli.PrintResponseMode;
+import rawhttp.cli.util.RequestStatistics;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
@@ -17,10 +18,27 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TimedHttpClient extends TcpRawHttpClient {
+public final class RawHttpCliClient extends TcpRawHttpClient {
 
-    public TimedHttpClient(PrintResponseMode printResponseMode) {
+    private final boolean logRequest;
+
+    public RawHttpCliClient(boolean logRequest, PrintResponseMode printResponseMode) {
         super(new ClientOptions(ResponsePrinter.of(printResponseMode)));
+        this.logRequest = logRequest;
+    }
+
+    @Override
+    public RawHttpResponse<Void> send(RawHttpRequest request) throws IOException {
+        if (logRequest) {
+            try {
+                request = request.eagerly();
+                request.writeTo(System.out);
+                System.out.println();
+            } catch (IOException e) {
+                System.err.println("Error logging request to sysout: " + e);
+            }
+        }
+        return super.send(request);
     }
 
     @Override

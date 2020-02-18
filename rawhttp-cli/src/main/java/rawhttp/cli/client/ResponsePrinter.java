@@ -1,6 +1,7 @@
-package rawhttp.cli.time;
+package rawhttp.cli.client;
 
 import rawhttp.cli.PrintResponseMode;
+import rawhttp.cli.util.RequestStatistics;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.StatusLine;
 import rawhttp.core.body.BodyReader;

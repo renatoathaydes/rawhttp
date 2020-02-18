@@ -1,4 +1,6 @@
-package rawhttp.cli.time;
+package rawhttp.cli.client;
+
+import rawhttp.cli.util.RequestStatistics;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +12,7 @@ import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class TimedSocket extends Socket {
+final class TimedSocket extends Socket {
     private final Socket delegate;
 
     private AtomicLong connectTime = new AtomicLong();

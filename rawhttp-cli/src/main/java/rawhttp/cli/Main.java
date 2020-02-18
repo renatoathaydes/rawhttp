@@ -1,7 +1,7 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
-import rawhttp.cli.time.TimedHttpClient;
+import rawhttp.cli.client.RawHttpCliClient;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -226,17 +226,7 @@ public class Main {
             request = request.withBody(requestBody);
         }
 
-        if (options.logRequest) {
-            try {
-                request = request.eagerly();
-                request.writeTo(System.out);
-                System.out.println();
-            } catch (IOException e) {
-                System.err.println("Error logging request to sysout: " + e);
-            }
-        }
-
-        try (TimedHttpClient client = new TimedHttpClient(options.printResponseMode)) {
+        try (RawHttpCliClient client = new RawHttpCliClient(options.logRequest, options.printResponseMode)) {
             client.send(request);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());

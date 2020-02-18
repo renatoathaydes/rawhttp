@@ -1,4 +1,4 @@
-package rawhttp.cli.time;
+package rawhttp.cli.util;
 
 import rawhttp.core.Writable;
 
