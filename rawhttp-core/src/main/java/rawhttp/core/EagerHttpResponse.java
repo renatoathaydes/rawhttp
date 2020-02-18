@@ -6,6 +6,7 @@ import rawhttp.core.body.EagerBodyReader;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
@@ -105,6 +106,24 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
                 statusLine,
                 getHeaders(),
                 getBody().orElse(null));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getLibResponse(), getStartLine(), getHeaders(), getBody());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        EagerHttpResponse<?> that = (EagerHttpResponse<?>) other;
+
+        return Objects.equals(getLibResponse(), that.getLibResponse())
+                && getStartLine().equals(that.getStartLine())
+                && getHeaders().equals(that.getHeaders())
+                && getBody().equals(that.getBody());
     }
 
 }

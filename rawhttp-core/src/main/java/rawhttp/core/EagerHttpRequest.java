@@ -7,6 +7,7 @@ import rawhttp.core.body.EagerBodyReader;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Objects;
 import java.util.Optional;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
@@ -96,4 +97,20 @@ public class EagerHttpRequest extends RawHttpRequest {
         return new EagerHttpRequest(requestLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getStartLine(), getHeaders(), getBody());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        EagerHttpRequest that = (EagerHttpRequest) other;
+
+        return getStartLine().equals(that.getStartLine())
+                && getHeaders().equals(that.getHeaders())
+                && getBody().equals(that.getBody());
+    }
 }

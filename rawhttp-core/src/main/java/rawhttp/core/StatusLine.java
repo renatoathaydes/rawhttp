@@ -3,6 +3,7 @@ package rawhttp.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * A {@link RawHttpResponse}'s start-line.
@@ -62,4 +63,18 @@ public class StatusLine implements StartLine {
         return builder.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StatusLine that = (StatusLine) o;
+        return statusCode == that.statusCode &&
+                httpVersion == that.httpVersion &&
+                reason.equals(that.reason);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(httpVersion, statusCode, reason);
+    }
 }

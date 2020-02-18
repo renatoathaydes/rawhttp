@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * A {@link RawHttpRequest}'s start-line.
@@ -90,5 +91,20 @@ public class RequestLine implements StartLine {
         }
 
         return method + " " + pathURI + " " + httpVersion;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RequestLine that = (RequestLine) o;
+        return method.equals(that.method) &&
+                uri.equals(that.uri) &&
+                httpVersion == that.httpVersion;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(method, uri, httpVersion);
     }
 }
