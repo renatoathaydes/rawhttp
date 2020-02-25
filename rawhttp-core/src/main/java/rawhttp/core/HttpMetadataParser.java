@@ -330,6 +330,15 @@ public final class HttpMetadataParser {
             if (next < 0 || next == '\n') {
                 return null; // end of headers stream
             }
+        } else if (b == '#' && options.allowComments()) {
+            // consume the comment and continue
+            while ((b = inputStream.read()) > 0) {
+                if (b == '\n') {
+                    b = inputStream.read();
+                    break;
+                }
+            }
+            if (b < 0) return null; // EOF
         }
 
         final boolean allowNewLineWithoutReturn = options.allowNewLineWithoutReturn();

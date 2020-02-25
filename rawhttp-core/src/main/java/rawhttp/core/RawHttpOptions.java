@@ -22,6 +22,7 @@ public class RawHttpOptions {
     private final boolean allowNewLineWithoutReturn;
     private final boolean ignoreLeadingEmptyLine;
     private final boolean allowIllegalStartLineCharacters;
+    private final boolean allowComments;
     private final HttpHeadersOptions httpHeadersOptions;
     private final HttpBodyEncodingRegistry encodingRegistry;
 
@@ -30,6 +31,7 @@ public class RawHttpOptions {
                            boolean allowNewLineWithoutReturn,
                            boolean ignoreLeadingEmptyLine,
                            boolean allowIllegalStartLineCharacters,
+                           boolean allowComments,
                            HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
@@ -37,6 +39,7 @@ public class RawHttpOptions {
         this.allowNewLineWithoutReturn = allowNewLineWithoutReturn;
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
         this.allowIllegalStartLineCharacters = allowIllegalStartLineCharacters;
+        this.allowComments = allowComments;
         this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
@@ -100,6 +103,14 @@ public class RawHttpOptions {
      */
     public boolean allowIllegalStartLineCharacters() {
         return allowIllegalStartLineCharacters;
+    }
+
+    /**
+     * @return whether or not to allow comments. Any line before the message body starting with a '#' character
+     * is considered to be a comment if this option is true.
+     */
+    public boolean allowComments() {
+        return allowComments;
     }
 
     /**
@@ -169,6 +180,7 @@ public class RawHttpOptions {
         private boolean ignoreLeadingEmptyLine = true;
         private boolean insertHttpVersionIfMissing = true;
         private boolean allowIllegalStartLineCharacters = false;
+        private boolean allowComments = false;
         private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
@@ -259,6 +271,19 @@ public class RawHttpOptions {
         }
 
         /**
+         * Allow comments in HTTP messages.
+         * <p>
+         * Any line before the message body starting with the '#' character will be considered a comment if this option
+         * is enabled.
+         *
+         * @return this
+         */
+        public Builder allowComments() {
+            this.allowComments = true;
+            return this;
+        }
+
+        /**
          * Get a builder of {@link HttpHeadersOptions} to use with this object.
          *
          * @return this
@@ -291,7 +316,7 @@ public class RawHttpOptions {
                     : encodingRegistry;
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters,
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters, allowComments,
                     httpHeadersOptionsBuilder.getOptions(), registry);
         }
 

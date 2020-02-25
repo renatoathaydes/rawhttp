@@ -75,6 +75,42 @@ class HttpMetadataParserTest {
     }
 
     @Test
+    fun canParseManyHeadersWithComments() {
+        val allHeaders = """
+            # this is a date
+            Date: Thu, 9 Aug 2018 17:42:09 GMT
+            Server: RawHTTP
+            # caching strategy
+            Cache-Control: no-cache
+            Pragma: no-cache
+            # this is a content-type!!!
+            Content-Type: text/plain
+            Content-Length: 23
+            # my custom headers
+            X-Color: red
+            X-Color: blue
+        """.trimIndent()
+
+        val parserWithComments = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .allowComments()
+                .build())
+
+        val headers = parserWithComments.parseHeaders(allHeaders.byteInputStream(), errorCreator)
+
+        headers.asMap().keys shouldEqual setOf(
+                "DATE", "SERVER", "CACHE-CONTROL", "PRAGMA",
+                "CONTENT-TYPE", "CONTENT-LENGTH", "X-COLOR")
+
+        headers["Date"] shouldEqual listOf("Thu, 9 Aug 2018 17:42:09 GMT")
+        headers["Server"] shouldEqual listOf("RawHTTP")
+        headers["Cache-Control"] shouldEqual listOf("no-cache")
+        headers["Pragma"] shouldEqual listOf("no-cache")
+        headers["Content-Type"] shouldEqual listOf("text/plain")
+        headers["Content-Length"] shouldEqual listOf("23")
+        headers["X-Color"] shouldEqual listOf("red", "blue")
+    }
+
+    @Test
     fun canParseWeirdHeaderNames() {
         val weirdNames = listOf("A!", "#H", "$$$", "4%0", "&X", "'A'", "*Y", "A+B", "A..", "A^", "X_Y", "`a", "X|Y", "~")
 
