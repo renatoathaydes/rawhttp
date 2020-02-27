@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.lang.Character.isWhitespace;
+
 public class ReqInEditParser {
 
     private static final RawHttp HTTP = new RawHttp(RawHttpOptions.newBuilder()
@@ -61,7 +63,6 @@ public class ReqInEditParser {
             line = line.trim();
             if (line.isEmpty()) {
                 if (requestBuilder.length() > 0) {
-                    requestBuilder.append('\n');
                     result.add(maybeParseBody(requestBuilder, iter, true));
                 }
             } else {
@@ -80,7 +81,8 @@ public class ReqInEditParser {
                                           Iterator<String> iter,
                                           boolean parseBody) {
         ReqWriter reqWriter = new ReqWriter();
-        reqWriter.write(requestBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        reqWriter.write(requestBuilder.toString().trim().getBytes(StandardCharsets.UTF_8));
+        reqWriter.writeln();
         @Nullable String script = parseBody ? continueFromBody(iter, reqWriter) : null;
         requestBuilder.delete(0, requestBuilder.length());
         return new ReqInEditEntry(reqWriter.toRequest(), script);
@@ -88,7 +90,11 @@ public class ReqInEditParser {
 
     private String continueFromBody(Iterator<String> iter,
                                     ReqWriter reqWriter) {
+        // line separating headers from body
+        reqWriter.writeln();
+
         @Nullable String script = null;
+        boolean foundNonWhitespace = false;
 
         while (iter.hasNext()) {
             String line = iter.next();
@@ -96,18 +102,28 @@ public class ReqInEditParser {
                 if (isSeparator(line)) break;
                 else continue;
             }
-            line = line.trim();
             if (line.startsWith("> ")) {
+                foundNonWhitespace = true;
                 line = line.substring(2).trim();
                 script = responseHandler(line, iter);
                 // FIXME maybe ended request, maybe there's a response ref
                 break;
             } else if (line.startsWith("< ")) {
+                foundNonWhitespace = true;
                 line = line.substring(2).trim();
                 byte[] bytes = inputFile(line);
                 reqWriter.write(bytes);
+                reqWriter.writeln();
             } else {
-                reqWriter.write(line);
+                // trim any leading whitespaces
+                if (!foundNonWhitespace) {
+                    line = trimLeft(line);
+                    foundNonWhitespace = !line.isEmpty();
+                }
+                if (foundNonWhitespace) {
+                    reqWriter.write(line);
+                    reqWriter.writeln();
+                }
             }
         }
 
@@ -134,16 +150,35 @@ public class ReqInEditParser {
         return line.startsWith("###");
     }
 
+    private static String trimLeft(String line) {
+        for (int i = 0; i < line.length(); i++) {
+            if (!isWhitespace(line.charAt(i))) {
+                return line.substring(i);
+            }
+        }
+        return "";
+    }
+
     private static final class ReqWriter {
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 
+        // remember the tail Strings written to this writer as we need to trim it at the end
+        private final StringBuilder tail = new StringBuilder();
+
         void write(CharSequence chars) {
+            String text = chars.toString();
+            tail.append(text);
             try {
-                bytes.write(chars.toString().getBytes(StandardCharsets.UTF_8));
+                bytes.write(text.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
                 // never happens
                 throw new RuntimeException(e);
             }
+        }
+
+        public void writeln() {
+            bytes.write('\n');
+            tail.append('\n');
         }
 
         void write(byte[] b) {
@@ -152,11 +187,15 @@ public class ReqInEditParser {
             } catch (IOException e) {
                 // never happens
                 throw new RuntimeException(e);
+            } finally {
+                // every time bytes are written, we don't need to do any trimming at the end
+                tail.delete(0, tail.length());
             }
         }
 
         RawHttpRequest toRequest() {
-            ByteArrayInputStream stream = new ByteArrayInputStream(bytes.toByteArray());
+            int len = bytes.size() - whitespacesInTail();
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes.toByteArray(), 0, len);
             try {
                 RawHttpRequest req = HTTP.parseRequest(stream);
 
@@ -169,6 +208,18 @@ public class ReqInEditParser {
                 // never happens
                 throw new RuntimeException(e);
             }
+        }
+
+        private int whitespacesInTail() {
+            int count = 0;
+            for (int i = tail.length() - 1; i >= 0; i--) {
+                if (isWhitespace(tail.charAt(i))) {
+                    count++;
+                } else {
+                    return count;
+                }
+            }
+            return count;
         }
 
         @Nullable

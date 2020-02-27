@@ -94,4 +94,44 @@ class ReqInEditParserTest {
                     "{\n  \"hello\": true\n}"
         }
     }
+
+    @Test
+    fun canParseRequestWithFileMixedBody() {
+        val parser = ReqInEditParser(object : FileReader {
+            override fun read(path: String?): ByteArray {
+                if (path == "./entries.json") return """  "file": true,""".toByteArray()
+                else throw FileNotFoundException(path)
+            }
+        })
+
+        val fileLines = listOf(
+                "POST /resource/some-id HTTP/1.1",
+                "Host: example.org",
+                "Content-Type: application/json",
+                "",
+                "",
+                "{",
+                "< ./entries.json",
+                "  \"extra\": \"entry\"",
+                "}",
+                "   "
+        )
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 1
+
+        entries[0].request.run {
+            method shouldBe "POST"
+            uri shouldBe URI.create("http://example.org/resource/some-id")
+            // the parser must add Content-Length as the message contains a body
+            headers.headerNames shouldBe listOf("Host", "Content-Type", "Content-Length")
+            body.isPresent shouldBe true
+            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
+                    """{
+                        |  "file": true,
+                        |  "extra": "entry"
+                        |}""".trimMargin()
+        }
+    }
 }
