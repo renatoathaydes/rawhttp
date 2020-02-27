@@ -1,0 +1,38 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0"
+    }
+}
+
+plugins {
+    id 'java'
+    id "org.jetbrains.kotlin.jvm"
+    id 'maven'
+}
+
+description = 'RawHTTP req-in-edit module (Jetbrains HTTP format)'
+version rawHttpReqInEditVersion
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+dependencies {
+    compile project(':rawhttp-core')
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile "org.jetbrains.kotlin:kotlin-reflect"
+    testCompile "org.jetbrains.kotlin:kotlin-test"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
+    testCompile "io.kotlintest:kotlintest:2.0.7"
+}
