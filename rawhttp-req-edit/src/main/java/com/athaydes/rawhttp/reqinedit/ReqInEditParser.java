@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,16 @@ public class ReqInEditParser {
             .allowComments()
             .allowIllegalStartLineCharacters()
             .build());
+
+    private final FileReader fileReader;
+
+    public ReqInEditParser() {
+        this(new DefaultFileReader());
+    }
+
+    public ReqInEditParser(FileReader fileReader) {
+        this.fileReader = fileReader;
+    }
 
     List<ReqInEditEntry> parse(File file) throws IOException {
         return parse(Files.lines(file.toPath()));
@@ -75,8 +86,8 @@ public class ReqInEditParser {
         return new ReqInEditEntry(reqWriter.toRequest(), script);
     }
 
-    private static String continueFromBody(Iterator<String> iter,
-                                           ReqWriter reqWriter) {
+    private String continueFromBody(Iterator<String> iter,
+                                    ReqWriter reqWriter) {
         @Nullable String script = null;
 
         while (iter.hasNext()) {
@@ -103,8 +114,12 @@ public class ReqInEditParser {
         return script;
     }
 
-    private static byte[] inputFile(String line) {
-        throw new UnsupportedOperationException("inputFile");
+    private byte[] inputFile(String path) {
+        try {
+            return fileReader.read(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static String responseHandler(String line, Iterator<String> iter) {
@@ -174,6 +189,13 @@ public class ReqInEditParser {
                 }
             }
             return true;
+        }
+    }
+
+    private static final class DefaultFileReader implements FileReader {
+        @Override
+        public byte[] read(String path) throws IOException {
+            return Files.readAllBytes(Paths.get(path));
         }
     }
 
