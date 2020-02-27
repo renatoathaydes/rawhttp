@@ -7,6 +7,26 @@ import java.net.URI
 
 class ReqInEditParserTest {
 
+
+    @Test
+    fun canParseSimplestRequest() {
+        val parser = ReqInEditParser()
+
+        val fileLines = listOf("http://example.org")
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 1
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://example.org")
+            headers.headerNames shouldBe listOf("Host")
+            headers["Host"] shouldBe listOf("example.org")
+            body.isPresent shouldBe false
+        }
+    }
+
     @Test
     fun canParseSimpleRequests() {
         val parser = ReqInEditParser()

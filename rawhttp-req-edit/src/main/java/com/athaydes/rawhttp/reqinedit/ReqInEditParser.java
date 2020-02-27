@@ -46,6 +46,7 @@ public class ReqInEditParser {
         List<ReqInEditEntry> result = new ArrayList<>();
         StringBuilder requestBuilder = new StringBuilder();
 
+        boolean parsingStartLine = true;
         Iterator<String> iter = lines.iterator();
         while (iter.hasNext()) {
             String line = iter.next();
@@ -57,11 +58,17 @@ public class ReqInEditParser {
                     if (requestBuilder.length() > 0) {
                         result.add(maybeParseBody(requestBuilder, iter, false));
                     }
+                    parsingStartLine = true;
                 }
                 continue;
             }
             line = line.trim();
-            if (line.isEmpty()) {
+            if (parsingStartLine) {
+                if (!line.isEmpty()) {
+                    requestBuilder.append(startLine(line));
+                    parsingStartLine = false;
+                }
+            } else if (line.isEmpty()) {
                 if (requestBuilder.length() > 0) {
                     result.add(maybeParseBody(requestBuilder, iter, true));
                 }
@@ -75,6 +82,28 @@ public class ReqInEditParser {
         }
 
         return result;
+    }
+
+    private static String startLine(String line) {
+        int i = line.indexOf(' ');
+        if (i > 0) {
+            String method = line.substring(0, i);
+            switch (method) {
+                case "GET":
+                case "HEAD":
+                case "POST":
+                case "PUT":
+                case "DELETE":
+                case "CONNECT":
+                case "PATCH":
+                case "OPTIONS":
+                case "TRACE":
+                    // line is already fine
+                    return line;
+            }
+        }
+        // use the default method
+        return "GET " + line;
     }
 
     private ReqInEditEntry maybeParseBody(StringBuilder requestBuilder,
