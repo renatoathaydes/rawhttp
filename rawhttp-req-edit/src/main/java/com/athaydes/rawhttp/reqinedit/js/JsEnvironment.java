@@ -31,7 +31,6 @@ public final class JsEnvironment implements HttpEnvironment {
         jsEngine = (NashornScriptEngine) new ScriptEngineManager().getEngineByName("nashorn");
         StringBuilder builder = new StringBuilder();
         loadLibraryInto(builder, "Mustache", "/META-INF/resources/webjars/mustache/3.1.0/mustache.js");
-        loadLibraryInto(builder, "Merger", "/META-INF/resources/webjars/deepmerge/4.2.2/dist/umd.js");
         readResource("response_handler.js", builder);
 
         try {
@@ -68,9 +67,9 @@ public final class JsEnvironment implements HttpEnvironment {
     }
 
     private static void loadLibraryInto(StringBuilder builder, String name, String path) {
-        builder.append("var exports = exports || {};\n\n");
+        builder.append("var exports = {};var module = {};\n");
         readResource(path, builder);
-        builder.append("\nvar ").append(name).append(" = exports; exports = {};\n");
+        builder.append("\nvar ").append(name).append(" = Object.keys(exports).length > 0 ? exports : module.exports; exports = {}; module = {};\n");
     }
 
     private static void readResource(String path, StringBuilder builder) {

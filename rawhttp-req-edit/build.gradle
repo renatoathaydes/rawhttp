@@ -30,7 +30,6 @@ compileTestKotlin {
 dependencies {
     compile project(':rawhttp-core')
     compile 'org.webjars.npm:mustache:3.1.0'
-    compile 'org.webjars.npm:deepmerge:4.2.2'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile "org.jetbrains.kotlin:kotlin-reflect"

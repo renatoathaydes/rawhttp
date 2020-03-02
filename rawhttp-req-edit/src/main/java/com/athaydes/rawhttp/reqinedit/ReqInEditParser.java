@@ -1,5 +1,6 @@
 package com.athaydes.rawhttp.reqinedit;
 
+import com.athaydes.rawhttp.reqinedit.js.JsEnvironment;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -38,11 +39,20 @@ public class ReqInEditParser {
         this.fileReader = fileReader;
     }
 
-    List<ReqInEditEntry> parse(File file) throws IOException {
-        return parse(Files.lines(file.toPath()));
+    public List<ReqInEditEntry> parse(File httpFile) throws IOException {
+        return parse(httpFile, null);
+    }
+
+    public List<ReqInEditEntry> parse(File httpFile, @Nullable String environmentName) throws IOException {
+        return parse(Files.lines(httpFile.toPath()), loadEnvironment(httpFile, environmentName));
     }
 
     List<ReqInEditEntry> parse(Stream<String> lines) {
+        return parse(lines, loadEnvironment(null, null));
+    }
+
+    List<ReqInEditEntry> parse(Stream<String> lines,
+                               HttpEnvironment environment) {
         List<ReqInEditEntry> result = new ArrayList<>();
         StringBuilder requestBuilder = new StringBuilder();
 
@@ -56,7 +66,7 @@ public class ReqInEditParser {
             if (isComment(line)) {
                 if (isSeparator(line)) {
                     if (requestBuilder.length() > 0) {
-                        result.add(maybeParseBody(requestBuilder, iter, false));
+                        result.add(maybeParseBody(requestBuilder, iter, environment, false));
                     }
                     parsingStartLine = true;
                 }
@@ -70,7 +80,7 @@ public class ReqInEditParser {
                 }
             } else if (line.isEmpty()) {
                 if (requestBuilder.length() > 0) {
-                    result.add(maybeParseBody(requestBuilder, iter, true));
+                    result.add(maybeParseBody(requestBuilder, iter, environment, true));
                 }
             } else {
                 requestBuilder.append(line);
@@ -78,7 +88,7 @@ public class ReqInEditParser {
         }
 
         if (requestBuilder.length() > 0) {
-            result.add(maybeParseBody(requestBuilder, iter, false));
+            result.add(maybeParseBody(requestBuilder, iter, environment, false));
         }
 
         return result;
@@ -108,9 +118,10 @@ public class ReqInEditParser {
 
     private ReqInEditEntry maybeParseBody(StringBuilder requestBuilder,
                                           Iterator<String> iter,
+                                          HttpEnvironment environment,
                                           boolean parseBody) {
-        ReqWriter reqWriter = new ReqWriter();
-        reqWriter.write(requestBuilder.toString().trim().getBytes(StandardCharsets.UTF_8));
+        ReqWriter reqWriter = new ReqWriter(environment);
+        reqWriter.write(requestBuilder.toString().trim());
         reqWriter.writeln();
         @Nullable String script = parseBody ? continueFromBody(iter, reqWriter) : null;
         requestBuilder.delete(0, requestBuilder.length());
@@ -188,14 +199,26 @@ public class ReqInEditParser {
         return "";
     }
 
+    static HttpEnvironment loadEnvironment(@Nullable File httpFile,
+                                           @Nullable String name) {
+        return new JsEnvironment(httpFile == null ? null : httpFile.getParentFile(), name);
+    }
+
     private static final class ReqWriter {
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 
         // remember the tail Strings written to this writer as we need to trim it at the end
         private final StringBuilder tail = new StringBuilder();
 
+        // TODO use the environment to run response handlers
+        private final HttpEnvironment environment;
+
+        public ReqWriter(HttpEnvironment environment) {
+            this.environment = environment;
+        }
+
         void write(CharSequence chars) {
-            String text = chars.toString();
+            String text = environment.apply(chars.toString());
             tail.append(text);
             try {
                 bytes.write(text.getBytes(StandardCharsets.UTF_8));

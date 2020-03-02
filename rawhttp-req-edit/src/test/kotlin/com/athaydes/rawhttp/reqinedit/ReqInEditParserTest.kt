@@ -2,11 +2,11 @@ package com.athaydes.rawhttp.reqinedit
 
 import io.kotlintest.matchers.shouldBe
 import org.junit.Test
+import java.io.File
 import java.io.FileNotFoundException
 import java.net.URI
 
 class ReqInEditParserTest {
-
 
     @Test
     fun canParseSimplestRequest() {
@@ -152,6 +152,80 @@ class ReqInEditParserTest {
                         |  "file": true,
                         |  "extra": "entry"
                         |}""".trimMargin()
+        }
+    }
+
+    @Test
+    fun canParseRequestWithEnvVarsMocked() {
+        val parser = ReqInEditParser()
+
+        val fileLines = listOf("http://{{host}}",
+                "Accept: {{ contentType }}",
+                "User-Agent: RawHTTP")
+
+        val httpEnv = HttpEnvironment { line ->
+            line.replace("{{host}}", "example.org")
+                    .replace("{{ contentType }}", "application/json")
+        }
+
+        val entries = parser.parse(fileLines.stream(), httpEnv)
+
+        entries.size shouldBe 1
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://example.org")
+            headers.headerNames shouldBe listOf("Accept", "User-Agent", "Host")
+            headers["Host"] shouldBe listOf("example.org")
+            headers["Accept"] shouldBe listOf("application/json")
+            headers["User-Agent"] shouldBe listOf("RawHTTP")
+            body.isPresent shouldBe false
+        }
+    }
+
+    @Test
+    fun canLoadRealJsEnvironment() {
+        val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
+        val prodEnv = ReqInEditParser.loadEnvironment(File(httpFile), "prod")
+        prodEnv.apply("{{ host }}") shouldBe "myserver.com"
+        prodEnv.apply("{{ secret }}") shouldBe "123456"
+
+        val testEnv = ReqInEditParser.loadEnvironment(File(httpFile), "test")
+        testEnv.apply("{{ host }}") shouldBe "localhost:8080"
+        testEnv.apply("{{ secret }}") shouldBe "password"
+    }
+
+    @Test
+    fun canParseRequestWithRealEnvironments() {
+        val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
+        val parser = ReqInEditParser()
+
+        val entries = parser.parse(File(httpFile), "prod")
+
+        entries.size shouldBe 1
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://myserver.com")
+            headers.headerNames shouldBe listOf("Accept", "Authorize", "Host")
+            headers["Host"] shouldBe listOf("myserver.com")
+            headers["Accept"] shouldBe listOf("*/*")
+            headers["Authorize"] shouldBe listOf("Bearer 123456")
+            body.isPresent shouldBe false
+        }
+
+        val entriesTest = parser.parse(File(httpFile), "test")
+
+        entriesTest.size shouldBe 1
+
+        entriesTest[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://localhost:8080")
+            headers.headerNames shouldBe listOf("Accept", "Authorize", "Host")
+            headers["Host"] shouldBe listOf("localhost")
+            headers["Accept"] shouldBe listOf("*/*")
+            headers["Authorize"] shouldBe listOf("Bearer password")
+            body.isPresent shouldBe false
         }
     }
 }

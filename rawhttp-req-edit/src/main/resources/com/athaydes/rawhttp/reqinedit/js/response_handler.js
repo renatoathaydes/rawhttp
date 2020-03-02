@@ -59,11 +59,17 @@ client.global = {
 };
 
 function __loadEnvironment__(envName, jsonEnv, privateJsonEnv) {
-    if (envName[envName]) {
-        Merger.deepmerge(global, envName[envName]);
+    var env = JSON.parse(jsonEnv)
+    var privEnv = JSON.parse(privateJsonEnv)
+    if (typeof env[envName] === 'object') {
+        for (var k in env[envName]) {
+            client.__view__[k] = env[envName][k];
+        }
     }
-    if (privateJsonEnv[envName]) {
-        Merger.deepmerge(global, privateJsonEnv[envName]);
+    if (typeof privEnv[envName] === 'object') {
+        for (var k in privEnv[envName]) {
+            client.__view__[k] = privEnv[envName][k];
+        }
     }
 }
 
