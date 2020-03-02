@@ -35,6 +35,8 @@ var client = {
     }
 };
 
+var response = {};
+
 client.global = {
     get: function(name) {
         return client.__view__[name];
@@ -73,6 +75,24 @@ function __loadEnvironment__(envName, jsonEnv, privateJsonEnv) {
     }
 }
 
+function __setResponse__(status, headers, contentType, bodyGetter) {
+    response.status = status;
+    response.headers = __jsHeaders__(headers);
+    response.contentType = contentType;
+    response.body = contentType.mimeType === "application/json" ? JSON.parse(bodyGetter.call()) : bodyGetter.call();
+}
+
+function __jsHeaders__(javaHeaders) {
+    return {
+        valueOf: function(name) {
+            return javaHeaders.getFirst(name).orElse(null);
+        },
+        valuesOf: function(name) {
+            return javaHeaders.get(name);
+        }
+    };
+}
+
 function __runAllTests__() {
     var tests = client.__tests__;
     var errors = new ArrayList();
@@ -83,6 +103,7 @@ function __runAllTests__() {
             errors.add("Test failed: " + test.name + " (" + e + ")");
         }
     }
+    client.__tests__ = [];
     return errors;
 }
 

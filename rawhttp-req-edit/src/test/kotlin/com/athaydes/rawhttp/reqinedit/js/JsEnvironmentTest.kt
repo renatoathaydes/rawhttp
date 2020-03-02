@@ -6,6 +6,7 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
+import rawhttp.core.RawHttp
 import javax.script.ScriptException
 
 class JsEnvironmentTest {
@@ -67,5 +68,50 @@ class JsEnvironmentTest {
         jsEnv.runAllTests() shouldBe listOf(
                 "Test failed: fails always (no good)",
                 "Test failed: fails too (no chance)")
+    }
+
+    @Test
+    fun responseObjectHasExpectedApiWithNonJson() {
+        val response = RawHttp().parseResponse("HTTP/1.1 404 Not Found\n" +
+                "Content-Type: text/plain; charset=US-ASCII\n" +
+                "Content-Length: 15\n" +
+                "Set-Cookie: cookie1=val1\n" +
+                "Set-Cookie: cookie2=val2\n" +
+                "Server: RawHTTP\n" +
+                "\n" +
+                "Hello ReqInEdit").eagerly()
+
+        jsEnv.setResponse(response)
+
+        jsEnv.eval("response.status") shouldBe 404
+        jsEnv.eval("response.contentType.mimeType") shouldBe "text/plain"
+        jsEnv.eval("response.contentType.charset") shouldBe "US-ASCII"
+        jsEnv.eval("response.headers.valueOf('Content-Type')") shouldBe "text/plain; charset=US-ASCII"
+        jsEnv.eval("response.headers.valueOf('Content-Length')") shouldBe "15"
+        jsEnv.eval("response.headers.valueOf('Set-Cookie')") shouldBe "cookie1=val1"
+        jsEnv.eval("response.headers.valuesOf('Set-Cookie')") shouldBe listOf("cookie1=val1", "cookie2=val2")
+        jsEnv.eval("response.headers.valueOf('Server')") shouldBe "RawHTTP"
+        jsEnv.eval("response.body") shouldBe "Hello ReqInEdit"
+    }
+
+    @Test
+    fun responseObjectHasExpectedApiWithJsonBody() {
+        val response = RawHttp().parseResponse("HTTP/1.1 200 OK\n" +
+                "Content-Type: application/json\n" +
+                "Content-Length: 28\n" +
+                "\n" +
+                "{\"foo\": \"bar\", \"cool\": true}").eagerly()
+
+        jsEnv.setResponse(response)
+
+        jsEnv.eval("response.status") shouldBe 200
+        jsEnv.eval("response.contentType.mimeType") shouldBe "application/json"
+        jsEnv.eval("response.contentType.charset") shouldBe null
+        jsEnv.eval("response.headers.valueOf('Content-Type')") shouldBe "application/json"
+        jsEnv.eval("response.headers.valueOf('Content-Length')") shouldBe "28"
+        jsEnv.eval("typeof response.body") shouldBe "object"
+        jsEnv.eval("Object.keys(response.body).length") shouldBe 2
+        jsEnv.eval("response.body.foo") shouldBe "bar"
+        jsEnv.eval("response.body.cool") shouldBe true
     }
 }
