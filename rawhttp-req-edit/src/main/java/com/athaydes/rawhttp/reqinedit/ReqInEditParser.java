@@ -135,6 +135,7 @@ public class ReqInEditParser {
 
         @Nullable String script = null;
         boolean foundNonWhitespace = false;
+        boolean doneParsingBody = false;
 
         while (iter.hasNext()) {
             String line = iter.next();
@@ -142,18 +143,25 @@ public class ReqInEditParser {
                 if (isSeparator(line)) break;
                 else continue;
             }
-            if (line.startsWith("> ")) {
+            if (!doneParsingBody && line.startsWith("> ")) {
                 foundNonWhitespace = true;
                 line = line.substring(2).trim();
                 script = responseHandler(line, iter);
-                // FIXME maybe ended request, maybe there's a response ref
-                break;
-            } else if (line.startsWith("< ")) {
+                doneParsingBody = true; // can only parse a response-ref now
+            } else if (!doneParsingBody && line.startsWith("< ")) {
                 foundNonWhitespace = true;
                 line = line.substring(2).trim();
                 byte[] bytes = inputFile(line);
                 reqWriter.write(bytes);
                 reqWriter.writeln();
+            } else if (line.startsWith("<> ")) {
+                // TODO return a response-ref
+                doneParsingBody = true;
+            } else if (doneParsingBody) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    throw new RuntimeException("Unexpected token after response: " + line);
+                }
             } else {
                 // trim any leading whitespaces
                 if (!foundNonWhitespace) {
@@ -178,8 +186,27 @@ public class ReqInEditParser {
         }
     }
 
-    private static String responseHandler(String line, Iterator<String> iter) {
-        throw new UnsupportedOperationException("responseHandler");
+    private String responseHandler(String line, Iterator<String> iter) {
+        if (line.startsWith("{%")) {
+            line = line.substring(2);
+            StringBuilder result = new StringBuilder();
+            while (!line.contains("%}")) {
+                result.append(line).append('\n');
+                if (!iter.hasNext()) break;
+                line = iter.next();
+            }
+            int endIndex = line.indexOf("%}");
+            if (endIndex > 0) {
+                result.append(line.substring(0, endIndex));
+            }
+            line = line.substring(endIndex + 2).trim();
+            if (!line.isEmpty()) {
+                throw new RuntimeException("Unexpected token after response handler: " + line);
+            }
+            return result.toString();
+        } else {
+            return new String(inputFile(line), StandardCharsets.UTF_8);
+        }
     }
 
     private static boolean isComment(String line) {

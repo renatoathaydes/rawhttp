@@ -1,0 +1,1 @@
+client.global.set("auth", response.body.token);

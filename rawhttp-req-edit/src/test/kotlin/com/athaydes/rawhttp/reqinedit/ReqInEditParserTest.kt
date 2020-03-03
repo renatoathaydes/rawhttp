@@ -25,6 +25,7 @@ class ReqInEditParserTest {
             headers["Host"] shouldBe listOf("example.org")
             body.isPresent shouldBe false
         }
+        entries[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -32,6 +33,7 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
+                "### here start my requests",
                 "GET /something HTTP/1.1",
                 "Host: example.org",
                 "Accept: text/html",
@@ -47,7 +49,10 @@ class ReqInEditParserTest {
                 "",
                 "GET /resource/some-id HTTP/1.1",
                 "Host: example.org",
-                "Accept: application/json"
+                "Accept: application/json",
+                "",
+                "### done",
+                ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -60,6 +65,8 @@ class ReqInEditParserTest {
             headers.headerNames shouldBe listOf("Host", "Accept")
             body.isPresent shouldBe false
         }
+        entries[0].script.isPresent shouldBe false
+
         entries[1].request.run {
             method shouldBe "POST"
             uri shouldBe URI.create("http://example.org/resource/some-id")
@@ -69,12 +76,15 @@ class ReqInEditParserTest {
             body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
                     "{\"example\": \"value\", \"count\": 1}"
         }
+        entries[1].script.isPresent shouldBe false
+
         entries[2].request.run {
             method shouldBe "GET"
             uri shouldBe URI.create("http://example.org/resource/some-id")
             headers.headerNames shouldBe listOf("Host", "Accept")
             body.isPresent shouldBe false
         }
+        entries[2].script.isPresent shouldBe false
     }
 
     @Test
@@ -113,6 +123,7 @@ class ReqInEditParserTest {
             body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
                     "{\n  \"hello\": true\n}"
         }
+        entries[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -153,6 +164,7 @@ class ReqInEditParserTest {
                         |  "extra": "entry"
                         |}""".trimMargin()
         }
+        entries[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -181,6 +193,7 @@ class ReqInEditParserTest {
             headers["User-Agent"] shouldBe listOf("RawHTTP")
             body.isPresent shouldBe false
         }
+        entries[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -213,6 +226,7 @@ class ReqInEditParserTest {
             headers["Authorize"] shouldBe listOf("Bearer 123456")
             body.isPresent shouldBe false
         }
+        entries[0].script.isPresent shouldBe false
 
         val entriesTest = parser.parse(File(httpFile), "test")
 
@@ -227,5 +241,88 @@ class ReqInEditParserTest {
             headers["Authorize"] shouldBe listOf("Bearer password")
             body.isPresent shouldBe false
         }
+        entriesTest[0].script.isPresent shouldBe false
     }
+
+    @Test
+    fun canParseRequestWithEmbeddedResponseHandler() {
+        val parser = ReqInEditParser()
+
+        val fileLines = listOf(
+                "GET /resource/some-id HTTP/1.1",
+                "Host: example.org",
+                "Accept: application/json",
+                "",
+                "> {% ",
+                "    client.test(\"Request executed successfully\", function() {",
+                "        client.assert(response.status === 200, \"Response status is not 200\");",
+                "    });",
+                " %} ",
+                ""
+        )
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 1
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://example.org/resource/some-id")
+            // the parser must add Content-Length as the message contains a body
+            headers.headerNames shouldBe listOf("Host", "Accept")
+            body.isPresent shouldBe false
+        }
+        entries[0].script.isPresent shouldBe true
+        entries[0].script.get() shouldBe "\n    client.test(\"Request executed successfully\", function() {\n" +
+                "        client.assert(response.status === 200, \"Response status is not 200\");\n" +
+                "    });\n "
+    }
+
+    @Test
+    fun canParseRequestWithIncludedResponseHandler() {
+        val parser = ReqInEditParser()
+        val includedJs1 = ReqInEditParserTest::class.java.getResource("response_handler.js").file
+        val includedJs2 = ReqInEditParserTest::class.java.getResource("response_handler_2.js").file
+        val fileLines = listOf(
+                "GET /resource/some-id HTTP/1.1",
+                "Host: example.org",
+                "Accept: application/json",
+                "",
+                "> $includedJs1",
+                "###",
+                "POST http://example.com/foo",
+                "",
+                "foo bar",
+                "> $includedJs2",
+                ""
+        )
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 2
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://example.org/resource/some-id")
+            // the parser must add Content-Length as the message contains a body
+            headers.headerNames shouldBe listOf("Host", "Accept")
+            body.isPresent shouldBe false
+        }
+        entries[0].script.isPresent shouldBe true
+        entries[0].script.get() shouldBe "client.global.set(\"auth\", response.body.token);"
+
+        entries[1].request.run {
+            method shouldBe "POST"
+            uri shouldBe URI.create("http://example.com/foo")
+            // the parser must add Content-Length as the message contains a body
+            headers.headerNames shouldBe listOf("Host", "Content-Length")
+            body.isPresent shouldBe true
+            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe "foo bar"
+        }
+        entries[1].script.isPresent shouldBe true
+        entries[1].script.get() shouldBe "client.test(\"check\", function() {\n" +
+                "    client.assert(response.body == \"foo bar\");\n" +
+                "});"
+    }
+
 }
