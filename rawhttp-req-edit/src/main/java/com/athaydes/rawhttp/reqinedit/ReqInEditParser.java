@@ -203,7 +203,7 @@ public class ReqInEditParser {
             }
             int endIndex = line.indexOf("%}");
             if (endIndex > 0) {
-                result.append(line.substring(0, endIndex));
+                result.append(line, 0, endIndex);
             }
             line = line.substring(endIndex + 2).trim();
             if (!line.isEmpty()) {
