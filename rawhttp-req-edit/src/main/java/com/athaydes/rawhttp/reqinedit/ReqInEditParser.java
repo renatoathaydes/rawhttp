@@ -81,6 +81,7 @@ public class ReqInEditParser {
             } else if (line.isEmpty()) {
                 if (requestBuilder.length() > 0) {
                     result.add(maybeParseBody(requestBuilder, iter, environment, true));
+                    parsingStartLine = true;
                 }
             } else {
                 requestBuilder.append(line);
@@ -123,17 +124,21 @@ public class ReqInEditParser {
         ReqWriter reqWriter = new ReqWriter(environment);
         reqWriter.write(requestBuilder.toString().trim());
         reqWriter.writeln();
-        @Nullable String script = parseBody ? continueFromBody(iter, reqWriter) : null;
+        ScriptAndResponseRef scriptAndResponseRef = new ScriptAndResponseRef();
+        if (parseBody) {
+            continueFromBody(iter, reqWriter, scriptAndResponseRef);
+        }
         requestBuilder.delete(0, requestBuilder.length());
-        return new ReqInEditEntry(reqWriter.toRequest(), script);
+        return new ReqInEditEntry(reqWriter.toRequest(),
+                scriptAndResponseRef.script, scriptAndResponseRef.responseRef);
     }
 
-    private String continueFromBody(Iterator<String> iter,
-                                    ReqWriter reqWriter) {
+    private void continueFromBody(Iterator<String> iter,
+                                  ReqWriter reqWriter,
+                                  ScriptAndResponseRef scriptAndResponseRef) {
         // line separating headers from body
         reqWriter.writeln();
 
-        @Nullable String script = null;
         boolean foundNonWhitespace = false;
         boolean doneParsingBody = false;
 
@@ -146,7 +151,7 @@ public class ReqInEditParser {
             if (!doneParsingBody && line.startsWith("> ")) {
                 foundNonWhitespace = true;
                 line = line.substring(2).trim();
-                script = responseHandler(line, iter);
+                scriptAndResponseRef.script = responseHandler(line, iter);
                 doneParsingBody = true; // can only parse a response-ref now
             } else if (!doneParsingBody && line.startsWith("< ")) {
                 foundNonWhitespace = true;
@@ -155,7 +160,10 @@ public class ReqInEditParser {
                 reqWriter.write(bytes);
                 reqWriter.writeln();
             } else if (line.startsWith("<> ")) {
-                // TODO return a response-ref
+                String ref = line.substring(3).trim();
+                if (!ref.isEmpty()) {
+                    scriptAndResponseRef.responseRef = ref;
+                }
                 doneParsingBody = true;
             } else if (doneParsingBody) {
                 line = line.trim();
@@ -174,8 +182,6 @@ public class ReqInEditParser {
                 }
             }
         }
-
-        return script;
     }
 
     private byte[] inputFile(String path) {
@@ -327,6 +333,13 @@ public class ReqInEditParser {
         public byte[] read(String path) throws IOException {
             return Files.readAllBytes(Paths.get(path));
         }
+    }
+
+    private static final class ScriptAndResponseRef {
+        @Nullable
+        String script;
+        @Nullable
+        String responseRef;
     }
 
 }

@@ -88,6 +88,49 @@ class ReqInEditParserTest {
     }
 
     @Test
+    fun canParseRequestsWithResponseRef() {
+        val parser = ReqInEditParser()
+
+        val fileLines = listOf("http://example.org",
+                "",
+                "<> first-response",
+                "",
+                "###",
+                "# another request",
+                "http://another.com",
+                "",
+                "<> second-response",
+                ""
+        )
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 2
+
+        entries[0].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://example.org")
+            headers.headerNames shouldBe listOf("Host")
+            headers["Host"] shouldBe listOf("example.org")
+            body.isPresent shouldBe false
+        }
+        entries[0].script.isPresent shouldBe false
+        entries[0].responseRef.isPresent shouldBe true
+        entries[0].responseRef.get() shouldBe "first-response"
+
+        entries[1].request.run {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://another.com")
+            headers.headerNames shouldBe listOf("Host")
+            headers["Host"] shouldBe listOf("another.com")
+            body.isPresent shouldBe false
+        }
+        entries[1].script.isPresent shouldBe false
+        entries[1].responseRef.isPresent shouldBe true
+        entries[1].responseRef.get() shouldBe "second-response"
+    }
+
+    @Test
     fun canParseRequestWithFileBody() {
         val parser = ReqInEditParser(object : FileReader {
             override fun read(path: String?): ByteArray {

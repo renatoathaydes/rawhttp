@@ -10,11 +10,15 @@ public final class ReqInEditEntry {
 
     @Nullable
     private final String script;
+    @Nullable
+    private final String responseRef;
 
     public ReqInEditEntry(RawHttpRequest request,
-                          @Nullable String script) {
+                          @Nullable String script,
+                          @Nullable String responseRef) {
         this.request = request;
         this.script = script;
+        this.responseRef = responseRef;
     }
 
     public RawHttpRequest getRequest() {
@@ -23,5 +27,9 @@ public final class ReqInEditEntry {
 
     public Optional<String> getScript() {
         return Optional.ofNullable(script);
+    }
+
+    public Optional<String> getResponseRef() {
+        return Optional.ofNullable(responseRef);
     }
 }
