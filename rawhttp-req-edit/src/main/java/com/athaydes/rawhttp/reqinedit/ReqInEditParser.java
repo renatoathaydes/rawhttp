@@ -39,21 +39,21 @@ public class ReqInEditParser {
         this.fileReader = fileReader;
     }
 
-    public List<ReqInEditEntry> parse(File httpFile) throws IOException {
+    public ReqInEditUnit parse(File httpFile) throws IOException {
         return parse(httpFile, null);
     }
 
-    public List<ReqInEditEntry> parse(File httpFile, @Nullable String environmentName) throws IOException {
+    public ReqInEditUnit parse(File httpFile, @Nullable String environmentName) throws IOException {
         return parse(Files.lines(httpFile.toPath()), loadEnvironment(httpFile, environmentName));
     }
 
-    List<ReqInEditEntry> parse(Stream<String> lines) {
+    ReqInEditUnit parse(Stream<String> lines) {
         return parse(lines, loadEnvironment(null, null));
     }
 
-    List<ReqInEditEntry> parse(Stream<String> lines,
-                               HttpEnvironment environment) {
-        List<ReqInEditEntry> result = new ArrayList<>();
+    ReqInEditUnit parse(Stream<String> lines,
+                        HttpEnvironment environment) {
+        List<ReqInEditEntry> entries = new ArrayList<>();
         StringBuilder requestBuilder = new StringBuilder();
 
         boolean parsingStartLine = true;
@@ -66,7 +66,7 @@ public class ReqInEditParser {
             if (isComment(line)) {
                 if (isSeparator(line)) {
                     if (requestBuilder.length() > 0) {
-                        result.add(maybeParseBody(requestBuilder, iter, environment, false));
+                        entries.add(maybeParseBody(requestBuilder, iter, environment, false));
                     }
                     parsingStartLine = true;
                 }
@@ -80,7 +80,7 @@ public class ReqInEditParser {
                 }
             } else if (line.isEmpty()) {
                 if (requestBuilder.length() > 0) {
-                    result.add(maybeParseBody(requestBuilder, iter, environment, true));
+                    entries.add(maybeParseBody(requestBuilder, iter, environment, true));
                     parsingStartLine = true;
                 }
             } else {
@@ -89,10 +89,10 @@ public class ReqInEditParser {
         }
 
         if (requestBuilder.length() > 0) {
-            result.add(maybeParseBody(requestBuilder, iter, environment, false));
+            entries.add(maybeParseBody(requestBuilder, iter, environment, false));
         }
 
-        return result;
+        return new ReqInEditUnit(entries, environment);
     }
 
     private static String startLine(String line) {
@@ -232,8 +232,8 @@ public class ReqInEditParser {
         return "";
     }
 
-    static HttpEnvironment loadEnvironment(@Nullable File httpFile,
-                                           @Nullable String name) {
+    static JsEnvironment loadEnvironment(@Nullable File httpFile,
+                                         @Nullable String name) {
         return new JsEnvironment(httpFile == null ? null : httpFile.getParentFile(), name);
     }
 
@@ -243,7 +243,6 @@ public class ReqInEditParser {
         // remember the tail Strings written to this writer as we need to trim it at the end
         private final StringBuilder tail = new StringBuilder();
 
-        // TODO use the environment to run response handlers
         private final HttpEnvironment environment;
 
         public ReqWriter(HttpEnvironment environment) {
@@ -251,7 +250,7 @@ public class ReqInEditParser {
         }
 
         void write(CharSequence chars) {
-            String text = environment.apply(chars.toString());
+            String text = environment.renderTemplate(chars.toString());
             tail.append(text);
             try {
                 bytes.write(text.getBytes(StandardCharsets.UTF_8));

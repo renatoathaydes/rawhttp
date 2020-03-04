@@ -16,18 +16,18 @@ class JsEnvironmentTest {
 
     @Test
     fun canComputeRandomInt() {
-        jsEnv.apply("number is {{ \$randomInt }}") should match("number is \\d+")
+        jsEnv.renderTemplate("number is {{ \$randomInt }}") should match("number is \\d+")
     }
 
     @Test
     fun canComputeRandomUUID() {
-        jsEnv.apply("rand UUID {{ \$uuid }}") should match("rand UUID [a-f0-9-]{36}")
+        jsEnv.renderTemplate("rand UUID {{ \$uuid }}") should match("rand UUID [a-f0-9-]{36}")
     }
 
     @Test
     fun canComputeTimestamp() {
         val now = System.currentTimeMillis()
-        jsEnv.apply("{{\$timestamp}}").toLong() shouldBe between(now, now + 5000L)
+        jsEnv.renderTemplate("{{\$timestamp}}").toLong() shouldBe between(now, now + 5000L)
     }
 
     @Test
@@ -36,7 +36,7 @@ class JsEnvironmentTest {
         jsEnv.eval("client.global.set(\"name\", \"Michael\");")
         jsEnv.eval("client.global.set(\"other\", \"Something\");")
         jsEnv.eval("client.global.isEmpty()") shouldBe false
-        jsEnv.apply("welcome {{name}}!") shouldBe "welcome Michael!"
+        jsEnv.renderTemplate("welcome {{name}}!") shouldBe "welcome Michael!"
         jsEnv.eval("client.global.get(\"other\")") shouldBe "Something"
         jsEnv.eval("client.global.clear(\"other\")")
         jsEnv.eval("client.global.get(\"other\")") shouldBe null

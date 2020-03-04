@@ -2,6 +2,7 @@ package com.athaydes.rawhttp.reqinedit
 
 import io.kotlintest.matchers.shouldBe
 import org.junit.Test
+import rawhttp.core.RawHttpResponse
 import java.io.File
 import java.io.FileNotFoundException
 import java.net.URI
@@ -14,7 +15,8 @@ class ReqInEditParserTest {
 
         val fileLines = listOf("http://example.org")
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -55,7 +57,8 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 3
 
@@ -103,7 +106,8 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 2
 
@@ -153,7 +157,8 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -191,7 +196,8 @@ class ReqInEditParserTest {
                 "   "
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -218,12 +224,20 @@ class ReqInEditParserTest {
                 "Accept: {{ contentType }}",
                 "User-Agent: RawHTTP")
 
-        val httpEnv = HttpEnvironment { line ->
-            line.replace("{{host}}", "example.org")
-                    .replace("{{ contentType }}", "application/json")
+        val httpEnv = object : HttpEnvironment {
+            override fun renderTemplate(line: String): String {
+                return line.replace("{{host}}", "example.org")
+                        .replace("{{ contentType }}", "application/json")
+            }
+
+            override fun runResponseHandler(responseHandler: String?, response: RawHttpResponse<*>?): MutableList<String> {
+                error("cannot run responseHandler")
+            }
+
         }
 
-        val entries = parser.parse(fileLines.stream(), httpEnv)
+        val unit = parser.parse(fileLines.stream(), httpEnv)
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -243,12 +257,12 @@ class ReqInEditParserTest {
     fun canLoadRealJsEnvironment() {
         val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
         val prodEnv = ReqInEditParser.loadEnvironment(File(httpFile), "prod")
-        prodEnv.apply("{{ host }}") shouldBe "myserver.com"
-        prodEnv.apply("{{ secret }}") shouldBe "123456"
+        prodEnv.renderTemplate("{{ host }}") shouldBe "myserver.com"
+        prodEnv.renderTemplate("{{ secret }}") shouldBe "123456"
 
         val testEnv = ReqInEditParser.loadEnvironment(File(httpFile), "test")
-        testEnv.apply("{{ host }}") shouldBe "localhost:8080"
-        testEnv.apply("{{ secret }}") shouldBe "password"
+        testEnv.renderTemplate("{{ host }}") shouldBe "localhost:8080"
+        testEnv.renderTemplate("{{ secret }}") shouldBe "password"
     }
 
     @Test
@@ -256,7 +270,8 @@ class ReqInEditParserTest {
         val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
         val parser = ReqInEditParser()
 
-        val entries = parser.parse(File(httpFile), "prod")
+        val unit = parser.parse(File(httpFile), "prod")
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -271,7 +286,8 @@ class ReqInEditParserTest {
         }
         entries[0].script.isPresent shouldBe false
 
-        val entriesTest = parser.parse(File(httpFile), "test")
+        val unitTest = parser.parse(File(httpFile), "test")
+        val entriesTest = unitTest.entries
 
         entriesTest.size shouldBe 1
 
@@ -304,7 +320,8 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 1
 
@@ -340,7 +357,8 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val entries = parser.parse(fileLines.stream())
+        val unit = parser.parse(fileLines.stream())
+        val entries = unit.entries
 
         entries.size shouldBe 2
 

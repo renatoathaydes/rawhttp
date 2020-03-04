@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.reqinedit.js;
 import com.athaydes.rawhttp.reqinedit.HttpEnvironment;
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 import rawhttp.core.EagerHttpResponse;
+import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.EagerBodyReader;
 
 import javax.annotation.Nullable;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public final class JsEnvironment implements HttpEnvironment {
 
@@ -52,7 +54,7 @@ public final class JsEnvironment implements HttpEnvironment {
     }
 
     @Override
-    public String apply(String line) {
+    public String renderTemplate(String line) {
         return invoke("__mustacheRender__", line).toString();
     }
 
@@ -60,14 +62,24 @@ public final class JsEnvironment implements HttpEnvironment {
         return jsEngine.eval(script);
     }
 
-    public void setResponse(EagerHttpResponse<?> response) {
+    @Override
+    public List<String> runResponseHandler(String responseHandler, RawHttpResponse<?> response)
+            throws IOException, ScriptException {
+        setResponse(response.eagerly());
+        eval(responseHandler);
+        return runAllTests();
+    }
+
+    void setResponse(EagerHttpResponse<?> response) {
         Map<String, String> contentType = contentTypeObject(response.getHeaders().getFirst("Content-Type").orElse(""));
         invoke("__setResponse__", response.getStatusCode(), response.getHeaders(),
                 contentType, bodyObject(contentType, response.getBody().orElse(null)));
     }
 
-    List<?> runAllTests() {
-        return (List<?>) invoke("__runAllTests__");
+    List<String> runAllTests() {
+        return ((List<?>) invoke("__runAllTests__")).stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
 
     private Object invoke(String name, Object... args) {
