@@ -34,12 +34,23 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
 
     @Override
     public void run() {
+        HttpTestsReporter testsReporter = result -> {
+            if (result.isSuccess()) {
+                System.out.println("Test passed: " + result.getName());
+            } else {
+                System.out.println("Test FAILED: " + result.getName() + " - " + result.getError());
+            }
+        };
+        runWith(testsReporter);
+    }
+
+    public void runWith(HttpTestsReporter testsReporter) {
         for (ReqInEditEntry entry : entries) {
-            run(entry);
+            run(entry, testsReporter);
         }
     }
 
-    public void run(ReqInEditEntry entry) {
+    private void run(ReqInEditEntry entry, HttpTestsReporter testsReporter) {
         RawHttpResponse<?> response;
         try {
             response = httpClient.send(entry.getRequest());
@@ -48,7 +59,7 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
         }
 
         entry.getResponseRef().ifPresent(responseRef -> storeResponse(responseRef, response));
-        entry.getScript().ifPresent(script -> runResponseScript(script, response));
+        entry.getScript().ifPresent(script -> runResponseScript(script, response, testsReporter));
     }
 
     private void storeResponse(String responseRef,
@@ -56,16 +67,13 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
         // TODO
     }
 
-    private void runResponseScript(String script, RawHttpResponse<?> response) {
-        List<String> errors;
+    private void runResponseScript(String script,
+                                   RawHttpResponse<?> response,
+                                   HttpTestsReporter testsReporter) {
         try {
-            errors = environment.runResponseHandler(script, response);
+            environment.runResponseHandler(script, response, testsReporter);
         } catch (IOException | ScriptException e) {
             throw new RuntimeException(e);
-        }
-
-        if (!errors.isEmpty()) {
-            throw new RuntimeException(String.join(", ", errors));
         }
     }
 

@@ -1,7 +1,7 @@
 var System = Java.type("java.lang.System");
 var UUID = Java.type("java.util.UUID");
 var Random = Java.type("java.util.Random");
-var ArrayList = Java.type("java.util.ArrayList");
+var JsTestReporter = Java.type("com.athaydes.rawhttp.reqinedit.js.JsTestReporter");
 
 var RANDOM = new Random();
 
@@ -93,18 +93,20 @@ function __jsHeaders__(javaHeaders) {
     };
 }
 
-function __runAllTests__() {
+function __runAllTests__(testsReporter) {
+    var reporter = new JsTestReporter(testsReporter);
     var tests = client.__tests__;
-    var errors = new ArrayList();
+
     for each (var test in tests) {
+        var time = System.currentTimeMillis();
         try {
             test.check();
+            reporter.success({name: test.name, time: time});
         } catch (e) {
-            errors.add("Test failed: " + test.name + " (" + e + ")");
+            reporter.failure({name: test.name, time: time, error: e});
         }
     }
     client.__tests__ = [];
-    return errors;
 }
 
 function __mustacheRender__(template) {

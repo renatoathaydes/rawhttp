@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.reqinedit.js;
 
 import com.athaydes.rawhttp.reqinedit.HttpEnvironment;
+import com.athaydes.rawhttp.reqinedit.HttpTestsReporter;
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpResponse;
@@ -21,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 public final class JsEnvironment implements HttpEnvironment {
 
@@ -63,11 +63,13 @@ public final class JsEnvironment implements HttpEnvironment {
     }
 
     @Override
-    public List<String> runResponseHandler(String responseHandler, RawHttpResponse<?> response)
+    public void runResponseHandler(String responseHandler,
+                                   RawHttpResponse<?> response,
+                                   HttpTestsReporter testsReporter)
             throws IOException, ScriptException {
         setResponse(response.eagerly());
         eval(responseHandler);
-        return runAllTests();
+        runAllTests(testsReporter);
     }
 
     void setResponse(EagerHttpResponse<?> response) {
@@ -76,10 +78,8 @@ public final class JsEnvironment implements HttpEnvironment {
                 contentType, bodyObject(contentType, response.getBody().orElse(null)));
     }
 
-    List<String> runAllTests() {
-        return ((List<?>) invoke("__runAllTests__")).stream()
-                .map(Object::toString)
-                .collect(Collectors.toList());
+    void runAllTests(HttpTestsReporter reporter) {
+        invoke("__runAllTests__", reporter);
     }
 
     private Object invoke(String name, Object... args) {

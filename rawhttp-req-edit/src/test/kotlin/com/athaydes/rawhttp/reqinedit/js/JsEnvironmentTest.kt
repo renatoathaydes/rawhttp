@@ -1,5 +1,7 @@
 package com.athaydes.rawhttp.reqinedit.js
 
+import com.athaydes.rawhttp.reqinedit.HttpTestResult
+import com.athaydes.rawhttp.reqinedit.HttpTestsReporter
 import io.kotlintest.matchers.between
 import io.kotlintest.matchers.match
 import io.kotlintest.matchers.should
@@ -65,9 +67,22 @@ class JsEnvironmentTest {
                 + "client.test(\"fails too\", function() {client.assert(false, \"no chance\")});\n")
 
         // running tests should cause all failures to be reported
-        jsEnv.runAllTests() shouldBe listOf(
-                "Test failed: fails always (no good)",
-                "Test failed: fails too (no chance)")
+        val results = mutableListOf<HttpTestResult>()
+        val reporter = HttpTestsReporter { result ->
+            results.add(result)
+        }
+
+        jsEnv.runAllTests(reporter)
+
+        results.size shouldBe 2
+
+        results[0].name shouldBe "fails always"
+        results[0].isSuccess shouldBe false
+        results[0].error shouldBe "foo"
+
+        results[1].name shouldBe "fails too"
+        results[1].isSuccess shouldBe false
+        results[1].error shouldBe "foo"
     }
 
     @Test

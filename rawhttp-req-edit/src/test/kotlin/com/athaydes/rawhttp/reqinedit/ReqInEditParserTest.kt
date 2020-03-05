@@ -230,10 +230,11 @@ class ReqInEditParserTest {
                         .replace("{{ contentType }}", "application/json")
             }
 
-            override fun runResponseHandler(responseHandler: String?, response: RawHttpResponse<*>?): MutableList<String> {
+            override fun runResponseHandler(responseHandler: String?,
+                                            response: RawHttpResponse<*>?,
+                                            reporter: HttpTestsReporter?) {
                 error("cannot run responseHandler")
             }
-
         }
 
         val unit = parser.parse(fileLines.stream(), httpEnv)
