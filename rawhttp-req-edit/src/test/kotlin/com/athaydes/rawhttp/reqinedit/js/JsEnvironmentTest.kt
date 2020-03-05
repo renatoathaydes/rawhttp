@@ -74,15 +74,21 @@ class JsEnvironmentTest {
 
         jsEnv.runAllTests(reporter)
 
-        results.size shouldBe 2
+        results.size shouldBe 4
 
-        results[0].name shouldBe "fails always"
-        results[0].isSuccess shouldBe false
-        results[0].error shouldBe "foo"
+        results[0].name shouldBe "js test"
+        results[0].isSuccess shouldBe true
 
-        results[1].name shouldBe "fails too"
-        results[1].isSuccess shouldBe false
-        results[1].error shouldBe "foo"
+        results[1].name shouldBe "js second test"
+        results[1].isSuccess shouldBe true
+
+        results[2].name shouldBe "fails always"
+        results[2].isSuccess shouldBe false
+        results[2].error shouldBe "no good"
+
+        results[3].name shouldBe "fails too"
+        results[3].isSuccess shouldBe false
+        results[3].error shouldBe "no chance"
     }
 
     @Test
