@@ -12,20 +12,22 @@ import java.util.List;
 public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
     private final List<ReqInEditEntry> entries;
     private final HttpEnvironment environment;
-
     private final RawHttpClient<?> httpClient;
+    private final ResponseStorage responseStorage;
 
     public ReqInEditUnit(List<ReqInEditEntry> entries,
                          HttpEnvironment environment) {
-        this(entries, environment, new TcpRawHttpClient());
+        this(entries, environment, new TcpRawHttpClient(), new FileResponseStorage());
     }
 
     public ReqInEditUnit(List<ReqInEditEntry> entries,
                          HttpEnvironment environment,
-                         RawHttpClient<?> httpClient) {
+                         RawHttpClient<?> httpClient,
+                         ResponseStorage responseStorage) {
         this.entries = entries;
         this.environment = environment;
         this.httpClient = httpClient;
+        this.responseStorage = responseStorage;
     }
 
     public List<ReqInEditEntry> getEntries() {
@@ -38,7 +40,7 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
             if (result.isSuccess()) {
                 System.out.println("Test passed: " + result.getName());
             } else {
-                System.out.println("Test FAILED: " + result.getName() + " - " + result.getError());
+                System.out.println("Test FAILED: " + result.getName() + ": " + result.getError());
             }
         };
         runWith(testsReporter);
@@ -53,7 +55,7 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
     private void run(ReqInEditEntry entry, HttpTestsReporter testsReporter) {
         RawHttpResponse<?> response;
         try {
-            response = httpClient.send(entry.getRequest());
+            response = httpClient.send(entry.getRequest()).eagerly();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -64,7 +66,11 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
 
     private void storeResponse(String responseRef,
                                RawHttpResponse<?> response) {
-        // TODO
+        try {
+            responseStorage.store(response, responseRef);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void runResponseScript(String script,

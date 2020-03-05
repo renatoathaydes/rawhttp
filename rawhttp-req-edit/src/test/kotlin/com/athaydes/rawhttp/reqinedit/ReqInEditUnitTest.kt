@@ -19,6 +19,10 @@ import java.net.URI
 
 class ReqInEditUnitTest {
 
+    private val fakeResponseStorage = ResponseStorage { _, _ ->
+        throw UnsupportedOperationException("cannot store response")
+    }
+
     @Test
     fun canRunSingleRequest() {
         val httpEnv = JsEnvironment()
@@ -48,7 +52,7 @@ class ReqInEditUnitTest {
         ).eagerly()
 
         val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, null)),
-                httpEnv, fakeClient)
+                httpEnv, fakeClient, fakeResponseStorage)
 
         unit.run()
 
@@ -92,7 +96,7 @@ class ReqInEditUnitTest {
         """.trimIndent()
 
         val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, script, null)),
-                httpEnv, fakeClient)
+                httpEnv, fakeClient, fakeResponseStorage)
 
         val results = mutableListOf<HttpTestResult>()
         val testsReporter = HttpTestsReporter { result -> results.add(result) }
@@ -120,6 +124,44 @@ class ReqInEditUnitTest {
         results[2].isSuccess shouldBe false
         results[2].error shouldBe "content type is not wrong: application/json"
         results[2] shouldEndAfterStartAnd beforeTestsTime
+    }
+
+
+    @Test
+    fun canStoreHttpResponseInStorage() {
+        val httpEnv = JsEnvironment()
+        var storedResponse: RawHttpResponse<*>? = null
+        var storedResponseRef: String? = null
+
+        val responseStorage = ResponseStorage { response, responseRef ->
+            if (storedResponse != null) throw IllegalArgumentException("Tried to store more than one response")
+            storedResponse = response
+            storedResponseRef = responseRef
+        }
+
+        val response = RawHttpResponse<Unit>(null, null,
+                StatusLine(HttpVersion.HTTP_1_1, 200, "OK"),
+                RawHttpHeaders.newBuilder()
+                        .with("Content-Type", "application/json")
+                        .build(),
+                StringBody("""{ "foo": "bar" }""").toBodyReader()
+        ).eagerly()
+
+        val fakeClient = RawHttpClient { response }
+
+        val request = RawHttpRequest(
+                RequestLine("GET", URI.create("http://hello.com/foo/bar"), HttpVersion.HTTP_1_1),
+                RawHttpHeaders.empty(),
+                null, null
+        ).eagerly()
+
+        val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, "my-response.http")),
+                httpEnv, fakeClient, responseStorage)
+
+        unit.run()
+
+        storedResponse shouldEqual response
+        storedResponseRef shouldEqual "my-response.http"
     }
 
     private infix fun HttpTestResult.shouldEndAfterStartAnd(beforeTestsTime: Long) {
