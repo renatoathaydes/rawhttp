@@ -12,21 +12,19 @@ import java.util.List;
 public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
     private final List<ReqInEditEntry> entries;
     private final HttpEnvironment environment;
-    private final RawHttpClient<?> httpClient;
     private final ResponseStorage responseStorage;
+    private final TcpRawHttpClient defaultHttpClient = new TcpRawHttpClient();
 
     public ReqInEditUnit(List<ReqInEditEntry> entries,
                          HttpEnvironment environment) {
-        this(entries, environment, new TcpRawHttpClient(), new FileResponseStorage());
+        this(entries, environment, new FileResponseStorage());
     }
 
     public ReqInEditUnit(List<ReqInEditEntry> entries,
                          HttpEnvironment environment,
-                         RawHttpClient<?> httpClient,
                          ResponseStorage responseStorage) {
         this.entries = entries;
         this.environment = environment;
-        this.httpClient = httpClient;
         this.responseStorage = responseStorage;
     }
 
@@ -43,16 +41,18 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
                 System.out.println("Test FAILED: " + result.getName() + ": " + result.getError());
             }
         };
-        runWith(testsReporter);
+        runWith(defaultHttpClient, testsReporter);
     }
 
-    public void runWith(HttpTestsReporter testsReporter) {
+    public void runWith(RawHttpClient<?> httpClient, HttpTestsReporter testsReporter) {
         for (ReqInEditEntry entry : entries) {
-            run(entry, testsReporter);
+            run(entry, httpClient, testsReporter);
         }
     }
 
-    private void run(ReqInEditEntry entry, HttpTestsReporter testsReporter) {
+    private void run(ReqInEditEntry entry,
+                     RawHttpClient<?> httpClient,
+                     HttpTestsReporter testsReporter) {
         RawHttpResponse<?> response;
         try {
             response = httpClient.send(entry.getRequest()).eagerly();
@@ -85,8 +85,6 @@ public class ReqInEditUnit implements Runnable, Closeable, AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        if (httpClient instanceof Closeable) {
-            ((Closeable) httpClient).close();
-        }
+        defaultHttpClient.close();
     }
 }

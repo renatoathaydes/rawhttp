@@ -1,10 +1,10 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
-import rawhttp.cli.client.HttpFileEntry;
-import rawhttp.cli.client.HttpFileParser;
-import rawhttp.cli.client.HttpFileRunner;
+import com.athaydes.rawhttp.reqinedit.ReqInEditParser;
+import com.athaydes.rawhttp.reqinedit.ReqInEditUnit;
 import rawhttp.cli.client.RawHttpCliClient;
+import rawhttp.cli.client.RawHttpCliTestsReporter;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -15,14 +15,11 @@ import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -153,8 +150,8 @@ public class Main {
                         "  rawhttp run <http-file> [options]\n" +
                         "\n" +
                         "Options:\n" +
-                        "  * -e --environment <json-file>\n" +
-                        "    the JSON environment file\n" +
+                        "  * -e --environment <name>\n" +
+                        "    the name of the environment to use\n" +
                         "  * -p --print-response-mode\n" +
                         "  *   one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full responses\n" +
@@ -241,15 +238,12 @@ public class Main {
     }
 
     private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
-        HttpFileParser parser = new HttpFileParser(HTTP);
-
-        ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("graal.js");
+        ReqInEditParser parser = new ReqInEditParser();
 
         try (RawHttpCliClient httpClient = new RawHttpCliClient(
                 httpFileOptions.logRequest, httpFileOptions.printResponseMode)) {
-            List<HttpFileEntry> entries = parser.parse(httpFileOptions.httpFile, httpFileOptions.envFile);
-            HttpFileRunner runner = new HttpFileRunner(httpClient, scriptEngine);
-            runner.run(entries);
+            ReqInEditUnit unit = parser.parse(httpFileOptions.httpFile, httpFileOptions.envName);
+            unit.runWith(httpClient, new RawHttpCliTestsReporter());
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }

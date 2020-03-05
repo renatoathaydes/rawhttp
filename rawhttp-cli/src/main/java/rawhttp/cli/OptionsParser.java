@@ -116,14 +116,14 @@ final class ClientOptions {
 final class HttpFileOptions {
     final File httpFile;
     @Nullable
-    final File envFile;
+    final String envName;
     final PrintResponseMode printResponseMode;
     final boolean logRequest;
 
-    public HttpFileOptions(File httpFile, @Nullable File envFile,
+    public HttpFileOptions(File httpFile, @Nullable String envName,
                            PrintResponseMode printResponseMode, boolean logRequest) {
         this.httpFile = httpFile;
-        this.envFile = envFile;
+        this.envName = envName;
         this.printResponseMode = printResponseMode;
         this.logRequest = logRequest;
     }
@@ -330,7 +330,7 @@ final class OptionsParser {
 
     private static Options parseRunCommand(String[] args) throws OptionsException {
         File httpFile;
-        @Nullable File envFile = null;
+        @Nullable String envName = null;
         PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
 
@@ -345,11 +345,11 @@ final class OptionsParser {
             switch (arg) {
                 case "-e":
                 case "--environment":
-                    if (envFile != null) {
+                    if (envName != null) {
                         throw new OptionsException("the --environment option can only be used once");
                     }
                     if (i + 1 < args.length) {
-                        envFile = new File(args[i + 1]);
+                        envName = args[i + 1];
                         i++;
                     } else {
                         throw new OptionsException("Missing argument for " + arg + " flag");
@@ -380,7 +380,7 @@ final class OptionsParser {
             printResponseMode = PrintResponseMode.RESPONSE;
         }
 
-        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, envFile, printResponseMode, logRequest));
+        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, envName, printResponseMode, logRequest));
     }
 
     private static Options parseServeCommand(String[] args) throws OptionsException {

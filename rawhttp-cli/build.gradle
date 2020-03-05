@@ -29,9 +29,7 @@ final generatedJavaSources = "$buildDir/java-generated-sources"
 sourceSets.main.java.srcDir generatedJavaSources
 
 dependencies {
-    compile project(':rawhttp-core')
-    compile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
-    runtime group: 'org.graalvm.js', name: 'js-scriptengine', version: '19.3.1'
+    compile project(':rawhttp-req-edit')
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testCompile 'junit:junit:4.12'
 }

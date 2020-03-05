@@ -23,6 +23,8 @@ class ReqInEditUnitTest {
         throw UnsupportedOperationException("cannot store response")
     }
 
+    private val fakeTestsReporter = HttpTestsReporter { }
+
     @Test
     fun canRunSingleRequest() {
         val httpEnv = JsEnvironment()
@@ -52,9 +54,9 @@ class ReqInEditUnitTest {
         ).eagerly()
 
         val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, null)),
-                httpEnv, fakeClient, fakeResponseStorage)
+                httpEnv, fakeResponseStorage)
 
-        unit.run()
+        unit.runWith(fakeClient, fakeTestsReporter)
 
         receivedRequests shouldEqual listOf(request)
     }
@@ -96,14 +98,14 @@ class ReqInEditUnitTest {
         """.trimIndent()
 
         val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, script, null)),
-                httpEnv, fakeClient, fakeResponseStorage)
+                httpEnv, fakeResponseStorage)
 
         val results = mutableListOf<HttpTestResult>()
         val testsReporter = HttpTestsReporter { result -> results.add(result) }
 
         var beforeTestsTime = System.currentTimeMillis()
 
-        unit.runWith(testsReporter)
+        unit.runWith(fakeClient, testsReporter)
 
         results.size shouldBe 3
 
@@ -156,9 +158,9 @@ class ReqInEditUnitTest {
         ).eagerly()
 
         val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, "my-response.http")),
-                httpEnv, fakeClient, responseStorage)
+                httpEnv, responseStorage)
 
-        unit.run()
+        unit.runWith(fakeClient, fakeTestsReporter)
 
         storedResponse shouldEqual response
         storedResponseRef shouldEqual "my-response.http"

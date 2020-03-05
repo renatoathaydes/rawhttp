@@ -549,20 +549,20 @@ public class OptionsParserTest {
 
         assertNotNull("Parsed run options", result);
         assertEquals(new File("file.http"), result.httpFile);
-        assertNull(result.envFile);
+        assertNull(result.envName);
         assertFalse(result.logRequest);
         assertEquals(PrintResponseMode.RESPONSE, result.printResponseMode);
     }
 
     @Test
     public void canParseRunOptionWithArgs() throws OptionsException {
-        Options options = OptionsParser.parse(new String[]{"run", "file.http", "-l", "-e", ".env", "-p", "stats"});
+        Options options = OptionsParser.parse(new String[]{"run", "file.http", "-l", "-e", "my-env", "-p", "stats"});
 
         HttpFileOptions result = options.run(c -> null, h -> h, s -> null, h -> null);
 
         assertNotNull("Parsed run options", result);
         assertEquals(new File("file.http"), result.httpFile);
-        assertEquals(new File(".env"), result.envFile);
+        assertEquals("my-env", result.envName);
         assertTrue(result.logRequest);
         assertEquals(PrintResponseMode.STATS, result.printResponseMode);
     }
