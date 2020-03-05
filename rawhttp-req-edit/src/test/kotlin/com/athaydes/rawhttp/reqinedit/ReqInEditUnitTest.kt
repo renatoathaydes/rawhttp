@@ -1,6 +1,9 @@
 package com.athaydes.rawhttp.reqinedit
 
 import com.athaydes.rawhttp.reqinedit.js.JsEnvironment
+import io.kotlintest.matchers.beGreaterThanOrEqualTo
+import io.kotlintest.matchers.beLessThanOrEqualTo
+import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import org.junit.Test
@@ -94,19 +97,37 @@ class ReqInEditUnitTest {
         val results = mutableListOf<HttpTestResult>()
         val testsReporter = HttpTestsReporter { result -> results.add(result) }
 
+        var beforeTestsTime = System.currentTimeMillis()
+
         unit.runWith(testsReporter)
 
         results.size shouldBe 3
 
         results[0].name shouldBe "check status"
         results[0].isSuccess shouldBe true
+        results[0] shouldEndAfterStartAnd beforeTestsTime
+
+        beforeTestsTime = results[0].endTime
 
         results[1].name shouldBe "check body"
         results[1].isSuccess shouldBe false
         results[1].error shouldBe "assertion failed"
+        results[1] shouldEndAfterStartAnd beforeTestsTime
+
+        beforeTestsTime = results[1].endTime
 
         results[2].name shouldBe "check header"
         results[2].isSuccess shouldBe false
         results[2].error shouldBe "content type is not wrong: application/json"
+        results[2] shouldEndAfterStartAnd beforeTestsTime
     }
+
+    private infix fun HttpTestResult.shouldEndAfterStartAnd(beforeTestsTime: Long) {
+        startTime should beGreaterThanOrEqualTo(beforeTestsTime)
+                .and(beLessThanOrEqualTo(System.currentTimeMillis()))
+
+        endTime should beGreaterThanOrEqualTo(startTime)
+                .and(beLessThanOrEqualTo(System.currentTimeMillis()))
+    }
+
 }
