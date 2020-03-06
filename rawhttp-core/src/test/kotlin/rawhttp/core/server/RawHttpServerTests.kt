@@ -8,6 +8,7 @@ import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
+import rawhttp.core.errors.InvalidHttpRequest
 import java.net.ServerSocket
 import java.time.Duration
 import java.util.concurrent.Executors
@@ -23,8 +24,11 @@ class RawHttpServerTests {
             thread
         }
 
+        // grab a random port
+        val serverSocket = ServerSocket(0)
+        val port = serverSocket.localPort
+
         executor.execute {
-            val serverSocket = ServerSocket(8092)
             while (true) {
                 val client = serverSocket.accept()
                 executor.execute {
@@ -43,6 +47,9 @@ class RawHttpServerTests {
                                     StringBody("Sorry, can't handle this request")
                             ).writeTo(client.getOutputStream())
                         }
+                    } catch (e: InvalidHttpRequest) {
+                        // error ok as we probe the port below without sending an actual request
+                        client.close()
                     } catch (e: Exception) {
                         e.printStackTrace()
                         client.close()
@@ -51,12 +58,12 @@ class RawHttpServerTests {
             }
         }
 
-        waitForPortToBeTaken(8092, Duration.ofSeconds(2))
+        waitForPortToBeTaken(port, Duration.ofSeconds(2))
 
         val httpClient = TcpRawHttpClient()
 
         try {
-            val request = http.parseRequest("GET http://localhost:8092")
+            val request = http.parseRequest("GET http://localhost:$port")
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 200
