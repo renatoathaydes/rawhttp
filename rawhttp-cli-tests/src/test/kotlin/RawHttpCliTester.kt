@@ -1,4 +1,5 @@
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.startsWith
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThat
@@ -8,7 +9,9 @@ import org.junit.BeforeClass
 import rawhttp.core.EagerHttpResponse
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpResponse
+import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
+import rawhttp.core.errors.InvalidHttpRequest
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -16,12 +19,16 @@ import java.lang.Thread.sleep
 import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
 
+val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
+
+val replyResponseFile = File("response.txt")
+
 data class ProcessHandle(val process: Process,
                          private val outputStream: ByteArrayOutputStream,
                          private val errStream: ByteArrayOutputStream) {
 
     fun waitForEndAndGetStatus(): Int {
-        val completed = process.waitFor(2, TimeUnit.SECONDS)
+        val completed = process.waitFor(if (IS_DEBUG) 500 else 3, TimeUnit.SECONDS)
 
         if (!completed) {
             process.destroyForcibly()
@@ -68,6 +75,15 @@ abstract class RawHttpCliTester {
                 "\r\n" +
                 "something"
 
+        private const val SUCCESS_GET_FOO_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: text/plain\r\n" +
+                "Content-Length: 7\r\n" +
+                "\r\n" +
+                "GET foo"
+
+        private const val SUCCESS_POST_FOO_HTTP_RESPONSE = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: text/plain"
+
         private val NOT_FOUND_HTTP_RESPONSE = "HTTP/1.1 404 Not Found\r\n" +
                 "Content-Type: text/plain\r\n" +
                 "Content-Length: 18\r\n" +
@@ -91,9 +107,13 @@ abstract class RawHttpCliTester {
                 throw IllegalStateException("Cannot execute java: $java")
             }
 
-            CLI_EXECUTABLE = arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
+            CLI_EXECUTABLE = if (IS_DEBUG)
+                arrayOf(java.absolutePath, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000",
+                        "-jar", cliJar.absolutePath)
+            else arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
 
-            println("Running tests with executable: ${CLI_EXECUTABLE.joinToString(" ")}")
+            println("Running tests with executable (${if (IS_DEBUG) "debug mode" else "no debug"}): " +
+                    CLI_EXECUTABLE.joinToString(" "))
         }
 
         private fun tryLocateRawHttpCliJar(): String {
@@ -122,22 +142,44 @@ abstract class RawHttpCliTester {
                     while (true) {
                         val client = server.accept()
                         println("Accepted connection from client $client")
-                        try {
-                            val request = http.parseRequest(client.getInputStream())
+                        while (true) {
+                            try {
+                                val request = http.parseRequest(client.getInputStream())
 
-                            println("Received Request:\n$request")
+                                println("Received Request:\n$request")
 
-                            if (request.uri.path == "/saysomething") {
-                                http.parseResponse(SUCCESS_HTTP_RESPONSE)
-                                        .writeTo(client.getOutputStream())
-                            } else {
-                                http.parseResponse(NOT_FOUND_HTTP_RESPONSE).writeTo(client.getOutputStream())
+                                when (request.uri.path) {
+                                    "/saysomething" ->
+                                        http.parseResponse(SUCCESS_HTTP_RESPONSE)
+                                                .writeTo(client.getOutputStream())
+                                    "/foo" ->
+                                        when (request.method) {
+                                            "GET" -> http.parseResponse(SUCCESS_GET_FOO_HTTP_RESPONSE)
+                                                    .writeTo(client.getOutputStream())
+                                            "POST" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
+                                                    .withBody(request.body.map { StringBody(it.decodeBodyToString(Charsets.UTF_8)) }
+                                                            .orElse(null))
+                                                    .writeTo(client.getOutputStream())
+                                            else -> http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
+                                                    .writeTo(client.getOutputStream())
+                                        }
+                                    "/reply" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
+                                            .withBody(StringBody(request.body.map { "Received:" + it.decodeBodyToString(Charsets.UTF_8) }
+                                                    .orElse("Did not receive anything")))
+                                            .writeTo(client.getOutputStream())
+                                    else ->
+                                        http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
+                                                .writeTo(client.getOutputStream())
+                                }
+                            } catch (e: InvalidHttpRequest) {
+                                // likely EOF
+                                break
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                break
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        } finally {
-                            client.close()
                         }
+                        client.close()
                     }
                 } catch (e: InterruptedException) {
                     println("RawHttpCliTest HTTP Server stopped")
@@ -170,7 +212,7 @@ abstract class RawHttpCliTester {
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE))
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
             assertNoSysErrOutput(handle)
         }
 
@@ -179,14 +221,14 @@ abstract class RawHttpCliTester {
             val separator = "\n---------------------------------\n"
             val separatorIndex = handle.out.indexOf(separator)
             assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
-            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE))
+            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
             assertStatistics(handle.out.substring(separatorIndex + separator.length))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE))
+            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + "\n"))
             assertNoSysErrOutput(handle)
         }
 
@@ -195,7 +237,7 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE))
+            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE + "\n"))
             assertNoSysErrOutput(handle)
         }
 
@@ -211,9 +253,58 @@ abstract class RawHttpCliTester {
             assertNoSysErrOutput(handle)
         }
 
+        fun assertSuccessResponseReplyToFiles(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo("Received:This is the foo file\n"))
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertReplyResponseStoredInFile() {
+            assertTrue(replyResponseFile.exists())
+            assertThat(replyResponseFile.readText(), equalTo(
+                    "HTTP/1.1 200 OK\r\n" +
+                            "Content-Type: text/plain\r\n" +
+                            "Content-Length: 29\r\n" +
+                            "\r\n" +
+                            "Received:This is the foo file"))
+        }
+
+        fun assertGetFooThenPostFooRequestsAndStats(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+
+            val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n\n"
+            assertThat(handle.out, startsWith(getFooRequest))
+
+            var out = handle.out.substring(getFooRequest.length)
+            val secondRequestIndex = out.indexOf("POST")
+            assertTrue(secondRequestIndex > 0)
+            val firstStats = out.substring(0, secondRequestIndex)
+            assertStatistics(firstStats)
+
+            val postFooRequest = "POST /foo HTTP/1.1\r\nContent-Type: application/json\r\n" +
+                    "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}\n"
+            out = out.substring(secondRequestIndex)
+            assertThat(out, startsWith(postFooRequest))
+
+            out = out.substring(postFooRequest.length)
+            assertStatistics(out)
+
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertGetFooResponseThenPostFooResponse(handle: ProcessHandle, postFooBody: String) {
+            val postResponse = SUCCESS_POST_FOO_HTTP_RESPONSE +
+                    "\r\nContent-Length: ${postFooBody.length}" +
+                    "\r\n\r\n$postFooBody\n"
+
+            handle.verifyProcessTerminatedWithExitCode(0)
+            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + "\n" + postResponse))
+            assertNoSysErrOutput(handle)
+        }
+
         private fun assertStatistics(output: String) {
             output.lines().run {
-                assertThat(size, equalTo(6))
+                assertThat("Expected 6 element, got: " + toString(), size, equalTo(6))
                 assertTrue("Expected 'Connect time', got " + get(0),
                         get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms")))
                 assertTrue("Expected 'First received byte time', got " + get(1),
@@ -230,7 +321,7 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseBody(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("something"))
+            assertThat(handle.out, equalTo("something\n"))
             assertNoSysErrOutput(handle)
         }
 
@@ -262,6 +353,9 @@ abstract class RawHttpCliTester {
                     ?: throw AssertionError("Unable to connect to server after $failedConnectionAttempts failed attempts")
         }
 
+        fun asClassPathFile(file: String): String =
+                RawHttpCliTester::class.java.getResource("/$file").file
+
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
             if (statusCode != expectedExitCode) {
@@ -289,4 +383,17 @@ abstract class RawHttpCliTester {
 
 private fun String.matches(regex: Regex): Boolean {
     return regex.matchEntire(this) != null
+}
+
+class ManualTest : RawHttpCliTester() {
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            startHttpServer()
+            println("Server running on http://localhost:8083")
+            println("Hit Enter to stop the server")
+            System.`in`.read()
+            stopHttpServer()
+        }
+    }
 }

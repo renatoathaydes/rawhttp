@@ -10,13 +10,8 @@ import rawhttp.core.client.TcpRawHttpClient;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class RawHttpCliClient extends TcpRawHttpClient {
 
@@ -64,9 +59,7 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         }
     }
 
-    private static final class ClientOptions implements TcpRawHttpClientOptions {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-
+    private static final class ClientOptions extends DefaultOptions {
         private final ResponsePrinter responsePrinter;
         private TimedSocket currentSocket;
 
@@ -79,31 +72,20 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         }
 
         @Override
+        protected Socket createSocket(boolean useHttps, String host, int port) throws IOException {
+            // overridden to ensure the connection to host:port is done later so we can time it
+            Socket socket = useHttps
+                    ? SSLSocketFactory.getDefault().createSocket()
+                    : new Socket();
+            return new TimedSocket(socket, host, port);
+        }
+
+        @Override
         public TimedSocket getSocket(URI uri) {
-            boolean useHttps = "https".equalsIgnoreCase(uri.getScheme());
-            String host = uri.getHost();
-            int port = uri.getPort();
-            if (port < 1) {
-                port = useHttps ? 443 : 80;
-            }
-            InetAddress address;
+            currentSocket = (TimedSocket) super.getSocket(uri);
+
             try {
-                address = InetAddress.getByName(host);
-            } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
-            }
-            Socket socket;
-            try {
-                socket = useHttps
-                        ? SSLSocketFactory.getDefault().createSocket()
-                        : new Socket();
-                socket.setSoTimeout(5_000);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            currentSocket = new TimedSocket(socket);
-            try {
-                currentSocket.connect(new InetSocketAddress(address, port), 10_000);
+                currentSocket.connect();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -130,25 +112,13 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
 
             responsePrinter.waitFor();
 
-            if (!keepAlive) {
-                socket.close();
-            }
-
-            return eagerResponse;
+            return super.onResponse(socket, uri, eagerResponse);
         }
 
         @Override
-        public ExecutorService getExecutorService() {
-            return executorService;
-        }
-
-        @Override
-        public void close() {
-            executorService.shutdown();
-        }
-
-        @Override
-        public void removeSocket(Socket socket) {
+        public void close() throws IOException {
+            responsePrinter.close();
+            super.close();
         }
     }
 }

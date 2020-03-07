@@ -6,6 +6,8 @@ import rawhttp.core.RawHttpResponse
 import java.io.File
 import java.io.FileNotFoundException
 import java.net.URI
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class ReqInEditParserTest {
 
@@ -137,12 +139,12 @@ class ReqInEditParserTest {
     @Test
     fun canParseRequestWithFileBody() {
         val parser = ReqInEditParser(object : FileReader {
-            override fun read(path: String?): ByteArray {
-                if (path == "./simple/body.json") return """
+            override fun read(path: Path?): ByteArray {
+                if (path?.toString() == "./simple/body.json") return """
             {
               "hello": true
             }""".trimIndent().toByteArray()
-                else throw FileNotFoundException(path)
+                else throw FileNotFoundException(path?.toString() ?: "null")
             }
         })
 
@@ -177,9 +179,9 @@ class ReqInEditParserTest {
     @Test
     fun canParseRequestWithFileMixedBody() {
         val parser = ReqInEditParser(object : FileReader {
-            override fun read(path: String?): ByteArray {
-                if (path == "./entries.json") return """  "file": true,""".toByteArray()
-                else throw FileNotFoundException(path)
+            override fun read(path: Path?): ByteArray {
+                if (path.toString() == "./entries.json") return """  "file": true,""".toByteArray()
+                else throw FileNotFoundException(path?.toString() ?: "null")
             }
         })
 
@@ -235,6 +237,8 @@ class ReqInEditParserTest {
                                             reporter: HttpTestsReporter?) {
                 error("cannot run responseHandler")
             }
+
+            override fun resolvePath(path: String) = Paths.get(path)
         }
 
         val unit = parser.parse(fileLines.stream(), httpEnv)

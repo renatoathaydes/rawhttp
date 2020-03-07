@@ -332,4 +332,40 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertThat(xmlResponse.body.get().asRawString(Charsets.UTF_8), equalTo(xmlFile.readText()))
     }
 
+    @Test
+    fun canRunBasicHttpFile() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/basic/get.http"))
+        assertOutputIsSuccessResponse(handle)
+    }
+
+    @Test
+    fun canRunBasicHttpFileLoggingRequest() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/basic/get.http"), "--log-request")
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
+    fun canRunHttpFileWithEnvironment() {
+        val handleProd = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"), "-e", "prod")
+        assertGetFooResponseThenPostFooResponse(handleProd, "{prod: true}")
+
+        val handleTest = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"), "-e", "test")
+        assertGetFooResponseThenPostFooResponse(handleTest, "{prod: false}")
+    }
+
+    @Test
+    fun canRunHttpFileWithEnvironmentAndPrintStats() {
+        val handleProd = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"),
+                "-l", "-e", "prod", "-p", "stats")
+        assertGetFooThenPostFooRequestsAndStats(handleProd)
+    }
+
+    @Test
+    fun canRunHttpFileUsingExternalFiles() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/files/post.http"),
+                "-p", "body")
+        assertSuccessResponseReplyToFiles(handle)
+        assertReplyResponseStoredInFile()
+    }
+
 }

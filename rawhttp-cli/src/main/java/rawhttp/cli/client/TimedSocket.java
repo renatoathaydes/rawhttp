@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -14,6 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 final class TimedSocket extends Socket {
     private final Socket delegate;
+    private final String host;
+    private final int port;
 
     private AtomicLong connectTime = new AtomicLong();
     private AtomicLong firstByteTime = new AtomicLong();
@@ -21,8 +24,10 @@ final class TimedSocket extends Socket {
 
     private final AtomicLong httpRequestSendTime = new AtomicLong();
 
-    public TimedSocket(Socket delegate) {
+    public TimedSocket(Socket delegate, String host, int port) {
         this.delegate = delegate;
+        this.host = host;
+        this.port = port;
     }
 
     public void markHttpRequestSendTimeNow() {
@@ -34,18 +39,24 @@ final class TimedSocket extends Socket {
         return new TimedInputStream(delegate.getInputStream());
     }
 
-    @Override
-    public void connect(SocketAddress endpoint, int timeout) throws IOException {
-        long t = System.nanoTime();
-        delegate.connect(endpoint, timeout);
-        connectTime.set(System.nanoTime() - t);
+    public void connect() throws IOException {
+        if (isConnected()) {
+            connectTime.set(0L);
+        } else {
+            long t = System.nanoTime();
+            delegate.connect(new InetSocketAddress(host, port));
+            connectTime.set(System.nanoTime() - t);
+        }
     }
 
     @Override
-    public void connect(SocketAddress endpoint) throws IOException {
-        long t = System.nanoTime();
-        delegate.connect(endpoint);
-        connectTime.set(System.nanoTime() - t);
+    public void connect(SocketAddress endpoint, int timeout) {
+        throw new UnsupportedOperationException("connect(endpoint, timeout)");
+    }
+
+    @Override
+    public void connect(SocketAddress endpoint) {
+        throw new UnsupportedOperationException("connect(endpoint)");
     }
 
     @Override

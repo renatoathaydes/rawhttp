@@ -160,7 +160,9 @@ public class Main {
                         "        - status: print the response status-lines\n" +
                         "        - stats: print statistics about each request\n" +
                         "  * -l --log-request\n" +
-                        "      log the request\n"
+                        "      log the request\n" +
+                        "\n" +
+                        "For more information about the stats response-mode, see the docs for the 'send' sub-command."
                 );
             case SERVE:
                 System.out.println("\n" +
@@ -241,8 +243,8 @@ public class Main {
         ReqInEditParser parser = new ReqInEditParser();
 
         try (RawHttpCliClient httpClient = new RawHttpCliClient(
-                httpFileOptions.logRequest, httpFileOptions.printResponseMode)) {
-            ReqInEditUnit unit = parser.parse(httpFileOptions.httpFile, httpFileOptions.envName);
+                httpFileOptions.logRequest, httpFileOptions.printResponseMode);
+             ReqInEditUnit unit = parser.parse(httpFileOptions.httpFile, httpFileOptions.envName)) {
             unit.runWith(httpClient, new RawHttpCliTestsReporter());
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());

@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,11 +29,16 @@ public final class JsEnvironment implements HttpEnvironment {
 
     private final NashornScriptEngine jsEngine;
 
+    @Nullable
+    private final File projectDir;
+
     public JsEnvironment() {
         this(null, null);
     }
 
     public JsEnvironment(@Nullable File projectDir, @Nullable String environmentName) {
+        this.projectDir = projectDir;
+
         List<String> environments = environmentName == null
                 ? Collections.emptyList()
                 : JsLoader.getJsObjects(projectDir);
@@ -51,6 +58,13 @@ public final class JsEnvironment implements HttpEnvironment {
             invoke("__loadEnvironment__",
                     environmentName, environments.get(0), environments.get(1));
         }
+    }
+
+    @Override
+    public Path resolvePath(String path) {
+        return projectDir == null || path.startsWith("/")
+                ? Paths.get(path)
+                : Paths.get(projectDir.getAbsolutePath(), path);
     }
 
     @Override

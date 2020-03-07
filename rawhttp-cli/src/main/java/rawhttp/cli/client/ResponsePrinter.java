@@ -7,6 +7,7 @@ import rawhttp.core.StatusLine;
 import rawhttp.core.body.BodyReader;
 
 import javax.annotation.Nullable;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeoutException;
  * <p>
  * All print operations must run async to avoid impacting time measurements.
  */
-public interface ResponsePrinter {
+public interface ResponsePrinter extends Closeable {
     default void print(StatusLine statusLine) {
     }
 
@@ -106,6 +107,9 @@ class AllResponsePrinter implements ResponsePrinter {
                 bodyReader.writeDecodedTo(System.out);
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                // print a new-line after the response body
+                System.out.println();
             }
         });
     }
@@ -139,8 +143,13 @@ class AllResponsePrinter implements ResponsePrinter {
                 }
             }
         } finally {
-            executorService.shutdownNow();
+            allRequests.clear();
         }
+    }
+
+    @Override
+    public void close() {
+        executorService.shutdownNow();
     }
 }
 
@@ -171,6 +180,11 @@ class FullResponsePrinter implements ResponsePrinter {
     public void waitFor() {
         allResponsePrinter.waitFor();
     }
+
+    @Override
+    public void close() {
+        allResponsePrinter.close();
+    }
 }
 
 final class StatusOnlyPrinter implements ResponsePrinter {
@@ -190,6 +204,11 @@ final class StatusOnlyPrinter implements ResponsePrinter {
         allResponsePrinter.waitFor();
     }
 
+    @Override
+    public void close() {
+        allResponsePrinter.close();
+    }
+
 }
 
 final class BodyResponsePrinter implements ResponsePrinter {
@@ -207,6 +226,11 @@ final class BodyResponsePrinter implements ResponsePrinter {
     @Override
     public void waitFor() {
         allResponsePrinter.waitFor();
+    }
+
+    @Override
+    public void close() {
+        allResponsePrinter.close();
     }
 
 }
@@ -229,4 +253,8 @@ final class StatsPrinter implements ResponsePrinter {
         allResponsePrinter.waitFor();
     }
 
+    @Override
+    public void close() {
+        allResponsePrinter.close();
+    }
 }

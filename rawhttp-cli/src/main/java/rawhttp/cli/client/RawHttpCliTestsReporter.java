@@ -6,6 +6,11 @@ import com.athaydes.rawhttp.reqinedit.HttpTestsReporter;
 public class RawHttpCliTestsReporter implements HttpTestsReporter {
     @Override
     public void report(HttpTestResult result) {
-        // TODO
+        long time = result.getEndTime() - result.getStartTime();
+        if (result.isSuccess()) {
+            System.out.println("TEST OK (" + time + "ms): " + result.getName());
+        } else {
+            System.out.println("TEST FAILED (" + time + "ms): " + result.getName());
+        }
     }
 }

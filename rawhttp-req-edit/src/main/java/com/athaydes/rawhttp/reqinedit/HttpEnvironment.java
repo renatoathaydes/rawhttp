@@ -5,6 +5,7 @@ import rawhttp.core.RawHttpResponse;
 
 import javax.script.ScriptException;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * A HTTP environment for evaluation of scripts in {@link ReqInEditUnit}.
@@ -34,4 +35,14 @@ public interface HttpEnvironment {
                             RawHttpResponse<?> response,
                             HttpTestsReporter reporter)
             throws IOException, ScriptException;
+
+    /**
+     * Resolve a path referenced from a HTTP file.
+     * <p>
+     * If the path is relative, it must be relative to the HTTP file.
+     *
+     * @param path to resolve
+     * @return the resolved path
+     */
+    Path resolvePath(String path);
 }

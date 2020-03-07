@@ -272,9 +272,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                     port = useHttps ? 443 : 80;
                 }
                 try {
-                    socket = useHttps
-                            ? SSLSocketFactory.getDefault().createSocket(host, port)
-                            : new Socket(host, port);
+                    socket = createSocket(useHttps, host, port);
                     socket.setSoTimeout(5_000);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -283,6 +281,12 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             }
 
             return socket;
+        }
+
+        protected Socket createSocket(boolean useHttps, String host, int port) throws IOException {
+            return useHttps
+                    ? SSLSocketFactory.getDefault().createSocket(host, port)
+                    : new Socket(host, port);
         }
 
         @Override
@@ -309,7 +313,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         }
 
         @Override
-        public void close() {
+        public void close() throws IOException {
             try {
                 executorService.shutdown();
             } catch (Exception e) {

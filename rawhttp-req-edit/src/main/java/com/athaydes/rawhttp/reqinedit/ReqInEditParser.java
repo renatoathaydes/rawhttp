@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -126,7 +126,7 @@ public class ReqInEditParser {
         reqWriter.writeln();
         ScriptAndResponseRef scriptAndResponseRef = new ScriptAndResponseRef();
         if (parseBody) {
-            continueFromBody(iter, reqWriter, scriptAndResponseRef);
+            continueFromBody(iter, reqWriter, scriptAndResponseRef, environment);
         }
         requestBuilder.delete(0, requestBuilder.length());
         return new ReqInEditEntry(reqWriter.toRequest(),
@@ -135,7 +135,8 @@ public class ReqInEditParser {
 
     private void continueFromBody(Iterator<String> iter,
                                   ReqWriter reqWriter,
-                                  ScriptAndResponseRef scriptAndResponseRef) {
+                                  ScriptAndResponseRef scriptAndResponseRef,
+                                  HttpEnvironment environment) {
         // line separating headers from body
         reqWriter.writeln();
 
@@ -151,12 +152,12 @@ public class ReqInEditParser {
             if (!doneParsingBody && line.startsWith("> ")) {
                 foundNonWhitespace = true;
                 line = line.substring(2).trim();
-                scriptAndResponseRef.script = responseHandler(line, iter);
+                scriptAndResponseRef.script = responseHandler(line, iter, environment);
                 doneParsingBody = true; // can only parse a response-ref now
             } else if (!doneParsingBody && line.startsWith("< ")) {
                 foundNonWhitespace = true;
                 line = line.substring(2).trim();
-                byte[] bytes = inputFile(line);
+                byte[] bytes = inputFile(line, environment);
                 reqWriter.write(bytes);
                 reqWriter.writeln();
             } else if (line.startsWith("<> ")) {
@@ -184,15 +185,15 @@ public class ReqInEditParser {
         }
     }
 
-    private byte[] inputFile(String path) {
+    private byte[] inputFile(String path, HttpEnvironment environment) {
         try {
-            return fileReader.read(path);
+            return fileReader.read(environment.resolvePath(path));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String responseHandler(String line, Iterator<String> iter) {
+    private String responseHandler(String line, Iterator<String> iter, HttpEnvironment environment) {
         if (line.startsWith("{%")) {
             line = line.substring(2);
             StringBuilder result = new StringBuilder();
@@ -211,7 +212,7 @@ public class ReqInEditParser {
             }
             return result.toString();
         } else {
-            return new String(inputFile(line), StandardCharsets.UTF_8);
+            return new String(inputFile(line, environment), StandardCharsets.UTF_8);
         }
     }
 
@@ -329,8 +330,8 @@ public class ReqInEditParser {
 
     private static final class DefaultFileReader implements FileReader {
         @Override
-        public byte[] read(String path) throws IOException {
-            return Files.readAllBytes(Paths.get(path));
+        public byte[] read(Path path) throws IOException {
+            return Files.readAllBytes(path);
         }
     }
 
