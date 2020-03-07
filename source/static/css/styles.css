@@ -1,0 +1,76 @@
+body {
+    background-color: #39424E;
+    color: #CCC;
+    margin: auto;
+    max-width: 90%;
+    margin-top: 1em;
+    font-family:"Didact Gothic","sans serif";
+    font-size: 1.2em;
+}
+
+a {
+  color: white;
+}
+a:visited {
+  color: gray;
+}
+a:hover {
+  color: white;
+}
+a.big-link {
+  font-size: 2.4em;
+  display: block;
+  margin: 1em;
+}
+
+.title {
+    font-size: 3em;
+}
+
+.sub-title {
+    font-size: 2em;
+}
+
+.title {
+  animation-duration: 0.5s;
+  animation-name: slidein;
+}
+
+.sub-title {
+    animation-duration: 1s;
+    animation-name: appear;
+}
+
+@keyframes slidein {
+  from {
+    margin-top: 4em;
+  }
+
+  to {
+    margin-top: 2em;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+pre {
+  padding: 1em;
+}
+
+.main-body {
+  min-height: 100em;
+}
+
+.footer {
+    margin-top: 4em;
+    width: 90%;
+    padding: 1em 0 1em 0;
+}

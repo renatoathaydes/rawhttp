@@ -1,8 +1,7 @@
----
-title: "RawHTTP CLI"
-date: 2017-05-11T19:20:11+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "RawHTTP CLI" }}
+{{ define path baseURL + "/rawhttp-modules/cli.html" }}
+{{ include fragments/_header.html }}
 
 The `rawhttp-cli` module is a CLI (command-line interface) that can send HTTP requests and serve
 local files via a RawHTTP server.
@@ -178,3 +177,5 @@ Unmapped file extensions result in the `Content-Type` header being set to `appli
 <hr>
 
 [Modules](/rawhttp/rawhttp-modules) [HTTP Components](/rawhttp/rawhttp-modules/http-components)
+
+{{ include fragments/_footer.html }}

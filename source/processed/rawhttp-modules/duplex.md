@@ -1,8 +1,7 @@
----
-title: "RawHTTP Duplex"
-date: 2018-06-03T12:40:11+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "RawHTTP Duplex" }}
+{{ define path baseURL + "/rawhttp-modules/duplex.html" }}
+{{ include fragments/_header.html }}
 
 The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
 
@@ -89,3 +88,5 @@ The video below shows it in action:
 
 <iframe width="600" height="400" alt="rawhttp-duplex chat app in action"
  src="https://www.youtube.com/embed/_h3a5yodVgM"></iframe>
+
+{{ include fragments/_footer.html }}

@@ -1,8 +1,7 @@
----
-title: "RawHTTP HttpComponents"
-date: 2017-05-11T19:20:11+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "RawHTTP Http-Components Integration" }}
+{{ define path baseURL + "/rawhttp-modules/cli.html" }}
+{{ include fragments/_header.html }}
 
 RawHTTP can be integrated with the popular
 [HttpComponents library's](https://hc.apache.org/httpcomponents-client-4.5.x/) HTTP client.
@@ -14,4 +13,4 @@ administration and automatic redirects, but prefer to use the simpler API provid
 
 <hr>
 
-[Modules](/rawhttp/rawhttp-modules)
+{{ include fragments/_footer.html }}
