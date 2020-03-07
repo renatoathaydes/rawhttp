@@ -142,51 +142,59 @@ abstract class RawHttpCliTester {
                     while (true) {
                         val client = server.accept()
                         println("Accepted connection from client $client")
-                        while (true) {
-                            try {
-                                val request = http.parseRequest(client.getInputStream())
+                        Thread {
+                            while (true) {
+                                try {
+                                    val request = http.parseRequest(client.getInputStream())
 
-                                println("Received Request:\n$request")
+                                    println("Received Request:\n$request")
 
-                                when (request.uri.path) {
-                                    "/saysomething" ->
-                                        http.parseResponse(SUCCESS_HTTP_RESPONSE)
+                                    when (request.uri.path) {
+                                        "/saysomething" ->
+                                            http.parseResponse(SUCCESS_HTTP_RESPONSE)
+                                                    .writeTo(client.getOutputStream())
+                                        "/foo" ->
+                                            when (request.method) {
+                                                "GET" -> http.parseResponse(SUCCESS_GET_FOO_HTTP_RESPONSE)
+                                                        .writeTo(client.getOutputStream())
+                                                "POST" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
+                                                        .withBody(request.body.map { StringBody(it.decodeBodyToString(Charsets.UTF_8)) }
+                                                                .orElse(null))
+                                                        .writeTo(client.getOutputStream())
+                                                else -> http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
+                                                        .writeTo(client.getOutputStream())
+                                            }
+                                        "/reply" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
+                                                .withBody(StringBody(request.body.map { "Received:" + it.decodeBodyToString(Charsets.UTF_8) }
+                                                        .orElse("Did not receive anything")))
                                                 .writeTo(client.getOutputStream())
-                                    "/foo" ->
-                                        when (request.method) {
-                                            "GET" -> http.parseResponse(SUCCESS_GET_FOO_HTTP_RESPONSE)
+                                        else ->
+                                            http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
                                                     .writeTo(client.getOutputStream())
-                                            "POST" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
-                                                    .withBody(request.body.map { StringBody(it.decodeBodyToString(Charsets.UTF_8)) }
-                                                            .orElse(null))
-                                                    .writeTo(client.getOutputStream())
-                                            else -> http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
-                                                    .writeTo(client.getOutputStream())
-                                        }
-                                    "/reply" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
-                                            .withBody(StringBody(request.body.map { "Received:" + it.decodeBodyToString(Charsets.UTF_8) }
-                                                    .orElse("Did not receive anything")))
-                                            .writeTo(client.getOutputStream())
-                                    else ->
-                                        http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
-                                                .writeTo(client.getOutputStream())
+                                    }
+                                } catch (e: InvalidHttpRequest) {
+                                    // likely EOF
+                                    break
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    break
                                 }
-                            } catch (e: InvalidHttpRequest) {
-                                // likely EOF
-                                break
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                break
                             }
+                            client.close()
+                        }.apply {
+                            isDaemon = true
+                            start()
                         }
-                        client.close()
                     }
                 } catch (e: InterruptedException) {
                     println("RawHttpCliTest HTTP Server stopped")
                 } catch (e: IOException) {
                     e.printStackTrace()
                 }
-            }.apply { start() }
+            }.apply {
+                isDaemon = true
+                start()
+            }
         }
 
         @AfterClass
