@@ -11,6 +11,9 @@ public class RawHttpCliTestsReporter implements HttpTestsReporter {
             System.out.println("TEST OK (" + time + "ms): " + result.getName());
         } else {
             System.out.println("TEST FAILED (" + time + "ms): " + result.getName());
+            if (!"".equals(result.getError())) {
+                System.err.println(result.getError());
+            }
         }
     }
 }

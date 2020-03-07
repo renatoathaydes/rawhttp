@@ -368,4 +368,11 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertReplyResponseStoredInFile()
     }
 
+    @Test
+    fun canRunHttpFileWithTests() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
+                "-p", "status")
+        assertHttpTestResults(handle)
+    }
+
 }

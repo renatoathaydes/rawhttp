@@ -325,6 +325,22 @@ abstract class RawHttpCliTester {
             assertNoSysErrOutput(handle)
         }
 
+        fun assertHttpTestResults(handle: ProcessHandle) {
+            handle.verifyProcessTerminatedWithExitCode(0)
+            handle.out.lines().run {
+                assertThat(size, equalTo(6))
+                assertThat(get(0), equalTo("HTTP/1.1 200 OK"))
+                assertTrue(get(1), get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200")))
+                assertThat(get(2), equalTo("HTTP/1.1 200 OK"))
+                assertTrue(get(3), get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200")))
+                assertTrue(get(4), get(4).matches(Regex("TEST FAILED \\(\\d+ms\\): body is as expected")))
+                assertEquals(get(5), "")
+            }
+
+            // FIXME currently, req-in-edit is not resolving variables in the body
+            assertThat(handle.err, equalTo("Unexpected body: Did not receive anything\n"))
+        }
+
         fun assertNoSysErrOutput(handle: ProcessHandle) {
             var errOut = handle.err
             if (errOut.startsWith("Picked up _JAVA_OPTIONS")) {
