@@ -138,7 +138,7 @@ public final class HttpMetadataParser {
         }
         int firstSpace = requestLine.indexOf(' ');
         if (firstSpace <= 0) {
-            throw new InvalidHttpRequest("Invalid request line", 1);
+            throw new InvalidHttpRequest(String.format("Invalid request line: '%s'", requestLine), 1);
         }
         String method = requestLine.substring(0, firstSpace);
         OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(method);

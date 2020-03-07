@@ -15,8 +15,8 @@ class RawHttpErrorsTest : StringSpec({
         val examples = table(
                 headers("Request", "lineNumber", "message"),
                 row("", 0, "No content"),
-                row("    ", 1, "Invalid request line"),
-                row("POST", 1, "Invalid request line"),
+                row("    ", 1, "Invalid request line: '    '"),
+                row("POST", 1, "Invalid request line: 'POST'"),
                 row("A B C D", 1, "Unknown HTTP version"),
                 row("GET / HTTP/1.1\r\nINVALID\r\n", 2, "Invalid header: missing the ':' separator"),
                 row("GET / HTTP/1.1\r\nAccept: all\r\nINVALID\r\n", 3, "Invalid header: missing the ':' separator"),

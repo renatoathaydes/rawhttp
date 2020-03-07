@@ -75,8 +75,8 @@ class RequestLineTest {
     fun cannotParseIllegalRequestLine__allowMissingHTTPVersion() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
-                row("/", "Invalid request line"),
-                row("GET", "Invalid request line"),
+                row("/", "Invalid request line: '/'"),
+                row("GET", "Invalid request line: 'GET'"),
                 row("POST ", "Missing request target"),
                 row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
                 row("/Hi /", "Invalid method name: illegal character at index 0: '/Hi'"),
@@ -119,8 +119,8 @@ class RequestLineTest {
     fun cannotParseIllegalRequestLine__strict() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
-                row("/", "Invalid request line"),
-                row("GET", "Invalid request line"),
+                row("/", "Invalid request line: '/'"),
+                row("GET", "Invalid request line: 'GET'"),
                 row("POST  ", "Unknown HTTP version"),
                 row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
                 row("GET /", "Missing HTTP version"),
