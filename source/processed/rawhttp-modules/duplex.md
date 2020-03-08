@@ -87,7 +87,9 @@ was written in Kotlin to demonstrate usage of this library.
 
 The video below shows it in action:
 
-<iframe width="600" height="400" alt="rawhttp-duplex chat app in action"
- src="https://www.youtube.com/embed/_h3a5yodVgM"></iframe>
+<div class="video-container">
+<iframe alt="rawhttp-duplex chat app in action" frameborder="0" allowfullscreen
+ src="https://www.youtube.com/embed/_h3a5yodVgM" class="video"></iframe>
+</div>
 
 {{ include /processed/fragments/_footer.html }}
