@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><p>By default, <code>RawHttp</code> will fix the following common mistakes when parsing a HTTP message:</p>
+
+<h4>Line separators</h4>
+
+<p>According to <a href="https://tools.ietf.org/html/rfc7230#section-3">RFC-7230</a>, which defines the HTTP/1.1 message format,
+line separators must be <code>CRLF</code>, or <code>\r\n</code>.</p>
+
+<p>However, by default, <code>RawHttp</code> allows a simple <code>\n</code> to be used:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;GET /hello HTTP/1.1\n&#34;</span> <span style="color:#719e07">+</span>
+    <span style="color:#2aa198">&#34;Host: example.com&#34;</span>);
+</pre>
+<h4>HTTP version</h4>
+
+<p>For simplicity, the HTTP version can be omitted from HTTP messages, in which case <code>HTTP/1.1</code> is used:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;GET /hello\n&#34;</span> <span style="color:#719e07">+</span>
+    <span style="color:#2aa198">&#34;Host: example.com&#34;</span>);
+</pre>
+<h4>Host header</h4>
+
+<p>The <code>Host</code> header is mandatory in HTTP requests. But <code>RawHttp</code> allows specifying a full URL in the method-line,
+which makes it automatically add a <code>Host</code> header to the request in case it&rsquo;s missing:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;GET http://example.com/hello&#34;</span>);
+</pre>
+<h4>Leading new-line in message</h4>
+
+<p><a href="https://tools.ietf.org/html/rfc7230#section-3.5">RFC-7230</a> recommends that HTTP message receivers ignore a leading
+new-line for the sake of robustness and historical reasons.</p>
+
+<p><code>RawHttp</code> will do that by default:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#586e75">// this is ok!
+</span><span style="color:#586e75"></span>    <span style="color:#2aa198">&#34;\nGET http://example.com/hello&#34;</span>);
+</pre>
+<hr>
+
+<h3>Configuring <code>RawHttp</code></h3>
+
+<p>The <code>RawHttp</code> class has a constructor which takes a <code>RawHttpOptions</code> instance, allowing for all of the fix-ups
+mentioned above to be turned off:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">strictHttp</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp(RawHttpOptions.newBuilder()
+            .doNotAllowNewLineWithoutReturn()
+            .doNotInsertHostHeaderIfMissing()
+            .doNotInsertHttpVersionIfMissing()
+            .doNotIgnoreLeadingEmptyLine()
+            .build());
+</pre>
+<h3>Allowing unescaped URIs</h3>
+
+<p>By default, RawHTTP is strict when parsing URIs. However, you can make it lenient so that you don&rsquo;t need to escape
+all forbidden characters (e.g. whitespaces don&rsquo;t need to be given as <code>%20</code>).</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">lenientUriOptions</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp(RawHttpOptions.newBuilder()
+            .allowIllegalStartLineCharacters()
+            .build());
+</pre>
+<p>With this enabled, you can give URIs more easily:</p>
+<pre style="color:#93a1a1;background-color:#002b36">GET https://www.example.com/name=Joe Doe&amp;age=43 HTTP/1.1
+Accept: text/html
+</pre>
+<hr>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><h1>About RawHTTP</h1>
+
+<h2>Motivation</h2>
+
+<p>RawHTTP was created by <a href="https://software.athaydes.com">Renato Athaydes</a> after he realized just how complex Java
+HTTP clients and servers were, when in reality, <a href="https://tools.ietf.org/html/rfc7230">HTTP itself</a> is pretty simple.</p>
+
+<p>Imagine that you just wanted to fire up a little microservice with a couple of REST endpoints.</p>
+
+<p>One of the &ldquo;simplest&rdquo; Java server micro-frameworks around, <a href="http://sparkjava.com">SparkJava</a>, lets you
+do that, but it takes all of these things with it:</p>
+
+<pre style="font-size: 8px; line-height: 1rem; font-family: Courier">
+\--- com.sparkjava:spark-core:2.7.1
+     +--- org.slf4j:slf4j-api:1.7.13
+     +--- org.eclipse.jetty:jetty-server:9.4.6.v20170531
+     |    +--- javax.servlet:javax.servlet-api:3.1.0
+     |    +--- org.eclipse.jetty:jetty-http:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty:jetty-util:9.4.6.v20170531
+     |    |    \--- org.eclipse.jetty:jetty-io:9.4.6.v20170531
+     |    |         \--- org.eclipse.jetty:jetty-util:9.4.6.v20170531
+     |    \--- org.eclipse.jetty:jetty-io:9.4.6.v20170531 (*)
+     +--- org.eclipse.jetty:jetty-webapp:9.4.6.v20170531
+     |    +--- org.eclipse.jetty:jetty-xml:9.4.6.v20170531
+     |    |    \--- org.eclipse.jetty:jetty-util:9.4.6.v20170531
+     |    \--- org.eclipse.jetty:jetty-servlet:9.4.6.v20170531
+     |         \--- org.eclipse.jetty:jetty-security:9.4.6.v20170531
+     |              \--- org.eclipse.jetty:jetty-server:9.4.6.v20170531 (*)
+     +--- org.eclipse.jetty.websocket:websocket-server:9.4.6.v20170531
+     |    +--- org.eclipse.jetty.websocket:websocket-common:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty.websocket:websocket-api:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty:jetty-util:9.4.6.v20170531
+     |    |    \--- org.eclipse.jetty:jetty-io:9.4.6.v20170531 (*)
+     |    +--- org.eclipse.jetty.websocket:websocket-client:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty:jetty-util:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty:jetty-io:9.4.6.v20170531 (*)
+     |    |    +--- org.eclipse.jetty:jetty-client:9.4.6.v20170531
+     |    |    |    +--- org.eclipse.jetty:jetty-http:9.4.6.v20170531 (*)
+     |    |    |    \--- org.eclipse.jetty:jetty-io:9.4.6.v20170531 (*)
+     |    |    \--- org.eclipse.jetty.websocket:websocket-common:9.4.6.v20170531 (*)
+     |    +--- org.eclipse.jetty.websocket:websocket-servlet:9.4.6.v20170531
+     |    |    +--- org.eclipse.jetty.websocket:websocket-api:9.4.6.v20170531
+     |    |    \--- javax.servlet:javax.servlet-api:3.1.0
+     |    +--- org.eclipse.jetty:jetty-servlet:9.4.6.v20170531 (*)
+     |    \--- org.eclipse.jetty:jetty-http:9.4.6.v20170531 (*)
+     \--- org.eclipse.jetty.websocket:websocket-servlet:9.4.6.v20170531 (*)
+</pre>
+
+<p>Now you need to understand what all these dependencies are doing if you really want to know how your
+little microservice actually works.</p>
+
+<p>If you look at <a href="https://projects.spring.io/spring-boot/">Spring Boot</a> or
+<a href="https://www.dropwizard.io/1.3.1/docs/">Dropwizard</a>, things are worse still.</p>
+
+<p>HTTP clients may not be as complex, but they tend to be difficult to learn and use when compared to plain
+(or, let&rsquo;s say, raw) HTTP.</p>
+
+<h2>Why RawHTTP</h2>
+
+<p>RawHTTP has ZERO dependencies and should be trivial to learn.</p>
+
+<p>You have 100% control of what your server or client should do. No magic!</p>
+
+<p>Of course, RawHTTP is not a full package, and it doesn&rsquo;t try to be. It just gives you an easy-to-use
+API to implement your own HTTP clients and servers.</p>
+
+<p>Want to convert your POJOs to JSON or XML before sending it to a client?</p>
+
+<p>Well, just use <a href="https://github.com/google/gson">Gson</a> or
+your favourite XML parser to convert the POJO into bytes, put those bytes into a HTTP response,
+then write that to a <code>Socket</code>:</p>
+<pre style="color:#93a1a1;background-color:#002b36">RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(<span style="color:#2aa198">&#34;200 OK&#34;</span>);
+response.withBody(
+    <span style="color:#719e07">new</span> BytesBody(bytes, <span style="color:#2aa198">&#34;application/json&#34;</span>)
+).writeTo(socket);
+</pre>
+<p>Need to send a <code>GET</code> request to fetch some JSON from your API?</p>
+<pre style="color:#93a1a1;background-color:#002b36">RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;GET https://example.com/my-resource/123\n&#34;</span> <span style="color:#719e07">+</span>
+    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span>);
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span>
+    <span style="color:#719e07">new</span> TcpRawHttpClient().send(request);
+</pre>
+<p>You can even copy-paste a sample HTTP request from the API docs and send it out as-is.</p>
+
+<p>The RawHTTP API was designed to make it intuitive to use and allow all behaviour to be easily
+customized.</p>
+
+<p>All objects are immutable, so mutator methods always return a new object rather than change the receiver.
+This is done very efficiently, so performance is not compromised.</p>
+
+<p>Check <a href="/rawhttp/in-5-minutes.html">RawHTTP in 5 minutes</a> for a quick overview, or head to the
+<a href="/rawhttp/docs/index.html">documentation</a> for more details.</p>
+
+<h2>Source code</h2>
+
+<p>RawHTTP is on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a>.</p>
+
+<h2>License</h2>
+
+<p><a href="https://github.com/renatoathaydes/rawhttp/blob/master/LICENSE.txt">Apache 2.0</a></p>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>

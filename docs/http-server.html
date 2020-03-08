@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><h3>Using a HTTP server</h3>
+
+<p>Even though you can write a simple HTTP server using only a <code>ServerSocket</code> and <code>RawHttp</code> to parse requests and
+responses, RawHTTP also offers a simple server implementation that makes things easier:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.server.<span style="color:#719e07">*</span>;
+
+RawHttpServer <span style="color:#268bd2">server</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer(8086);
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+
+server.start(request <span style="color:#719e07">-</span><span style="color:#719e07">&gt;</span> {
+    RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(...);
+    <span style="color:#719e07">return</span> Optional.of(response);
+});
+</pre>
+<p>Stop the server once you don&rsquo;t need it anymore:</p>
+<pre style="color:#93a1a1;background-color:#002b36">server.stop();
+</pre>
+<h3>Configuring a HTTP server</h3>
+
+<p>As with the HTTP client, to configure a HTTP server, pass the options into the constructor.</p>
+
+<p>An example implementation of <code>TcpRawHttpServer.TcpRawHttpServerOptions</code>:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#268bd2">class</span> <span style="color:#268bd2">ExampleTcpRawHttpServerOptions</span> <span style="color:#268bd2">implements</span> <span style="color:#268bd2">TcpRawHttpServer</span>.TcpRawHttpServerOptions {
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">ServerSocket</span> getServerSocket() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
+        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> ServerSocket(8080);
+    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttp</span> getRawHttp() {
+        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> RawHttp();
+    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">ExecutorService</span> createExecutorService() {
+        <span style="color:#719e07">return</span> Executors.newCachedThreadPool();
+    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Optional</span><span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">serverErrorResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>) {
+        <span style="color:#719e07">return</span> Optional.empty(); <span style="color:#586e75">// use the default 500 error response
+</span><span style="color:#586e75"></span>    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Optional</span><span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">notFoundResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>) {
+        <span style="color:#719e07">return</span> Optional.empty(); <span style="color:#586e75">// use the default 404 error response
+</span><span style="color:#586e75"></span>    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttpResponse</span><span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>, RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">response</span>) {
+        <span style="color:#586e75">// TODO this is a good place to log the request and response
+</span><span style="color:#586e75"></span>        <span style="color:#586e75">// or add standard HTTP response headers, like &#34;Server&#34; and &#34;Date&#34;
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> response;
+    }
+
+    <span style="color:#268bd2">@Override</span>
+    <span style="color:#268bd2">public</span> <span style="color:#268bd2">void</span> close() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
+    }
+}
+</pre>
+<p>The default options used by the server creates an unlimited, cached Thread pool to serve requests
+and automatically inserts a <code>Server</code> and <code>Date</code> headers to all responses by implementing
+the <code>autoHeadersSupplier()</code> method. If you provide your own options, this behaviour is overridden.</p>
+
+<hr>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>

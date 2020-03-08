@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><p>The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.</p>
+
+<p>The entry point of the library is the <code>com.athaydes.rawhttp.duplex.RawHttpDuplex</code> class.</p>
+
+<p>Its <code>connect</code> methods are used from a client to connect to a server,
+while the <code>accept</code> methods should be used within a HTTP server to handle requests from a client.</p>
+
+<p>Example Kotlin code on the server:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*
+<span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
+<span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
+
+<span style="color:#719e07">val</span> http = RawHttp()
+<span style="color:#719e07">val</span> duplex = RawHttpDuplex()
+<span style="color:#719e07">val</span> server = TcpRawHttpServer(<span style="color:#2aa198">8082</span>)
+
+server.start { request -&gt;
+    <span style="color:#586e75">// TODO check the request is a POST to the /connect path!
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// call duplex.accept() to return a response that can initiate duplex communication
+</span><span style="color:#586e75"></span>    Optional.of(duplex.accept(request, { sender -&gt;
+        <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> {
+            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onTextMessage</span>(message: String) {
+                <span style="color:#586e75">// handle text message 
+</span><span style="color:#586e75"></span>                sender.sendTextMessage(<span style="color:#2aa198">&#34;Hi there! You sent this: $message&#34;</span>)
+            }      
+            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onBinaryMessage</span>(message: ByteArray, headers: RawHttpHeaders) { <span style="color:#586e75">/* handle binary message */</span> }
+            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onClose</span>() { <span style="color:#586e75">/* handle closed connection */</span> }
+        }
+    }))
+}
+</pre>
+<hr/>
+
+<p>Example Kotlin code on the client:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*
+<span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
+<span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
+
+<span style="color:#719e07">val</span> http = RawHttp()
+<span style="color:#719e07">val</span> duplex = RawHttpDuplex()
+
+duplex.connect(http.parseRequest(<span style="color:#2aa198">&#34;POST http://localhost:8082/connect&#34;</span>), { sender -&gt;
+    <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> { <span style="color:#586e75">/* same API as on the server */</span> }
+}
+</pre>
+<h2>How duplex works</h2>
+
+<p>The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:</p>
+
+<ul>
+<li>The server listens for requests to start duplex communication.</li>
+<li>When a client connects, the server sends out a single chunked response in which each chunk
+is a new message from the server to the client.</li>
+<li>The client does the same: it sends a chunked body with the request in which each chunk is a message from the
+client to the server.</li>
+</ul>
+
+<p>In other words, a single request/response is used to bootstrap communications. Both the request and the response
+have effectively infinite chunked bodies where each chunk represents a message.</p>
+
+<p><code>RawHttpDuplex</code> sends a single extension parameter to idenfity text
+messages: <code>Content-Type: text/plain</code> (notice that each chunk may contain &ldquo;extensions&rdquo;).</p>
+
+<p>If the chunk does not contain this extension, then it is considered to be a binary message.</p>
+
+<p>Text messages may also contain the <code>Charset: &lt;charset&gt;</code> (e.g. <code>Charset: US-ASCII</code>) extension parameter to provide a
+charset for the message. By default, <code>UTF-8</code> is used.</p>
+
+<p>Each side of a connection pings the other every 5 seconds, by default, to avoid the TCP socket timing out.
+To use a different ping period, use the {@link RawHttpDuplex#RawHttpDuplex(TcpRawHttpClient, Duration)} constructor.</p>
+
+<h2>Demo</h2>
+
+<p>As is mandatory for duplex communication implementations,
+a <a href="https://github.com/renatoathaydes/rawhttp/blob/master/rawhttp-duplex/src/test/kotlin/chat-example.kt">Chat Demo application</a>
+was written in Kotlin to demonstrate usage of this library.</p>
+
+<p>The video below shows it in action:</p>
+
+<div class="video-container">
+<iframe alt="rawhttp-duplex chat app in action" frameborder="0" allowfullscreen
+ src="https://www.youtube.com/embed/_h3a5yodVgM" class="video"></iframe>
+</div>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>

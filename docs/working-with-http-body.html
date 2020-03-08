@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><p>RawHTTP makes it easy to replace the body of a HTTP message, changing the relevant headers as appropriate.</p>
+
+<h3>Set body from String</h3>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.body.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span>);
+RawHttpRequest <span style="color:#268bd2">requestWithBody</span> <span style="color:#719e07">=</span> request.withBody(
+    <span style="color:#719e07">new</span> StringBody(<span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span>, <span style="color:#2aa198">&#34;text/plain&#34;</span>));
+
+System.out.println(requestWithBody.eagerly());
+</pre>
+<p>Prints:</p>
+<pre style="color:#93a1a1;background-color:#002b36">POST /hello HTTP/1.1
+Host: example.com
+Content-Type: text/plain
+Content-Length: 13
+
+Hello RawHTTP
+</pre>
+<h3>Set body from File</h3>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.body.<span style="color:#719e07">*</span>;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span>);
+RawHttpRequest <span style="color:#268bd2">requestWithBody</span> <span style="color:#719e07">=</span> request.withBody(
+    <span style="color:#719e07">new</span> FileBody(<span style="color:#719e07">new</span> File(<span style="color:#2aa198">&#34;hello.request&#34;</span>), <span style="color:#2aa198">&#34;text/plain&#34;</span>));
+</pre>
+<h3>Set body from byte array</h3>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.body.<span style="color:#719e07">*</span>;
+
+<span style="color:#dc322f">byte</span>[] <span style="color:#268bd2">bytes</span> <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span>.getBytes();
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span>);
+RawHttpRequest <span style="color:#268bd2">requestWithBody</span> <span style="color:#719e07">=</span> request.withBody(
+    <span style="color:#719e07">new</span> BytesBody(bytes, <span style="color:#2aa198">&#34;text/plain&#34;</span>));
+</pre>
+<h3>Set body from InputStream (chunked)</h3>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.body.<span style="color:#719e07">*</span>;
+
+InputStream <span style="color:#268bd2">stream</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ByteArrayInputStream(
+    <span style="color:#2aa198">&#34;Hello RawHTTTP&#34;</span>.getBytes());
+<span style="color:#dc322f">int</span> <span style="color:#268bd2">chunkSize</span> <span style="color:#719e07">=</span> 4;
+
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span>);
+RawHttpRequest <span style="color:#268bd2">requestWithBody</span> <span style="color:#719e07">=</span> request.withBody(
+    <span style="color:#719e07">new</span> ChunkedBody(stream, <span style="color:#2aa198">&#34;text/plain&#34;</span>, chunkSize));
+</pre>
+<p>The <code>InputStream</code> is read lazily as the body of the HTTP message is consumed by a reader.</p>
+
+<p>The header <code>Transfer-Encoding: chunked</code> is set, and the body is encoded accordingly.</p>
+
+<hr>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>

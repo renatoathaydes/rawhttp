@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#39424E">
+    <link rel="shortcut icon" href="/rawhttp/sam.ico" id="favicon">
+    <title>RawHTTP</title>
+    <link rel="stylesheet" href="/rawhttp/css/styles.css">
+</head>
+<body>
+<div class="main-body"><nav class="main-nav">
+    <a href="/rawhttp/index.html">Home</a>
+    <a href="/rawhttp/docs/index.html">Docs</a>
+    <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
+    <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
+</nav><p>The <code>rawhttp-cli</code> module is a CLI (command-line interface) that can send HTTP requests and serve
+local files via a RawHTTP server.</p>
+
+<h2>Download</h2>
+<pre style="color:#93a1a1;background-color:#002b36">curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.1.1/rawhttp-cli-1.1.1-all.jar -o rawhttp.jar
+</pre>
+<h2>Usage</h2>
+
+<p>Use <code>rawhttp send</code> to send HTTP requests.</p>
+
+<p>Use <code>rawhttp serve</code> to serve a local directory via HTTP.</p>
+
+<p>To see the help screen, run <code>rawhttp help</code>.</p>
+
+<hr>
+
+<h3>Using the <code>send</code> command</h3>
+
+<p>The <code>send</code> command has the purpose of sending out HTTP requests.
+It prints the full HTTP response (including status line, headers, body) to <code>stdout</code>.</p>
+
+<p>Usage:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send [options]
+</pre>
+<p>Options:</p>
+<pre style="color:#93a1a1;background-color:#002b36">* -f --file &lt;file&gt;
+      <span style="color:#b58900">read</span> request from a file
+* -t --text &lt;request-text&gt;
+      <span style="color:#b58900">read</span> request as text
+* -p --print-body-only
+      print response body only
+* -l --log-request
+      log the request
+* -b --body-text &lt;text&gt;
+      replace message body with the text
+* -g --body-file &lt;text&gt;
+      replace message body with the file
+</pre>
+<h4>Send a HTTP request from a file</h4>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send -f my-request.req
+</pre>
+<p>Running this command will print the full HTTP response to stdout.</p>
+
+<p>You can send the HTTP response to another file:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send my-request.req &gt; my-response.res
+</pre>
+<h4>Send a HTTP request from text</h4>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send -t <span style="color:#2aa198">&#34;
+</span><span style="color:#2aa198">GET http://example.com/hello
+</span><span style="color:#2aa198">User-Agent: my-client
+</span><span style="color:#2aa198">Accept: text/html&#34;</span>
+</pre>
+<h4>Send a HTTP request from stdin</h4>
+
+<p>If neither the <code>-t</code> nor the <code>-f</code> options are used, the request is read from <code>stdin</code>.</p>
+
+<p>Just start typing:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send
+&gt; GET http://example.com/hello
+&gt; User-Agent: my-client
+&gt; Accept: text/html
+&gt;
+</pre>
+<p>You can also pipe the request from another command:</p>
+<pre style="color:#93a1a1;background-color:#002b36">cat my-request.req | rawhttp send
+</pre>
+<h4>Use a file as message body</h4>
+
+<p>Assuming a JSON file called <code>body.json</code> exists in the working directory:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send --body-file body.json -t <span style="color:#2aa198">&#34;
+</span><span style="color:#2aa198">POST http://example.com/hello
+</span><span style="color:#2aa198">Accept: application/json
+</span><span style="color:#2aa198">Content-Type: application/json
+</span><span style="color:#2aa198">&#34;</span>
+</pre>
+<hr>
+
+<h3>Using the <code>serve</code> command</h3>
+
+<p>The <code>serve</code> command starts up a HTTP server to serve the contents of a directory.</p>
+
+<p>Paths may match a file name with or without its extension.
+If more than one file exists with the same name but different extensions, the server attempts
+to use the request <code>Accept</code> header to disambiguate.</p>
+
+<p>Usage:</p>
+
+<p><code>rawhttp serve &lt;dir&gt; [options]</code></p>
+
+<p>Options:</p>
+<pre style="color:#93a1a1;background-color:#002b36">* -l --log-requests
+      log requests received by the server
+* -m --media-types &lt;file&gt;
+      use custom Media-Type mappings
+* -p --port &lt;port-number&gt;
+      the port to listen on
+</pre>
+<h4>Serve files from a local directory</h4>
+
+<p>To serve the local directory <code>public/</code> on the default port:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/
+</pre>
+<p>Enable a request logger (prints to stdout):</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ -l
+</pre>
+<p>Use a different port, say 8082:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ -p <span style="color:#2aa198">8082</span>
+</pre>
+<h4>Provide custom media-type mapping</h4>
+
+<p>The CLI HTTP Server, by default, maps only a few common file extensions to a proper
+<a href="http://www.iana.org/assignments/media-types/media-types.xhtml">Media Type</a>.</p>
+
+<p>To override or just provide extra mappings, start the server with a <code>--media-types</code> flag:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ --media-types my-media-types.properties
+</pre>
+<p>A properties file with mappings should contain entries where the key is a file extension,
+ and the value a media-type. It might look something like this:</p>
+<pre style="color:#93a1a1;background-color:#002b36">sql: application/sql
+soap+xml: application/soap+xml
+ac3: audio/ac3
+3gpp: video/3gpp
+mpeg: video/mpeg4-generic
+</pre>
+<p>Unmapped file extensions result in the <code>Content-Type</code> header being set to <code>application/octet-stream</code>.</p>
+
+<hr>
+</div>
+<footer class="footer">
+    <div>
+        <small>
+            RawHTTP is a project by <a href="https://github.com/renatoathaydes">Renato Athaydes</a>
+        </small>
+    </div>
+    <div>
+        <small>Sources on <a href="https://github.com/renatoathaydes/rawhttp">GitHub</a></small>
+    </div>
+</footer>
+</body>
+</html>
