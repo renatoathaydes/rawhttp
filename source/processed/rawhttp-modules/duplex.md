@@ -1,7 +1,8 @@
 {{ define title "RawHTTP" }}
 {{ define moduleName "RawHTTP Duplex" }}
 {{ define path baseURL + "/rawhttp-modules/duplex.html" }}
-{{ include fragments/_header.html }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
 
@@ -12,7 +13,7 @@ while the `accept` methods should be used within a HTTP server to handle request
 
 Example Kotlin code on the server:
 
-{{< highlight kotlin >}}
+```kotlin
 import rawhttp.core.*
 import com.athaydes.rawhttp.duplex.*
 import rawhttp.core.server.TcpRawHttpServer;
@@ -35,13 +36,13 @@ server.start { request ->
         }
     }))
 }
-{{< / highlight >}}
+```
 
 <hr/>
 
 Example Kotlin code on the client:
 
-{{< highlight kotlin >}}
+```kotlin
 import rawhttp.core.*
 import com.athaydes.rawhttp.duplex.*
 import rawhttp.core.server.TcpRawHttpServer;
@@ -52,7 +53,7 @@ val duplex = RawHttpDuplex()
 duplex.connect(http.parseRequest("POST http://localhost:8082/connect"), { sender ->
     object : MessageHandler { /* same API as on the server */ }
 }
-{{< / highlight >}}
+```
 
 ## How duplex works
 
@@ -89,4 +90,4 @@ The video below shows it in action:
 <iframe width="600" height="400" alt="rawhttp-duplex chat app in action"
  src="https://www.youtube.com/embed/_h3a5yodVgM"></iframe>
 
-{{ include fragments/_footer.html }}
+{{ include /processed/fragments/_footer.html }}

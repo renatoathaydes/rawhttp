@@ -25,6 +25,7 @@ a.big-link {
 
 .title {
     font-size: 3em;
+    margin-top: 2em;
 }
 
 .sub-title {
@@ -61,12 +62,17 @@ a.big-link {
   }
 }
 
+.main-nav > a {
+  margin-right: 0.3em;
+}
+
 pre {
   padding: 1em;
+  overflow: auto;
 }
 
 .main-body {
-  min-height: 100em;
+  min-height: 30em;
 }
 
 .footer {

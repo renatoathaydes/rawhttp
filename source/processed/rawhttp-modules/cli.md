@@ -1,7 +1,8 @@
 {{ define title "RawHTTP" }}
 {{ define moduleName "RawHTTP CLI" }}
 {{ define path baseURL + "/rawhttp-modules/cli.html" }}
-{{ include fragments/_header.html }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 The `rawhttp-cli` module is a CLI (command-line interface) that can send HTTP requests and serve
 local files via a RawHTTP server.
@@ -35,7 +36,7 @@ rawhttp send [options]
 
 Options:
 
-{{< highlight shell >}}
+```bash
 * -f --file <file>
       read request from a file
 * -t --text <request-text>
@@ -48,30 +49,30 @@ Options:
       replace message body with the text
 * -g --body-file <text>
       replace message body with the file
-{{< / highlight >}}
+```
 
 #### Send a HTTP request from a file
 
-{{< highlight bash >}}
+```bash
 rawhttp send -f my-request.req
-{{< / highlight >}}
+```
 
 Running this command will print the full HTTP response to stdout.
 
 You can send the HTTP response to another file:
 
-{{< highlight bash >}}
+```bash
 rawhttp send my-request.req > my-response.res
-{{< / highlight >}}
+```
 
 #### Send a HTTP request from text
 
-{{< highlight bash >}}
+```bash
 rawhttp send -t "
 GET http://example.com/hello
 User-Agent: my-client
 Accept: text/html"
-{{< / highlight >}}
+```
 
 #### Send a HTTP request from stdin
 
@@ -79,31 +80,31 @@ If neither the `-t` nor the `-f` options are used, the request is read from `std
 
 Just start typing:
 
-{{< highlight bash >}}
+```bash
 rawhttp send
 > GET http://example.com/hello
 > User-Agent: my-client
 > Accept: text/html
 >
-{{< / highlight >}}
+```
 
 You can also pipe the request from another command:
 
-{{< highlight bash >}}
+```bash
 cat my-request.req | rawhttp send
-{{< / highlight >}}
+```
 
 #### Use a file as message body
 
 Assuming a JSON file called `body.json` exists in the working directory:
 
-{{< highlight bash >}}
+```bash
 rawhttp send --body-file body.json -t "
 POST http://example.com/hello
 Accept: application/json
 Content-Type: application/json
 "
-{{< / highlight >}}
+```
 
 <hr>
 
@@ -121,34 +122,34 @@ Usage:
 
 Options:
 
-{{< highlight shell >}}
+```bash
 * -l --log-requests
       log requests received by the server
 * -m --media-types <file>
       use custom Media-Type mappings
 * -p --port <port-number>
       the port to listen on
-{{< / highlight >}}
+```
 
 #### Serve files from a local directory
 
 To serve the local directory `public/` on the default port:
 
-{{< highlight bash >}}
+```bash
 rawhttp serve public/
-{{< / highlight >}}
+```
 
 Enable a request logger (prints to stdout):
 
-{{< highlight bash >}}
+```bash
 rawhttp serve public/ -l
-{{< / highlight >}}
+```
 
 Use a different port, say 8082:
 
-{{< highlight bash >}}
+```bash
 rawhttp serve public/ -p 8082
-{{< / highlight >}}
+```
 
 #### Provide custom media-type mapping
 
@@ -157,25 +158,23 @@ The CLI HTTP Server, by default, maps only a few common file extensions to a pro
 
 To override or just provide extra mappings, start the server with a `--media-types` flag:
 
-{{< highlight bash >}}
+```bash
 rawhttp serve public/ --media-types my-media-types.properties
-{{< / highlight >}}
+```
 
 A properties file with mappings should contain entries where the key is a file extension,
  and the value a media-type. It might look something like this:
 
-{{< highlight properties >}}
+```properties
 sql: application/sql
 soap+xml: application/soap+xml
 ac3: audio/ac3
 3gpp: video/3gpp
 mpeg: video/mpeg4-generic
-{{< / highlight >}}
+```
 
 Unmapped file extensions result in the `Content-Type` header being set to `application/octet-stream`.
 
 <hr>
 
-[Modules](/rawhttp/rawhttp-modules) [HTTP Components](/rawhttp/rawhttp-modules/http-components)
-
-{{ include fragments/_footer.html }}
+{{ include /processed/fragments/_footer.html }}

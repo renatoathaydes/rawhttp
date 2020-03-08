@@ -1,15 +1,15 @@
----
-title: "HTTP Server"
-date: 2018-05-10T14:02:44+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "HTTP Server" }}
+{{ define path baseURL + "/docs/http-server.html" }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 ### Using a HTTP server
 
 Even though you can write a simple HTTP server using only a `ServerSocket` and `RawHttp` to parse requests and
 responses, RawHTTP also offers a simple server implementation that makes things easier:
 
-{{< highlight java >}}
+```java
 import rawhttp.core.*;
 import rawhttp.core.server.*;
 
@@ -20,13 +20,13 @@ server.start(request -> {
     RawHttpResponse<?> response = http.parseResponse(...);
     return Optional.of(response);
 });
-{{< / highlight >}}
+```
 
 Stop the server once you don't need it anymore:
 
-{{< highlight java >}}
+```java
 server.stop();
-{{< / highlight >}}
+```
 
 ### Configuring a HTTP server
 
@@ -34,7 +34,7 @@ As with the HTTP client, to configure a HTTP server, pass the options into the c
 
 An example implementation of `TcpRawHttpServer.TcpRawHttpServerOptions`:
 
-{{< highlight java >}}
+```java
 class ExampleTcpRawHttpServerOptions implements TcpRawHttpServer.TcpRawHttpServerOptions {
 
     @Override
@@ -73,7 +73,7 @@ class ExampleTcpRawHttpServerOptions implements TcpRawHttpServer.TcpRawHttpServe
     public void close() throws IOException {
     }
 }
-{{< / highlight >}}
+```
 
 The default options used by the server creates an unlimited, cached Thread pool to serve requests
 and automatically inserts a `Server` and `Date` headers to all responses by implementing
@@ -81,4 +81,4 @@ the `autoHeadersSupplier()` method. If you provide your own options, this behavi
 
 <hr>
 
-[Index](/rawhttp/docs)
+{{ include /processed/fragments/_footer.html }}

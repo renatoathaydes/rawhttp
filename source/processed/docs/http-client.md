@@ -1,14 +1,14 @@
----
-title: "HTTP Client"
-date: 2018-05-10T14:02:44+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "HTTP Client" }}
+{{ define path baseURL + "/docs/http-client.html" }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 ### Using a HTTP client
 
 To make it easier to send HTTP requests, you can use a `TcpRawHttpClient`:
 
-{{< highlight java >}}
+```java
 import rawhttp.core.*;
 import rawhttp.core.client.*;
 
@@ -16,20 +16,20 @@ TcpRawHttpClient client = new TcpRawHttpClient();
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest("...");
 RawHttpResponse<?> response = client.send(request);
-{{< / highlight >}}
+```
 
 The client keeps connections alive if possible, so after you're done with it, close it:
 
-{{< highlight java >}}
+```java
 client.close();
-{{< / highlight >}}
+```
 
 ### Configuring a HTTP client
 
 To configure a HTTP client, use the constructor that takes an instance of
 `TcpRawHttpClient.TcpRawHttpClientOptions`:
 
-{{< highlight java >}}
+```java
 import rawhttp.core.client.*;
 
 TcpRawHttpClient client = new TcpRawHttpClient(new TcpRawHttpClient.TcpRawHttpClientOptions() {
@@ -50,12 +50,12 @@ TcpRawHttpClient client = new TcpRawHttpClient(new TcpRawHttpClient.TcpRawHttpCl
         // TODO the client was closed, perform cleanup
     }
 });
-{{< / highlight >}}
+```
 
 Example implementation of `TcpRawHttpClientOptions` which only allows HTTPS connections
 and always forces HTTP responses to be consumed fully, including its body, by calling `response.eagerly()`:
 
-{{< highlight java >}}
+```java
 class SafeHttpClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions {
     @Override
     public Socket getSocket(URI uri) {
@@ -82,8 +82,8 @@ class SafeHttpClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions 
         // TODO the client was closed, perform cleanup
     }
 }
-{{< / highlight >}}
+```
 
 <hr>
 
-[Index](/rawhttp/docs) [Next: HTTP Server](/rawhttp/docs/http-server)
+{{ include /processed/fragments/_footer.html }}

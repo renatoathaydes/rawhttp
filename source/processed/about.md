@@ -1,3 +1,9 @@
+{{ define title "RawHTTP" }}
+{{ define moduleName "About" }}
+{{ define path baseURL + "/about.html" }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
+
 # About RawHTTP
 
 ## Motivation
@@ -70,24 +76,24 @@ Well, just use [Gson](https://github.com/google/gson) or
 your favourite XML parser to convert the POJO into bytes, put those bytes into a HTTP response,
 then write that to a `Socket`:
 
-{{< highlight java >}}
+```java
 RawHttp http = new RawHttp();
 RawHttpResponse<?> response = http.parseResponse("200 OK");
 response.withBody(
     new BytesBody(bytes, "application/json")
 ).writeTo(socket);
-{{< / highlight >}}
+```
 
 Need to send a `GET` request to fetch some JSON from your API?
 
-{{< highlight java >}}
+```java
 RawHttp http = new RawHttp();
 RawHttpRequest request = http.parseRequest(
     "GET https://example.com/my-resource/123\n" +
     "Accept: application/json");
 RawHttpResponse<?> response =
     new TcpRawHttpClient().send(request);
-{{< / highlight >}}
+```
 
 You can even copy-paste a sample HTTP request from the API docs and send it out as-is.
 
@@ -97,7 +103,8 @@ customized.
 All objects are immutable, so mutator methods always return a new object rather than change the receiver.
 This is done very efficiently, so performance is not compromised.
 
-Check [RawHTTP in 5 minutes](/rawhttp/in-5-minutes) for a quick overview, or head to the [documentation](/rawhttp/docs) for more details.
+Check [RawHTTP in 5 minutes]({{eval baseURL}}/in-5-minutes.html) for a quick overview, or head to the 
+[documentation]({{eval baseURL}}/docs/index.html) for more details.
 
 ## Source code
 
@@ -106,3 +113,5 @@ RawHTTP is on [GitHub](https://github.com/renatoathaydes/rawhttp).
 ## License
 
 [Apache 2.0](https://github.com/renatoathaydes/rawhttp/blob/master/LICENSE.txt)
+
+{{ include /processed/fragments/_footer.html }}

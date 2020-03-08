@@ -1,5 +1,8 @@
 {{ define title "RawHTTP" }}
+{{ define moduleName "RawHTTP in 5 minutes" }}
+{{ define path baseURL + "/in-5-minutes.html" }}
 {{ include fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 # RawHTTP in 5 minutes
 

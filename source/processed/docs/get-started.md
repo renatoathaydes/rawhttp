@@ -2,6 +2,7 @@
 {{ define moduleName "Get Started" }}
 {{ define path baseURL + "/docs/get-started.html" }}
 {{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 ## Add a dependency on RawHTTP
 

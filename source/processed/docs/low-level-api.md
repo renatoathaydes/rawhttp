@@ -1,12 +1,12 @@
----
-title: "Low level API"
-date: 2018-05-10T14:25:00+02:00
-draft: false
----
+{{ define title "RawHTTP" }}
+{{ define moduleName "Low Level API" }}
+{{ define path baseURL + "/docs/low-level-api.html" }}
+{{ include /processed/fragments/_header.html }}
+{{ include /processed/fragments/_nav.html }}
 
 ### Send a GET request
 
-{{< highlight java >}}
+```java
 import rawhttp.core.*;
 import java.net.Socket;
 
@@ -19,11 +19,11 @@ RawHttpRequest request = http.parseRequest(
 
 Socket socket = new Socket("headers.jsontest.com", 80);
 request.writeTo(socket.getOutputStream());
-{{< / highlight >}}
+```
 
 ### Send a POST request with a body
 
-{{< highlight java >}}
+```java
 import rawhttp.core.*;
 import java.net.Socket;
 
@@ -41,13 +41,13 @@ RawHttpRequest request = http.parseRequest(
 
 Socket socket = new Socket("httpbin.org", 80);
 request.writeTo(socket.getOutputStream());
-{{< / highlight >}}
+```
 
 ### Read a response
 
 ... continues from the previous example:
 
-{{< highlight java >}}
+```java
 RawHttpResponse<?> response = http.parseResponse(socket.getInputStream()).eagerly();
 System.out.println("RESPONSE:\n" + response);
 
@@ -56,13 +56,13 @@ assertTrue(response.getBody().isPresent());
 
 String textBody = response.getBody().get().decodeBodyToString(UTF_8);
 assertTrue(textBody.contains(jsonBody.replaceAll(" ", "")));
-{{< / highlight >}}
+```
 
 ### Check headers (in both request or response)
 
 ... continues from the previous examples:
 
-{{< highlight java >}}
+```java
 assertEquals("application/json",
     request.getHeaders().getFirst("Accept").orElse(""));
 
@@ -74,11 +74,11 @@ assertEquals(asList("application/json"),
 
 assertEquals(asList("Host", "User-Agent", "Content-Length", "Content-Type", "Accept"),
     request.getHeaders().getHeaderNames());
-{{< / highlight >}}
+```
 
 ### Listen for HTTP requests (as a server)
 
-{{< highlight java >}}
+```java
 import rawhttp.core.*;
 import java.net.ServerSocket;
 
@@ -86,13 +86,13 @@ ServerSocket serverSocket = new ServerSocket(8082);
 RawHttp http = new RawHttp();
 Socket client = serverSocket.accept();
 RawHttpRequest request = http.parseRequest(client.getInputStream());
-{{< / highlight >}}
+```
 
 ### Respond to a HTTP request
 
 ... continues from the previous example:
 
-{{< highlight java >}}
+```java
 import java.time.*;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
@@ -107,8 +107,8 @@ RawHttpResponse<?> response = http.parseResponse(
     "\r\n" +
     body);
 response.writeTo(client.getOutputStream());
-{{< / highlight >}}
+```
 
 <hr>
 
-[Index](/rawhttp/docs) [Next: Working with message body](/rawhttp/docs/working-with-http-body)
+{{ include /processed/fragments/_footer.html }}
