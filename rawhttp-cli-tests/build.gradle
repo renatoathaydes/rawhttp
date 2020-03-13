@@ -23,7 +23,8 @@ test {
 }
 
 dependencies {
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    testCompile 'junit:junit:4.12'
-    testCompile project(':rawhttp-cli')
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    testImplementation 'junit:junit:4.12'
+    testImplementation project(':rawhttp-core')
+    testImplementation project(':rawhttp-cli')
 }
