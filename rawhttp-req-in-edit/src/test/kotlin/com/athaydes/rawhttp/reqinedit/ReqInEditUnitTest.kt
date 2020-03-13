@@ -8,6 +8,7 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import org.junit.Test
 import rawhttp.core.HttpVersion
+import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpHeaders
 import rawhttp.core.RawHttpRequest
 import rawhttp.core.RawHttpResponse
@@ -19,11 +20,15 @@ import java.net.URI
 
 class ReqInEditUnitTest {
 
+    val http = RawHttp()
+
     private val fakeResponseStorage = ResponseStorage { _, _ ->
         throw UnsupportedOperationException("cannot store response")
     }
 
     private val fakeTestsReporter = HttpTestsReporter { }
+
+    private val fakeFileReader = FileReader { throw UnsupportedOperationException() }
 
     @Test
     fun canRunSingleRequest() {
@@ -53,10 +58,9 @@ class ReqInEditUnitTest {
                 null, null
         ).eagerly()
 
-        val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, null)),
-                httpEnv, fakeResponseStorage)
+        val unit = ReqInEditUnit(httpEnv, http, fakeClient)
 
-        unit.runWith(fakeClient, fakeTestsReporter)
+        unit.run(listOf(ReqInEditEntry(request.toString(), emptyList(), null, null)))
 
         receivedRequests shouldEqual listOf(request)
     }
@@ -97,15 +101,14 @@ class ReqInEditUnitTest {
             });
         """.trimIndent()
 
-        val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, script, null)),
-                httpEnv, fakeResponseStorage)
-
         val results = mutableListOf<HttpTestResult>()
         val testsReporter = HttpTestsReporter { result -> results.add(result) }
 
+        val unit = ReqInEditUnit(httpEnv, http, fakeClient, fakeFileReader, fakeResponseStorage, testsReporter)
+
         var beforeTestsTime = System.currentTimeMillis()
 
-        unit.runWith(fakeClient, testsReporter)
+        unit.run(listOf(ReqInEditEntry(request.toString(), emptyList(), StringOrFile.ofString(script), null)))
 
         results.size shouldBe 3
 
@@ -151,16 +154,9 @@ class ReqInEditUnitTest {
 
         val fakeClient = RawHttpClient { response }
 
-        val request = RawHttpRequest(
-                RequestLine("GET", URI.create("http://hello.com/foo/bar"), HttpVersion.HTTP_1_1),
-                RawHttpHeaders.empty(),
-                null, null
-        ).eagerly()
+        val unit = ReqInEditUnit(httpEnv, http, fakeClient, fakeFileReader, responseStorage, fakeTestsReporter)
 
-        val unit = ReqInEditUnit(listOf(ReqInEditEntry(request, null, "my-response.http")),
-                httpEnv, responseStorage)
-
-        unit.runWith(fakeClient, fakeTestsReporter)
+        unit.run(listOf(ReqInEditEntry("GET http://hello.com/", emptyList(), null, "my-response.http")))
 
         storedResponse shouldEqual response
         storedResponseRef shouldEqual "my-response.http"

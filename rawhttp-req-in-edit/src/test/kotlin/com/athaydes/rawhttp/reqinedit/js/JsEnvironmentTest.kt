@@ -2,6 +2,7 @@ package com.athaydes.rawhttp.reqinedit.js
 
 import com.athaydes.rawhttp.reqinedit.HttpTestResult
 import com.athaydes.rawhttp.reqinedit.HttpTestsReporter
+import com.athaydes.rawhttp.reqinedit.ReqInEditParserTest
 import io.kotlintest.matchers.between
 import io.kotlintest.matchers.match
 import io.kotlintest.matchers.should
@@ -9,6 +10,7 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
 import rawhttp.core.RawHttp
+import java.io.File
 import javax.script.ScriptException
 
 class JsEnvironmentTest {
@@ -135,4 +137,17 @@ class JsEnvironmentTest {
         jsEnv.eval("response.body.foo") shouldBe "bar"
         jsEnv.eval("response.body.cool") shouldBe true
     }
+
+    @Test
+    fun canLoadRealJsEnvironment() {
+        val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
+        val prodEnv = JsEnvironment.loadEnvironment(File(httpFile), "prod")
+        prodEnv.renderTemplate("{{ host }}") shouldBe "myserver.com"
+        prodEnv.renderTemplate("{{ secret }}") shouldBe "123456"
+
+        val testEnv = JsEnvironment.loadEnvironment(File(httpFile), "test")
+        testEnv.renderTemplate("{{ host }}") shouldBe "localhost:8080"
+        testEnv.renderTemplate("{{ secret }}") shouldBe "password"
+    }
+
 }

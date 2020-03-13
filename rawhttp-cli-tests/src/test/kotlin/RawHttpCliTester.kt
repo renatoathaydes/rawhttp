@@ -341,12 +341,11 @@ abstract class RawHttpCliTester {
                 assertTrue(get(1), get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200")))
                 assertThat(get(2), equalTo("HTTP/1.1 200 OK"))
                 assertTrue(get(3), get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200")))
-                assertTrue(get(4), get(4).matches(Regex("TEST FAILED \\(\\d+ms\\): body is as expected")))
+                assertTrue(get(4), get(4).matches(Regex("TEST OK \\(\\d+ms\\): body is as expected")))
                 assertEquals(get(5), "")
             }
 
-            // FIXME currently, req-in-edit is not resolving variables in the body
-            assertThat(handle.err, equalTo("Unexpected body: Did not receive anything\n"))
+            assertThat(handle.err, equalTo(""))
         }
 
         fun assertNoSysErrOutput(handle: ProcessHandle) {

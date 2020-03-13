@@ -1,13 +1,11 @@
 package com.athaydes.rawhttp.reqinedit
 
+import io.kotlintest.matchers.beEmpty
+import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import org.junit.Test
-import rawhttp.core.RawHttpResponse
-import java.io.File
 import java.io.FileNotFoundException
-import java.net.URI
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class ReqInEditParserTest {
 
@@ -17,19 +15,18 @@ class ReqInEditParserTest {
 
         val fileLines = listOf("http://example.org")
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 1
 
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org")
-            headers.headerNames shouldBe listOf("Host")
-            headers["Host"] shouldBe listOf("example.org")
-            body.isPresent shouldBe false
+        entries[0].run {
+            request shouldBe """
+                GET http://example.org
+            """.trimIndent()
+            requestBody should beEmpty()
+            script.isPresent shouldBe false
+            responseRef.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -59,37 +56,45 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 3
 
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org/something")
-            headers.headerNames shouldBe listOf("Host", "Accept")
-            body.isPresent shouldBe false
+        entries[0].run {
+            request shouldBe """
+                GET /something HTTP/1.1
+                Host: example.org
+                Accept: text/html
+                
+            """.trimIndent()
+            requestBody should beEmpty()
+            responseRef.isPresent shouldBe false
+            script.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe false
 
-        entries[1].request.run {
-            method shouldBe "POST"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Content-Type", "Content-Length")
-            body.isPresent shouldBe true
-            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
-                    "{\"example\": \"value\", \"count\": 1}"
+        entries[1].run {
+            request shouldBe """
+                POST /resource/some-id HTTP/1.1
+                Host: example.org
+                Content-Type: application/json
+                
+            """.trimIndent()
+            requestBody shouldBe listOf(StringOrFile.ofString("{\"example\": \"value\", \"count\": 1}"))
+            responseRef.isPresent shouldBe false
+            script.isPresent shouldBe false
         }
-        entries[1].script.isPresent shouldBe false
 
-        entries[2].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            headers.headerNames shouldBe listOf("Host", "Accept")
-            body.isPresent shouldBe false
+        entries[2].run {
+            request shouldBe """
+                GET /resource/some-id HTTP/1.1
+                Host: example.org
+                Accept: application/json
+                
+            """.trimIndent()
+            requestBody should beEmpty()
+            responseRef.isPresent shouldBe false
+            script.isPresent shouldBe false
         }
-        entries[2].script.isPresent shouldBe false
     }
 
     @Test
@@ -108,37 +113,36 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 2
 
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org")
-            headers.headerNames shouldBe listOf("Host")
-            headers["Host"] shouldBe listOf("example.org")
-            body.isPresent shouldBe false
+        entries[0].run {
+            request shouldBe """
+                GET http://example.org
+                
+            """.trimIndent()
+            requestBody should beEmpty()
+            script.isPresent shouldBe false
+            responseRef.isPresent shouldBe true
+            responseRef.get() shouldBe "first-response"
         }
-        entries[0].script.isPresent shouldBe false
-        entries[0].responseRef.isPresent shouldBe true
-        entries[0].responseRef.get() shouldBe "first-response"
 
-        entries[1].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://another.com")
-            headers.headerNames shouldBe listOf("Host")
-            headers["Host"] shouldBe listOf("another.com")
-            body.isPresent shouldBe false
+        entries[1].run {
+            request shouldBe """
+                GET http://another.com
+                
+            """.trimIndent()
+            requestBody should beEmpty()
+            script.isPresent shouldBe false
+            responseRef.isPresent shouldBe true
+            responseRef.get() shouldBe "second-response"
         }
-        entries[1].script.isPresent shouldBe false
-        entries[1].responseRef.isPresent shouldBe true
-        entries[1].responseRef.get() shouldBe "second-response"
     }
 
     @Test
     fun canParseRequestWithFileBody() {
-        val parser = ReqInEditParser(object : FileReader {
+        object : FileReader {
             override fun read(path: Path?): ByteArray {
                 if (path?.toString() == "./simple/body.json") return """
             {
@@ -146,7 +150,9 @@ class ReqInEditParserTest {
             }""".trimIndent().toByteArray()
                 else throw FileNotFoundException(path?.toString() ?: "null")
             }
-        })
+        }
+
+        val parser = ReqInEditParser()
 
         val fileLines = listOf(
                 "POST /resource/some-id HTTP/1.1",
@@ -159,31 +165,26 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 1
 
-        entries[0].request.run {
-            method shouldBe "POST"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Content-Type", "Content-Length")
-            body.isPresent shouldBe true
-            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
-                    "{\n  \"hello\": true\n}"
+        entries[0].run {
+            request shouldBe """
+                POST /resource/some-id HTTP/1.1
+                Host: example.org
+                Content-Type: application/json
+                
+            """.trimIndent()
+            requestBody shouldBe listOf(StringOrFile.ofFile("./simple/body.json"))
+            script.isPresent shouldBe false
+            responseRef.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe false
     }
 
     @Test
     fun canParseRequestWithFileMixedBody() {
-        val parser = ReqInEditParser(object : FileReader {
-            override fun read(path: Path?): ByteArray {
-                if (path.toString() == "./entries.json") return """  "file": true,""".toByteArray()
-                else throw FileNotFoundException(path?.toString() ?: "null")
-            }
-        })
+        val parser = ReqInEditParser()
 
         val fileLines = listOf(
                 "POST /resource/some-id HTTP/1.1",
@@ -198,114 +199,24 @@ class ReqInEditParserTest {
                 "   "
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 1
 
-        entries[0].request.run {
-            method shouldBe "POST"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Content-Type", "Content-Length")
-            body.isPresent shouldBe true
-            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe
-                    """{
-                        |  "file": true,
-                        |  "extra": "entry"
-                        |}""".trimMargin()
+        entries[0].run {
+            request shouldBe """
+                POST /resource/some-id HTTP/1.1
+                Host: example.org
+                Content-Type: application/json
+                
+            """.trimIndent()
+            requestBody shouldBe listOf(StringOrFile.ofString("{"),
+                    StringOrFile.ofFile("./entries.json"),
+                    StringOrFile.ofString("  \"extra\": \"entry\""),
+                    StringOrFile.ofString("}"))
+            script.isPresent shouldBe false
+            responseRef.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe false
-    }
-
-    @Test
-    fun canParseRequestWithEnvVarsMocked() {
-        val parser = ReqInEditParser()
-
-        val fileLines = listOf("http://{{host}}",
-                "Accept: {{ contentType }}",
-                "User-Agent: RawHTTP")
-
-        val httpEnv = object : HttpEnvironment {
-            override fun renderTemplate(line: String): String {
-                return line.replace("{{host}}", "example.org")
-                        .replace("{{ contentType }}", "application/json")
-            }
-
-            override fun runResponseHandler(responseHandler: String?,
-                                            response: RawHttpResponse<*>?,
-                                            reporter: HttpTestsReporter?) {
-                error("cannot run responseHandler")
-            }
-
-            override fun resolvePath(path: String) = Paths.get(path)
-        }
-
-        val unit = parser.parse(fileLines.stream(), httpEnv)
-        val entries = unit.entries
-
-        entries.size shouldBe 1
-
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org")
-            headers.headerNames shouldBe listOf("Accept", "User-Agent", "Host")
-            headers["Host"] shouldBe listOf("example.org")
-            headers["Accept"] shouldBe listOf("application/json")
-            headers["User-Agent"] shouldBe listOf("RawHTTP")
-            body.isPresent shouldBe false
-        }
-        entries[0].script.isPresent shouldBe false
-    }
-
-    @Test
-    fun canLoadRealJsEnvironment() {
-        val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
-        val prodEnv = ReqInEditParser.loadEnvironment(File(httpFile), "prod")
-        prodEnv.renderTemplate("{{ host }}") shouldBe "myserver.com"
-        prodEnv.renderTemplate("{{ secret }}") shouldBe "123456"
-
-        val testEnv = ReqInEditParser.loadEnvironment(File(httpFile), "test")
-        testEnv.renderTemplate("{{ host }}") shouldBe "localhost:8080"
-        testEnv.renderTemplate("{{ secret }}") shouldBe "password"
-    }
-
-    @Test
-    fun canParseRequestWithRealEnvironments() {
-        val httpFile = ReqInEditParserTest::class.java.getResource("http/get.http").file
-        val parser = ReqInEditParser()
-
-        val unit = parser.parse(File(httpFile), "prod")
-        val entries = unit.entries
-
-        entries.size shouldBe 1
-
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://myserver.com")
-            headers.headerNames shouldBe listOf("Accept", "Authorize", "Host")
-            headers["Host"] shouldBe listOf("myserver.com")
-            headers["Accept"] shouldBe listOf("*/*")
-            headers["Authorize"] shouldBe listOf("Bearer 123456")
-            body.isPresent shouldBe false
-        }
-        entries[0].script.isPresent shouldBe false
-
-        val unitTest = parser.parse(File(httpFile), "test")
-        val entriesTest = unitTest.entries
-
-        entriesTest.size shouldBe 1
-
-        entriesTest[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://localhost:8080")
-            headers.headerNames shouldBe listOf("Accept", "Authorize", "Host")
-            headers["Host"] shouldBe listOf("localhost")
-            headers["Accept"] shouldBe listOf("*/*")
-            headers["Authorize"] shouldBe listOf("Bearer password")
-            body.isPresent shouldBe false
-        }
-        entriesTest[0].script.isPresent shouldBe false
     }
 
     @Test
@@ -325,70 +236,53 @@ class ReqInEditParserTest {
                 ""
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
         entries.size shouldBe 1
 
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Accept")
-            body.isPresent shouldBe false
+        entries[0].run {
+            request shouldBe """
+                GET /resource/some-id HTTP/1.1
+                Host: example.org
+                Accept: application/json
+
+            """.trimIndent()
+            script.isPresent shouldBe true
+            script.get() shouldBe StringOrFile.ofString("\n    client.test(\"Request executed successfully\", function() {\n" +
+                    "        client.assert(response.status === 200, \"Response status is not 200\");\n" +
+                    "    });\n ")
+            responseRef.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe true
-        entries[0].script.get() shouldBe "\n    client.test(\"Request executed successfully\", function() {\n" +
-                "        client.assert(response.status === 200, \"Response status is not 200\");\n" +
-                "    });\n "
     }
 
     @Test
-    fun canParseRequestWithIncludedResponseHandler() {
+    fun canParseRequestWithIncludedFileResponseHandler() {
         val parser = ReqInEditParser()
-        val includedJs1 = ReqInEditParserTest::class.java.getResource("response_handler.js").file
-        val includedJs2 = ReqInEditParserTest::class.java.getResource("response_handler_2.js").file
+
         val fileLines = listOf(
                 "GET /resource/some-id HTTP/1.1",
                 "Host: example.org",
                 "Accept: application/json",
                 "",
-                "> $includedJs1",
-                "###",
-                "POST http://example.com/foo",
-                "",
-                "foo bar",
-                "> $includedJs2",
+                "> my_response_handler.js",
                 ""
         )
 
-        val unit = parser.parse(fileLines.stream())
-        val entries = unit.entries
+        val entries = parser.parse(fileLines.stream())
 
-        entries.size shouldBe 2
+        entries.size shouldBe 1
 
-        entries[0].request.run {
-            method shouldBe "GET"
-            uri shouldBe URI.create("http://example.org/resource/some-id")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Accept")
-            body.isPresent shouldBe false
+        entries[0].run {
+            request shouldBe """
+                GET /resource/some-id HTTP/1.1
+                Host: example.org
+                Accept: application/json
+
+            """.trimIndent()
+            script.isPresent shouldBe true
+            script.get() shouldBe StringOrFile.ofFile("my_response_handler.js")
+            responseRef.isPresent shouldBe false
         }
-        entries[0].script.isPresent shouldBe true
-        entries[0].script.get() shouldBe "client.global.set(\"auth\", response.body.token);"
-
-        entries[1].request.run {
-            method shouldBe "POST"
-            uri shouldBe URI.create("http://example.com/foo")
-            // the parser must add Content-Length as the message contains a body
-            headers.headerNames shouldBe listOf("Host", "Content-Length")
-            body.isPresent shouldBe true
-            body.get().decodeBodyToString(Charsets.UTF_8) shouldBe "foo bar"
-        }
-        entries[1].script.isPresent shouldBe true
-        entries[1].script.get() shouldBe "client.test(\"check\", function() {\n" +
-                "    client.assert(response.body == \"foo bar\");\n" +
-                "});"
     }
 
 }

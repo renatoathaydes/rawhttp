@@ -32,6 +32,18 @@ public final class JsEnvironment implements HttpEnvironment {
     @Nullable
     private final File projectDir;
 
+    /**
+     * Load the environment with the given name.
+     *
+     * @param httpFile the http file that requires an environment.
+     * @param name     of environment
+     * @return the environment
+     */
+    public static JsEnvironment loadEnvironment(@Nullable File httpFile,
+                                                @Nullable String name) {
+        return new JsEnvironment(httpFile == null ? null : httpFile.getParentFile(), name);
+    }
+
     public JsEnvironment() {
         this(null, null);
     }

@@ -45,6 +45,14 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
 
     public ReqInEditUnit(HttpEnvironment environment,
                          RawHttp http,
+                         RawHttpClient<?> httpClient) {
+        this(environment, http, httpClient,
+                new DefaultFileReader(), new FileResponseStorage(),
+                new DefaultTestReporter());
+    }
+
+    public ReqInEditUnit(HttpEnvironment environment,
+                         RawHttp http,
                          RawHttpClient<?> httpClient,
                          FileReader fileReader,
                          ResponseStorage responseStorage,
@@ -80,7 +88,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream(4096);
         entry.getRequestBody().stream().map(b -> b.match(
                 text -> environment.renderTemplate(text).getBytes(StandardCharsets.UTF_8),
-                file -> inputFile(file, environment))
+                this::inputFile)
         ).forEach(b -> {
             try {
                 buffer.write(b);
@@ -88,7 +96,12 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
                 // cannot occur - memory buffer
             }
         });
-        return http.parseRequest(requestTop).withBody(new BytesBody(buffer.toByteArray()));
+
+        RawHttpRequest request = http.parseRequest(requestTop);
+        if (buffer.size() > 0) {
+            request = request.withBody(new BytesBody(buffer.toByteArray()));
+        }
+        return request;
     }
 
     private void storeResponse(String responseRef,
@@ -100,17 +113,18 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         }
     }
 
-    private void runResponseScript(String script,
+    private void runResponseScript(StringOrFile script,
                                    RawHttpResponse<?> response,
                                    HttpTestsReporter testsReporter) {
         try {
-            environment.runResponseHandler(script, response, testsReporter);
+            String scriptText = script.match(text -> text, file -> new String(inputFile(file)));
+            environment.runResponseHandler(scriptText, response, testsReporter);
         } catch (IOException | ScriptException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private byte[] inputFile(String path, HttpEnvironment environment) {
+    private byte[] inputFile(String path) {
         try {
             return fileReader.read(environment.resolvePath(path));
         } catch (IOException e) {

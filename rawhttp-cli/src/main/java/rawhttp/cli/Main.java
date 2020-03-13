@@ -1,10 +1,11 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
+import com.athaydes.rawhttp.reqinedit.ReqInEditEntry;
 import com.athaydes.rawhttp.reqinedit.ReqInEditParser;
 import com.athaydes.rawhttp.reqinedit.ReqInEditUnit;
+import com.athaydes.rawhttp.reqinedit.js.JsEnvironment;
 import rawhttp.cli.client.RawHttpCliClient;
-import rawhttp.cli.client.RawHttpCliTestsReporter;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -20,6 +21,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -241,11 +243,12 @@ public class Main {
 
     private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
         ReqInEditParser parser = new ReqInEditParser();
+        JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
 
         try (RawHttpCliClient httpClient = new RawHttpCliClient(
-                httpFileOptions.logRequest, httpFileOptions.printResponseMode);
-             ReqInEditUnit unit = parser.parse(httpFileOptions.httpFile, httpFileOptions.envName)) {
-            unit.runWith(httpClient, new RawHttpCliTestsReporter());
+                httpFileOptions.logRequest, httpFileOptions.printResponseMode)) {
+            List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);
+            new ReqInEditUnit(env, HTTP, httpClient).run(entries);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }

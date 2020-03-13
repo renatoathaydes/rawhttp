@@ -1,7 +1,5 @@
 package com.athaydes.rawhttp.reqinedit;
 
-import com.athaydes.rawhttp.reqinedit.js.JsEnvironment;
-
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -146,7 +144,7 @@ public class ReqInEditParser {
                 }
             }
         }
-        return result;
+        return trimEmptyLinesAtEnd(result);
     }
 
     private StringOrFile responseHandler(String line, Iterator<String> iter) {
@@ -191,9 +189,11 @@ public class ReqInEditParser {
         return "";
     }
 
-    static JsEnvironment loadEnvironment(@Nullable File httpFile,
-                                         @Nullable String name) {
-        return new JsEnvironment(httpFile == null ? null : httpFile.getParentFile(), name);
+    private static List<StringOrFile> trimEmptyLinesAtEnd(List<StringOrFile> result) {
+        while (!result.isEmpty() && result.get(result.size() - 1).isBlank()) {
+            result.remove(result.size() - 1);
+        }
+        return result;
     }
 
     private static final class ScriptAndResponseRef {
