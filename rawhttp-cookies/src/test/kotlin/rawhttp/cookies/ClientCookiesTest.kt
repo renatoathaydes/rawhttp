@@ -15,7 +15,7 @@ import java.net.HttpCookie
 import java.time.Duration
 import java.util.Optional
 
-class RawHttpCookiesTest {
+class ClientCookiesTest {
 
     companion object {
         val HTTP = RawHttp()
