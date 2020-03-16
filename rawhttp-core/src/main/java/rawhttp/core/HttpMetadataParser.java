@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -111,7 +112,7 @@ public final class HttpMetadataParser {
         if (queryString.isEmpty()) {
             return new HashMap<>(1);
         }
-        Map<String, List<String>> result = new HashMap<>(8);
+        Map<String, List<String>> result = new LinkedHashMap<>(8);
         String[] queryStringParts = queryString.split("&");
         for (String queryStringPart : queryStringParts) {
             String[] entry = queryStringPart.split("=", 2);
