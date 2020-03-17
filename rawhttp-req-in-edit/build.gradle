@@ -29,6 +29,7 @@ compileTestKotlin {
 
 dependencies {
     implementation project(':rawhttp-core')
+    implementation project(':rawhttp-cookies')
     implementation 'org.webjars.npm:mustache:3.1.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testImplementation project(':rawhttp-core')

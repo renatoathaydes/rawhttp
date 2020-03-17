@@ -3,6 +3,9 @@ package com.athaydes.rawhttp.reqinedit;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Representation of either a {@link String} or a {@link java.io.File}.
+ */
 public final class StringOrFile {
     private final String data;
     private final boolean isFile;

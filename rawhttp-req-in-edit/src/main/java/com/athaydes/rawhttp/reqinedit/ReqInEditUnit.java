@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.reqinedit;
 
 import com.athaydes.rawhttp.reqinedit.js.JsEnvironment;
+import rawhttp.cookies.ClientOptionsWithCookies;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
@@ -19,6 +20,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * A unit representing a single HTTP file.
+ * <p>
+ * A HTTP file may contain one or more HTTP requests, as well as response handlers and references to other
+ * files (to either populate request bodies or store responses). These references are resolved at runtime
+ * (i.e. when the {@link ReqInEditUnit#run(List)} or {@link ReqInEditUnit#run(ReqInEditEntry)} methods are called.
+ * <p>
+ * This class can run {@link ReqInEditEntry} instances, which are normally obtained via the {@link ReqInEditParser}
+ * class by parsing a HTTP file.
+ * <p>
+ * A {@link ReqInEditUnit} may be run one or more times. The caller is expected to close it once it's done
+ * running requests.
+ * <p>
+ * The {@link TcpRawHttpClient} and {@link HttpTestsReporter} used by this unit are closed when this unit
+ * is closed.
+ */
 public class ReqInEditUnit implements Closeable, AutoCloseable {
 
     private static final RawHttp HTTP = new RawHttp(RawHttpOptions.newBuilder()
@@ -38,7 +55,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
     }
 
     public ReqInEditUnit(HttpEnvironment environment) {
-        this(environment, HTTP, new TcpRawHttpClient(null, HTTP),
+        this(environment, HTTP, new TcpRawHttpClient(new ClientOptionsWithCookies(), HTTP),
                 new DefaultFileReader(), new FileResponseStorage(),
                 new DefaultTestReporter());
     }
@@ -65,13 +82,24 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         this.environment = environment;
     }
 
+    /**
+     * Run all of the given entries.
+     * <p>
+     * The entries are run in order until either they all execute without errors, or an error occurs,
+     * or a response handler test fails.
+     * <p>
+     * The results of running an entry can be used by its associated response handler to modify subsequent
+     * requests.
+     *
+     * @param entries to run
+     */
     public void run(List<ReqInEditEntry> entries) {
         for (ReqInEditEntry entry : entries) {
             run(entry);
         }
     }
 
-    private void run(ReqInEditEntry entry) {
+    public void run(ReqInEditEntry entry) {
         RawHttpResponse<?> response;
         try {
             response = httpClient.send(toRequest(entry)).eagerly();
@@ -80,7 +108,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         }
 
         entry.getResponseRef().ifPresent(responseRef -> storeResponse(responseRef, response));
-        entry.getScript().ifPresent(script -> runResponseScript(script, response, testsReporter));
+        entry.getScript().ifPresent(script -> runResponseScript(script, response));
     }
 
     private RawHttpRequest toRequest(ReqInEditEntry entry) {
@@ -114,8 +142,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
     }
 
     private void runResponseScript(StringOrFile script,
-                                   RawHttpResponse<?> response,
-                                   HttpTestsReporter testsReporter) {
+                                   RawHttpResponse<?> response) {
         try {
             String scriptText = script.match(text -> text, file -> new String(inputFile(file)));
             environment.runResponseHandler(scriptText, response, testsReporter);
@@ -134,8 +161,12 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        if (httpClient instanceof Closeable) {
-            ((Closeable) httpClient).close();
+        try {
+            testsReporter.close();
+        } finally {
+            if (httpClient instanceof Closeable) {
+                ((Closeable) httpClient).close();
+            }
         }
     }
 

@@ -12,12 +12,36 @@ import java.util.stream.Stream;
 
 import static java.lang.Character.isWhitespace;
 
+/**
+ * A HTTP file parser.
+ * <p>
+ * HTTP files are defined by the
+ * <a href="https://github.com/JetBrains/http-request-in-editor-spec">http-request-in-editor-spec</a> Specification,
+ * as well as the <a href="https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html">
+ * IntelliJ Documentation</a>.
+ * <p>
+ * One a HTTP file is parsed, the list of {@link ReqInEditEntry} produced by it can be run via an instance of
+ * {@link ReqInEditUnit}.
+ */
 public class ReqInEditParser {
 
+    /**
+     * Parse the given HTTP file.
+     *
+     * @param httpFile to parse
+     * @return list of entries in the file
+     * @throws IOException if an error occurs while reading the file
+     */
     public List<ReqInEditEntry> parse(File httpFile) throws IOException {
         return parse(Files.lines(httpFile.toPath()));
     }
 
+    /**
+     * Parse the lines of a HTTP file.
+     *
+     * @param lines to parse
+     * @return list of entries in the file
+     */
     public List<ReqInEditEntry> parse(Stream<String> lines) {
         List<ReqInEditEntry> entries = new ArrayList<>();
         StringBuilder requestBuilder = new StringBuilder();

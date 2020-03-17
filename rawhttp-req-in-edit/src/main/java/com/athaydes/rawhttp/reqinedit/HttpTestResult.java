@@ -4,6 +4,8 @@ import javax.annotation.Nullable;
 
 /**
  * Result of running a single test for a HTTP response.
+ *
+ * @see ReqInEditEntry
  */
 public final class HttpTestResult {
     private final String name;

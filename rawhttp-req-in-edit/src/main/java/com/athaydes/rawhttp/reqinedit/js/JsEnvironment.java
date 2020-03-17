@@ -25,6 +25,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+/**
+ * The default, JavaScript-based {@link HttpEnvironment} used by {@link com.athaydes.rawhttp.reqinedit.ReqInEditUnit}
+ * to evaluate HTTP files.
+ * <p>
+ * This implementation is based on the Java Nashorn engine in an effort to keep compatibility with the JS engine
+ * used in IntelliJ to run HTTP files.
+ * <p>
+ * Future implementations of {@link HttpEnvironment} may be based on more modern JS engines, such as GraalVM,
+ * which may allow broad compatibility with JS libraries and tools.
+ * <p>
+ * For help writing Nashorn-based JS, please see the
+ * <a href="https://winterbe.com/posts/2014/04/05/java8-nashorn-tutorial/">Nashorn Tutorial</a>.
+ */
 public final class JsEnvironment implements HttpEnvironment {
 
     private final NashornScriptEngine jsEngine;

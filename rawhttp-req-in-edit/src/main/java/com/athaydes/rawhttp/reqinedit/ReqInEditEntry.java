@@ -4,6 +4,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * A single HTTP request in a HTTP file.
+ * <p>
+ * It may also contain a response handler script and a response reference (where the HTTP response resulting from
+ * running the HTTP request will be written).
+ */
 public final class ReqInEditEntry {
 
     private final String request;
