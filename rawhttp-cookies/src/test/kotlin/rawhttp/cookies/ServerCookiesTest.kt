@@ -47,7 +47,6 @@ class ServerCookiesTest {
         }
 
         private fun withCookiesFrom(query: String?): RawHttpHeaders {
-            println("Reading body: '$query'")
             return if (query == null) {
                 RawHttpHeaders.empty()
             } else {

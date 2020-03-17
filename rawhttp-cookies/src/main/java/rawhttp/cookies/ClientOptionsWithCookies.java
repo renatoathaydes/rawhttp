@@ -15,6 +15,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * An implementation of {@link rawhttp.core.client.TcpRawHttpClient.TcpRawHttpClientOptions}
+ * that adds support for cookies to a {@link TcpRawHttpClient} that uses it.
+ * <p>
+ * It can be used stand-alone, in which case it delegates to {@link rawhttp.core.client.TcpRawHttpClient.DefaultOptions}
+ * for all operations, after handling cookies, or it can use an existing options object as a delegate.
+ * <p>
+ * It can also use a custom {@link CookieHandler} implementation, defaulting to the Java standard implementation,
+ * {@link CookieManager}.
+ *
+ * @see rawhttp.core.client.TcpRawHttpClient.DefaultOptions
+ * @see TcpRawHttpClient
+ */
 public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClientOptions {
 
     private final CookieHandler cookieHandler;
@@ -44,11 +57,27 @@ public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClie
         return delegate.getExecutorService();
     }
 
+    /**
+     * Adds the relevant cookies to the request before sending it.
+     *
+     * @param httpRequest the HTTP request to be sent
+     * @return request with the relevant cookies added to the headers
+     * @throws IOException if any communication problem occurs
+     */
     @Override
     public RawHttpRequest onRequest(RawHttpRequest httpRequest) throws IOException {
         return delegate.onRequest(addCookies(httpRequest));
     }
 
+    /**
+     * Adds any cookies sent by the server in the given httpResponse to the cookie handler.
+     *
+     * @param socket       the socket used to send out a HTTP request
+     * @param uri          used to make the HTTP request
+     * @param httpResponse the HTTP response received from the server
+     * @return the httpResponse
+     * @throws IOException if any communication problem occurs
+     */
     @Override
     public RawHttpResponse<Void> onResponse(Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException {
         cookieHandler.put(uri, httpResponse.getHeaders().asMap());

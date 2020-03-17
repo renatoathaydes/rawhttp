@@ -42,7 +42,7 @@ class ClientCookiesTest {
                     } else if (uri.path == "/headers") {
                         return@start Optional.of(Responses.ok.withHeaders(req.headers))
                     }
-                    Optional.empty<RawHttpResponse<*>>()
+                    Optional.empty()
                 }
             }
             waitForPortToBeTaken(port, Duration.ofSeconds(5))
@@ -50,7 +50,6 @@ class ClientCookiesTest {
         }
 
         private fun withCookiesFrom(query: String?): RawHttpHeaders {
-            println("Reading body: '$query'")
             return if (query == null) {
                 RawHttpHeaders.empty()
             } else {
@@ -86,6 +85,7 @@ class ClientCookiesTest {
     fun clientKeepsCookiesBetweenRequests() {
         val client = TcpRawHttpClient(ClientOptionsWithCookies())
 
+        // ask the server to set a couple of cookies
         val response = client.send(HTTP.parseRequest("""
             POST http://localhost:$port/cookies HTTP/1.1
         """.trimIndent()).withBody(StringBody(
@@ -97,6 +97,7 @@ class ClientCookiesTest {
         // verify that the server set the cookies
         val expectedCookie1 = HttpCookie("foo", "bar").apply { path = "/" }
         val expectedCookie2 = HttpCookie("abc", "def").apply { path = "/" }
+
         response.headers["Set-Cookie"] shouldBe listOf(expectedCookie1.toString(), expectedCookie2.toString())
 
         // make a normal request that returns the headers we sent
@@ -104,7 +105,7 @@ class ClientCookiesTest {
 
         headersResponse.statusCode shouldBe 200
 
-        // the response headers are copied from the last request we sent
+        // the response headers should show that the HTTP client correctly sent the relevant cookies
         headersResponse.headers["Cookie"] shouldBe listOf("foo=bar; abc=def")
     }
 
