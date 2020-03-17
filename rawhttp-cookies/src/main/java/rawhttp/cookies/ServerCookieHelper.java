@@ -70,6 +70,15 @@ public final class ServerCookieHelper {
         return headers.with(SET_COOKIE_HEADER, headerValue(cookie, sameSite));
     }
 
+    /**
+     * Compute the value of the "Set-Cookie" header to represent the given cookie,
+     * with an optional {@link SameSite} attribute.
+     *
+     * @param cookie   the cookie
+     * @param sameSite attribute for the cookie (given separately as {@link HttpCookie} does not currently
+     *                 support it
+     * @return the value of the "Set-Cookie" header
+     */
     public static String headerValue(HttpCookie cookie, @Nullable SameSite sameSite) {
         StringBuilder builder = new StringBuilder(cookie.getName());
         builder.append("=\"").append(cookie.getValue()).append('"');

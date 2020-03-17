@@ -8,6 +8,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Implementation of {@link rawhttp.cookies.persist.FileCookieJar.FlushStrategy} that will flush
+ * cookies periodically.
+ * <p>
+ * This ensures that even in the eventuality of a JVM crash, cookies will not be lost for at least
+ * the duration of the last period used by this strategy.
+ * <p>
+ * Even though the implementation of this class uses an {@link java.util.concurrent.ExecutorService},
+ * it is not necessary to close this strategy because it uses a daemon Thread (it won't stop the JVM from
+ * shutting down) and is expected to have the same lifetime as the application itself.
+ */
 public class PeriodicFlushStrategy extends JvmShutdownFlushStrategy {
 
     private static final AtomicInteger instances = new AtomicInteger();

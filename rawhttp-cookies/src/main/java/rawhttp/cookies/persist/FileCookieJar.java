@@ -24,12 +24,30 @@ import java.util.concurrent.Callable;
  *     <li>only persistent cookies are written out to the file (non-persistent cookies are only stored in memory).</li>
  *     <li>expired cookies are eventually deleted, but never returned when queried.</li>
  * </ul>
+ * <p>
+ * How often cookies are flushed to the file depends on the implementation of {@link FlushStrategy} used by this
+ * cookie jar. By default, a {@link JvmShutdownFlushStrategy} is used.
  */
 public class FileCookieJar implements CookieStore {
 
+    /**
+     * Strategy for how a {@link FileCookieJar} should flush cookies to the file.
+     */
     public interface FlushStrategy {
+        /**
+         * Initialize this strategy.
+         * <p>
+         * The given {@code flush} callable should be called every time the cookies should be flushed to a file.
+         *
+         * @param flush a callable that should be called to flush the cookies
+         */
         void init(Callable<Integer> flush);
 
+        /**
+         * This method is called every time the {@link FileCookieJar} is modified.
+         *
+         * @param cookieStore a view of the in-memory cookie store backing the {@link FileCookieJar}.
+         */
         void onUpdate(CookieStore cookieStore);
     }
 
@@ -39,6 +57,10 @@ public class FileCookieJar implements CookieStore {
 
     // the InMemory implementation is not exposed, but we can steal it by creating a CookieManager like this:
     private final CookieStore inMemory = new CookieManager().getCookieStore();
+
+    public FileCookieJar(File file) throws IOException {
+        this(file, new JvmShutdownFlushStrategy());
+    }
 
     public FileCookieJar(File file, FlushStrategy flushPolicy) throws IOException {
         this.file = file;
