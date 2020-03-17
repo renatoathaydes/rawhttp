@@ -2,14 +2,22 @@ package rawhttp.cli.client;
 
 import rawhttp.cli.PrintResponseMode;
 import rawhttp.cli.util.RequestStatistics;
+import rawhttp.cookies.ClientOptionsWithCookies;
+import rawhttp.cookies.persist.FileCookieJar;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.client.TcpRawHttpClient;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.CookieStore;
 import java.net.Socket;
 import java.net.URI;
 
@@ -18,8 +26,24 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
     private final boolean logRequest;
 
     public RawHttpCliClient(boolean logRequest, PrintResponseMode printResponseMode) {
-        super(new ClientOptions(ResponsePrinter.of(printResponseMode)));
+        this(logRequest, printResponseMode, null);
+    }
+
+    public RawHttpCliClient(boolean logRequest, PrintResponseMode printResponseMode,
+                            @Nullable File cookieJar) {
+        super(new ClientOptionsWithCookies(cookieManagerFor(cookieJar),
+                new ClientOptions(ResponsePrinter.of(printResponseMode))));
         this.logRequest = logRequest;
+    }
+
+    private static CookieHandler cookieManagerFor(@Nullable File cookieJar) {
+        CookieStore cookieStore;
+        try {
+            cookieStore = cookieJar == null ? null : new FileCookieJar(cookieJar);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return new CookieManager(cookieStore, CookiePolicy.ACCEPT_ALL);
     }
 
     @Override

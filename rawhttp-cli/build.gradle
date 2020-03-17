@@ -30,6 +30,7 @@ sourceSets.main.java.srcDir generatedJavaSources
 
 dependencies {
     implementation project(':rawhttp-core')
+    implementation project(':rawhttp-cookies')
     implementation project(':rawhttp-req-in-edit')
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testImplementation 'junit:junit:4.12'

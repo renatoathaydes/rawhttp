@@ -154,6 +154,8 @@ public class Main {
                         "Options:\n" +
                         "  * -e --environment <name>\n" +
                         "    the name of the environment to use\n" +
+                        "  * -c --cookiejar <file>\n" +
+                        "    the file to use as a cookie jar\n" +
                         "  * -p --print-response-mode\n" +
                         "  *   one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full responses\n" +
@@ -246,7 +248,8 @@ public class Main {
         JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
 
         try (RawHttpCliClient httpClient = new RawHttpCliClient(
-                httpFileOptions.logRequest, httpFileOptions.printResponseMode)) {
+                httpFileOptions.logRequest, httpFileOptions.printResponseMode,
+                httpFileOptions.cookieJar)) {
             List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);
             new ReqInEditUnit(env, HTTP, httpClient).run(entries);
         } catch (IOException e) {

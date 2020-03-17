@@ -549,6 +549,7 @@ public class OptionsParserTest {
 
         assertNotNull("Parsed run options", result);
         assertEquals(new File("file.http"), result.httpFile);
+        assertNull(result.cookieJar);
         assertNull(result.envName);
         assertFalse(result.logRequest);
         assertEquals(PrintResponseMode.RESPONSE, result.printResponseMode);
@@ -556,15 +557,37 @@ public class OptionsParserTest {
 
     @Test
     public void canParseRunOptionWithArgs() throws OptionsException {
-        Options options = OptionsParser.parse(new String[]{"run", "file.http", "-l", "-e", "my-env", "-p", "stats"});
+        Options options = OptionsParser.parse(new String[]{"run", "file.http", "-l",
+                "-e", "my-env", "-c", "cookies.txt", "-p", "stats"});
 
         HttpFileOptions result = options.run(c -> null, h -> h, s -> null, h -> null);
 
         assertNotNull("Parsed run options", result);
         assertEquals(new File("file.http"), result.httpFile);
+        assertEquals(new File("cookies.txt"), result.cookieJar);
         assertEquals("my-env", result.envName);
         assertTrue(result.logRequest);
         assertEquals(PrintResponseMode.STATS, result.printResponseMode);
+    }
+
+    @Test
+    public void cannotParseRunMissingArgs() {
+        String[][] examples = new String[][]{
+                {"run", "file", "-e"}, {"run", "file", "--cookiejar"},
+                {"run", "file", "-e", "env", "-c"}, {"run", "file", "-e", "env", "--cookiejar"}
+        };
+
+        assertMissingArgumentError(examples);
+    }
+
+    @Test
+    public void cannotParseRunOptionMissingMandatoryArg() {
+        String[][] examples = new String[][]{
+                {"run", "file", "-e"}, {"run", "file", "--cookiejar"},
+                {"run", "file", "-e", "env", "-c"}, {"run", "file", "-e", "env", "--cookiejar"}
+        };
+
+        assertMissingArgumentError(examples);
     }
 
     @Test
@@ -740,11 +763,12 @@ public class OptionsParserTest {
 
     @Test
     public void cannotParseServeRootPathOptionMissingMandatoryArg() {
-        String[][] examples = new String[][]{
-                {"serve", "a", "-r"}, {"serve", "b", "-l", "--root-path"},
-        };
-
-        assertMissingArgumentError(examples);
+        try {
+            OptionsParser.parse(new String[]{"run"});
+            fail("Should not be able to parse run command without options");
+        } catch (OptionsException e) {
+            assertEquals("No http requests file provided", e.getMessage());
+        }
     }
 
     @Test

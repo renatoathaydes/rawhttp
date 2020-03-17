@@ -116,13 +116,17 @@ final class ClientOptions {
 final class HttpFileOptions {
     final File httpFile;
     @Nullable
+    final File cookieJar;
+    @Nullable
     final String envName;
     final PrintResponseMode printResponseMode;
     final boolean logRequest;
 
-    public HttpFileOptions(File httpFile, @Nullable String envName,
+    public HttpFileOptions(File httpFile, @Nullable File cookieJar,
+                           @Nullable String envName,
                            PrintResponseMode printResponseMode, boolean logRequest) {
         this.httpFile = httpFile;
+        this.cookieJar = cookieJar;
         this.envName = envName;
         this.printResponseMode = printResponseMode;
         this.logRequest = logRequest;
@@ -330,6 +334,7 @@ final class OptionsParser {
 
     private static Options parseRunCommand(String[] args) throws OptionsException {
         File httpFile;
+        @Nullable File cookieJar = null;
         @Nullable String envName = null;
         PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
@@ -350,6 +355,18 @@ final class OptionsParser {
                     }
                     if (i + 1 < args.length) {
                         envName = args[i + 1];
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-c":
+                case "--cookiejar":
+                    if (cookieJar != null) {
+                        throw new OptionsException("the --cookiejar option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        cookieJar = new File(args[i + 1]);
                         i++;
                     } else {
                         throw new OptionsException("Missing argument for " + arg + " flag");
@@ -380,7 +397,7 @@ final class OptionsParser {
             printResponseMode = PrintResponseMode.RESPONSE;
         }
 
-        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, envName, printResponseMode, logRequest));
+        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, cookieJar, envName, printResponseMode, logRequest));
     }
 
     private static Options parseServeCommand(String[] args) throws OptionsException {
