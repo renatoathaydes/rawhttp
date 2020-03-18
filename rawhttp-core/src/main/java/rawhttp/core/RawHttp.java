@@ -17,12 +17,10 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -373,43 +371,10 @@ public class RawHttp {
      * @param uri     original URI
      * @param newHost host to use in the returned URI
      * @return a new URI with the host replaced
+     * @deprecated use {@link UriUtil#withHost(URI, String)} instead
      */
     public static URI replaceHost(URI uri, String newHost) {
-        StringBuilder builder = new StringBuilder(uri.toString().length());
-        if (uri.getScheme() == null) {
-            builder.append("http");
-        } else {
-            builder.append(uri.getScheme());
-        }
-        builder.append("://");
-        if (uri.getRawUserInfo() != null) {
-            builder.append(uri.getRawUserInfo()).append('@');
-        }
-
-        builder.append(newHost);
-
-        if (uri.getRawPath() != null) {
-            String newPath = uri.getRawPath();
-            if (!newPath.isEmpty()) {
-                if (!newPath.startsWith("/")) {
-                    builder.append('/');
-                }
-                builder.append(newPath);
-            }
-        }
-        if (uri.getRawQuery() != null) {
-            builder.append('?').append(uri.getRawQuery());
-        }
-        if (uri.getRawFragment() != null) {
-            builder.append('#').append(uri.getRawFragment());
-        }
-
-        try {
-            return new URI(builder.toString());
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
-                    e.getMessage()).map(s -> ": " + s).orElse(""));
-        }
+        return UriUtil.withHost(uri, newHost);
     }
 
     private static boolean startsWith(int firstDigit, int statusCode) {
