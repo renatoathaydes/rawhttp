@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService;
  * @see rawhttp.core.client.TcpRawHttpClient.DefaultOptions
  * @see TcpRawHttpClient
  */
-public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClientOptions {
+public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClientOptions, AutoCloseable {
 
     private final CookieHandler cookieHandler;
     private final TcpRawHttpClient.TcpRawHttpClientOptions delegate;
@@ -101,4 +101,8 @@ public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClie
         return request;
     }
 
+    @Override
+    public void close() throws IOException {
+        delegate.close();
+    }
 }
