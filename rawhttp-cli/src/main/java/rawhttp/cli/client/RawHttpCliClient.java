@@ -7,6 +7,7 @@ import rawhttp.cookies.persist.FileCookieJar;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
+import rawhttp.core.StatusLine;
 import rawhttp.core.client.TcpRawHttpClient;
 
 import javax.annotation.Nullable;
@@ -125,16 +126,20 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         @Override
         public RawHttpResponse<Void> onResponse(Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException {
             assert socket == currentSocket;
-            if (httpResponse.getStatusCode() == 100) {
-                responsePrinter.print(httpResponse.getStartLine());
-                return httpResponse;
-            }
 
             responsePrinter.print(httpResponse.getStartLine());
             responsePrinter.print(httpResponse.getHeaders());
 
             boolean keepAlive = !RawHttpResponse.shouldCloseConnectionAfter(httpResponse);
             EagerHttpResponse<Void> eagerResponse = httpResponse.eagerly(keepAlive);
+
+            int statusCode = eagerResponse.getStatusCode();
+            if (statusCode == 100 || StatusLine.isRedirectCode(statusCode)) {
+                // temporary response, do not print its body or statistics yet
+                responsePrinter.waitFor();
+                return eagerResponse;
+            }
+
             RequestStatistics stats = currentSocket.computeStatistics();
 
             responsePrinter.print(eagerResponse.getBody().orElse(null));
