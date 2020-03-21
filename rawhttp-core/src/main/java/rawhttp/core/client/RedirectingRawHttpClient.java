@@ -33,7 +33,7 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
         RawHttpResponse<Response> response;
         while (true) {
             response = delegate.send(request);
-            if (isRedirectCode(response.getStatusCode())) {
+            if (response.getStartLine().isRedirect()) {
                 response = response.eagerly(); // consume body
                 totalRedirects++;
                 if (totalRedirects >= maxRedirects) {
@@ -72,26 +72,6 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
         }
         return request.withRequestLine(new RequestLine(
                 request.getMethod(), newUri, request.getStartLine().getHttpVersion()));
-    }
-
-    /**
-     * Returns true if the given status code indicates a HTTP redirection.
-     *
-     * @param statusCode HTTP status code
-     * @return true if this is a redirection status code, false otherwise
-     */
-    public static boolean isRedirectCode(int statusCode) {
-        switch (statusCode) {
-            case 300:
-            case 301:
-            case 302:
-            case 303:
-            case 307:
-            case 308:
-                return true;
-            default:
-                return false;
-        }
     }
 
 }

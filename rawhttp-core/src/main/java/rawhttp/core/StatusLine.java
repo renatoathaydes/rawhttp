@@ -33,6 +33,16 @@ public class StatusLine implements StartLine {
     }
 
     /**
+     * Returns true if this {@link StatusLine} indicates a HTTP redirection.
+     *
+     * @return true if the status code indicates a HTTP redirection
+     * @see StatusLine#isRedirectCode(int)
+     */
+    public boolean isRedirect() {
+        return isRedirectCode(statusCode);
+    }
+
+    /**
      * @return the reason phrase in this status-code line.
      */
     public String getReason() {
@@ -77,4 +87,25 @@ public class StatusLine implements StartLine {
     public int hashCode() {
         return Objects.hash(httpVersion, statusCode, reason);
     }
+
+    /**
+     * Returns true if the given status code indicates a HTTP redirection.
+     *
+     * @param statusCode HTTP status code
+     * @return true if this is a redirection status code, false otherwise
+     */
+    public static boolean isRedirectCode(int statusCode) {
+        switch (statusCode) {
+            case 300:
+            case 301:
+            case 302:
+            case 303:
+            case 307:
+            case 308:
+                return true;
+            default:
+                return false;
+        }
+    }
+
 }
