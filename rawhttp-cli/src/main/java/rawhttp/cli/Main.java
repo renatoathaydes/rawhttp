@@ -235,7 +235,7 @@ public class Main {
             request = request.withBody(requestBody);
         }
 
-        try (RawHttpCliClient client = new RawHttpCliClient(options.logRequest, options.printResponseMode)) {
+        try (RawHttpCliClient client = RawHttpCliClient.create(options.logRequest, options.printResponseMode)) {
             client.send(request);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
@@ -247,7 +247,7 @@ public class Main {
         ReqInEditParser parser = new ReqInEditParser();
         JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
 
-        try (RawHttpCliClient httpClient = new RawHttpCliClient(
+        try (RawHttpCliClient httpClient = RawHttpCliClient.create(
                 httpFileOptions.logRequest, httpFileOptions.printResponseMode,
                 httpFileOptions.cookieJar)) {
             List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);

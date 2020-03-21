@@ -24,16 +24,26 @@ import java.net.URI;
 public final class RawHttpCliClient extends TcpRawHttpClient {
 
     private final boolean logRequest;
+    private final ClientOptions clientOptions;
 
-    public RawHttpCliClient(boolean logRequest, PrintResponseMode printResponseMode) {
-        this(logRequest, printResponseMode, null);
+    public static RawHttpCliClient create(boolean logRequest, PrintResponseMode printResponseMode) {
+        return create(logRequest, printResponseMode, null);
     }
 
-    public RawHttpCliClient(boolean logRequest, PrintResponseMode printResponseMode,
-                            @Nullable File cookieJar) {
-        super(new ClientOptionsWithCookies(cookieManagerFor(cookieJar),
-                new ClientOptions(ResponsePrinter.of(printResponseMode))));
+    public static RawHttpCliClient create(boolean logRequest, PrintResponseMode printResponseMode,
+                                          @Nullable File cookieJar) {
+        ClientOptions clientOptions = new ClientOptions(ResponsePrinter.of(printResponseMode));
+        ClientOptionsWithCookies parentOptions = new ClientOptionsWithCookies(
+                cookieManagerFor(cookieJar), clientOptions);
+        return new RawHttpCliClient(logRequest, parentOptions, clientOptions);
+    }
+
+    private RawHttpCliClient(boolean logRequest,
+                             TcpRawHttpClientOptions parentOptions,
+                             ClientOptions clientOptions) {
+        super(parentOptions);
         this.logRequest = logRequest;
+        this.clientOptions = clientOptions;
     }
 
     private static CookieHandler cookieManagerFor(@Nullable File cookieJar) {
@@ -65,10 +75,6 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         return new TimedRunnable(super.requestSender(request, outputStream, expectContinue));
     }
 
-    private ClientOptions getOptions() {
-        return (ClientOptions) options;
-    }
-
     private final class TimedRunnable implements Runnable {
         private final Runnable delegate;
 
@@ -78,7 +84,7 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
 
         @Override
         public void run() {
-            getOptions().updateSendTime();
+            clientOptions.updateSendTime();
             delegate.run();
         }
     }
