@@ -92,14 +92,25 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
      * requests.
      *
      * @param entries to run
+     * @return true if all tests passed or there was no tests, false if any test failed.
      */
-    public void run(List<ReqInEditEntry> entries) {
+    public boolean run(List<ReqInEditEntry> entries) {
         for (ReqInEditEntry entry : entries) {
-            run(entry);
+            boolean allTestsPass = run(entry);
+            if (!allTestsPass) {
+                return false;
+            }
         }
+        return true;
     }
 
-    public void run(ReqInEditEntry entry) {
+    /**
+     * Run a single entry of a HTTP file.
+     *
+     * @param entry to run
+     * @return true if all tests passed or there was no tests, false if any test failed.
+     */
+    public boolean run(ReqInEditEntry entry) {
         RawHttpResponse<?> response;
         try {
             response = httpClient.send(toRequest(entry)).eagerly();
@@ -108,7 +119,9 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         }
 
         entry.getResponseRef().ifPresent(responseRef -> storeResponse(responseRef, response));
-        entry.getScript().ifPresent(script -> runResponseScript(script, response));
+        return entry.getScript()
+                .map(script -> runResponseScript(script, response))
+                .orElse(true);
     }
 
     private RawHttpRequest toRequest(ReqInEditEntry entry) {
@@ -141,11 +154,11 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
         }
     }
 
-    private void runResponseScript(StringOrFile script,
-                                   RawHttpResponse<?> response) {
+    private boolean runResponseScript(StringOrFile script,
+                                      RawHttpResponse<?> response) {
         try {
             String scriptText = script.match(text -> text, file -> new String(inputFile(file)));
-            environment.runResponseHandler(scriptText, response, testsReporter);
+            return environment.runResponseHandler(scriptText, response, testsReporter);
         } catch (IOException | ScriptException e) {
             throw new RuntimeException(e);
         }

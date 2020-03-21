@@ -96,6 +96,7 @@ function __jsHeaders__(javaHeaders) {
 function __runAllTests__(testsReporter) {
     var reporter = new JsTestReporter(testsReporter);
     var tests = client.__tests__;
+    var allTestsOk = true;
 
     for each (var test in tests) {
         var time = System.currentTimeMillis();
@@ -104,9 +105,13 @@ function __runAllTests__(testsReporter) {
             reporter.success({name: test.name, time: time});
         } catch (e) {
             reporter.failure({name: test.name, time: time, error: e});
+            allTestsOk = false;
         }
     }
+
     client.__tests__ = [];
+
+    return allTestsOk;
 }
 
 function __mustacheRender__(template) {

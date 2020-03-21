@@ -45,5 +45,14 @@ public final class ReqInEditEntry {
         return Optional.ofNullable(responseRef);
     }
 
+    @Override
+    public String toString() {
+        return "ReqInEditEntry{" +
+                "request='" + request + '\'' +
+                ", requestBody=" + requestBody +
+                ", script=" + script +
+                ", responseRef='" + responseRef + '\'' +
+                '}';
+    }
 }
 

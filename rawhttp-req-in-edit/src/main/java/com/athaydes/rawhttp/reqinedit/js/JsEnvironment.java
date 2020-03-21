@@ -102,13 +102,13 @@ public final class JsEnvironment implements HttpEnvironment {
     }
 
     @Override
-    public void runResponseHandler(String responseHandler,
-                                   RawHttpResponse<?> response,
-                                   HttpTestsReporter testsReporter)
+    public boolean runResponseHandler(String responseHandler,
+                                      RawHttpResponse<?> response,
+                                      HttpTestsReporter testsReporter)
             throws IOException, ScriptException {
         setResponse(response.eagerly());
         eval(responseHandler);
-        runAllTests(testsReporter);
+        return runAllTests(testsReporter);
     }
 
     void setResponse(EagerHttpResponse<?> response) {
@@ -117,8 +117,8 @@ public final class JsEnvironment implements HttpEnvironment {
                 contentType, bodyObject(contentType, response.getBody().orElse(null)));
     }
 
-    void runAllTests(HttpTestsReporter reporter) {
-        invoke("__runAllTests__", reporter);
+    boolean runAllTests(HttpTestsReporter reporter) {
+        return (boolean) invoke("__runAllTests__", reporter);
     }
 
     private Object invoke(String name, Object... args) {

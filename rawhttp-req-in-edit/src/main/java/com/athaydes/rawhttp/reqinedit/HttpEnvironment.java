@@ -28,12 +28,13 @@ public interface HttpEnvironment {
      * @param responseHandler script to run
      * @param response        the HTTP response
      * @param reporter        to receive test results, if any
+     * @return true if there was no tests, or all tests passed, or false if any test failed.
      * @throws IOException     if a problem occurs reading the HTTP response
      * @throws ScriptException if running the responseHandler script results in unexpected errors
      */
-    void runResponseHandler(String responseHandler,
-                            RawHttpResponse<?> response,
-                            HttpTestsReporter reporter)
+    boolean runResponseHandler(String responseHandler,
+                               RawHttpResponse<?> response,
+                               HttpTestsReporter reporter)
             throws IOException, ScriptException;
 
     /**
