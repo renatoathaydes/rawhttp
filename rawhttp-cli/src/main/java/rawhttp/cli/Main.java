@@ -12,6 +12,7 @@ import rawhttp.core.RawHttpRequest;
 import rawhttp.core.body.FileBody;
 import rawhttp.core.body.HttpMessageBody;
 import rawhttp.core.body.StringBody;
+import rawhttp.core.client.RedirectingRawHttpClient;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
@@ -251,7 +252,12 @@ public class Main {
                 httpFileOptions.logRequest, httpFileOptions.printResponseMode,
                 httpFileOptions.cookieJar)) {
             List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);
-            new ReqInEditUnit(env, HTTP, httpClient).run(entries);
+            try (ReqInEditUnit unit = new ReqInEditUnit(env, HTTP, new RedirectingRawHttpClient<>(httpClient))) {
+                boolean allTestsPass = unit.run(entries);
+                if (!allTestsPass) {
+                    System.err.println("FAIL: There were test failures!");
+                }
+            }
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }
