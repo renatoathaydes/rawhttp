@@ -402,7 +402,7 @@ class RawHttpStaticMethodsTest : StringSpec({
                 row("foo", "bar", "http://bar/foo"),
                 row("host/a", "bar", "http://bar/host/a"),
                 row("https://hello/world", "goodbye", "https://goodbye/world"),
-                row("http://localhost:8080", "remote", "http://remote"),
+                row("http://localhost:8080", "remote", "http://remote:8080"),
                 row("http://localhost", "remote:43", "http://remote:43"),
                 row("http://localhost:8080", "remote:33", "http://remote:33"),
                 row("https://localhost:8080/hi?there", "remote:33", "https://remote:33/hi?there"),
