@@ -1,0 +1,49 @@
+GET http://localhost:8084/me
+Accept: */*
+
+# The HTTP client is supposed to follow redirects
+> {%
+client.test("We are automatically redirected to the login page", function () {
+    client.assert(response.status == 200, "expected to be redirected automatically, got status=" + response.status);
+    client.assert(response.body == "Send your credentials to me!", "expected to go to login page, got response: " + response.body);
+    client.global.set("password", "123");
+});
+%}
+
+###
+
+POST http://localhost:8084/login
+Content-Type: text/plain
+
+my password is NOT {{ password }}
+
+> {%
+client.test("We get the bad credentials response", function () {
+    client.assert(response.status == 401, "bad credentials expected, but got " + response.status);
+});
+%}
+
+###
+
+POST http://localhost:8084/login
+Content-Type: text/plain
+
+my password is {{ password }}
+> {%
+client.test("We get the SID cookie", function () {
+    client.assert(response.status == 200, "expected 200 response, but was " + response.status);
+    client.assert(response.headers.valueOf("Set-Cookie") == "sid=foo", "Expected cookie to be set");
+});
+%}
+
+###
+
+GET http://localhost:8084/me
+Accept: */*
+
+> {%
+client.test("With the login cookie, we can get what we wanted", function () {
+    client.assert(response.status == 200, "expected success 200, got " + response.status);
+    client.assert(response.body == "Hello user", "expected hello message, got " + response.body);
+});
+%}

@@ -1,3 +1,4 @@
+import CliRunner.CLI_EXECUTABLE
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.AfterClass
@@ -22,6 +23,50 @@ import java.util.concurrent.TimeUnit
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
 
 val replyResponseFile = File("response.txt")
+
+object CliRunner {
+    val CLI_EXECUTABLE: Array<String>
+
+    init {
+        val rawhttpCliJar = tryLocateRawHttpCliJar()
+
+        val javaHome = System.getProperty("java.home")
+
+        val cliJar = File(rawhttpCliJar)
+        if (!cliJar.isFile) {
+            throw IllegalStateException("The CLI launcher does not exist: $cliJar")
+        }
+
+        val java = File(javaHome, "bin/java")
+        if (!java.canExecute()) {
+            throw IllegalStateException("Cannot execute java: $java")
+        }
+
+        CLI_EXECUTABLE = if (IS_DEBUG)
+            arrayOf(java.absolutePath, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000",
+                    "-jar", cliJar.absolutePath)
+        else arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
+
+        println("Running tests with executable (${if (IS_DEBUG) "debug mode" else "no debug"}): " +
+                CLI_EXECUTABLE.joinToString(" "))
+    }
+
+    private fun tryLocateRawHttpCliJar(): String {
+        val guessLocation: () -> String? = {
+            val workingDir = File(System.getProperty("user.dir"))
+            listOf(".", "..")
+                    .map { File(workingDir, "$it/rawhttp-cli/build/libs/rawhttp.jar").canonicalFile }
+                    .filter { it.isFile }
+                    .map { it.absolutePath }
+                    .firstOrNull()
+        }
+
+        return System.getProperty("rawhttp.cli.jar")
+                ?: guessLocation()
+                ?: throw IllegalStateException("rawhttp.cli.jar system property must be set")
+    }
+
+}
 
 data class ProcessHandle(val process: Process,
                          private val outputStream: ByteArrayOutputStream,
@@ -49,10 +94,24 @@ data class ProcessHandle(val process: Process,
 
 }
 
+fun runCli(vararg args: String): ProcessHandle {
+    val process = ProcessBuilder().command(*CLI_EXECUTABLE, *args).start()
+    val outputStream = ByteArrayOutputStream(1024)
+    val errStream = ByteArrayOutputStream(1024)
+
+    Thread {
+        process.inputStream.copyTo(outputStream)
+    }.start()
+    Thread {
+        process.errorStream.copyTo(errStream)
+    }.start()
+
+    return ProcessHandle(process, outputStream, errStream)
+}
+
 abstract class RawHttpCliTester {
 
     companion object {
-        private val CLI_EXECUTABLE: Array<String>
 
         const val SUCCESS_HTTP_REQUEST = "GET /saysomething HTTP/1.1\r\n" +
                 "Host: localhost:8083\r\n" +
@@ -91,45 +150,6 @@ abstract class RawHttpCliTester {
                 "Resource Not Found".trimIndent()
 
         private var httpServerThread: Thread? = null
-
-        init {
-            val rawhttpCliJar = tryLocateRawHttpCliJar()
-
-            val javaHome = System.getProperty("java.home")
-
-            val cliJar = File(rawhttpCliJar)
-            if (!cliJar.isFile) {
-                throw IllegalStateException("The CLI launcher does not exist: $cliJar")
-            }
-
-            val java = File(javaHome, "bin/java")
-            if (!java.canExecute()) {
-                throw IllegalStateException("Cannot execute java: $java")
-            }
-
-            CLI_EXECUTABLE = if (IS_DEBUG)
-                arrayOf(java.absolutePath, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000",
-                        "-jar", cliJar.absolutePath)
-            else arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
-
-            println("Running tests with executable (${if (IS_DEBUG) "debug mode" else "no debug"}): " +
-                    CLI_EXECUTABLE.joinToString(" "))
-        }
-
-        private fun tryLocateRawHttpCliJar(): String {
-            val guessLocation: () -> String? = {
-                val workingDir = File(System.getProperty("user.dir"))
-                listOf(".", "..")
-                        .map { File(workingDir, "$it/rawhttp-cli/build/libs/rawhttp.jar").canonicalFile }
-                        .filter { it.isFile }
-                        .map { it.absolutePath }
-                        .firstOrNull()
-            }
-
-            return System.getProperty("rawhttp.cli.jar")
-                    ?: guessLocation()
-                    ?: throw IllegalStateException("rawhttp.cli.jar system property must be set")
-        }
 
         @BeforeClass
         @JvmStatic
@@ -201,21 +221,6 @@ abstract class RawHttpCliTester {
         @JvmStatic
         fun stopHttpServer() {
             httpServerThread!!.interrupt()
-        }
-
-        fun runCli(vararg args: String): ProcessHandle {
-            val process = ProcessBuilder().command(*CLI_EXECUTABLE, *args).start()
-            val outputStream = ByteArrayOutputStream(1024)
-            val errStream = ByteArrayOutputStream(1024)
-
-            Thread {
-                process.inputStream.copyTo(outputStream)
-            }.start()
-            Thread {
-                process.errorStream.copyTo(errStream)
-            }.start()
-
-            return ProcessHandle(process, outputStream, errStream)
         }
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
