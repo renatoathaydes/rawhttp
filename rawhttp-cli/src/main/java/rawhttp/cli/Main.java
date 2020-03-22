@@ -42,7 +42,8 @@ public class Main {
         BAD_USAGE, // 1
         INVALID_HTTP_REQUEST, // 2
         UNEXPECTED_ERROR, // 3
-        IO_EXCEPTION // 4
+        IO_EXCEPTION, // 4
+        USER_TEST_FAILURE, // 5
     }
 
     private static final RawHttp HTTP = new RawHttp(RawHttpOptions.newBuilder()
@@ -255,7 +256,7 @@ public class Main {
             try (ReqInEditUnit unit = new ReqInEditUnit(env, HTTP, new RedirectingRawHttpClient<>(httpClient))) {
                 boolean allTestsPass = unit.run(entries);
                 if (!allTestsPass) {
-                    System.err.println("FAIL: There were test failures!");
+                    return new CliError(ErrorCode.USER_TEST_FAILURE, "FAIL: There were test failures!");
                 }
             }
         } catch (IOException e) {

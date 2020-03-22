@@ -168,4 +168,42 @@ class RawHttpCliCookiesTest {
         handle.err shouldBe ""
     }
 
+    @Test
+    fun canRunHttpFileThatRequiresCookiesUsingEnvironmentAndEndingInTestFailure() {
+        val basicHttpFile = RawHttpCliTester::class.java.getResource("/reqin-edit-tests/login/login.http").file
+
+        val handle = runCli("run", basicHttpFile, "-e", "test")
+
+        handle.verifyProcessTerminatedWithExitCode(5)
+
+        val outLines = handle.out.lines()
+
+        outLines should haveSize(21)
+
+        outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
+                "Location: http://localhost:8084/login",
+                "Content-Length: 0",
+                "",
+                "HTTP/1.1 200 OK",
+                "Content-Type: text/plain",
+                "Content-Length: 28",
+                "",
+                "Send your credentials to me!")
+        outLines[9] should match("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
+        outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
+                "Content-Length: 0",
+                "",
+                "")
+        outLines[14] should match("TEST OK \\(\\d+ms\\): We get the bad credentials response")
+        outLines.subList(15, 19) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
+                "Content-Length: 0",
+                "",
+                "")
+        outLines[19] should match("TEST FAILED \\(\\d+ms\\): We get the SID cookie")
+        outLines[20] shouldBe ""
+
+        handle.err shouldBe "expected 200 response, but status was 401\n" +
+                "FAIL: There were test failures!\n"
+    }
+
 }

@@ -6,8 +6,9 @@ Accept: */*
 client.test("We are automatically redirected to the login page", function () {
     client.assert(response.status == 200, "expected to be redirected automatically, got status=" + response.status);
     client.assert(response.body == "Send your credentials to me!", "expected to go to login page, got response: " + response.body);
-    client.global.set("password", "123");
 });
+
+if (client.global.get("password") === undefined) client.global.set("password", "123");
 %}
 
 ###
@@ -31,7 +32,7 @@ Content-Type: text/plain
 my password is {{ password }}
 > {%
 client.test("We get the SID cookie", function () {
-    client.assert(response.status == 200, "expected 200 response, but was " + response.status);
+    client.assert(response.status == 200, "expected 200 response, but status was " + response.status);
     var cookieHeader = response.headers.valueOf("Set-Cookie");
     client.assert(cookieHeader == 'sid="foo"', "Expected cookie to be set, Set-Cookie=" + cookieHeader);
 });
