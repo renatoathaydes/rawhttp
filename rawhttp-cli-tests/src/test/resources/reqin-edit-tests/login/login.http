@@ -32,7 +32,8 @@ my password is {{ password }}
 > {%
 client.test("We get the SID cookie", function () {
     client.assert(response.status == 200, "expected 200 response, but was " + response.status);
-    client.assert(response.headers.valueOf("Set-Cookie") == "sid=foo", "Expected cookie to be set");
+    var cookieHeader = response.headers.valueOf("Set-Cookie");
+    client.assert(cookieHeader == 'sid="foo"', "Expected cookie to be set, Set-Cookie=" + cookieHeader);
 });
 %}
 
