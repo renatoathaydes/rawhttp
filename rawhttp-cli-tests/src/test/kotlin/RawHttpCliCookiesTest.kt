@@ -12,6 +12,7 @@ import rawhttp.core.RawHttpRequest
 import rawhttp.core.RawHttpResponse
 import rawhttp.core.body.StringBody
 import rawhttp.core.errors.InvalidHttpRequest
+import java.io.File
 import java.io.IOException
 import java.net.HttpCookie
 import java.net.ServerSocket
@@ -84,7 +85,7 @@ class RawHttpCliCookiesTest {
         private fun route(request: RawHttpRequest): RawHttpResponse<Void> {
             return when (request.uri.path) {
                 "/me" -> {
-                    val cookies = ServerCookieHelper.readCookies(request)
+                    val cookies = ServerCookieHelper.readClientCookies(request)
                     val sid = cookies.find { it.name == "sid" }?.value ?: ""
                     if (sid.isBlank())
                         http.parseResponse(REDIRECT_TO_LOGIN_HTTP_RESPONSE)
@@ -96,9 +97,9 @@ class RawHttpCliCookiesTest {
                     when (request.method) {
                         "POST" -> (if (request.body.map { it.decodeBodyToString(Charsets.UTF_8) }
                                         .orElse("") == "my password is 123")
-                            ServerCookieHelper.withCookie(
+                            ServerCookieHelper.setCookie(
                                     http.parseResponse(SUCCESS_HTTP_RESPONSE),
-                                    HttpCookie("sid", "foo"))
+                                    HttpCookie("sid", "foo").apply { maxAge = 120 })
                         else http.parseResponse(BAD_CREDENTIALS_RESPONSE))
                         "GET" -> http.parseResponse(SUCCESS_HTTP_RESPONSE)
                                 .withBody(StringBody("Send your credentials to me!"))
@@ -130,42 +131,7 @@ class RawHttpCliCookiesTest {
         val handle = runCli("run", basicHttpFile)
 
         handle.verifyProcessTerminatedWithExitCode(0)
-
-        val outLines = handle.out.lines()
-
-        outLines should haveSize(29)
-
-        outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
-                "Location: http://localhost:8084/login",
-                "Content-Length: 0",
-                "",
-                "HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 28",
-                "",
-                "Send your credentials to me!")
-        outLines[9] should match("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
-        outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
-                "Content-Length: 0",
-                "",
-                "")
-        outLines[14] should match("TEST OK \\(\\d+ms\\): We get the bad credentials response")
-        outLines.subList(15, 21) shouldBe listOf("HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 9",
-                "Set-Cookie: sid=\"foo\"",
-                "",
-                "something")
-        outLines[21] should match("TEST OK \\(\\d+ms\\): We get the SID cookie")
-        outLines.subList(22, 27) shouldBe listOf("HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 10",
-                "",
-                "Hello user")
-        outLines[27] should match("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted")
-        outLines[28] shouldBe ""
-
-        handle.err shouldBe ""
+        assertHttpFileRanSuccessfully(handle)
     }
 
     @Test
@@ -204,6 +170,80 @@ class RawHttpCliCookiesTest {
 
         handle.err shouldBe "expected 200 response, but status was 401\n" +
                 "FAIL: There were test failures!\n"
+    }
+
+
+    @Test
+    fun canRunHttpFileUsingPreLoadedCookies() {
+        val basicHttpFile = RawHttpCliTester::class.java.getResource("/reqin-edit-tests/login/login.http").file
+        val cookieJar = File("temp_cookie_jar")
+        cookieJar.exists() shouldBe false
+        cookieJar.deleteOnExit()
+
+        val handle1 = runCli("run", basicHttpFile, "--cookiejar", cookieJar.absolutePath)
+
+        handle1.verifyProcessTerminatedWithExitCode(0)
+
+        assertHttpFileRanSuccessfully(handle1)
+        cookieJar.exists() shouldBe true
+
+        // run file again, this time re-using the cookies from the previous run
+        val handle2 = runCli("run", basicHttpFile, "--cookiejar", cookieJar.absolutePath)
+
+        handle2.verifyProcessTerminatedWithExitCode(5) // test failure
+
+        val outLines = handle2.out.lines()
+
+        // the client went straight to the Hello User response because it already had a persisted cookie
+        outLines.subList(0, 5) shouldBe listOf("HTTP/1.1 200 OK",
+                "Content-Type: text/plain",
+                "Content-Length: 10",
+                "",
+                "Hello user")
+
+        handle2.err shouldBe """
+            expected to go to login page, got response: Hello user
+            FAIL: There were test failures!
+            
+        """.trimIndent()
+    }
+
+    private fun assertHttpFileRanSuccessfully(handle: ProcessHandle) {
+        val outLines = handle.out.lines()
+
+        outLines should haveSize(29)
+
+        outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
+                "Location: http://localhost:8084/login",
+                "Content-Length: 0",
+                "",
+                "HTTP/1.1 200 OK",
+                "Content-Type: text/plain",
+                "Content-Length: 28",
+                "",
+                "Send your credentials to me!")
+        outLines[9] should match("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
+        outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
+                "Content-Length: 0",
+                "",
+                "")
+        outLines[14] should match("TEST OK \\(\\d+ms\\): We get the bad credentials response")
+        outLines.subList(15, 21) shouldBe listOf("HTTP/1.1 200 OK",
+                "Content-Type: text/plain",
+                "Content-Length: 9",
+                "Set-Cookie: sid=\"foo\"; Max-Age=120",
+                "",
+                "something")
+        outLines[21] should match("TEST OK \\(\\d+ms\\): We get the SID cookie")
+        outLines.subList(22, 27) shouldBe listOf("HTTP/1.1 200 OK",
+                "Content-Type: text/plain",
+                "Content-Length: 10",
+                "",
+                "Hello user")
+        outLines[27] should match("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted")
+        outLines[28] shouldBe ""
+
+        handle.err shouldBe ""
     }
 
 }
