@@ -93,7 +93,9 @@ public class ClientOptionsWithCookies implements TcpRawHttpClient.TcpRawHttpClie
             for (Map.Entry<String, List<String>> entry : cookies) {
                 String cookieHeaderName = entry.getKey();
                 List<String> values = entry.getValue();
-                builder.with(cookieHeaderName, String.join("; ", values));
+                if (!values.isEmpty()) {
+                    builder.with(cookieHeaderName, String.join("; ", values));
+                }
             }
             return request.withHeaders(builder.build());
         }

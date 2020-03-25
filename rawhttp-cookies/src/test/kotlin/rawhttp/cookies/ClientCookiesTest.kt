@@ -11,7 +11,10 @@ import rawhttp.core.RawHttpResponse
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.server.TcpRawHttpServer
+import java.net.CookieManager
+import java.net.CookiePolicy
 import java.net.HttpCookie
+import java.net.Socket
 import java.time.Duration
 import java.util.Optional
 
@@ -39,7 +42,7 @@ class ClientCookiesTest {
                             }.orElse(""))
                             return@start Optional.of<RawHttpResponse<*>>(Responses.ok.withHeaders(headers))
                         }
-                    } else if (uri.path == "/headers") {
+                    } else if (uri.path == "/headers" || uri.path == "/headers/two") {
                         return@start Optional.of(Responses.ok.withHeaders(req.headers))
                     }
                     Optional.empty()
@@ -56,7 +59,7 @@ class ClientCookiesTest {
                 val builder = RawHttpHeaders.newBuilder()
                 query.lines().forEach { line ->
                     val cookie = HTTP.metadataParser.parseQueryString(line).toCookie()
-                    builder.with("Set-Cookie", cookie.toString())
+                    ServerCookieHelper.setCookie(builder, cookie)
                 }
                 builder.build()
             }
@@ -64,9 +67,11 @@ class ClientCookiesTest {
 
         private fun Map<String, List<String>>.toCookie(): HttpCookie {
             val cookie = HttpCookie(this["name"].first(), this["value"].first())
-            if (containsKey("path")) {
-                cookie.path = this["path"].first()
-            }
+            if (containsKey("path")) cookie.path = this["path"].first()
+            if (containsKey("domain")) cookie.domain = this["domain"].first()
+            if (containsKey("maxAge")) cookie.maxAge = this["maxAge"].first().toLong()
+            if (containsKey("secure")) cookie.secure = true
+            if (containsKey("httpOnly")) cookie.isHttpOnly = true
             return cookie
         }
 
@@ -94,11 +99,9 @@ class ClientCookiesTest {
 
         response.statusCode shouldBe 200
 
-        // verify that the server set the cookies
-        val expectedCookie1 = HttpCookie("foo", "bar").apply { path = "/" }
-        val expectedCookie2 = HttpCookie("abc", "def").apply { path = "/" }
-
-        response.headers["Set-Cookie"] shouldBe listOf(expectedCookie1.toString(), expectedCookie2.toString())
+        response.headers["Set-Cookie"] shouldBe listOf(
+                """foo="bar"; Path=/""",
+                """abc="def"; Path=/""")
 
         // make a normal request that returns the headers we sent
         val headersResponse = client.send(HTTP.parseRequest("GET http://localhost:$port/headers")).eagerly()
@@ -109,4 +112,63 @@ class ClientCookiesTest {
         headersResponse.headers["Cookie"] shouldBe listOf("foo=bar; abc=def")
     }
 
+    /**
+     * According to MDN <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie">Set-Cookie</a>
+     * docs:
+     *
+     * If (domain is) omitted, defaults to the host of the current document URL, not including subdomains.
+     * Contrary to earlier specifications, leading dots in domain names (.example.com) are ignored.
+     * If a domain is specified, subdomains are always included.
+     * A cookie for a domain that does not include the server that set it should be rejected by the user agent.
+     * A cookie for a sub domain of the serving domain will be rejected.
+     *
+     */
+    @Test
+    fun clientDoesNotSendCookiesForWrongDomainOrPath() {
+        // this client will just send all requests to localhost, regardless of the domain
+        val client = TcpRawHttpClient(ClientOptionsWithCookies(
+                CookieManager(null, CookiePolicy.ACCEPT_ALL), ClientOptionsIgnoresDomain()))
+
+        // ask the server to set a couple of cookies
+        val response = client.send(HTTP.parseRequest("""
+            POST http://a.b.localhost:$port/cookies HTTP/1.1
+        """.trimIndent()).withBody(StringBody(
+                "path=/headers&name=foo&value=bar&domain=b.localhost\n" +
+                        "path=/headers/two&name=abc&value=def"))).eagerly()
+
+        response.statusCode shouldBe 200
+
+        response.headers["Set-Cookie"] shouldBe listOf(
+                """foo="bar"; Domain=b.localhost; Path=/headers""",
+                """abc="def"; Path=/headers/two""")
+
+        data class Ex(val domain: String, val path: String, val expectedCookies: List<String>)
+
+        val examples = listOf(
+                Ex(domain = "localhost", path = "headers", expectedCookies = listOf()),
+                Ex(domain = "localhost", path = "headers/two", expectedCookies = listOf()),
+                Ex(domain = "c.localhost", path = "headers/two", expectedCookies = listOf()),
+                Ex(domain = "other-domain", path = "headers", expectedCookies = listOf()),
+                Ex(domain = "b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
+                Ex(domain = "b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar")),
+                Ex(domain = "a.b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
+                Ex(domain = "a.b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar; abc=def"))
+        )
+
+        for ((domain, path, expectedCookies) in examples) {
+            // make a normal request that returns the headers we sent
+            val headersResponse = client.send(HTTP.parseRequest("GET http://$domain:$port/$path")).eagerly()
+
+            headersResponse.statusCode shouldBe 200
+
+            headersResponse.headers["Cookie"] shouldBe expectedCookies
+        }
+    }
+
+}
+
+class ClientOptionsIgnoresDomain : TcpRawHttpClient.DefaultOptions() {
+    override fun createSocket(useHttps: Boolean, host: String, port: Int): Socket {
+        return Socket("localhost", port)
+    }
 }

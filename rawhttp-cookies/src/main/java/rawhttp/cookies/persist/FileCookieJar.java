@@ -78,6 +78,10 @@ public class FileCookieJar implements CookieStore {
     }
 
     private void load() throws IOException {
+
+        if (!file.exists()) {
+            return;
+        }
         URI currentURI = null;
         for (String line : Files.readAllLines(file.toPath(), StandardCharsets.UTF_8)) {
             if (line.startsWith(" ")) {

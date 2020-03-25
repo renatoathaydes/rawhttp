@@ -7,9 +7,8 @@ import rawhttp.core.RawHttpResponse;
 import javax.annotation.Nullable;
 import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Utility static methods to help HTTP servers set cookies.
@@ -41,53 +40,109 @@ public final class ServerCookieHelper {
     private ServerCookieHelper() {
     }
 
-    public static <T> RawHttpResponse<T> withCookie(RawHttpResponse<T> response, HttpCookie cookie) {
-        return response.withHeaders(withCookie(response.getHeaders(), cookie));
+    public static <T> RawHttpResponse<T> setCookie(RawHttpResponse<T> response, HttpCookie cookie) {
+        return setCookie(response, cookie, null, null);
     }
 
-    public static <T> RawHttpResponse<T> withCookies(RawHttpResponse<T> response, List<HttpCookie> cookies) {
-        return response.withHeaders(withCookies(response.getHeaders(), cookies));
+    public static <T> RawHttpResponse<T> setCookie(RawHttpResponse<T> response, HttpCookie cookie,
+                                                   @Nullable SameSite sameSite) {
+        return setCookie(response, cookie, sameSite, null);
     }
 
-    public static RawHttpHeaders withCookies(RawHttpHeaders headers, List<HttpCookie> cookies) {
-        return withCookies(headers, cookies, null);
+    public static <T> RawHttpResponse<T> setCookie(RawHttpResponse<T> response, HttpCookie cookie,
+                                                   @Nullable SameSite sameSite,
+                                                   @Nullable Object extension) {
+        return response.withHeaders(setCookie(response.getHeaders(), cookie, sameSite, extension));
     }
 
-    public static RawHttpHeaders withCookies(RawHttpHeaders headers, List<HttpCookie> cookies,
-                                             @Nullable SameSite sameSite) {
-        return withCookies(RawHttpHeaders.newBuilder(headers), cookies, sameSite).build();
+    public static <T> RawHttpResponse<T> setCookies(RawHttpResponse<T> response, List<HttpCookie> cookies) {
+        return setCookies(response, cookies, null, null);
     }
 
-    public static RawHttpHeaders.Builder withCookies(RawHttpHeaders.Builder headers,
-                                                     List<HttpCookie> cookies) {
-        return withCookies(headers, cookies, null);
+    public static <T> RawHttpResponse<T> setCookies(RawHttpResponse<T> response, List<HttpCookie> cookies,
+                                                    @Nullable SameSite sameSite) {
+        return setCookies(response, cookies, sameSite, null);
     }
 
-    public static RawHttpHeaders.Builder withCookies(RawHttpHeaders.Builder headers,
-                                                     List<HttpCookie> cookies,
-                                                     @Nullable SameSite sameSite) {
+    public static <T> RawHttpResponse<T> setCookies(RawHttpResponse<T> response, List<HttpCookie> cookies,
+                                                    @Nullable SameSite sameSite,
+                                                    @Nullable Object extension) {
+        return response.withHeaders(setCookies(response.getHeaders(), cookies, sameSite, extension));
+    }
+
+    public static RawHttpHeaders setCookies(RawHttpHeaders headers, List<HttpCookie> cookies) {
+        return setCookies(headers, cookies, null, null);
+    }
+
+    public static RawHttpHeaders setCookies(RawHttpHeaders headers, List<HttpCookie> cookies,
+                                            @Nullable SameSite sameSite) {
+        return setCookies(headers, cookies, sameSite, null);
+    }
+
+    public static RawHttpHeaders setCookies(RawHttpHeaders headers, List<HttpCookie> cookies,
+                                            @Nullable SameSite sameSite,
+                                            @Nullable Object extension) {
+        return setCookies(RawHttpHeaders.newBuilder(headers), cookies, sameSite, extension).build();
+    }
+
+    public static RawHttpHeaders.Builder setCookies(RawHttpHeaders.Builder headers,
+                                                    List<HttpCookie> cookies) {
+        return setCookies(headers, cookies, null, null);
+    }
+
+    public static RawHttpHeaders.Builder setCookies(RawHttpHeaders.Builder headers,
+                                                    List<HttpCookie> cookies,
+                                                    @Nullable SameSite sameSite) {
+        return setCookies(headers, cookies, sameSite, null);
+    }
+
+    public static RawHttpHeaders.Builder setCookies(RawHttpHeaders.Builder headers,
+                                                    List<HttpCookie> cookies,
+                                                    @Nullable SameSite sameSite,
+                                                    @Nullable Object extension) {
         for (HttpCookie cookie : cookies) {
-            headers.with(SET_COOKIE_HEADER, headerValue(cookie, sameSite));
+            headers.with(SET_COOKIE_HEADER, setCookieHeaderValue(cookie, sameSite, extension));
         }
         return headers;
     }
 
-    public static RawHttpHeaders withCookie(RawHttpHeaders headers, HttpCookie cookie) {
-        return withCookie(headers, cookie, null);
+    public static RawHttpHeaders setCookie(RawHttpHeaders headers, HttpCookie cookie) {
+        return setCookie(headers, cookie, null);
     }
 
-    public static RawHttpHeaders withCookie(RawHttpHeaders headers, HttpCookie cookie,
-                                            @Nullable SameSite sameSite) {
-        return withCookie(RawHttpHeaders.newBuilder(headers), cookie, sameSite).build();
+    public static RawHttpHeaders setCookie(RawHttpHeaders headers, HttpCookie cookie,
+                                           @Nullable SameSite sameSite) {
+        return setCookie(headers, cookie, sameSite, null);
     }
 
-    public static RawHttpHeaders.Builder withCookie(RawHttpHeaders.Builder headers, HttpCookie cookie) {
-        return withCookie(headers, cookie, null);
+    public static RawHttpHeaders setCookie(RawHttpHeaders headers, HttpCookie cookie,
+                                           @Nullable SameSite sameSite,
+                                           @Nullable Object extension) {
+        return setCookie(RawHttpHeaders.newBuilder(headers), cookie, sameSite, extension).build();
     }
 
-    public static RawHttpHeaders.Builder withCookie(RawHttpHeaders.Builder headers, HttpCookie cookie,
-                                                    @Nullable SameSite sameSite) {
-        return headers.with(SET_COOKIE_HEADER, headerValue(cookie, sameSite));
+    public static RawHttpHeaders.Builder setCookie(RawHttpHeaders.Builder headers, HttpCookie cookie) {
+        return setCookie(headers, cookie, null, null);
+    }
+
+    public static RawHttpHeaders.Builder setCookie(RawHttpHeaders.Builder headers, HttpCookie cookie,
+                                                   @Nullable SameSite sameSite) {
+        return setCookie(headers, cookie, sameSite, null);
+    }
+
+    public static RawHttpHeaders.Builder setCookie(RawHttpHeaders.Builder headers, HttpCookie cookie,
+                                                   @Nullable SameSite sameSite, @Nullable Object extension) {
+        return headers.with(SET_COOKIE_HEADER, setCookieHeaderValue(cookie, sameSite, extension));
+    }
+
+    /**
+     * Compute the value of the "Set-Cookie" header to represent the given cookie.
+     *
+     * @param cookie the cookie
+     * @return the value of the "Set-Cookie" header
+     */
+    public static String setCookieHeaderValue(HttpCookie cookie) {
+        return setCookieHeaderValue(cookie, null, null);
     }
 
     /**
@@ -99,19 +154,29 @@ public final class ServerCookieHelper {
      *                 support it
      * @return the value of the "Set-Cookie" header
      */
-    public static String headerValue(HttpCookie cookie, @Nullable SameSite sameSite) {
+    public static String setCookieHeaderValue(HttpCookie cookie,
+                                              @Nullable SameSite sameSite) {
+        return setCookieHeaderValue(cookie, sameSite, null);
+    }
+
+    /**
+     * Compute the value of the "Set-Cookie" header to represent the given cookie,
+     * with an optional {@link SameSite} attribute and extension.
+     *
+     * @param cookie    the cookie
+     * @param sameSite  attribute for the cookie (given separately as {@link HttpCookie} does not currently
+     *                  support it
+     * @param extension cookie extension
+     * @return the value of the "Set-Cookie" header
+     */
+    public static String setCookieHeaderValue(HttpCookie cookie,
+                                              @Nullable SameSite sameSite,
+                                              @Nullable Object extension) {
         StringBuilder builder = new StringBuilder(cookie.getName());
         builder.append("=\"").append(cookie.getValue()).append('"');
-        List<String> attributes = attributesOf(cookie, sameSite);
-        if (!attributes.isEmpty()) {
-            builder.append(';');
-            final int maxIndex = attributes.size() - 1;
-            for (int i = 0; i < attributes.size(); i++) {
-                builder.append(attributes.get(i));
-                if (i != maxIndex) {
-                    builder.append(';');
-                }
-            }
+        List<String> attributes = attributesForSetCookie(cookie, sameSite, extension);
+        for (String attribute : attributes) {
+            builder.append("; ").append(attribute);
         }
         return builder.toString();
     }
@@ -122,8 +187,8 @@ public final class ServerCookieHelper {
      * @param request that may contain cookies
      * @return the cookies sent by the client
      */
-    public static List<HttpCookie> readCookies(RawHttpRequest request) {
-        return readCookies(request.getHeaders());
+    public static List<HttpCookie> readClientCookies(RawHttpRequest request) {
+        return readClientCookies(request.getHeaders());
     }
 
     /**
@@ -132,20 +197,42 @@ public final class ServerCookieHelper {
      * @param headers from a HTTP request
      * @return the cookies sent by the client
      */
-    public static List<HttpCookie> readCookies(RawHttpHeaders headers) {
-        return headers.get(COOKIE_HEADER).stream()
-                .flatMap(ServerCookieHelper::readClientCookies)
-                .collect(Collectors.toList());
+    public static List<HttpCookie> readClientCookies(RawHttpHeaders headers) {
+        return headers.getFirst(COOKIE_HEADER)
+                .map(ServerCookieHelper::readClientCookies)
+                .orElse(Collections.emptyList());
     }
 
-    private static List<String> attributesOf(HttpCookie cookie, @Nullable SameSite sameSite) {
+    /**
+     * Create a List with the attributes for the cookie as specified in RFC-6265 and draft-west-first-party-cookies-07
+     *
+     * <pre>
+     *         cookie-av  = expires-av / max-age-av / domain-av /
+     *                      path-av / secure-av / httponly-av /
+     *                      samesite-av / extension-av
+     * </pre>
+     *
+     * @param cookie    cookie
+     * @param sameSite  attribute
+     * @param extension cookie extension
+     * @return list of attributes for the cookie
+     */
+    private static List<String> attributesForSetCookie(HttpCookie cookie,
+                                                       @Nullable SameSite sameSite,
+                                                       @Nullable Object extension) {
         List<String> result = new ArrayList<>(6);
+        addAttributeIfNotEmpty(result, "Max-Age", cookie.getMaxAge() < 0 ? null : cookie.getMaxAge());
         addAttributeIfNotEmpty(result, "Domain", cookie.getDomain());
         addAttributeIfNotEmpty(result, "Path", cookie.getPath());
-        addAttributeIfNotEmpty(result, "Max-Age", cookie.getMaxAge() < 0 ? null : cookie.getMaxAge());
-        addAttributeIfNotEmpty(result, "SameSite", sameSite);
         addAttributeIfTrue(result, "Secure", cookie.isHttpOnly());
         addAttributeIfTrue(result, "HttpOnly", cookie.isHttpOnly());
+        addAttributeIfNotEmpty(result, "SameSite", sameSite);
+        if (extension != null) {
+            String extensionText = extension.toString();
+            if (!extensionText.isEmpty()) {
+                result.add(extensionText);
+            }
+        }
         return result;
     }
 
@@ -165,18 +252,22 @@ public final class ServerCookieHelper {
         }
     }
 
-    private static Stream<HttpCookie> readClientCookies(String value) {
-        if (value == null || value.trim().isEmpty()) return Stream.of();
+    private static List<HttpCookie> readClientCookies(String value) {
+        if (value == null || value.trim().isEmpty()) return Collections.emptyList();
         List<HttpCookie> result = new ArrayList<>();
 
         String[] cookiePairs = value.split(";");
         for (String cookiePair : cookiePairs) {
             String[] pair = cookiePair.split("=");
             if (pair.length == 2) {
-                result.add(new HttpCookie(pair[0].trim(), unquoted(pair[1])));
+                try {
+                    result.add(new HttpCookie(pair[0].trim(), unquoted(pair[1])));
+                } catch (IllegalArgumentException e) {
+                    // ignore invalid cookie
+                }
             }
         }
-        return result.stream();
+        return result;
     }
 
     private static String unquoted(String s) {

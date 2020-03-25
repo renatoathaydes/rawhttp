@@ -53,7 +53,7 @@ class ServerCookiesTest {
                 val builder = RawHttpHeaders.newBuilder()
                 query.lines().forEach { line ->
                     val (cookie, sameSite) = HTTP.metadataParser.parseQueryString(line).toCookie()
-                    ServerCookieHelper.withCookie(builder, cookie, sameSite)
+                    ServerCookieHelper.setCookie(builder, cookie, sameSite)
                 }
                 builder.build()
             }
@@ -82,6 +82,19 @@ class ServerCookiesTest {
     }
 
     @Test
+    fun serverCanSendCookieWithNoAttributes() {
+        val client = TcpRawHttpClient()
+
+        val response = client.send(HTTP.parseRequest("""
+            POST http://localhost:${port}/cookies HTTP/1.1
+        """.trimIndent()).withBody(StringBody("name=foo&value=bar"))).eagerly()
+
+        response.statusCode shouldBe 200
+
+        response.headers["Set-Cookie"] shouldBe listOf("""foo="bar"""")
+    }
+
+    @Test
     fun serverCanSendCookies() {
         val client = TcpRawHttpClient()
 
@@ -95,6 +108,6 @@ class ServerCookiesTest {
 
         response.headers["Set-Cookie"] shouldBe listOf(
                 """foo="bar"""",
-                """abc="def";Path=/;Max-Age=100;SameSite=Lax;Secure;HttpOnly""")
+                """abc="def"; Max-Age=100; Path=/; Secure; HttpOnly; SameSite=Lax""")
     }
 }
