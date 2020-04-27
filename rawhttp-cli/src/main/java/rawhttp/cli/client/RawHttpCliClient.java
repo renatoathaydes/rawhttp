@@ -11,7 +11,6 @@ import rawhttp.core.StatusLine;
 import rawhttp.core.client.TcpRawHttpClient;
 
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,13 +26,14 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
     private final boolean logRequest;
     private final ClientOptions clientOptions;
 
-    public static RawHttpCliClient create(boolean logRequest, PrintResponseMode printResponseMode) {
-        return create(logRequest, printResponseMode, null);
+    public static RawHttpCliClient create(boolean logRequest, PrintResponseMode printResponseMode,
+                                          boolean ignoreTlsCert) {
+        return create(logRequest, printResponseMode, ignoreTlsCert, null);
     }
 
     public static RawHttpCliClient create(boolean logRequest, PrintResponseMode printResponseMode,
-                                          @Nullable File cookieJar) {
-        ClientOptions clientOptions = new ClientOptions(ResponsePrinter.of(printResponseMode));
+                                          boolean ignoreTlsCert, @Nullable File cookieJar) {
+        ClientOptions clientOptions = new ClientOptions(ResponsePrinter.of(printResponseMode), ignoreTlsCert);
         ClientOptionsWithCookies parentOptions = new ClientOptionsWithCookies(
                 cookieManagerFor(cookieJar), clientOptions);
         return new RawHttpCliClient(logRequest, parentOptions, clientOptions);
@@ -92,10 +92,12 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
 
     private static final class ClientOptions extends DefaultOptions {
         private final ResponsePrinter responsePrinter;
+        private final TlsSocketFactory tlsSocketFactory;
         private TimedSocket currentSocket;
 
-        public ClientOptions(ResponsePrinter responsePrinter) {
+        public ClientOptions(ResponsePrinter responsePrinter, boolean ignoreTlsCert) {
             this.responsePrinter = responsePrinter;
+            this.tlsSocketFactory = new TlsSocketFactory(ignoreTlsCert);
         }
 
         void updateSendTime() {
@@ -106,7 +108,7 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         protected Socket createSocket(boolean useHttps, String host, int port) throws IOException {
             // overridden to ensure the connection to host:port is done later so we can time it
             Socket socket = useHttps
-                    ? SSLSocketFactory.getDefault().createSocket()
+                    ? tlsSocketFactory.create()
                     : new Socket();
             return new TimedSocket(socket, host, port);
         }

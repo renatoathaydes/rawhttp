@@ -62,11 +62,14 @@ final class SendRequestOptions {
     private final RequestBody requestBody;
     final PrintResponseMode printResponseMode;
     final boolean logRequest;
+    final boolean ignoreTlsCertificate;
 
-    SendRequestOptions(RequestBody requestBody, PrintResponseMode printResponseMode, boolean logRequest) {
+    SendRequestOptions(RequestBody requestBody, PrintResponseMode printResponseMode,
+                       boolean logRequest, boolean ignoreTlsCertificate) {
         this.requestBody = requestBody;
         this.printResponseMode = printResponseMode == null ? PrintResponseMode.RESPONSE : printResponseMode;
         this.logRequest = logRequest;
+        this.ignoreTlsCertificate = ignoreTlsCertificate;
     }
 
     public Optional<RequestBody> getRequestBody() {
@@ -121,15 +124,18 @@ final class HttpFileOptions {
     final String envName;
     final PrintResponseMode printResponseMode;
     final boolean logRequest;
+    final boolean ignoreTlsCert;
 
     public HttpFileOptions(File httpFile, @Nullable File cookieJar,
                            @Nullable String envName,
-                           PrintResponseMode printResponseMode, boolean logRequest) {
+                           PrintResponseMode printResponseMode,
+                           boolean logRequest, boolean ignoreTlsCert) {
         this.httpFile = httpFile;
         this.cookieJar = cookieJar;
         this.envName = envName;
         this.printResponseMode = printResponseMode;
         this.logRequest = logRequest;
+        this.ignoreTlsCert = ignoreTlsCert;
     }
 }
 
@@ -235,6 +241,7 @@ final class OptionsParser {
         RequestBody requestBody = null;
         PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
+        boolean ignoreTlsCert = false;
 
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
@@ -315,12 +322,18 @@ final class OptionsParser {
                 case "--log-request":
                     logRequest = true;
                     break;
+                case "-i":
+                case "--ignore-tls-cert":
+                    ignoreTlsCert = true;
+                    break;
                 default:
                     throw new OptionsException("Unrecognized option: " + arg);
             }
         }
 
-        SendRequestOptions options = new SendRequestOptions(requestBody, printResponseMode, logRequest);
+        SendRequestOptions options = new SendRequestOptions(requestBody, printResponseMode,
+                logRequest, ignoreTlsCert);
+
         ClientOptions clientOptions;
         if (requestFile != null) {
             clientOptions = ClientOptions.withFile(requestFile, options);
@@ -338,6 +351,7 @@ final class OptionsParser {
         @Nullable String envName = null;
         PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
+        boolean ignoreTlsCert = false;
 
         if (args.length < 2) {
             throw new OptionsException("No http requests file provided");
@@ -388,6 +402,10 @@ final class OptionsParser {
                 case "--log-request":
                     logRequest = true;
                     break;
+                case "-i":
+                case "--ignore-tls-cert":
+                    ignoreTlsCert = true;
+                    break;
                 default:
                     throw new OptionsException("Unrecognized option: " + arg);
             }
@@ -397,7 +415,8 @@ final class OptionsParser {
             printResponseMode = PrintResponseMode.RESPONSE;
         }
 
-        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, cookieJar, envName, printResponseMode, logRequest));
+        return Options.withHttpFileOptions(new HttpFileOptions(httpFile, cookieJar, envName, printResponseMode,
+                logRequest, ignoreTlsCert));
     }
 
     private static Options parseServeCommand(String[] args) throws OptionsException {

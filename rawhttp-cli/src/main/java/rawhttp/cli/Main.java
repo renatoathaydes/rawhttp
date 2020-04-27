@@ -238,7 +238,8 @@ public class Main {
             request = request.withBody(requestBody);
         }
 
-        try (RawHttpCliClient client = RawHttpCliClient.create(options.logRequest, options.printResponseMode)) {
+        try (RawHttpCliClient client = RawHttpCliClient.create(options.logRequest,
+                options.printResponseMode, options.ignoreTlsCertificate)) {
             client.send(request);
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
@@ -252,7 +253,7 @@ public class Main {
 
         try (RawHttpCliClient httpClient = RawHttpCliClient.create(
                 httpFileOptions.logRequest, httpFileOptions.printResponseMode,
-                httpFileOptions.cookieJar)) {
+                httpFileOptions.ignoreTlsCert, httpFileOptions.cookieJar)) {
             List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);
             try (ReqInEditUnit unit = new ReqInEditUnit(env, HTTP, new RedirectingRawHttpClient<>(httpClient))) {
                 boolean allTestsPass = unit.run(entries);
