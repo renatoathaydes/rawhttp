@@ -170,6 +170,7 @@ public class Main {
                         "\n" +
                         "For more information about the stats response-mode, see the docs for the 'send' sub-command."
                 );
+                break;
             case SERVE:
                 System.out.println("\n" +
                         "Serve sub-command Help.\n" +
