@@ -124,7 +124,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
                 .orElse(true);
     }
 
-    private RawHttpRequest toRequest(ReqInEditEntry entry) {
+    private RawHttpRequest toRequest(ReqInEditEntry entry) throws IOException {
         String requestTop = environment.renderTemplate(entry.getRequest());
         ByteArrayOutputStream buffer = new ByteArrayOutputStream(4096);
         entry.getRequestBody().stream().map(b -> b.match(
@@ -140,7 +140,7 @@ public class ReqInEditUnit implements Closeable, AutoCloseable {
 
         RawHttpRequest request = http.parseRequest(requestTop);
         if (buffer.size() > 0) {
-            request = request.withBody(new BytesBody(buffer.toByteArray()));
+            request = request.withBody(new BytesBody(buffer.toByteArray())).eagerly();
         }
         return request;
     }
