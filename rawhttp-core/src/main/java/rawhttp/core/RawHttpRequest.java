@@ -68,11 +68,15 @@ public class RawHttpRequest extends HttpMessage {
     }
 
     @Override
-    public RawHttpRequest withBody(HttpMessageBody body) {
-        return new RawHttpRequest(requestLine,
-                body.headersFrom(getHeaders()),
-                body.toBodyReader(),
-                getSenderAddress().orElse(null));
+    public RawHttpRequest withBody(@Nullable HttpMessageBody body) {
+        return withBody(body, true);
+    }
+
+    @Override
+    public RawHttpRequest withBody(@Nullable HttpMessageBody body, boolean adjustHeaders) {
+        return withBody(body, adjustHeaders, (headers, bodyReader) ->
+                new RawHttpRequest(requestLine, headers, bodyReader, senderAddress));
+
     }
 
     @Override
@@ -99,6 +103,13 @@ public class RawHttpRequest extends HttpMessage {
                 getHeaders(),
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));
+    }
+
+    /**
+     * @return whether this request contains a {@code Expect} header with value {@code 100-continue}.
+     */
+    public boolean expectContinue() {
+        return getHeaders().get("Expect").contains("100-continue");
     }
 
 }

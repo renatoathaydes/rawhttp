@@ -1,20 +1,18 @@
 package com.athaydes.rawhttp.duplex;
 
-import java.io.IOException;
+import rawhttp.core.client.TcpRawHttpClient;
+
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
-import rawhttp.core.RawHttpResponse;
-import rawhttp.core.client.TcpRawHttpClient;
 
-final class DuplexClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions {
+final class DuplexClientOptions extends TcpRawHttpClient.DefaultOptions {
 
-    private final TcpRawHttpClient.TcpRawHttpClientOptions defaultOptions = new TcpRawHttpClient.DefaultOptions();
     int socketTimeout = 60 * 1_000;
 
     @Override
     public Socket getSocket(URI uri) {
-        Socket socket = defaultOptions.getSocket(uri);
+        Socket socket = super.getSocket(uri);
         try {
             socket.setSoTimeout(socketTimeout);
         } catch (SocketException e) {
@@ -22,11 +20,4 @@ final class DuplexClientOptions implements TcpRawHttpClient.TcpRawHttpClientOpti
         }
         return socket;
     }
-
-    @Override
-    public RawHttpResponse<Void> onResponse(Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws
-            IOException {
-        return defaultOptions.onResponse(socket, uri, httpResponse);
-    }
-
 }

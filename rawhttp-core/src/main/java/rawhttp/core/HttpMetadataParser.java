@@ -6,16 +6,20 @@ import rawhttp.core.errors.InvalidHttpResponse;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
+
+import static java.net.URLDecoder.decode;
 
 /**
  * Parser of HTTP messages' metadata lines, i.e. start-line and header fields.
@@ -92,11 +96,14 @@ public final class HttpMetadataParser {
     /**
      * Parses the provided query String into a {@link Map}.
      * <p>
-     * This method does not verify nor performs any encoding/decoding.
+     * This method assumes the given query String is in its "raw" format, so that it can safely be split into its
+     * constituent parts.
      * <p>
      * Entries are separated with a {@code &} character, and each entry may be split into a key-value pair
      * with the {@code =} character as a separator. If no {@code =} character is found, the whole entry is taken
      * to be a key without value.
+     * <p>
+     * Once broken up, the query components are decoded, then added to the returned Map.
      *
      * @param queryString query string to parse
      * @return Map containing the query parameters
@@ -105,16 +112,25 @@ public final class HttpMetadataParser {
         if (queryString.isEmpty()) {
             return new HashMap<>(1);
         }
-        Map<String, List<String>> result = new HashMap<>(8);
+        Map<String, List<String>> result = new LinkedHashMap<>(8);
         String[] queryStringParts = queryString.split("&");
         for (String queryStringPart : queryStringParts) {
             String[] entry = queryStringPart.split("=", 2);
-            List<String> values = result.computeIfAbsent(entry[0], k -> new ArrayList<>(1));
+            List<String> values = result.computeIfAbsent(decodeFromUrl(entry[0]), k -> new ArrayList<>(1));
             if (entry.length == 2) {
-                values.add(entry[1]);
+                values.add(decodeFromUrl(entry[1]));
             }
         }
         return result;
+    }
+
+    private static String decodeFromUrl(String text) {
+        try {
+            return decode(text, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // this is never expected as all JVMs support UTF-8
+            throw new RuntimeException(e);
+        }
     }
 
     private RequestLine buildRequestLine(String requestLine) {
@@ -123,7 +139,7 @@ public final class HttpMetadataParser {
         }
         int firstSpace = requestLine.indexOf(' ');
         if (firstSpace <= 0) {
-            throw new InvalidHttpRequest("Invalid request line", 1);
+            throw new InvalidHttpRequest(String.format("Invalid request line: '%s'", requestLine), 1);
         }
         String method = requestLine.substring(0, firstSpace);
         OptionalInt illegalIndex = FieldValues.indexOfNotAllowedInTokens(method);
@@ -315,6 +331,15 @@ public final class HttpMetadataParser {
             if (next < 0 || next == '\n') {
                 return null; // end of headers stream
             }
+        } else if (b == '#' && options.allowComments()) {
+            // consume the comment and continue
+            while ((b = inputStream.read()) > 0) {
+                if (b == '\n') {
+                    b = inputStream.read();
+                    break;
+                }
+            }
+            if (b < 0) return null; // EOF
         }
 
         final boolean allowNewLineWithoutReturn = options.allowNewLineWithoutReturn();

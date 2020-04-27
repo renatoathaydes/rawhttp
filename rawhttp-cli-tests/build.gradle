@@ -15,6 +15,7 @@ compileKotlin {
 
 test {
     systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
+//    systemProperty 'rawhttp-cli-tester-debug', 'true'
     dependsOn ':rawhttp-cli:fatJar'
     testLogging {
         events "failed"
@@ -23,7 +24,14 @@ test {
 }
 
 dependencies {
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    testCompile 'junit:junit:4.12'
-    testCompile project(':rawhttp-cli')
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation 'junit:junit:4.12'
+    testImplementation project(':rawhttp-core')
+    testImplementation project(':rawhttp-cookies')
+    testImplementation project(':rawhttp-cli')
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect"
+    testImplementation "org.jetbrains.kotlin:kotlin-test"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit"
+    testImplementation "io.kotlintest:kotlintest:2.0.7"
 }

@@ -54,6 +54,36 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canLogResponseFull() {
+        val handle = runCli("send", "-l", "-p", "response", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
+    fun canLogResponseAll() {
+        val handle = runCli("send", "-p", "all", "-t", SUCCESS_HTTP_REQUEST)
+        assertOutputIsSuccessResponseAndThenStatistics(handle)
+    }
+
+    @Test
+    fun canLogResponseStatus() {
+        val handle = runCli("send", "-p", "status", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseStatus(handle)
+    }
+
+    @Test
+    fun canLogResponseBody() {
+        val handle = runCli("send", "-p", "body", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseBody(handle)
+    }
+
+    @Test
+    fun canLogResponseStats() {
+        val handle = runCli("send", "-p", "stats", "-t", SUCCESS_HTTP_REQUEST)
+        assertSuccessResponseStats(handle)
+    }
+
+    @Test
     fun serverReturns404OnNonExistentResource() {
         val handle = runCli("send", "-t", NOT_FOUND_HTTP_REQUEST)
         assertOutputIs404Response(handle)
@@ -109,7 +139,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val workDir = File(".")
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
                 ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
-        var contextPath = "some/example"
+        val contextPath = "some/example"
 
         val handle = runCli("serve", ".", "-r", contextPath)
 
@@ -214,7 +244,7 @@ class RawHttpCliTest : RawHttpCliTester() {
         val dateRegex = Regex("[0-9.:]+ \\[(?<date>.+)] \".+\" \\d{3} \\d+").toPattern()
 
         // verify the request was logged
-        val lastOutputLine = handle.out.lines().asReversed().find { !it.isEmpty() }
+        val lastOutputLine = handle.out.lines().asReversed().find { it.isNotEmpty() } ?: "<none>"
         val match = dateRegex.matcher(lastOutputLine)
 
         if (!match.find()) {
@@ -300,6 +330,49 @@ class RawHttpCliTest : RawHttpCliTester() {
                 xmlResponse.statusCode, equalTo(200))
         assertTrue(xmlResponse.body.isPresent)
         assertThat(xmlResponse.body.get().asRawString(Charsets.UTF_8), equalTo(xmlFile.readText()))
+    }
+
+    @Test
+    fun canRunBasicHttpFile() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/basic/get.http"))
+        assertOutputIsSuccessResponse(handle)
+    }
+
+    @Test
+    fun canRunBasicHttpFileLoggingRequest() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/basic/get.http"), "--log-request")
+        assertSuccessRequestIsLoggedThenSuccessResponse(handle)
+    }
+
+    @Test
+    fun canRunHttpFileWithEnvironment() {
+        val handleProd = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"), "-e", "prod")
+        assertGetFooResponseThenPostFooResponse(handleProd, "{prod: true}")
+
+        val handleTest = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"), "-e", "test")
+        assertGetFooResponseThenPostFooResponse(handleTest, "{prod: false}")
+    }
+
+    @Test
+    fun canRunHttpFileWithEnvironmentAndPrintStats() {
+        val handleProd = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"),
+                "-l", "-e", "prod", "-p", "stats")
+        assertGetFooThenPostFooRequestsAndStats(handleProd)
+    }
+
+    @Test
+    fun canRunHttpFileUsingExternalFiles() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/files/post.http"),
+                "-p", "body")
+        assertSuccessResponseReplyToFiles(handle)
+        assertReplyResponseStoredInFile()
+    }
+
+    @Test
+    fun canRunHttpFileWithTests() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
+                "-p", "status")
+        assertHttpTestResults(handle)
     }
 
 }

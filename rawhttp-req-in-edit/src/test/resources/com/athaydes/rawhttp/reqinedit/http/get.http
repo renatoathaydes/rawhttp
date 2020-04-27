@@ -1,0 +1,3 @@
+GET http://{{ host }}
+Accept: */*
+Authorize: Bearer {{ secret }}

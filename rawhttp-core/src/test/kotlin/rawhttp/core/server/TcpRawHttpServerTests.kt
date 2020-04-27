@@ -4,38 +4,51 @@ import io.kotlintest.Spec
 import io.kotlintest.matchers.fail
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldHave
+import io.kotlintest.matchers.shouldNot
 import io.kotlintest.specs.StringSpec
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
+import rawhttp.core.RawHttpHeaders
+import rawhttp.core.RawHttpRequest
+import rawhttp.core.RawHttpResponse
+import rawhttp.core.RequestLine
 import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
+import rawhttp.core.notBePresent
 import rawhttp.core.validDateHeader
 import java.lang.Thread.sleep
+import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketException
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.Optional
 
 class TcpRawHttpServerTests : StringSpec() {
 
-    private val server = TcpRawHttpServer(8093)
-    private val http = RawHttp()
+    companion object {
+        private val http = RawHttp()
+    }
 
+    private val server = TcpRawHttpServer(8093)
     private val httpClient = TcpRawHttpClient()
 
-    private fun startServer() {
-        server.start { req ->
-            Optional.ofNullable(when (req.uri.path) {
+    private object TestRouter : Router {
+        override fun route(req: RawHttpRequest): Optional<RawHttpResponse<*>> {
+            return Optional.ofNullable(when (req.uri.path) {
                 "/hello", "/" ->
                     when (req.method) {
-                        "GET" ->
+                        "GET", "HEAD" ->
                             http.parseResponse("HTTP/1.1 200 OK\n" +
                                     "Content-Type: text/plain"
                             ).withBody(StringBody("Hello RawHTTP!"))
                         "DELETE" ->
                             throw Exception("Cannot delete")
+                        "POST" ->
+                            http.parseResponse("HTTP/1.1 200 OK").withBody(StringBody("Thanks"))
                         else ->
                             http.parseResponse("HTTP/1.1 405 Method Not Allowed\n" +
                                     "Content-Type: text/plain"
@@ -49,6 +62,18 @@ class TcpRawHttpServerTests : StringSpec() {
                     ).withBody(StringBody("Content was not found"))
             })
         }
+
+        override fun continueResponse(requestLine: RequestLine, headers: RawHttpHeaders):
+                Optional<RawHttpResponse<Void>> {
+            return Optional.of(HttpResponses.get100ContinueResponse()
+                    .withHeaders(RawHttpHeaders.newBuilder()
+                            .with("Accept-100", "True")
+                            .build()))
+        }
+    }
+
+    private fun startServer() {
+        server.start(TestRouter)
     }
 
     private fun cleanup() {
@@ -77,27 +102,36 @@ class TcpRawHttpServerTests : StringSpec() {
             }
         }
 
-        "Server can handle multiple successful http client requests" {
-            val request = http.parseRequest("GET http://localhost:8093/hello")
-            val response = httpClient.send(request).eagerly()
+        "Server can handle multiple successful http client requests, including HEAD request" {
+            val getRequest = http.parseRequest("GET http://localhost:8093/hello")
+            val headRequest = http.parseRequest("HEAD http://localhost:8093/hello")
+            val response = httpClient.send(getRequest).eagerly()
 
             response.statusCode shouldBe 200
+            response.headers["Content-Length"] shouldBe listOf("14")
             response.body should bePresent {
                 it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
 
             sleep(500)
 
-            val response2 = httpClient.send(request).eagerly()
+            val response2 = httpClient.send(headRequest).eagerly()
 
             response2.statusCode shouldBe 200
-            response2.body should bePresent {
+            response2.headers["Content-Length"] shouldBe listOf("14")
+            response2.body shouldNot bePresent()
+
+            val response3 = httpClient.send(getRequest).eagerly()
+
+            response3.statusCode shouldBe 200
+            response3.headers["Content-Length"] shouldBe listOf("14")
+            response3.body should bePresent {
                 it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         }
 
         "Server can handle wrong method http client request" {
-            val request = http.parseRequest("POST http://localhost:8093")
+            val request = http.parseRequest("PUT http://localhost:8093")
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 405
@@ -200,6 +234,42 @@ class TcpRawHttpServerTests : StringSpec() {
             socket.assertIsOpen()
         }
 
+        "Server honours http client request desire to use 100-Continue" {
+            val request = http.parseRequest("POST / HTTP/1.1\n" +
+                    "Host: localhost:8093\n" +
+                    "Expect: 100-continue\n" +
+                    "Content-Length: 10\n" +
+                    "\n" +
+                    "0123456789").eagerly()
+
+            val socket = Socket(InetAddress.getLoopbackAddress(), 8093)
+            socket.soTimeout = 500
+
+            // don't send the body just yet
+            val out = socket.getOutputStream()
+            Thread {
+                request.startLine.writeTo(out)
+                request.headers.writeTo(out)
+            }.start()
+
+            val response100 = http.parseResponse(socket.getInputStream()).eagerly()
+
+            response100.statusCode shouldBe 100
+            response100.headers["Accept-100"] shouldBe listOf("True")
+            response100.body should notBePresent()
+
+            // Server accepted the body, send it
+            request.body.map { it.writeTo(out) }
+
+            // now the final response can be read
+            val response = http.parseResponse(socket.getInputStream()).eagerly()
+
+            response.statusCode shouldBe 200
+            response.headers shouldHave validDateHeader()
+            response.body should bePresent {
+                it.asRawString(StandardCharsets.UTF_8) shouldEqual "Thanks"
+            }
+        }
     }
 
     private fun Socket.assertIsOpen() {

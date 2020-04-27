@@ -1,0 +1,32 @@
+GET /saysomething HTTP/1.1
+Host: localhost:8083
+Accept: */*
+User-Agent: RawHTTP
+
+> {%
+client.test('response is 200', function() {
+  client.assert(response.status === 200, "status code not 200");
+});
+client.global.set('previousBody', response.body);
+ %}
+
+###
+
+POST /reply HTTP/1.1
+Host: localhost:8083
+Accept: text/plain
+Content-Type: text/plain
+User-Agent: RawHTTP
+
+{{ previousBody }}
+
+> {%
+client.test('response again is 200', function() {
+  client.assert(response.status === 200, "status code not 200");
+});
+client.test('body is as expected', function() {
+  client.assert(response.body === 'Received:something', 'Unexpected body: ' + response.body);
+});
+%}
+
+###

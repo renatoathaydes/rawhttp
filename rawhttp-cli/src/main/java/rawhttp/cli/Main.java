@@ -1,14 +1,18 @@
 package rawhttp.cli;
 
 import com.athaydes.rawhttp.cli.Versions;
+import com.athaydes.rawhttp.reqinedit.ReqInEditEntry;
+import com.athaydes.rawhttp.reqinedit.ReqInEditParser;
+import com.athaydes.rawhttp.reqinedit.ReqInEditUnit;
+import com.athaydes.rawhttp.reqinedit.js.JsEnvironment;
+import rawhttp.cli.client.RawHttpCliClient;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.FileBody;
 import rawhttp.core.body.HttpMessageBody;
 import rawhttp.core.body.StringBody;
-import rawhttp.core.client.TcpRawHttpClient;
+import rawhttp.core.client.RedirectingRawHttpClient;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.server.RawHttpServer;
 import rawhttp.core.server.TcpRawHttpServer;
@@ -18,6 +22,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -37,7 +42,8 @@ public class Main {
         BAD_USAGE, // 1
         INVALID_HTTP_REQUEST, // 2
         UNEXPECTED_ERROR, // 3
-        IO_EXCEPTION // 4
+        IO_EXCEPTION, // 4
+        USER_TEST_FAILURE, // 5
     }
 
     private static final RawHttp HTTP = new RawHttp(RawHttpOptions.newBuilder()
@@ -52,6 +58,7 @@ public class Main {
                             Main::sendRequestFromSysIn,
                             Main::sendRequestFromFile,
                             Main::sendRequestFromText),
+                    Main::runHttpFile,
                     Main::serve,
                     Main::showUsage);
         } catch (OptionsException e) {
@@ -80,12 +87,15 @@ public class Main {
                         "RawHTTP CLI is a utility to send and receive HTTP messages.\n" +
                         "The following sub-commands are available:\n" +
                         "\n" +
-                        "  send    - sends HTTP requests\n" +
+                        "  send    - sends a HTTP request\n" +
+                        "  run     - runs a HTTP file in the IntelliJ format.\n" +
                         "  serve   - serves the contents of a local directory via HTTP.\n" +
                         "  help    - shows this message or help for a specific sub-command.\n" +
                         "\n" +
                         "Send Command Usage:\n" +
                         "  rawhttp send [options]\n" +
+                        "Run Command Usage:\n" +
+                        "  rawhttp run <http-file> [options]\n" +
                         "\n" +
                         "Serve Command Usage:\n" +
                         "  rawhttp serve <directory> [options]\n" +
@@ -99,7 +109,7 @@ public class Main {
                 System.out.println("\n" +
                         "Send sub-command Help.\n" +
                         "\n" +
-                        "The 'send' sub-command is used to send out HTTP requests.\n" +
+                        "The 'send' sub-command is used to send out a single HTTP request.\n" +
                         "\n" +
                         "Usage:\n" +
                         "  rawhttp send [options]\n" +
@@ -109,8 +119,13 @@ public class Main {
                         "      read request from a file\n" +
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
-                        "  * -p --print-body-only\n" +
-                        "      print response body only\n" +
+                        "  * -p --print-response-mode <option>\n" +
+                        "      option is one of: response|all|body|status|stats\n" +
+                        "        - response: (default) print the full response\n" +
+                        "        - all: print the full response and statistics about the request\n" +
+                        "        - body: print the response body\n" +
+                        "        - status: print the response status-line\n" +
+                        "        - stats: print statistics about the request\n" +
                         "  * -l --log-request\n" +
                         "      log the request\n" +
                         "  * -b --body-text <text>\n" +
@@ -118,7 +133,43 @@ public class Main {
                         "  * -g --body-file <file>\n" +
                         "      replace message body with the contents of the file\n" +
                         "\n" +
-                        "If no -f or -t options are given, a HTTP request is read from sysin.\n");
+                        "Statistics include the following information:\n" +
+                        "  Connect time: the time it took to connect to the server (includes only the Socket::connect call).\n" +
+                        "  First received byte time (FRBT): the time between the first byte of the request being sent, and the first byte of the response being received.\n" +
+                        "  Total response time (TRT): time to receive the first byte, plus the time to download the full response.\n" +
+                        "  Bytes received: the number of bytes received from the server.\n" +
+                        "  Throughput: the total number of bytes received, divided by (TRT - FRBT) in seconds.\n" +
+                        "\n" +
+                        "If no -f or -t options are given, a HTTP request is read from stdin.\n");
+                break;
+            case RUN:
+                System.out.println("\n" +
+                        "Run sub-command Help.\n" +
+                        "\n" +
+                        "The 'run' sub-command executes a HTTP file as defined by Jetbrains at\n" +
+                        "\n" +
+                        "https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html\n" +
+                        "\n" +
+                        "Usage:\n" +
+                        "  rawhttp run <http-file> [options]\n" +
+                        "\n" +
+                        "Options:\n" +
+                        "  * -e --environment <name>\n" +
+                        "    the name of the environment to use\n" +
+                        "  * -c --cookiejar <file>\n" +
+                        "    the file to use as a cookie jar\n" +
+                        "  * -p --print-response-mode\n" +
+                        "  *   one of: response|all|body|status|stats\n" +
+                        "        - response: (default) print the full responses\n" +
+                        "        - all: print the full response and statistics about each request\n" +
+                        "        - body: print the response bodies\n" +
+                        "        - status: print the response status-lines\n" +
+                        "        - stats: print statistics about each request\n" +
+                        "  * -l --log-request\n" +
+                        "      log the request\n" +
+                        "\n" +
+                        "For more information about the stats response-mode, see the docs for the 'send' sub-command."
+                );
                 break;
             case SERVE:
                 System.out.println("\n" +
@@ -149,11 +200,11 @@ public class Main {
         return null;
     }
 
-    private static CliError sendRequestFromText(String request, RequestRunOptions options) {
+    private static CliError sendRequestFromText(String request, SendRequestOptions options) {
         return sendRequest(HTTP.parseRequest(request), options);
     }
 
-    private static CliError sendRequestFromSysIn(RequestRunOptions options) {
+    private static CliError sendRequestFromSysIn(SendRequestOptions options) {
         try {
             return sendRequest(HTTP.parseRequest(System.in), options);
         } catch (IOException e) {
@@ -161,7 +212,7 @@ public class Main {
         }
     }
 
-    private static CliError sendRequestFromFile(File file, RequestRunOptions options) {
+    private static CliError sendRequestFromFile(File file, SendRequestOptions options) {
         try (InputStream fileStream = Files.newInputStream(file.toPath())) {
             return sendRequest(HTTP.parseRequest(fileStream), options);
         } catch (IOException e) {
@@ -169,7 +220,7 @@ public class Main {
         }
     }
 
-    private static CliError sendRequest(RawHttpRequest request, RequestRunOptions options) {
+    private static CliError sendRequest(RawHttpRequest request, SendRequestOptions options) {
         if (options.getRequestBody().isPresent()) {
             HttpMessageBody requestBody = options.getRequestBody().get().run(
                     FileBody::new,
@@ -187,24 +238,28 @@ public class Main {
             request = request.withBody(requestBody);
         }
 
-        if (options.logRequest) {
-            try {
-                request = request.eagerly();
-                request.writeTo(System.out);
-                System.out.println();
-            } catch (IOException e) {
-                System.err.println("Error logging request to sysout: " + e);
-            }
+        try (RawHttpCliClient client = RawHttpCliClient.create(options.logRequest,
+                options.printResponseMode, options.ignoreTlsCertificate)) {
+            client.send(request);
+        } catch (IOException e) {
+            return new CliError(ErrorCode.IO_EXCEPTION, e.toString());
         }
+        return null;
+    }
 
-        try (TcpRawHttpClient client = new TcpRawHttpClient()) {
-            RawHttpResponse<Void> response = client.send(request);
-            if (options.printBodyOnly) {
-                if (response.getBody().isPresent()) {
-                    response.getBody().get().writeTo(System.out);
+    private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
+        ReqInEditParser parser = new ReqInEditParser();
+        JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
+
+        try (RawHttpCliClient httpClient = RawHttpCliClient.create(
+                httpFileOptions.logRequest, httpFileOptions.printResponseMode,
+                httpFileOptions.ignoreTlsCert, httpFileOptions.cookieJar)) {
+            List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);
+            try (ReqInEditUnit unit = new ReqInEditUnit(env, HTTP, new RedirectingRawHttpClient<>(httpClient))) {
+                boolean allTestsPass = unit.run(entries);
+                if (!allTestsPass) {
+                    return new CliError(ErrorCode.USER_TEST_FAILURE, "FAIL: There were test failures!");
                 }
-            } else {
-                response.writeTo(System.out);
             }
         } catch (IOException e) {
             return new CliError(ErrorCode.IO_EXCEPTION, e.toString());

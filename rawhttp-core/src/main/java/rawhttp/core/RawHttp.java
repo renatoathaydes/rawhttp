@@ -361,6 +361,20 @@ public class RawHttp {
         throw new TimeoutException("Port $port was not taken within the timeout");
     }
 
+    /**
+     * Get a new URI based on the given URI, but with the host replaced with newHost.
+     * <p>
+     * The new host may include a port using the "host:port" syntax.
+     *
+     * @param uri     original URI
+     * @param newHost host to use in the returned URI
+     * @return a new URI with the host replaced
+     * @deprecated use {@link UriUtil#withHost(URI, String)} instead
+     */
+    public static URI replaceHost(URI uri, String newHost) {
+        return UriUtil.withHost(uri, newHost);
+    }
+
     private static boolean startsWith(int firstDigit, int statusCode) {
         assert 0 < firstDigit && firstDigit < 10;
         int minCode = firstDigit * 100;
@@ -386,7 +400,7 @@ public class RawHttp {
             if (requestLineHost == null) try {
                 RequestLine newRequestLine = requestLine.withHost(hostHeaderValues.iterator().next());
                 // cleanup the host header
-                headers.overwrite("Host", newRequestLine.getUri().getHost());
+                headers.overwrite("Host", hostHeaderValueFor(newRequestLine.getUri()));
                 return newRequestLine;
             } catch (IllegalArgumentException e) {
                 int lineNumber = headers.getLineNumberAt("Host", 0);
@@ -404,4 +418,17 @@ public class RawHttp {
         }
     }
 
+    private static String hostHeaderValueFor(URI uri) {
+        if (hasDefaultPort(uri)) {
+            return uri.getHost();
+        } else {
+            return uri.getHost() + ":" + uri.getPort();
+        }
+    }
+
+    private static boolean hasDefaultPort(URI uri) {
+        return (uri.getPort() < 0)
+                || ((uri.getPort() == 80) && ("http".equalsIgnoreCase(uri.getScheme())))
+                || ((uri.getPort() == 443) && ("https".equalsIgnoreCase(uri.getScheme())));
+    }
 }

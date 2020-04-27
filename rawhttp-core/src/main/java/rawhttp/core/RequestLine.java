@@ -5,7 +5,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * A {@link RawHttpRequest}'s start-line.
@@ -52,25 +52,17 @@ public class RequestLine implements StartLine {
     }
 
     /**
+     * Copy this {@link RequestLine}, replacing the host in its URI.
+     * <p>
+     * The new host may include a port using the "host:port" syntax.
+     * <p>
+     * The new URI never maintains the old URI's port, even if the port is omitted from the new host String.
+     *
      * @param host the host to be used in the method line's URI.
      * @return a copy of this method line, but with the given host
      */
     public RequestLine withHost(String host) {
-        try {
-            if (!host.matches("[a-z]{1,6}://.*")) {
-                host = "http://" + host;
-            }
-            URI hostURI = URI.create(host);
-            URI newURI = new URI(hostURI.getScheme(),
-                    hostURI.getUserInfo(),
-                    hostURI.getHost(),
-                    hostURI.getPort(),
-                    uri.getPath(), uri.getQuery(), uri.getFragment());
-            return new RequestLine(method, newURI, httpVersion);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid host format" + Optional.ofNullable(
-                    e.getMessage()).map(s -> ": " + s).orElse(""));
-        }
+        return new RequestLine(method, RawHttp.replaceHost(uri, host), httpVersion);
     }
 
     @Override
@@ -99,5 +91,20 @@ public class RequestLine implements StartLine {
         }
 
         return method + " " + pathURI + " " + httpVersion;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RequestLine that = (RequestLine) o;
+        return method.equals(that.method) &&
+                uri.equals(that.uri) &&
+                httpVersion == that.httpVersion;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(method, uri, httpVersion);
     }
 }

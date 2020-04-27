@@ -1,5 +1,19 @@
 package rawhttp.samples;
 
+import org.junit.Ignore;
+import org.junit.Test;
+import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpRequest;
+import rawhttp.core.RawHttpResponse;
+import rawhttp.core.body.BytesBody;
+import rawhttp.core.body.ChunkedBody;
+import rawhttp.core.body.FileBody;
+import rawhttp.core.body.StringBody;
+import rawhttp.core.client.TcpRawHttpClient;
+import rawhttp.core.server.RawHttpServer;
+import rawhttp.core.server.TcpRawHttpServer;
+
+import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,20 +27,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLSocketFactory;
-import org.junit.Ignore;
-import org.junit.Test;
-import rawhttp.core.RawHttp;
-import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
-import rawhttp.core.body.BytesBody;
-import rawhttp.core.body.ChunkedBody;
-import rawhttp.core.body.FileBody;
-import rawhttp.core.body.StringBody;
-import rawhttp.core.client.TcpRawHttpClient;
-import rawhttp.core.server.RawHttpServer;
-import rawhttp.core.server.TcpRawHttpServer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -179,6 +182,8 @@ public class DocsSamples {
     @Test
     public void requestWithConfiguredTcpRawHttpClient() throws IOException {
         class SafeHttpClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions {
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+
             @Override
             public Socket getSocket(URI uri) {
                 String host = uri.getHost();
@@ -200,8 +205,13 @@ public class DocsSamples {
             }
 
             @Override
-            public void close() throws IOException {
-                // the client was closed, perform cleanup
+            public ExecutorService getExecutorService() {
+                return executorService;
+            }
+
+            @Override
+            public void close() {
+                executorService.shutdownNow();
             }
         }
 

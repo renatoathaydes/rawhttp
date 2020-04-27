@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 /**
  * A HTTP message, which can be either a request or a response.
@@ -39,12 +40,54 @@ public abstract class HttpMessage implements Writable {
     /**
      * Create a copy of this HTTP message, replacing its body with the given body.
      * <p>
-     * The headers of this message should be adjusted if necessary to be consistent with the new body.
+     * The headers of this message will be adjusted if necessary to be consistent with the new body.
      *
-     * @param body body
+     * @param body the new body
      * @return a copy of this HTTP message with the new body.
      */
-    public abstract HttpMessage withBody(HttpMessageBody body);
+    public HttpMessage withBody(@Nullable HttpMessageBody body) {
+        return withBody(body, true);
+    }
+
+    /**
+     * Create a copy of this HTTP message, replacing its body with the given body.
+     * <p>
+     * Notice that if the {@code adjustHeaders} parameters is set to false, the resulting Http message may become
+     * inconsistent (e.g. if may have a Content-Length header with a value greater than 0,
+     * while the message has no body!). This is allowed for cases where a HTTP server must return a response
+     * containing body-related headers, even while it must not provide any actual body. Please use carefully.
+     *
+     * @param body          the new body
+     * @param adjustHeaders whether to set or remove the appropriate headers to be consistent with the new body
+     * @return a copy of this HTTP message with the new body.
+     */
+    public abstract HttpMessage withBody(@Nullable HttpMessageBody body, boolean adjustHeaders);
+
+    /**
+     * Helper method to allow sub-types to easily implement {@link HttpMessage#withBody(HttpMessageBody, boolean)}.
+     *
+     * @param body          the body or null if no body is returned
+     * @param adjustHeaders whether to "adjust" headers for the new body
+     * @param apply         create the Self type instance using the given headers and body
+     * @param <Self>        the Self type
+     * @return the result of calling {@code apply} with the headers maybe adjusted for the given body.
+     */
+    protected <Self> Self withBody(@Nullable HttpMessageBody body,
+                                   boolean adjustHeaders,
+                                   BiFunction<RawHttpHeaders, BodyReader, Self> apply) {
+        RawHttpHeaders headers;
+        if (body == null) {
+            headers = adjustHeaders ?
+                    HttpMessageBody.removeBodySpecificHeaders(getHeaders()) :
+                    getHeaders();
+        } else {
+            headers = adjustHeaders ?
+                    body.headersFrom(getHeaders()) :
+                    getHeaders();
+        }
+
+        return apply.apply(headers, body == null ? null : body.toBodyReader());
+    }
 
     /**
      * @return the headers of this HTTP message.

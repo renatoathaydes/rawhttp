@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.OptionalLong;
 
 /**
@@ -85,4 +86,16 @@ public final class EagerBodyReader extends BodyReader {
         return new String(rawBytes, StandardCharsets.UTF_8);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EagerBodyReader that = (EagerBodyReader) o;
+        return Arrays.equals(rawBytes, that.rawBytes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(rawBytes);
+    }
 }

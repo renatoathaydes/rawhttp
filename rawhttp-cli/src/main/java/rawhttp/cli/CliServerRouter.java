@@ -66,7 +66,7 @@ final class CliServerRouter implements Router {
     @Override
     public Optional<RawHttpResponse<?>> route(RawHttpRequest request) {
         final Optional<RawHttpResponse<?>> response;
-        if (request.getMethod().equals("GET")) {
+        if (request.getMethod().equals("GET") || request.getMethod().equals("HEAD")) {
             String path = pathReader.readPath(request);
             if (path == null) {
                 return Optional.empty();

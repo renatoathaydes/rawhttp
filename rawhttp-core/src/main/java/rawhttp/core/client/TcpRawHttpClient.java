@@ -1,30 +1,38 @@
 package rawhttp.core.client;
 
+import rawhttp.core.HttpVersion;
+import rawhttp.core.IOSupplier;
+import rawhttp.core.RawHttp;
+import rawhttp.core.RawHttpOptions;
+import rawhttp.core.RawHttpRequest;
+import rawhttp.core.RawHttpResponse;
+
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
-import javax.net.ssl.SSLSocketFactory;
-import rawhttp.core.HttpVersion;
-import rawhttp.core.RawHttp;
-import rawhttp.core.RawHttpOptions;
-import rawhttp.core.RawHttpRequest;
-import rawhttp.core.RawHttpResponse;
 
 /**
  * Simple implementation of {@link RawHttpClient} based on TCP {@link Socket}s.
  */
 public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
-    private final TcpRawHttpClientOptions options;
+    protected final TcpRawHttpClientOptions options;
     private final RawHttp rawHttp;
 
     /**
@@ -77,18 +85,72 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             throw e;
         }
 
-        OutputStream outputStream = socket.getOutputStream();
+        final RawHttpRequest finalRequest = options.onRequest(request);
 
-        options.getExecutorService().submit(() -> {
+        boolean expectContinue = !finalRequest.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1) &&
+                finalRequest.expectContinue();
+
+        OutputStream outputStream = socket.getOutputStream();
+        InputStream inputStream = socket.getInputStream();
+
+        options.getExecutorService().submit(requestSender(finalRequest, outputStream, expectContinue));
+
+        RawHttpResponse<Void> response;
+        if (expectContinue) {
+            ResponseWaiter responseWaiter = new ResponseWaiter(() ->
+                    rawHttp.parseResponse(inputStream, finalRequest.getStartLine()));
             try {
-                request.writeTo(outputStream);
+                if (options.shouldContinue(responseWaiter)) {
+                    //noinspection OptionalGetWithoutIsPresent (Expect continue is only valid when there is a body)
+                    finalRequest.getBody().get().writeTo(outputStream);
+                    // call the response waiter if the custom shouldContinue implementation hasn't yet done that
+                    if (!responseWaiter.wasCalled.get()) {
+                        responseWaiter.call();
+                    }
+                    response = responseWaiter.response;
+                } else {
+                    socket.close();
+                    options.removeSocket(socket);
+                    throw new RuntimeException("Unable to obtain a response due to a 100-continue " +
+                            "request not being continued");
+                }
+            } catch (Exception e) {
+                socket.close();
+                options.removeSocket(socket);
+                throw new RuntimeException("Unable to obtain a response due to a 100-continue " +
+                        "request not being continued", e);
+            }
+        } else {
+            response = rawHttp.parseResponse(inputStream, finalRequest.getStartLine());
+        }
+
+        if (response.getStatusCode() == 100) {
+            // 100-Continue: ignore the first response, then expect a new one...
+            options.onResponse(socket, finalRequest.getUri(), response);
+
+            return options.onResponse(socket, finalRequest.getUri(),
+                    rawHttp.parseResponse(socket.getInputStream(), finalRequest.getStartLine()));
+        }
+
+        return options.onResponse(socket, finalRequest.getUri(), response);
+    }
+
+    protected Runnable requestSender(RawHttpRequest request,
+                                     OutputStream outputStream,
+                                     boolean expectContinue) {
+        return () -> {
+            try {
+                if (expectContinue) {
+                    request.getStartLine().writeTo(outputStream);
+                    request.getHeaders().writeTo(outputStream);
+                } else {
+                    request.writeTo(outputStream);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        });
 
-        return options.onResponse(socket, request.getUri(),
-                rawHttp.parseResponse(socket.getInputStream()));
+        };
     }
 
     @Override
@@ -109,10 +171,28 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         Socket getSocket(URI uri);
 
         /**
+         * Callback that will be called every time the HTTP client is about to send a request.
+         * <p>
+         * This allows for modifying the request, logging it, inspecting it for sensitive data and many other use cases.
+         * <p>
+         * The default implementation returns the unmodified request.
+         *
+         * @param httpRequest the HTTP request to be sent
+         * @return a possibly transformed httpRequest
+         * @throws IOException if any communication problem occurs
+         */
+        default RawHttpRequest onRequest(RawHttpRequest httpRequest) throws IOException {
+            return httpRequest;
+        }
+
+        /**
          * Callback that will be called every time the HTTP client receives a response.
          * <p>
          * It may be used to perform maintenance (such as calling {@link RawHttpResponse#eagerly()}
          * then closing the connection), or transform the provided HTTP response, returning a modified one.
+         * <p>
+         * If the response has the 100-Continue status code, this method may be called more than once for the same
+         * request, once with the 100-Continue response, and then with the final response.
          *
          * @param socket       the socket used to send out a HTTP request. This socket is always
          *                     the same as provided by a previous call to {@link #getSocket(URI)}.
@@ -125,25 +205,49 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                 Socket socket, URI uri, RawHttpResponse<Void> httpResponse) throws IOException;
 
         /**
+         * Decide whether the body of a request with the 100-continue expectation should be sent to the server
+         * after obtaining a HTTP response from it.
+         * <p>
+         * The default implementation waits for up to 5 seconds for a response, and continues only if the response comes
+         * within that time limit and has either the 100-Continue or a 2xx or a 3xx status code.
+         *
+         * @param waitForHttpResponse callable that will block until the server sends a HTTP response
+         * @return true to continue and send the message body to the server, false to stop.
+         * @throws Exception if an error occurs. If that happens, the request body will not be sent and the connection
+         *                   to the server will be closed.
+         */
+        default boolean shouldContinue(Callable<RawHttpResponse<Void>> waitForHttpResponse) throws Exception {
+            Future<RawHttpResponse<Void>> responseFuture = getExecutorService().submit(waitForHttpResponse);
+            try {
+                RawHttpResponse<Void> response = responseFuture.get(5, TimeUnit.SECONDS);
+                return response.getStatusCode() == 100 ||
+                        200 <= response.getStatusCode() && response.getStatusCode() < 400;
+            } catch (TimeoutException e) {
+                return false;
+            }
+        }
+
+        /**
          * @return executor service to use to run send the full request body.
          * <p>
          * By sending the request's body asynchronously, it is possible to send more than
          * one request to a server without waiting for each response to be downloaded first.
          */
-        default ExecutorService getExecutorService() {
-            final AtomicInteger threadCount = new AtomicInteger(1);
-            return Executors.newFixedThreadPool(4, runnable -> {
-                Thread t = new Thread(runnable);
-                t.setDaemon(true);
-                t.setName("tcp-rawhttp-client-" + threadCount.incrementAndGet());
-                return t;
-            });
-        }
+        ExecutorService getExecutorService();
 
         @Override
         default void close() throws IOException {
         }
 
+        /**
+         * Remove a "bad" socket from the pool of sockets being currently used by the client.
+         * <p>
+         * This method may be called when an error occurs due to transmission of protocol problems.
+         *
+         * @param socket to remove
+         */
+        default void removeSocket(Socket socket) {
+        }
     }
 
     /**
@@ -159,6 +263,17 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
     public static class DefaultOptions implements TcpRawHttpClientOptions {
 
         private final Map<String, Socket> socketByHost = new HashMap<>(4);
+        private final ExecutorService executorService;
+
+        public DefaultOptions() {
+            final AtomicInteger threadCount = new AtomicInteger(1);
+            this.executorService = Executors.newFixedThreadPool(4, runnable -> {
+                Thread t = new Thread(runnable);
+                t.setDaemon(true);
+                t.setName("tcp-rawhttp-client-" + threadCount.incrementAndGet());
+                return t;
+            });
+        }
 
         @Override
         public Socket getSocket(URI uri) {
@@ -174,9 +289,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                     port = useHttps ? 443 : 80;
                 }
                 try {
-                    socket = useHttps
-                            ? SSLSocketFactory.getDefault().createSocket(host, port)
-                            : new Socket(host, port);
+                    socket = createSocket(useHttps, host, port);
                     socket.setSoTimeout(5_000);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -187,27 +300,42 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             return socket;
         }
 
+        protected Socket createSocket(boolean useHttps, String host, int port) throws IOException {
+            return useHttps
+                    ? SSLSocketFactory.getDefault().createSocket(host, port)
+                    : new Socket(host, port);
+        }
+
         @Override
         public RawHttpResponse<Void> onResponse(Socket socket,
                                                 URI uri,
                                                 RawHttpResponse<Void> httpResponse) throws IOException {
-            if (httpResponse.getHeaders()
-                    .getFirst("Connection")
-                    .orElse("")
-                    .equalsIgnoreCase("close") ||
-                    httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)) {
-
+            if (RawHttpResponse.shouldCloseConnectionAfter(httpResponse)) {
                 socketByHost.remove(uri.getHost());
 
                 // resolve the full response before closing the socket
-                return httpResponse.eagerly(false);
+                try {
+                    return httpResponse.eagerly(false);
+                } finally {
+                    socket.close();
+                }
             }
 
             return httpResponse;
         }
 
         @Override
-        public void close() {
+        public ExecutorService getExecutorService() {
+            return executorService;
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                executorService.shutdown();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             for (Socket socket : socketByHost.values()) {
                 try {
                     socket.close();
@@ -217,6 +345,31 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             }
         }
 
+        @Override
+        public void removeSocket(Socket socket) {
+            socketByHost.values().remove(socket);
+        }
+
+    }
+
+    private static class ResponseWaiter implements Callable<RawHttpResponse<Void>> {
+        private final AtomicBoolean wasCalled = new AtomicBoolean(false);
+        volatile RawHttpResponse<Void> response;
+        private final IOSupplier<RawHttpResponse<Void>> readResponse;
+
+        private ResponseWaiter(IOSupplier<RawHttpResponse<Void>> readResponse) {
+            this.readResponse = readResponse;
+        }
+
+        @Override
+        public RawHttpResponse<Void> call() throws Exception {
+            if (wasCalled.compareAndSet(false, true)) {
+                response = readResponse.get();
+                return response;
+            } else {
+                throw new IllegalStateException("Cannot receive HTTP Request more than once");
+            }
+        }
     }
 
 }

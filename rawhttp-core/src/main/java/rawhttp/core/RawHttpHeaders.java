@@ -25,7 +25,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * A Collection of HTTP headers.
@@ -129,8 +129,9 @@ public class RawHttpHeaders implements Writable {
      * @return a {@link Map} representation of this set of headers.
      */
     public Map<String, List<String>> asMap() {
-        return headersByCapitalizedName.entrySet().stream()
-                .collect(toMap(Map.Entry::getKey, e -> e.getValue().values));
+        Map<String, List<String>> map = new LinkedHashMap<>(headersByCapitalizedName.size());
+        headersByCapitalizedName.forEach((name, value) -> map.put(name, value.values));
+        return map;
     }
 
     @Override
@@ -222,8 +223,10 @@ public class RawHttpHeaders implements Writable {
     /**
      * Create a new set of headers, adding/replacing the provided headers into this instance.
      * <p>
-     * Multi-valued headers present in both this and the provided headers are not merged. The provided headers
-     * are guaranteed to be present and have the same values in the returned instance.
+     * Multi-valued headers present in both this and the provided headers are not merged.
+     * Use {@link Builder#merge(RawHttpHeaders)} if that's desired.
+     * <p>
+     * The provided headers are guaranteed to be present and have the same values in the returned instance.
      *
      * @param headers to add or replace on this.
      * @return new set of headers containing both this instance's values as well as the provided values
@@ -358,9 +361,6 @@ public class RawHttpHeaders implements Writable {
 
         /**
          * Include the given header in this builder.
-         * <p>
-         * This method takes a line number so that a HTTP message parser may query in which lines a
-         * certain header appeared later.
          *
          * @param headerName header name
          * @param value      header value
@@ -442,6 +442,19 @@ public class RawHttpHeaders implements Writable {
         }
 
         /**
+         * Remove all headers with the given names (including all values).
+         *
+         * @param names case-insensitive header names
+         * @return this
+         */
+        public Builder removeAll(Set<String> names) {
+            Set<String> keys = names.stream().map(RawHttpHeaders::toUppercaseAscii).collect(toSet());
+            headersByCapitalizedName.keySet().removeAll(keys);
+            names.forEach(headerName -> headerNames.removeIf(name -> name.equalsIgnoreCase(headerName)));
+            return this;
+        }
+
+        /**
          * Merge this builder's headers with the ones provided.
          *
          * @param headers to merge with this builder
@@ -487,7 +500,6 @@ public class RawHttpHeaders implements Writable {
             }
             throw new NoSuchElementException();
         }
-
     }
 
     private static final class Header {

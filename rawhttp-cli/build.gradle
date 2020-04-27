@@ -29,8 +29,11 @@ final generatedJavaSources = "$buildDir/java-generated-sources"
 sourceSets.main.java.srcDir generatedJavaSources
 
 dependencies {
-    compile project(':rawhttp-core')
-    testCompile 'junit:junit:4.12'
+    implementation project(':rawhttp-core')
+    implementation project(':rawhttp-cookies')
+    implementation project(':rawhttp-req-in-edit')
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testImplementation 'junit:junit:4.12'
 }
 
 jar {
@@ -41,14 +44,14 @@ jar {
     }
 }
 
-task fatJar(type: Jar) {
+task fatJar(type: Jar, group: 'build') {
     manifest {
         attributes 'Main-Class': mainClassName
     }
 
     archiveName = runnableJarName
     classifier "all"
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 

@@ -14,5 +14,7 @@ include 'rawhttp-core',
         'samples',
         'rawhttp-cli',
         'rawhttp-cli-tests',
-        'rawhttp-duplex'
+        'rawhttp-duplex',
+        'rawhttp-req-in-edit',
+        'rawhttp-cookies'
 

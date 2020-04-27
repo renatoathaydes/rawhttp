@@ -107,9 +107,14 @@ public class RawHttpResponse<Response> extends HttpMessage {
     }
 
     @Override
-    public RawHttpResponse<Response> withBody(HttpMessageBody body) {
-        return new RawHttpResponse<>(libResponse, request, statusLine,
-                body.headersFrom(getHeaders()), body.toBodyReader());
+    public RawHttpResponse<Response> withBody(@Nullable HttpMessageBody body) {
+        return withBody(body, true);
+    }
+
+    @Override
+    public RawHttpResponse<Response> withBody(@Nullable HttpMessageBody body, boolean adjustHeaders) {
+        return withBody(body, adjustHeaders, (headers, bodyReader) ->
+                new RawHttpResponse<>(libResponse, request, statusLine, headers, bodyReader));
     }
 
     @Override
@@ -119,9 +124,18 @@ public class RawHttpResponse<Response> extends HttpMessage {
 
     @Override
     public RawHttpResponse<Response> withHeaders(RawHttpHeaders headers, boolean append) {
+        RawHttpHeaders newHeaders;
+        if (append) {
+            newHeaders = getHeaders().and(headers);
+        } else {
+            // to avoid losing the values in the provided headers, we must first remove conflicting
+            // headers from our own headers.
+            RawHttpHeaders nonConflictingHeaders = RawHttpHeaders.newBuilder(getHeaders())
+                    .removeAll(headers.getUniqueHeaderNames()).build();
+            newHeaders = headers.and(nonConflictingHeaders);
+        }
         return new RawHttpResponse<>(libResponse, request, statusLine,
-                append ? getHeaders().and(headers) : headers.and(getHeaders()),
-                getBody().orElse(null));
+                newHeaders, getBody().orElse(null));
     }
 
     /**
@@ -133,6 +147,25 @@ public class RawHttpResponse<Response> extends HttpMessage {
     public RawHttpResponse<Response> withStatusLine(StatusLine statusLine) {
         return new RawHttpResponse<>(libResponse, request, statusLine,
                 getHeaders(), getBody().orElse(null));
+    }
+
+    /**
+     * Check whether the HTTP connection used to receive the given response needs to be closed.
+     * <p>
+     * Normally, connections should be kept alive so that a client can make several HTTP requests
+     * using the same connection, but in certain cases, that cannot be done. For example, the server
+     * may send a {@code Connection: closed} header to indicate that it does not expect the connection
+     * to be re-used by the client. In HTTP/1.0, this was always the case.
+     *
+     * @param httpResponse received from some connection
+     * @return whether the connection should be closed
+     */
+    public static boolean shouldCloseConnectionAfter(RawHttpResponse<?> httpResponse) {
+        return httpResponse.getHeaders()
+                .getFirst("Connection")
+                .orElse("")
+                .equalsIgnoreCase("close") ||
+                httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1);
     }
 
 }

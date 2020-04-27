@@ -1,6 +1,5 @@
 plugins {
     id "org.jetbrains.kotlin.jvm" apply false
-    id 'com.gradle.build-scan' version '2.2.1'
     id 'idea'
 }
 
@@ -15,16 +14,15 @@ subprojects {
 
 subprojects {
     apply plugin: 'java'
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions.jvmTarget = "1.8"
+    }
 }
 
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/test-results")
     // Include the results from the `test` task in all subprojects
     reportOn subprojects*.test
-}
-
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
 }
 

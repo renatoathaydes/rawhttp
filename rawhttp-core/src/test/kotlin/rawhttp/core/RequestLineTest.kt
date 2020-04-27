@@ -7,10 +7,10 @@ import io.kotlintest.properties.forAll
 import io.kotlintest.properties.headers
 import io.kotlintest.properties.row
 import io.kotlintest.properties.table
-import io.kotlintest.specs.StringSpec
+import org.junit.Test
 import rawhttp.core.errors.InvalidHttpRequest
 
-class RequestLineTest : StringSpec({
+class RequestLineTest {
 
     val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
 
@@ -20,7 +20,8 @@ class RequestLineTest : StringSpec({
             .doNotInsertHttpVersionIfMissing()
             .build())
 
-    "Can parse legal request-line (allow missing HTTP version)" {
+    @Test
+    fun canParseLegalRequestLine__allowMissingHTTPVersion() {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("GET /", HttpVersion.HTTP_1_1, "GET", "/", "GET / HTTP/1.1"),
@@ -43,7 +44,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Can parse legal request-line (allow illegal characters)" {
+    @Test
+    fun canParseLegalRequestLine__allowIllegalCharacters() {
         val illegalCharParser = HttpMetadataParser(RawHttpOptions.newBuilder()
                 .allowIllegalStartLineCharacters()
                 .build())
@@ -69,11 +71,12 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal request-line (allow missing HTTP version)" {
+    @Test
+    fun cannotParseIllegalRequestLine__allowMissingHTTPVersion() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
-                row("/", "Invalid request line"),
-                row("GET", "Invalid request line"),
+                row("/", "Invalid request line: '/'"),
+                row("GET", "Invalid request line: 'GET'"),
                 row("POST ", "Missing request target"),
                 row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
                 row("/Hi /", "Invalid method name: illegal character at index 0: '/Hi'"),
@@ -88,7 +91,8 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Can parse legal request-line (strict)" {
+    @Test
+    fun canParseLegalRequestLineStrict() {
         val table = table(
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
@@ -111,11 +115,12 @@ class RequestLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal request-line (strict)" {
+    @Test
+    fun cannotParseIllegalRequestLine__strict() {
         val table = table(headers("Request line", "Expected error"),
                 row("", "No content"),
-                row("/", "Invalid request line"),
-                row("GET", "Invalid request line"),
+                row("/", "Invalid request line: '/'"),
+                row("GET", "Invalid request line: 'GET'"),
                 row("POST  ", "Unknown HTTP version"),
                 row("POST  / HTTP/1.1", "Invalid request target: Illegal character in authority at index 0: ' /'"),
                 row("GET /", "Missing HTTP version"),
@@ -135,4 +140,51 @@ class RequestLineTest : StringSpec({
         }
     }
 
-})
+    @Test
+    fun canParseEncodedQueries() {
+        val table = table(headers("Request line", "raw query", "decoded query"),
+                row("GET /hi?a=1", "a=1", "a=1"),
+                row("GET /hi?a=1&b=2", "a=1&b=2", "a=1&b=2"),
+                row("GET /hi?a=hi%20w", "a=hi%20w", "a=hi w"),
+                row("GET /hi?%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D",
+                        "%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D",
+                        "//encoded?a=b&c=d&json={\"a\": null}")
+        )
+
+        forAll(table) { requestLine, expectedRawQuery, expectedDecodedQuery ->
+            metadataParser.parseRequestLine(requestLine).run {
+                uri.rawQuery shouldBe expectedRawQuery
+                uri.query shouldBe expectedDecodedQuery
+            }
+        }
+    }
+
+    @Test
+    fun requestLineWithHostPreservesEncoding() {
+        val table = table(headers("Request line", "New Host", "Path", "Decoded Query", "Raw Query"),
+                row("GET foo.com", "bar.com", "", "", ""),
+                row("GET foo.com:90", "bar.com", "", "", ""),
+                row("GET foo.com/foo", "bar.com", "/foo", "", ""),
+                row("GET foo.com/foo%20bar", "example.com", "/foo bar", "", ""),
+                row("GET foo.com/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET user@foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET https://user@foo.com:90/foo?bar", "bar.com", "/foo", "bar", "bar"),
+                row("GET foo.com/foo?bar=10", "a.org", "/foo", "bar=10", "bar=10"),
+                row("GET foo.com/foo?foo%20bar", "a.org", "/foo", "foo bar", "foo%20bar"),
+                row("GET foo.com/foo%20a?foo%20bar", "a.org", "/foo a", "foo bar", "foo%20bar"),
+                row("GET foo.com/foo%20a?foo%20bar%26or&b", "a.org", "/foo a", "foo bar&or&b", "foo%20bar%26or&b"),
+                row("GET http://hello?and%26you&me", "c.org", "", "and&you&me", "and%26you&me")
+        )
+
+        forAll(table) { requestLine, newHost, expectedPath, expectedQuery, expectedRawQuery ->
+            metadataParser.parseRequestLine(requestLine).withHost(newHost).run {
+                uri.host shouldBe newHost
+                (uri.path ?: "") shouldBe expectedPath
+                (uri.query ?: "") shouldBe expectedQuery
+                (uri.rawQuery ?: "") shouldBe expectedRawQuery
+            }
+        }
+    }
+
+}

@@ -75,6 +75,42 @@ class HttpMetadataParserTest {
     }
 
     @Test
+    fun canParseManyHeadersWithComments() {
+        val allHeaders = """
+            # this is a date
+            Date: Thu, 9 Aug 2018 17:42:09 GMT
+            Server: RawHTTP
+            # caching strategy
+            Cache-Control: no-cache
+            Pragma: no-cache
+            # this is a content-type!!!
+            Content-Type: text/plain
+            Content-Length: 23
+            # my custom headers
+            X-Color: red
+            X-Color: blue
+        """.trimIndent()
+
+        val parserWithComments = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .allowComments()
+                .build())
+
+        val headers = parserWithComments.parseHeaders(allHeaders.byteInputStream(), errorCreator)
+
+        headers.asMap().keys shouldEqual setOf(
+                "DATE", "SERVER", "CACHE-CONTROL", "PRAGMA",
+                "CONTENT-TYPE", "CONTENT-LENGTH", "X-COLOR")
+
+        headers["Date"] shouldEqual listOf("Thu, 9 Aug 2018 17:42:09 GMT")
+        headers["Server"] shouldEqual listOf("RawHTTP")
+        headers["Cache-Control"] shouldEqual listOf("no-cache")
+        headers["Pragma"] shouldEqual listOf("no-cache")
+        headers["Content-Type"] shouldEqual listOf("text/plain")
+        headers["Content-Length"] shouldEqual listOf("23")
+        headers["X-Color"] shouldEqual listOf("red", "blue")
+    }
+
+    @Test
     fun canParseWeirdHeaderNames() {
         val weirdNames = listOf("A!", "#H", "$$$", "4%0", "&X", "'A'", "*Y", "A+B", "A..", "A^", "X_Y", "`a", "X|Y", "~")
 
@@ -261,6 +297,31 @@ class HttpMetadataParserTest {
     }
 
     @Test
+    fun canParseURIsNonLenient() {
+        val table = table(
+                headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
+                UriExample("hi", "http", null, "hi", -1, "", null, null),
+                UriExample("/hello?encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D", "http",
+                        null, null, -1, "/hello",
+                        "encoded=%2F%2Fencoded%3Fa%3Db%26c%3Dd&json=%7B%22a%22%3A%20null%7D", null)
+
+        )
+
+        val parser = HttpMetadataParser(RawHttpOptions.defaultInstance())
+
+        forAll(table) { uriSpec, scheme, userInfo, host, port, path, query, fragment ->
+            val uri = parser.parseUri(uriSpec)
+            uri.scheme shouldEqual scheme
+            uri.userInfo shouldEqual userInfo
+            uri.host shouldEqual host
+            uri.port shouldEqual port
+            uri.path shouldEqual path
+            uri.rawQuery shouldEqual query
+            uri.rawFragment shouldEqual fragment
+        }
+    }
+
+    @Test
     fun canParseURIsLenient() {
         val table = table(
                 headers("URI spec", "scheme", "userInfo", "host", "port", "path", "query", "fragment"),
@@ -317,8 +378,9 @@ class HttpMetadataParserTest {
                 row("hello=true", mapOf("hello" to listOf("true"))),
                 row("a=1&b=2", mapOf("a" to listOf("1"), "b" to listOf("2"))),
                 row("a=1&a=2&b=3&a=4", mapOf("a" to listOf("1", "2", "4"), "b" to listOf("3"))),
-                row("hello=hi there", mapOf("hello" to listOf("hi there"))),
-                row("hello there=hi", mapOf("hello there" to listOf("hi"))))
+                row("hello=hi%20there", mapOf("hello" to listOf("hi there"))),
+                row("hello%20there=hi&foo=a%26b", mapOf("hello there" to listOf("hi"),
+                        "foo" to listOf("a&b"))))
 
         forAll(table) { queryString, expectedParameters ->
             val parameters = parser.parseQueryString(queryString)

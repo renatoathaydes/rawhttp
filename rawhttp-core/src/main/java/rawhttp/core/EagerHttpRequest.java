@@ -7,6 +7,7 @@ import rawhttp.core.body.EagerBodyReader;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Objects;
 import java.util.Optional;
 
 import static rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders;
@@ -22,7 +23,7 @@ public class EagerHttpRequest extends RawHttpRequest {
 
     private EagerHttpRequest(RequestLine requestLine,
                              RawHttpHeaders headers,
-                             @Nullable BodyReader bodyReader,
+                             @Nullable EagerBodyReader bodyReader,
                              @Nullable InetAddress senderAddress) {
         super(requestLine, headers, bodyReader, senderAddress);
     }
@@ -53,7 +54,7 @@ public class EagerHttpRequest extends RawHttpRequest {
             if (trailingHeaders.isEmpty()) {
                 headers = request.getHeaders();
             } else {
-                headers = RawHttpHeaders.newBuilder(request.getHeaders())
+                headers = RawHttpHeaders.newBuilderSkippingValidation(request.getHeaders())
                         .merge(trailingHeaders)
                         .build();
             }
@@ -96,4 +97,20 @@ public class EagerHttpRequest extends RawHttpRequest {
         return new EagerHttpRequest(requestLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getStartLine(), getHeaders(), getBody());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        EagerHttpRequest that = (EagerHttpRequest) other;
+
+        return getStartLine().equals(that.getStartLine())
+                && getHeaders().equals(that.getHeaders())
+                && getBody().equals(that.getBody());
+    }
 }

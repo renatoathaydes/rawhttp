@@ -21,6 +21,7 @@ fun sparkServerInterceptor(spec: Spec, runTest: () -> Unit) {
     get("/say-hi", "text/plain") { _, _ -> "Hi there" }
     get("/say-hi", "application/json") { _, _ -> "{ \"message\": \"Hi there\" }" }
     post("/echo", "text/plain") { req, _ -> req.body() }
+    post("/continue", "text/plain") { _, _ -> "continuing" }
 
     waitForPortToBeTaken(8083, Duration.ofSeconds(2))
     println("Spark is on")
@@ -104,15 +105,16 @@ class TcpRawHttp11ClientTest : StringSpec() {
 
         "Must be able to perform a HTTP 1.1 request with headers and a body against a real HTTP server" {
             TcpRawHttpClient().send(RawHttp().parseRequest(
-                    "POST /echo HTTP/1.1\r\n" +
+                    "POST /continue HTTP/1.1\r\n" +
                             "Host: localhost:8083\r\n" +
                             "Accept: text/plain\r\n" +
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 11\r\n" +
+                            "Expect: 100-continue\r\n" +
                             "\r\n" +
                             "hello world")).eagerly().run {
                 body should bePresent {
-                    it.decodeBodyToString(UTF_8) shouldBe "hello world"
+                    it.decodeBodyToString(UTF_8) shouldBe "continuing"
                 }
             }
         }
