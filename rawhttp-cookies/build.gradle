@@ -106,7 +106,7 @@ bintray {
         licenses = ['Apache-2.0']
         desc = project.description
         vcsUrl = 'https://github.com/renatoathaydes/rawhttp.git'
-        websiteUrl = 'https://renatoathaydes.github.io/rawhttp/rawhttp-modules/cookies'
+        websiteUrl = 'https://renatoathaydes.github.io/rawhttp/rawhttp-modules/cookies.html'
         issueTrackerUrl = 'https://github.com/renatoathaydes/rawhttp/issues'
         labels = ['http', 'java', 'cookies']
         publicDownloadNumbers = true
