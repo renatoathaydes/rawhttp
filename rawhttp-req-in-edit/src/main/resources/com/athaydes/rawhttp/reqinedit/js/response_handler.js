@@ -3,6 +3,11 @@ var UUID = Java.type("java.util.UUID");
 var Random = Java.type("java.util.Random");
 var JsTestReporter = Java.type("com.athaydes.rawhttp.reqinedit.js.JsTestReporter");
 
+// turn off all HTML escaping
+Mustache.escape = function (text) {
+    return text;
+}
+
 var RANDOM = new Random();
 
 function __emptyView__() {
