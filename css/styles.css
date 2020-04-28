@@ -2,10 +2,23 @@ body {
     background-color: #39424E;
     color: #CCC;
     margin: auto;
-    max-width: 90%;
+    width: 90%;
+    max-width: 65em;
     margin-top: 1em;
-    font-family:"Didact Gothic","sans serif";
+    font-family:"Didact Gothic","Arial", sans-serif;
     font-size: 1.2em;
+}
+
+code {
+    padding: 0.1em;
+    color: #2aa198;
+}
+
+blockquote {
+    font-style: italic;
+    padding: 1em;
+    margin: 0;
+    background-color: #49525E;
 }
 
 a {

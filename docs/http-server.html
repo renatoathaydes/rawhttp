@@ -15,68 +15,69 @@
     <a href="/rawhttp/docs/index.html">Docs</a>
     <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
     <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/cookies.html">Cookies</a>
     <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
 </nav><h3>Using a HTTP server</h3>
 
 <p>Even though you can write a simple HTTP server using only a <code>ServerSocket</code> and <code>RawHttp</code> to parse requests and
 responses, RawHTTP also offers a simple server implementation that makes things easier:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
-<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.server.<span style="color:#719e07">*</span>;
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+<span style="color:#719e07">import</span> rawhttp.core.server.*<span style="color:#719e07">;</span>
 
-RawHttpServer <span style="color:#268bd2">server</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer(8086);
-RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpServer server <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer<span style="color:#719e07">(</span>8086<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 
-server.start(request <span style="color:#719e07">-</span><span style="color:#719e07">&gt;</span> {
-    RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(...);
-    <span style="color:#719e07">return</span> Optional.of(response);
-});
+server<span style="color:#719e07">.</span>start<span style="color:#719e07">(</span>request <span style="color:#719e07">-</span><span style="color:#719e07">&gt;</span> <span style="color:#719e07">{</span>
+    RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#719e07">.</span><span style="color:#719e07">.</span><span style="color:#719e07">.</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">return</span> Optional<span style="color:#719e07">.</span>of<span style="color:#719e07">(</span>response<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<span style="color:#719e07">}</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <p>Stop the server once you don&rsquo;t need it anymore:</p>
-<pre style="color:#93a1a1;background-color:#002b36">server.stop();
+<pre style="color:#93a1a1;background-color:#002b36">server<span style="color:#719e07">.</span>stop<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <h3>Configuring a HTTP server</h3>
 
 <p>As with the HTTP client, to configure a HTTP server, pass the options into the constructor.</p>
 
 <p>An example implementation of <code>TcpRawHttpServer.TcpRawHttpServerOptions</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#268bd2">class</span> <span style="color:#268bd2">ExampleTcpRawHttpServerOptions</span> <span style="color:#268bd2">implements</span> <span style="color:#268bd2">TcpRawHttpServer</span>.TcpRawHttpServerOptions {
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#268bd2">class</span> <span style="color:#268bd2">ExampleTcpRawHttpServerOptions</span> <span style="color:#268bd2">implements</span> TcpRawHttpServer<span style="color:#719e07">.</span>TcpRawHttpServerOptions <span style="color:#719e07">{</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">ServerSocket</span> getServerSocket() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
-        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> ServerSocket(8080);
-    }
+    <span style="color:#268bd2">public</span> ServerSocket <span style="color:#268bd2">getServerSocket</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> ServerSocket<span style="color:#719e07">(</span>8080<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttp</span> getRawHttp() {
-        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> RawHttp();
-    }
+    <span style="color:#268bd2">public</span> RawHttp <span style="color:#268bd2">getRawHttp</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">ExecutorService</span> createExecutorService() {
-        <span style="color:#719e07">return</span> Executors.newCachedThreadPool();
-    }
+    <span style="color:#268bd2">public</span> ExecutorService <span style="color:#268bd2">createExecutorService</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> Executors<span style="color:#719e07">.</span>newCachedThreadPool<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Optional</span><span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">serverErrorResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>) {
-        <span style="color:#719e07">return</span> Optional.empty(); <span style="color:#586e75">// use the default 500 error response
-</span><span style="color:#586e75"></span>    }
+    <span style="color:#268bd2">public</span> Optional<span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">serverErrorResponse</span><span style="color:#719e07">(</span>RawHttpRequest request<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> Optional<span style="color:#719e07">.</span>empty<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span> <span style="color:#586e75">// use the default 500 error response
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Optional</span><span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">notFoundResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>) {
-        <span style="color:#719e07">return</span> Optional.empty(); <span style="color:#586e75">// use the default 404 error response
-</span><span style="color:#586e75"></span>    }
+    <span style="color:#268bd2">public</span> Optional<span style="color:#719e07">&lt;</span>EagerHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span><span style="color:#719e07">&gt;</span> <span style="color:#268bd2">notFoundResponse</span><span style="color:#719e07">(</span>RawHttpRequest request<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> Optional<span style="color:#719e07">.</span>empty<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span> <span style="color:#586e75">// use the default 404 error response
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttpResponse</span><span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span>(RawHttpRequest <span style="color:#268bd2">request</span>, RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">response</span>) {
+    <span style="color:#268bd2">public</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span><span style="color:#719e07">(</span>RawHttpRequest request<span style="color:#719e07">,</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> response<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
         <span style="color:#586e75">// TODO this is a good place to log the request and response
 </span><span style="color:#586e75"></span>        <span style="color:#586e75">// or add standard HTTP response headers, like &#34;Server&#34; and &#34;Date&#34;
-</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> response;
-    }
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> response<span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">void</span> close() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
-    }
-}
+    <span style="color:#268bd2">public</span> <span style="color:#dc322f">void</span> <span style="color:#268bd2">close</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
+    <span style="color:#719e07">}</span>
+<span style="color:#719e07">}</span>
 </pre>
 <p>The default options used by the server creates an unlimited, cached Thread pool to serve requests
 and automatically inserts a <code>Server</code> and <code>Date</code> headers to all responses by implementing

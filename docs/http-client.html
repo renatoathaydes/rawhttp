@@ -15,74 +15,75 @@
     <a href="/rawhttp/docs/index.html">Docs</a>
     <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
     <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/cookies.html">Cookies</a>
     <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
 </nav><h3>Using a HTTP client</h3>
 
 <p>To make it easier to send HTTP requests, you can use a <code>TcpRawHttpClient</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
-<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.client.<span style="color:#719e07">*</span>;
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+<span style="color:#719e07">import</span> rawhttp.core.client.*<span style="color:#719e07">;</span>
 
-TcpRawHttpClient <span style="color:#268bd2">client</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient();
-RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
-RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(<span style="color:#2aa198">&#34;...&#34;</span>);
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> client.send(request);
+TcpRawHttpClient client <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;...&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> client<span style="color:#719e07">.</span>send<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <p>The client keeps connections alive if possible, so after you&rsquo;re done with it, close it:</p>
-<pre style="color:#93a1a1;background-color:#002b36">client.close();
+<pre style="color:#93a1a1;background-color:#002b36">client<span style="color:#719e07">.</span>close<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <h3>Configuring a HTTP client</h3>
 
 <p>To configure a HTTP client, use the constructor that takes an instance of
 <code>TcpRawHttpClient.TcpRawHttpClientOptions</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.client.<span style="color:#719e07">*</span>;
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.client.*<span style="color:#719e07">;</span>
 
-TcpRawHttpClient <span style="color:#268bd2">client</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient(<span style="color:#719e07">new</span> TcpRawHttpClient.TcpRawHttpClientOptions() {
+TcpRawHttpClient client <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">.</span>TcpRawHttpClientOptions<span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Socket</span> getSocket(URI <span style="color:#268bd2">uri</span>) {
+    <span style="color:#268bd2">public</span> Socket <span style="color:#268bd2">getSocket</span><span style="color:#719e07">(</span>URI uri<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
         <span style="color:#586e75">// TODO implement creation of a Socket based on the URI
-</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> <span style="color:#cb4b16">null</span>;
-    }
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> <span style="color:#cb4b16">null</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttpResponse</span><span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span>(Socket <span style="color:#268bd2">socket</span>, URI <span style="color:#268bd2">uri</span>, RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">httpResponse</span>) <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
+    <span style="color:#268bd2">public</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span><span style="color:#719e07">(</span>Socket socket<span style="color:#719e07">,</span> URI uri<span style="color:#719e07">,</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> httpResponse<span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
         <span style="color:#586e75">// TODO return a modified HTTP response
-</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> httpResponse;
-    }
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">return</span> httpResponse<span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">void</span> close() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
+    <span style="color:#268bd2">public</span> <span style="color:#dc322f">void</span> <span style="color:#268bd2">close</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
         <span style="color:#586e75">// TODO the client was closed, perform cleanup
-</span><span style="color:#586e75"></span>    }
-});
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">}</span>
+<span style="color:#719e07">}</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <p>Example implementation of <code>TcpRawHttpClientOptions</code> which only allows HTTPS connections
 and always forces HTTP responses to be consumed fully, including its body, by calling <code>response.eagerly()</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#268bd2">class</span> <span style="color:#268bd2">SafeHttpClientOptions</span> <span style="color:#268bd2">implements</span> <span style="color:#268bd2">TcpRawHttpClient</span>.TcpRawHttpClientOptions {
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#268bd2">class</span> <span style="color:#268bd2">SafeHttpClientOptions</span> <span style="color:#268bd2">implements</span> TcpRawHttpClient<span style="color:#719e07">.</span>TcpRawHttpClientOptions <span style="color:#719e07">{</span>
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">Socket</span> getSocket(URI <span style="color:#268bd2">uri</span>) {
-        String <span style="color:#268bd2">host</span> <span style="color:#719e07">=</span> uri.getHost();
-        <span style="color:#dc322f">int</span> <span style="color:#268bd2">port</span> <span style="color:#719e07">=</span> uri.getPort();
-        <span style="color:#719e07">if</span> (port <span style="color:#719e07">&lt;</span> 1) {
-            port <span style="color:#719e07">=</span> 443;
-        }
-        <span style="color:#719e07">try</span> {
+    <span style="color:#268bd2">public</span> Socket <span style="color:#268bd2">getSocket</span><span style="color:#719e07">(</span>URI uri<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+        String host <span style="color:#719e07">=</span> uri<span style="color:#719e07">.</span>getHost<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+        <span style="color:#dc322f">int</span> port <span style="color:#719e07">=</span> uri<span style="color:#719e07">.</span>getPort<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+        <span style="color:#719e07">if</span> <span style="color:#719e07">(</span>port <span style="color:#719e07">&lt;</span> 1<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+            port <span style="color:#719e07">=</span> 443<span style="color:#719e07">;</span>
+        <span style="color:#719e07">}</span>
+        <span style="color:#719e07">try</span> <span style="color:#719e07">{</span>
             <span style="color:#586e75">// only allow HTTPS connections!
-</span><span style="color:#586e75"></span>            <span style="color:#719e07">return</span> SSLSocketFactory.getDefault().createSocket(host, port);
-        } <span style="color:#719e07">catch</span> (IOException <span style="color:#268bd2">e</span>) {
-            <span style="color:#719e07">throw</span> <span style="color:#719e07">new</span> RuntimeException(e);
-        }
-    }
+</span><span style="color:#586e75"></span>            <span style="color:#719e07">return</span> SSLSocketFactory<span style="color:#719e07">.</span>getDefault<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>createSocket<span style="color:#719e07">(</span>host<span style="color:#719e07">,</span> port<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+        <span style="color:#719e07">}</span> <span style="color:#719e07">catch</span> <span style="color:#719e07">(</span>IOException e<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+            <span style="color:#719e07">throw</span> <span style="color:#719e07">new</span> RuntimeException<span style="color:#719e07">(</span>e<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+        <span style="color:#719e07">}</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">RawHttpResponse</span><span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span>(Socket <span style="color:#268bd2">socket</span>, URI <span style="color:#268bd2">uri</span>, RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">httpResponse</span>) <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
-        <span style="color:#719e07">return</span> httpResponse.eagerly();
-    }
+    <span style="color:#268bd2">public</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> <span style="color:#268bd2">onResponse</span><span style="color:#719e07">(</span>Socket socket<span style="color:#719e07">,</span> URI uri<span style="color:#719e07">,</span> RawHttpResponse<span style="color:#719e07">&lt;</span>Void<span style="color:#719e07">&gt;</span> httpResponse<span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
+        <span style="color:#719e07">return</span> httpResponse<span style="color:#719e07">.</span>eagerly<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#719e07">}</span>
 
     <span style="color:#268bd2">@Override</span>
-    <span style="color:#268bd2">public</span> <span style="color:#268bd2">void</span> close() <span style="color:#268bd2">throws</span> <span style="color:#268bd2">IOException</span> {
+    <span style="color:#268bd2">public</span> <span style="color:#dc322f">void</span> <span style="color:#268bd2">close</span><span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#268bd2">throws</span> IOException <span style="color:#719e07">{</span>
         <span style="color:#586e75">// TODO the client was closed, perform cleanup
-</span><span style="color:#586e75"></span>    }
-}
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">}</span>
+<span style="color:#719e07">}</span>
 </pre>
 <hr>
 </div>

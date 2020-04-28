@@ -15,6 +15,7 @@
     <a href="/rawhttp/docs/index.html">Docs</a>
     <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
     <a href="/rawhttp/rawhttp-modules/duplex.html">Duplex</a>
+    <a href="/rawhttp/rawhttp-modules/cookies.html">Cookies</a>
     <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
 </nav><h1>About RawHTTP</h1>
 
@@ -87,19 +88,19 @@ API to implement your own HTTP clients and servers.</p>
 <p>Well, just use <a href="https://github.com/google/gson">Gson</a> or
 your favourite XML parser to convert the POJO into bytes, put those bytes into a HTTP response,
 then write that to a <code>Socket</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36">RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(<span style="color:#2aa198">&#34;200 OK&#34;</span>);
-response.withBody(
-    <span style="color:#719e07">new</span> BytesBody(bytes, <span style="color:#2aa198">&#34;application/json&#34;</span>)
-).writeTo(socket);
+<pre style="color:#93a1a1;background-color:#002b36">RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;200 OK&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+response<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+    <span style="color:#719e07">new</span> BytesBody<span style="color:#719e07">(</span>bytes<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;application/json&#34;</span><span style="color:#719e07">)</span>
+<span style="color:#719e07">)</span><span style="color:#719e07">.</span>writeTo<span style="color:#719e07">(</span>socket<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <p>Need to send a <code>GET</code> request to fetch some JSON from your API?</p>
-<pre style="color:#93a1a1;background-color:#002b36">RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
-RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
+<pre style="color:#93a1a1;background-color:#002b36">RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
     <span style="color:#2aa198">&#34;GET https://example.com/my-resource/123\n&#34;</span> <span style="color:#719e07">+</span>
-    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span>);
+    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span>
-    <span style="color:#719e07">new</span> TcpRawHttpClient().send(request);
+    <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>send<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
 </pre>
 <p>You can even copy-paste a sample HTTP request from the API docs and send it out as-is.</p>
 
