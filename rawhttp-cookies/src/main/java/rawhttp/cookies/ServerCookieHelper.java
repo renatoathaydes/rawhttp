@@ -19,7 +19,7 @@ import java.util.List;
  * {@code
  * var headers = RawHttpHeaders.newBuilder();
  * var cookie = new HttpCookie("sid", "123456");
- * ServerCookieHelper.withCookie(headers, cookie);
+ * ServerCookieHelper.setCookie(headers, cookie);
  * var response = new RawHttp().parseResponse("200 OK")
  *   .withHeaders(headers.build());
  * }
