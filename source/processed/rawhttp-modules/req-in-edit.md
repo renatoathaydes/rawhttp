@@ -4,7 +4,7 @@
 {{ include /processed/fragments/_header.html }}
 {{ include /processed/fragments/_nav.html }}
 
-# ReqInEdit
+# RawHTTP ReqInEdit
 
 The `rawhttp-req-in-edit` module implements a runner for HTTP files written in the [Request In Editor Specification](https://github.com/JetBrains/http-request-in-editor-spec)
 format created by JetBrains to make it easier to execute HTTP requests and test their responses.
@@ -36,7 +36,7 @@ The rest of this document regards the usage of `rawhttp-req-in-edit` as a Java l
 To execute a HTTP file, parse the file with the `com.athaydes.rawhttp.reqinedit.ReqInEditParser` class, 
 then execute it with `com.athaydes.rawhttp.reqinedit.ReqInEditUnit`:
 
-```
+```java
 var parser = new ReqInEditParser();
 
 try {
@@ -80,7 +80,7 @@ in the working directory.
 
 The following example, when run, will save the HTTP response in the file called `response.json` in the working directory:
 
-```http
+```javascript
 ### GET request with parameter
 GET https://httpbin.org/get?show_env=1
 Accept: application/json

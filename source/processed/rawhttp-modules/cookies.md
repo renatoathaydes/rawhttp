@@ -80,14 +80,14 @@ The `rawhttp.cookies.persist.FileCookieJar` class, as mentioned above, can be us
 
 It supports different strategies for _flushing_ cookies added to the jar. These strategies are:
 
-#### rawhttp.cookies.persist.JvmShutdownFlushStrategy
+#### `rawhttp.cookies.persist.JvmShutdownFlushStrategy`
 
 Only ever flush the cookies when the JVM shutdown. This is the fastest option at runtime because it behaves as an
 in-memory cookie jar until the JVM is shut down.
 
 The downside is that it may lose all cookies if the JVM crashes and does not shut down cleanly.
 
-#### rawhttp.cookies.persist.OnWriteFlushStrategy
+#### `rawhttp.cookies.persist.OnWriteFlushStrategy`
 
 A flush strategy that will flush every `n` updates, where `n >= 1`.
 
@@ -96,10 +96,10 @@ or modified.
 
 This strategy also flushes when the JVM shuts down to avoid losing cookies where possible.
 
-#### rawhttp.cookies.persist.PeriodicFlushStrategy
+#### `rawhttp.cookies.persist.PeriodicFlushStrategy`
 
 The periodic flush strategy flushes the cookies to disc periodically. The duration of time between flushes
-can be chosen by passing a `java.util.time.Duration` instance into its constructor (must be greater than 1 second).
+can be chosen by passing a `java.time.Duration` instance into its constructor (must be greater than 1 second).
 
 Flushes are performed on a background, daemon Thread. A custom `ScheduledExecutorService` may be provided in the 
 constructor to be used for scheduling flushes.

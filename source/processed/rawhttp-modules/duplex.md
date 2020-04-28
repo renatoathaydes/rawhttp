@@ -4,6 +4,8 @@
 {{ include /processed/fragments/_header.html }}
 {{ include /processed/fragments/_nav.html }}
 
+# RawHTTP Duplex
+
 The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
 
 The entry point of the library is the `com.athaydes.rawhttp.duplex.RawHttpDuplex` class.

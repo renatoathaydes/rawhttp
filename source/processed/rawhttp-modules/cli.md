@@ -4,6 +4,8 @@
 {{ include /processed/fragments/_header.html }}
 {{ include /processed/fragments/_nav.html }}
 
+# RawHTTP CLI
+
 The `rawhttp-cli` module is a CLI (command-line interface) that can send HTTP requests and serve
 local files via a RawHTTP server.
 
