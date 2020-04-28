@@ -1,0 +1,33 @@
+# This is a HTTP file in the format specified in https://github.com/JetBrains/http-request-in-editor-spec
+#
+# You can run this file in IntelliJ IDEA, or using the rawhttp-cli.
+
+### GET request with parameter
+GET https://httpbin.org/get?show_env=1
+Accept: application/json
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+<> response.json
+
+### Send POST request with body as parameters
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+X-Content-Type-Options: nosniff
+
+id=999&value=content
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+  client.assert(response.contentType.mimeType === 'application/json', "Not JSON: " + response.contentType);
+  // validate the body
+  var json = response.body;
+  client.assert(json.form.id === '999', "Unexpected JSON: " + json);
+  client.assert(json.form.value === 'content', "Unexpected JSON: " + json);
+  client.assert(json.headers['X-Content-Type-Options'] === 'nosniff', "Unexpected JSON: " + json);
+});
+%}
