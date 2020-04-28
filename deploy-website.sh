@@ -21,11 +21,14 @@ git worktree add -B gh-pages public origin/gh-pages
 
 echo "Removing existing files"
 rm -rf public/*
+rm -rf site/target
 
 echo "Generating site"
 cd site/
-hugo || exit 1
+magnanimous -style=solarized-dark -globalctx=_github_global_context || exit 1
 cd ..
+
+mv site/target/* public/
 
 if [ "$1" = "-d" ]
 then
