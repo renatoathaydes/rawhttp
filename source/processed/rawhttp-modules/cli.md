@@ -34,7 +34,7 @@ The following sub-commands are supported:
 
 To see information about a particular sub-command, `send` for example:
 
-```
+```bash
 rawhttp help send
 ```
 
@@ -49,7 +49,7 @@ print only parts of the response, and statistics about the request.
 
 Usage:
 
-```
+```bash
 rawhttp send [options]
 ```
 
