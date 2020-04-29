@@ -155,11 +155,11 @@ public class Main {
                         "\n" +
                         "Options:\n" +
                         "  * -e --environment <name>\n" +
-                        "    the name of the environment to use\n" +
+                        "      the name of the environment to use\n" +
                         "  * -c --cookiejar <file>\n" +
-                        "    the file to use as a cookie jar\n" +
+                        "      the file to use as a cookie jar\n" +
                         "  * -p --print-response-mode\n" +
-                        "  *   one of: response|all|body|status|stats\n" +
+                        "      one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full responses\n" +
                         "        - all: print the full response and statistics about each request\n" +
                         "        - body: print the response bodies\n" +
