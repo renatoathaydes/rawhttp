@@ -23,40 +23,70 @@
 local files via a RawHTTP server.</p>
 
 <h2>Download</h2>
-<pre style="color:#93a1a1;background-color:#002b36">curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.1.1/rawhttp-cli-1.1.1-all.jar -o rawhttp.jar
+<pre style="color:#93a1a1;background-color:#002b36">curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.2.1/rawhttp-cli-1.2.1-all.jar -o rawhttp.jar
 </pre>
 <h2>Usage</h2>
 
-<p>Use <code>rawhttp send</code> to send HTTP requests.</p>
+<p>Before we start, if your shell supports <code>alias</code>, create an alias for the command to run the RawHTTP CLI:</p>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#b58900">alias</span> <span style="color:#268bd2">rawhttp</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;</span><span style="color:#2aa198">java -jar </span><span style="color:#719e07">$(</span><span style="color:#b58900">pwd</span><span style="color:#719e07">)</span><span style="color:#2aa198">/rawhttp.jar</span><span style="color:#2aa198">&#34;</span>
+</pre>
+<p>Now, running the RawHTTP CLI is as easy as typing <code>rawhttp</code>.</p>
 
-<p>Use <code>rawhttp serve</code> to serve a local directory via HTTP.</p>
+<p>The following sub-commands are supported:</p>
 
-<p>To see the help screen, run <code>rawhttp help</code>.</p>
+<ul>
+<li><code>send</code>  - sends a HTTP request from sysin, a file, or an argument.</li>
+<li><code>run</code>   - runs a HTTP file in the <a href="https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html">JetBrains ReqInEdit</a> format.</li>
+<li><code>serve</code> - starts a HTTP server to serve the contents of a directory.</li>
+<li><code>help</code>  - show help information.</li>
+</ul>
 
+<p>To see information about a particular sub-command, <code>send</code> for example:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp <span style="color:#b58900">help</span> send
+</pre>
 <hr>
 
 <h3>Using the <code>send</code> command</h3>
 
-<p>The <code>send</code> command has the purpose of sending out HTTP requests.
-It prints the full HTTP response (including status line, headers, body) to <code>stdout</code>.</p>
+<p>The <code>send</code> command has the purpose of sending out single HTTP requests.</p>
+
+<p>By default, it prints the full HTTP response (including status line, headers, body) to <code>stdout</code>, but it can also
+print only parts of the response, and statistics about the request.</p>
 
 <p>Usage:</p>
-<pre style="color:#93a1a1;background-color:#002b36">rawhttp send [options]
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send <span style="color:#719e07">[</span>options<span style="color:#719e07">]</span>
 </pre>
 <p>Options:</p>
 <pre style="color:#93a1a1;background-color:#002b36">* -f --file &lt;file&gt;
       <span style="color:#b58900">read</span> request from a file
 * -t --text &lt;request-text&gt;
       <span style="color:#b58900">read</span> request as text
-* -p --print-body-only
-      print response body only
+* -p --print-response-mode &lt;option&gt;
+      option is one of: response|all|body|status|stats
+        - response: <span style="color:#719e07">(</span>default<span style="color:#719e07">)</span> print the full response
+        - all: print the full response and statistics about the request
+        - body: print the response body
+        - status: print the response status-line
+        - stats: print statistics about the request
 * -l --log-request
       log the request
 * -b --body-text &lt;text&gt;
       replace message body with the text
-* -g --body-file &lt;text&gt;
-      replace message body with the file
+* -g --body-file &lt;file&gt;
+      replace message body with the contents of the file
 </pre>
+<p>Statistics include the following information:</p>
+
+<ul>
+<li><code>Connect time</code>: the time it took to connect to the server (includes only the Socket::connect call).</li>
+<li><code>First received byte time (FRBT)</code>: the time between the first byte of the request being sent, and the first byte of the response being received.</li>
+<li><code>Total response time (TRT)</code>: time to receive the first byte, plus the time to download the full response.</li>
+<li><code>Bytes received</code>: the number of bytes received from the server.</li>
+<li><code>Throughput</code>: the total number of bytes received, divided by (TRT - FRBT) in seconds.</li>
+</ul>
+
+<p>If no <code>-f</code> or <code>-t</code> options are given, a HTTP request is read from stdin.</p>
+
 <h4>Send a HTTP request from a file</h4>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp send -f my-request.req
 </pre>
@@ -64,6 +94,15 @@ It prints the full HTTP response (including status line, headers, body) to <code
 
 <p>You can send the HTTP response to another file:</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp send my-request.req &gt; my-response.res
+</pre>
+<p>Or print statistics about it:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp send my-request.req -p stats
+
+Connect time: <span style="color:#2aa198">179</span>.35 ms
+First received byte time: <span style="color:#2aa198">698</span>.79 ms
+Total response time: <span style="color:#2aa198">713</span>.03 ms
+Bytes received: <span style="color:#2aa198">464</span>
+Throughput <span style="color:#719e07">(</span>bytes/sec<span style="color:#719e07">)</span>: <span style="color:#2aa198">32572</span>
 </pre>
 <h4>Send a HTTP request from text</h4>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp send -t <span style="color:#2aa198">&#34;
@@ -96,6 +135,124 @@ It prints the full HTTP response (including status line, headers, body) to <code
 </pre>
 <hr>
 
+<h3>Using the <code>run</code> command</h3>
+
+<p>The <code>run</code> sub-command executes a HTTP file as defined by <a href="https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html">Jetbrains</a>.</p>
+
+<p>Usage:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp run &lt;http-file&gt; <span style="color:#719e07">[</span>options<span style="color:#719e07">]</span>
+</pre>
+<p>Options:</p>
+<pre style="color:#93a1a1;background-color:#002b36">* -e --environment &lt;name&gt;
+      the name of the environment to use
+* -c --cookiejar &lt;file&gt;
+      the file to use as a cookie jar
+* -p --print-response-mode
+      one of: response|all|body|status|stats
+        - response: <span style="color:#719e07">(</span>default<span style="color:#719e07">)</span> print the full responses
+        - all: print the full response and statistics about each request
+        - body: print the response bodies
+        - status: print the response status-lines
+        - stats: print statistics about each request
+* -l --log-request
+      log the request
+</pre>
+<p>The <code>stats</code> argument of the <code>print-response-mode</code> option works as for the <code>send</code> command.</p>
+
+<h4>Example HTTP file</h4>
+
+<p>The following shows an example HTTP file that sends a GET request, then a POST request:</p>
+<pre style="color:#93a1a1;background-color:#002b36"># This is a HTTP file <span style="color:#719e07">in</span> the format specified <span style="color:#719e07">in</span> https<span style="color:#719e07">:</span><span style="color:#586e75">//github.com/JetBrains/http-request-in-editor-spec
+</span><span style="color:#586e75"></span>#
+# You can run <span style="color:#719e07">this</span> file <span style="color:#719e07">in</span> IntelliJ IDEA, or using the rawhttp<span style="color:#719e07">-</span>cli.
+
+### GET request <span style="color:#268bd2">with</span> parameter
+GET https<span style="color:#719e07">:</span><span style="color:#586e75">//httpbin.org/get?show_env=1
+</span><span style="color:#586e75"></span>Accept<span style="color:#719e07">:</span> application<span style="color:#719e07">/</span>json
+
+<span style="color:#719e07">&gt;</span> {<span style="color:#719e07">%</span>
+client.test(<span style="color:#2aa198">&#34;Request executed successfully&#34;</span>, <span style="color:#268bd2">function</span>() {
+  client.assert(response.status <span style="color:#719e07">===</span> <span style="color:#2aa198">200</span>, <span style="color:#2aa198">&#34;Response status is not 200&#34;</span>);
+});
+<span style="color:#719e07">%</span>}
+<span style="color:#719e07">&lt;</span><span style="color:#719e07">&gt;</span> response.json
+
+### Send POST request <span style="color:#268bd2">with</span> body as parameters
+POST https<span style="color:#719e07">:</span><span style="color:#586e75">//httpbin.org/post
+</span><span style="color:#586e75"></span>Content<span style="color:#719e07">-</span>Type<span style="color:#719e07">:</span> application<span style="color:#719e07">/</span>x<span style="color:#719e07">-</span>www<span style="color:#719e07">-</span>form<span style="color:#719e07">-</span>urlencoded
+X<span style="color:#719e07">-</span>Content<span style="color:#719e07">-</span>Type<span style="color:#719e07">-</span>Options<span style="color:#719e07">:</span> nosniff
+
+id<span style="color:#719e07">=</span><span style="color:#2aa198">999</span><span style="color:#719e07">&amp;</span>value<span style="color:#719e07">=</span>content
+
+<span style="color:#719e07">&gt;</span> {<span style="color:#719e07">%</span>
+client.test(<span style="color:#2aa198">&#34;Request executed successfully&#34;</span>, <span style="color:#268bd2">function</span>() {
+  client.assert(response.status <span style="color:#719e07">===</span> <span style="color:#2aa198">200</span>, <span style="color:#2aa198">&#34;Response status is not 200&#34;</span>);
+  client.assert(response.contentType.mimeType <span style="color:#719e07">===</span> <span style="color:#2aa198">&#39;application/json&#39;</span>, <span style="color:#2aa198">&#34;Not JSON: &#34;</span> <span style="color:#719e07">+</span> response.contentType);
+  <span style="color:#586e75">// validate the body
+</span><span style="color:#586e75"></span>  <span style="color:#268bd2">var</span> json <span style="color:#719e07">=</span> response.body;
+  client.assert(json.form.id <span style="color:#719e07">===</span> <span style="color:#2aa198">&#39;999&#39;</span>, <span style="color:#2aa198">&#34;Unexpected JSON: &#34;</span> <span style="color:#719e07">+</span> json);
+  client.assert(json.form.value <span style="color:#719e07">===</span> <span style="color:#2aa198">&#39;content&#39;</span>, <span style="color:#2aa198">&#34;Unexpected JSON: &#34;</span> <span style="color:#719e07">+</span> json);
+  client.assert(json.headers[<span style="color:#2aa198">&#39;X-Content-Type-Options&#39;</span>] <span style="color:#719e07">===</span> <span style="color:#2aa198">&#39;nosniff&#39;</span>, <span style="color:#2aa198">&#34;Unexpected JSON: &#34;</span> <span style="color:#719e07">+</span> json);
+});
+<span style="color:#719e07">%</span>}
+</pre>
+<p>To run this file, say it&rsquo;s called <code>test.http</code>:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp run test.http
+</pre>
+<h4>Dynamic variables</h4>
+
+<p>Dynamic variables generate a value each time you run a request:</p>
+
+<ul>
+<li><code>$uuid</code>: generates a universally unique identifier (UUID-v4)</li>
+<li><code>$timestamp</code>: generates the current UNIX timestamp</li>
+<li><code>$randomInt</code>: generates a random integer between 0 and 1000.</li>
+</ul>
+
+<p>For example:</p>
+<pre style="color:#93a1a1;background-color:#002b36">GET http://localhost/api/get?id={{$uuid}}
+</pre>
+<h4>Environments</h4>
+
+<p>An environment is a JSON file which defines variables that can be used in HTTP files.</p>
+
+<p>The file must be named <code>http-client.env.json</code>, and the <code>http-client.private.env.json</code> file holds the
+sensitive authorization data.</p>
+
+<p>The top-level keys in the JSON object are the names of the environments. For example, the following file defines
+two environments, <code>development</code> and <code>production</code>:</p>
+<pre style="color:#93a1a1;background-color:#002b36">{
+    <span style="color:#268bd2">&#34;development&#34;</span>: {
+        <span style="color:#268bd2">&#34;host&#34;</span>: <span style="color:#2aa198">&#34;localhost&#34;</span>,
+        <span style="color:#268bd2">&#34;id-value&#34;</span>: <span style="color:#2aa198">12345</span>,
+        <span style="color:#268bd2">&#34;username&#34;</span>: <span style="color:#2aa198">&#34;joe&#34;</span>,
+        <span style="color:#268bd2">&#34;password&#34;</span>: <span style="color:#2aa198">&#34;123&#34;</span>,
+        <span style="color:#268bd2">&#34;my-var&#34;</span>: <span style="color:#2aa198">&#34;my-dev-value&#34;</span>
+    },
+
+    <span style="color:#268bd2">&#34;production&#34;</span>: {
+        <span style="color:#268bd2">&#34;host&#34;</span>: <span style="color:#2aa198">&#34;example.com&#34;</span>,
+        <span style="color:#268bd2">&#34;id-value&#34;</span>: <span style="color:#2aa198">6789</span>,
+        <span style="color:#268bd2">&#34;username&#34;</span>: <span style="color:#2aa198">&#34;bob&#34;</span>,
+        <span style="color:#268bd2">&#34;password&#34;</span>: <span style="color:#2aa198">&#34;345&#34;</span>,
+        <span style="color:#268bd2">&#34;my-var&#34;</span>: <span style="color:#2aa198">&#34;my-prod-value&#34;</span>
+    }
+}
+</pre>
+<p>The following request could be used with this environment:</p>
+<pre style="color:#93a1a1;background-color:#002b36">GET http://{{host}}/api/json/get?id={{id-value}}
+Authorization: Basic {{username}} {{password}}
+Content-Type: application/json
+
+{
+&#34;key&#34;: {{my-var}}
+}
+</pre>
+<p>To run that with the <code>development</code> environment:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp run req.http -e development
+</pre>
+<hr>
+
 <h3>Using the <code>serve</code> command</h3>
 
 <p>The <code>serve</code> command starts up a HTTP server to serve the contents of a directory.</p>
@@ -105,9 +262,8 @@ If more than one file exists with the same name but different extensions, the se
 to use the request <code>Accept</code> header to disambiguate.</p>
 
 <p>Usage:</p>
-
-<p><code>rawhttp serve &lt;dir&gt; [options]</code></p>
-
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve &lt;dir&gt; [options]
+</pre>
 <p>Options:</p>
 <pre style="color:#93a1a1;background-color:#002b36">* -l --log-requests
       log requests received by the server
