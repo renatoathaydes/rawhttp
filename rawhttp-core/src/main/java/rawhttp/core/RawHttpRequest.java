@@ -123,4 +123,21 @@ public class RawHttpRequest extends HttpMessage {
         return getHeaders().get("Expect").contains("100-continue");
     }
 
+    /**
+     * RFC-7231 defines in <a href="https://tools.ietf.org/html/rfc7231#section-4.2.1">Section 4.2.1</a>
+     * that the following methods are safe, using the definition -
+     * <em>Request methods are considered "safe" if their defined semantics are essentially read-only"</em>:
+     * <ul>
+     *     <li>GET</li>
+     *     <li>HEAD</li>
+     *     <li>OPTIONS</li>
+     *     <li>TRACE</li>
+     * </ul>
+     * @return true if the request method is one of the safe methods
+     */
+    public boolean usesSafeMethod() {
+        String method = getMethod();
+        return method.equals("GET") || method.equals("HEAD") ||
+                method.equals("OPTIONS") || method.equals("TRACE");
+    }
 }
