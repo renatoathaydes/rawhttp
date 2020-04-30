@@ -10,6 +10,10 @@ import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * A {@link RawHttpClient} that wraps another {@link RawHttpClient}, enhancing it with the ability to follow redirects.
+ * @param <Response>
+ */
 public class RedirectingRawHttpClient<Response> implements RawHttpClient<Response> {
     private final RawHttpClient<Response> delegate;
     private final int maxRedirects;
@@ -37,7 +41,7 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
                 response = response.eagerly(); // consume body
                 totalRedirects++;
                 if (totalRedirects >= maxRedirects) {
-                    throw new IllegalStateException("Too many redirects");
+                    throw new IllegalStateException("Too many redirects (" + totalRedirects + ")");
                 }
                 String location = response.getHeaders().getFirst("Location").orElse("");
                 if (location.isEmpty()) {
