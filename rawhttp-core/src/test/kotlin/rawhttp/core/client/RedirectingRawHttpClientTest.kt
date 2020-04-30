@@ -157,4 +157,97 @@ class RedirectingRawHttpClientTest {
         redirectRequest!!.uri.path shouldBe "/40832723/b9093080-87e1-11ea-88bd-caad5f5731ae"
     }
 
+    /**
+     * https://tools.ietf.org/html/rfc7238
+     *
+     * ```
+     *  +-------------------------------------------+-----------+-----------+
+     *  |                                           | Permanent | Temporary |
+     *  +-------------------------------------------+-----------+-----------+
+     *  | Allows changing the request method from   | 301       | 302       |
+     *  | POST to GET                               |           |           |
+     *  | Does not allow changing the request       | (308)     | 307       |
+     *  | method from POST to GET                   |           |           |
+     *  +-------------------------------------------+-----------+-----------+
+     *  ```
+     *
+     *  303 (See Other) enforces that the redirected request must use GET or HEAD.
+     */
+    @Test
+    fun redirectsMayChangeHttpMethod() {
+        val redirect301 = http.parseResponse("301 Moved Permanently\nLocation: /foo").eagerly()
+        val redirect302 = http.parseResponse("302 Found\nLocation: /foo").eagerly()
+        val redirect303 = http.parseResponse("303 See Other\nLocation: /foo").eagerly()
+        val redirect307 = http.parseResponse("307 Temporary Redirect\nLocation: /foo").eagerly()
+        val redirect308 = http.parseResponse("308 Permanent Redirect\nLocation: /foo").eagerly()
+        val foo = http.parseResponse("200 OK").eagerly()
+
+        val requests = mutableListOf<RawHttpRequest>()
+
+        val mockClient = RawHttpClient { req ->
+            requests.add(req)
+            when (req.uri.path) {
+                "/301" -> redirect301
+                "/302" -> redirect302
+                "/303" -> redirect303
+                "/307" -> redirect307
+                "/308" -> redirect308
+                "/foo" -> foo
+                else -> fail("unexpected request: $req")
+            }
+        }
+
+        val redirectingClient = RedirectingRawHttpClient(mockClient)
+
+        listOf(301, 302, 303, 307, 308).forEach { code ->
+            listOf("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS").forEach { method ->
+                redirectingClient.send(http.parseRequest("$method /$code\nHost: myhost"))
+            }
+        }
+
+        val actual = requests.map { it.uri.path to it.method }
+        val expected = listOf(
+                "/301" to "GET", "/foo" to "GET",
+                "/301" to "POST", "/foo" to "POST",
+                "/301" to "PUT", "/foo" to "PUT",
+                "/301" to "DELETE", "/foo" to "DELETE",
+                "/301" to "HEAD", "/foo" to "HEAD",
+                "/301" to "OPTIONS", "/foo" to "OPTIONS",
+
+                "/302" to "GET", "/foo" to "GET",
+                "/302" to "POST", "/foo" to "POST",
+                "/302" to "PUT", "/foo" to "PUT",
+                "/302" to "DELETE", "/foo" to "DELETE",
+                "/302" to "HEAD", "/foo" to "HEAD",
+                "/302" to "OPTIONS", "/foo" to "OPTIONS",
+
+                "/303" to "GET", "/foo" to "GET",
+                "/303" to "POST", "/foo" to "GET",
+                "/303" to "PUT", "/foo" to "GET",
+                "/303" to "DELETE", "/foo" to "GET",
+                "/303" to "HEAD", "/foo" to "HEAD",
+                "/303" to "OPTIONS", "/foo" to "GET",
+
+                "/307" to "GET", "/foo" to "GET",
+                "/307" to "POST", "/foo" to "POST",
+                "/307" to "PUT", "/foo" to "PUT",
+                "/307" to "DELETE", "/foo" to "DELETE",
+                "/307" to "HEAD", "/foo" to "HEAD",
+                "/307" to "OPTIONS", "/foo" to "OPTIONS",
+
+                "/308" to "GET", "/foo" to "GET",
+                "/308" to "POST", "/foo" to "POST",
+                "/308" to "PUT", "/foo" to "PUT",
+                "/308" to "DELETE", "/foo" to "DELETE",
+                "/308" to "HEAD", "/foo" to "HEAD",
+                "/308" to "OPTIONS", "/foo" to "OPTIONS"
+        )
+
+        expected.forEachIndexed { i, item ->
+            val actualItem = actual[i]
+            actualItem shouldBe item
+        }
+
+    }
+
 }

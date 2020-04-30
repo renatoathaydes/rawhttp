@@ -12,6 +12,7 @@ import java.util.Set;
 
 /**
  * A {@link RawHttpClient} that wraps another {@link RawHttpClient}, enhancing it with the ability to follow redirects.
+ *
  * @param <Response>
  */
 public class RedirectingRawHttpClient<Response> implements RawHttpClient<Response> {
@@ -51,7 +52,7 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
                         throw new IllegalStateException("Redirect cycle detected. " +
                                 "Visited locations: " + String.join(", ", locations) + ". Next location: " + location);
                     }
-                    request = redirect(request, location);
+                    request = redirect(request, location, response.getStatusCode());
                 }
             } else {
                 break; // not a redirect
@@ -60,7 +61,7 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
         return response;
     }
 
-    private RawHttpRequest redirect(RawHttpRequest request, String location) {
+    private RawHttpRequest redirect(RawHttpRequest request, String location, int statusCode) {
         URI newUri;
         if (location.matches("^http(s)?://.*")) {
             newUri = URI.create(location);
@@ -74,8 +75,14 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
             }
             newUri = UriUtil.withPath(request.getUri(), path);
         }
+        String method;
+        if (statusCode == 303 && !request.getMethod().equals("HEAD")) {
+            method = "GET";
+        } else {
+            method = request.getMethod();
+        }
         return request.withRequestLine(new RequestLine(
-                request.getMethod(), newUri, request.getStartLine().getHttpVersion()));
+                method, newUri, request.getStartLine().getHttpVersion()));
     }
 
 }
