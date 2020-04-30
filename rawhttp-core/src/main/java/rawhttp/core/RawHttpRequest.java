@@ -94,13 +94,24 @@ public class RawHttpRequest extends HttpMessage {
 
     /**
      * Create a copy of this HTTP request, replacing its requestLine with the provided one.
+     * <p>
+     * If the host header does not match the host in the new {@link URI}, it is modified to do so.
      *
      * @param requestLine to replace
      * @return copy of this HTTP message with the provided requestLine
      */
     public RawHttpRequest withRequestLine(RequestLine requestLine) {
+        String newHost = requestLine.getUri().getHost();
+        RawHttpHeaders headers;
+        if (newHost.equalsIgnoreCase(getHeaders().getFirst("Host").orElse(""))) {
+            headers = getHeaders();
+        } else {
+            headers = RawHttpHeaders.newBuilder(getHeaders())
+                    .overwrite("Host", newHost)
+                    .build();
+        }
         return new RawHttpRequest(requestLine,
-                getHeaders(),
+                headers,
                 getBody().orElse(null),
                 getSenderAddress().orElse(null));
     }
