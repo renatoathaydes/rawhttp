@@ -32,71 +32,71 @@
 <p>The main class in the library is <code>RawHttp</code>.</p>
 
 <p>You can use it to create a HTTP request:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
 
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
     <span style="color:#2aa198">&#34;GET / HTTP/1.1\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;Host: headers.jsontest.com\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;User-Agent: RawHTTP\r\n&#34;</span> <span style="color:#719e07">+</span>
-    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span>);
 </pre>
 <p>RawHTTP is not strict by default, so you can use <code>\n</code> instead of <code>\r\n</code>, omit the
 HTTP version (so <code>HTTP/1.1</code> is used), and specify a full URL on the first line
 (the mandatory <code>Host</code> header is added automatically):</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
 
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(
     <span style="color:#2aa198">&#34;GET headers.jsontest.com\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;User-Agent: RawHTTPn&#34;</span> <span style="color:#719e07">+</span>
-    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span>);
 </pre>
 <p>You can also create a HTTP response:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> java.time.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import static</span> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">java</span>.time.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">static</span> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
-String body <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;Hello RawHTTP!&#34;</span><span style="color:#719e07">;</span>
-String dateString <span style="color:#719e07">=</span> RFC_1123_DATE_TIME<span style="color:#719e07">.</span>format<span style="color:#719e07">(</span>ZonedDateTime<span style="color:#719e07">.</span>now<span style="color:#719e07">(</span>ZoneOffset<span style="color:#719e07">.</span>UTC<span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span>
+String <span style="color:#268bd2">body</span> <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;Hello RawHTTP!&#34;</span>;
+String <span style="color:#268bd2">dateString</span> <span style="color:#719e07">=</span> RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC));
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(
     <span style="color:#2aa198">&#34;HTTP/1.1 200 OK\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;Content-Type: plain/text\r\n&#34;</span> <span style="color:#719e07">+</span>
-    <span style="color:#2aa198">&#34;Content-Length: &#34;</span> <span style="color:#719e07">+</span> body<span style="color:#719e07">.</span>length<span style="color:#719e07">(</span><span style="color:#719e07">)</span> <span style="color:#719e07">+</span> <span style="color:#2aa198">&#34;\r\n&#34;</span> <span style="color:#719e07">+</span>
+    <span style="color:#2aa198">&#34;Content-Length: &#34;</span> <span style="color:#719e07">+</span> body.length() <span style="color:#719e07">+</span> <span style="color:#2aa198">&#34;\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;Server: RawHTTP\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;Date: &#34;</span> <span style="color:#719e07">+</span> dateString <span style="color:#719e07">+</span> <span style="color:#2aa198">&#34;\r\n&#34;</span> <span style="color:#719e07">+</span>
     <span style="color:#2aa198">&#34;\r\n&#34;</span> <span style="color:#719e07">+</span>
-    body<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+    body);
 </pre>
 <p>To send out the HTTP message, just write it to an <code>OutputStream</code>.</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> java.net.Socket<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">java</span>.net.Socket;
 
-Socket socket <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> Socket<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;headers.jsontest.com&#34;</span><span style="color:#719e07">,</span> 80<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-request<span style="color:#719e07">.</span>writeTo<span style="color:#719e07">(</span>socket<span style="color:#719e07">.</span>getOutputStream<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+Socket <span style="color:#268bd2">socket</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> Socket(<span style="color:#2aa198">&#34;headers.jsontest.com&#34;</span>, 80);
+request.writeTo(socket.getOutputStream());
 </pre>
 <hr>
 
 <p>If you prefer, you can also use the <code>TcpRawHttpClient</code> class to send requests
 without managing sockets yourself:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.client.*<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.client.<span style="color:#719e07">*</span>;
 
-TcpRawHttpClient client <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;...&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> client<span style="color:#719e07">.</span>send<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+TcpRawHttpClient <span style="color:#268bd2">client</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient();
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
+RawHttpRequest <span style="color:#268bd2">request</span> <span style="color:#719e07">=</span> http.parseRequest(<span style="color:#2aa198">&#34;...&#34;</span>);
+RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> client.send(request);
 </pre>
 <p>If it&rsquo;s a server you&rsquo;re after, use <code>TcpRawHttpServer</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.server.*<span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
+<span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.server.<span style="color:#719e07">*</span>;
 
-RawHttpServer server <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer<span style="color:#719e07">(</span>8086<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+RawHttpServer <span style="color:#268bd2">server</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer(8086);
+RawHttp <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp();
 
-server<span style="color:#719e07">.</span>start<span style="color:#719e07">(</span>request <span style="color:#719e07">-</span><span style="color:#719e07">&gt;</span> <span style="color:#719e07">{</span>
-    RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#719e07">.</span><span style="color:#719e07">.</span><span style="color:#719e07">.</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">return</span> Optional<span style="color:#719e07">.</span>of<span style="color:#719e07">(</span>response<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-<span style="color:#719e07">}</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+server.start(request <span style="color:#719e07">-</span><span style="color:#719e07">&gt;</span> {
+    RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http.parseResponse(...);
+    <span style="color:#719e07">return</span> Optional.of(response);
+});
 </pre>
 <p>Easy!</p>
 

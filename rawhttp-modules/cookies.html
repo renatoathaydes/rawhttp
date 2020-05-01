@@ -31,14 +31,14 @@ for easily persisting cookies.</p>
 <code>TcpRawHttpClient.TcpRawHttpClientOptions</code> (i.e. it uses composition instead of inheritance to add behaviour).</p>
 
 <p>Basic usage:</p>
-<pre style="color:#93a1a1;background-color:#002b36">var client <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">new</span> ClientOptionsWithCookies<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">,</span> HTTP<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">var <span style="color:#268bd2">client</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient(<span style="color:#719e07">new</span> ClientOptionsWithCookies(), HTTP);
 </pre>
 <p>If you already have a custom implementation of <code>TcpRawHttpClient.TcpRawHttpClientOptions</code>, you can <em>wrap</em> it:</p>
-<pre style="color:#93a1a1;background-color:#002b36">TcpRawHttpClientOptions customClientOptions <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> MyCustomClientOptions<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-var client <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">new</span> ClientOptionsWithCookies<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> CookieManager<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">,</span> <span style="color:#586e75">// java.net.CookieManager
-</span><span style="color:#586e75"></span>    customClientOptions<span style="color:#719e07">)</span><span style="color:#719e07">,</span>
-    HTTP<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">TcpRawHttpClientOptions <span style="color:#268bd2">customClientOptions</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> MyCustomClientOptions();
+var <span style="color:#268bd2">client</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient(<span style="color:#719e07">new</span> ClientOptionsWithCookies(
+    <span style="color:#719e07">new</span> CookieManager(), <span style="color:#586e75">// java.net.CookieManager
+</span><span style="color:#586e75"></span>    customClientOptions),
+    HTTP);
 </pre>
 <p>If you want the client to have persistent cookies, pass a <code>FileCookieJar</code> into the constructor:</p>
 <pre style="color:#93a1a1;background-color:#002b36">var cookieJar = new FileCookieJar(new File(&#34;cookies&#34;));
@@ -53,21 +53,21 @@ var client = new TcpRawHttpClient(
 <p>Basic usage:</p>
 
 <p><em>Setting a cookie</em></p>
-<pre style="color:#93a1a1;background-color:#002b36">var headers <span style="color:#719e07">=</span> RawHttpHeaders<span style="color:#719e07">.</span>newBuilder<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-var cookie <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> HttpCookie<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;sid&#34;</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;123456&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-ServerCookieHelper<span style="color:#719e07">.</span>setCookie<span style="color:#719e07">(</span>headers<span style="color:#719e07">,</span> cookie<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-var response <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;200 OK&#34;</span><span style="color:#719e07">)</span>
-  <span style="color:#719e07">.</span>withHeaders<span style="color:#719e07">(</span>headers<span style="color:#719e07">.</span>build<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">var <span style="color:#268bd2">headers</span> <span style="color:#719e07">=</span> RawHttpHeaders.newBuilder();
+var <span style="color:#268bd2">cookie</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> HttpCookie(<span style="color:#2aa198">&#34;sid&#34;</span>, <span style="color:#2aa198">&#34;123456&#34;</span>);
+ServerCookieHelper.setCookie(headers, cookie);
+var <span style="color:#268bd2">response</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp().parseResponse(<span style="color:#2aa198">&#34;200 OK&#34;</span>)
+  .withHeaders(headers.build());
 <span style="color:#586e75">// send response to client
 </span></pre>
 <p><em>Reading the cookies sent by the client</em></p>
-<pre style="color:#93a1a1;background-color:#002b36">val cookies <span style="color:#719e07">=</span> ServerCookieHelper<span style="color:#719e07">.</span>readClientCookies<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">val <span style="color:#268bd2">cookies</span> <span style="color:#719e07">=</span> ServerCookieHelper.readClientCookies(request);
 </pre>
 <p>Because Java cookies do not support the increasingly common <code>SameSite</code> header, all the methods to set cookies
 support a separate parameter with a type of <code>rawhttp.cookies.SameSite</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36">var headers <span style="color:#719e07">=</span> RawHttpHeaders<span style="color:#719e07">.</span>newBuilder<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-var cookie <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> HttpCookie<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;sid&#34;</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;123456&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-ServerCookieHelper<span style="color:#719e07">.</span>setCookie<span style="color:#719e07">(</span>headers<span style="color:#719e07">,</span> cookie<span style="color:#719e07">,</span> SameSite<span style="color:#719e07">.</span>STRICT<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">var <span style="color:#268bd2">headers</span> <span style="color:#719e07">=</span> RawHttpHeaders.newBuilder();
+var <span style="color:#268bd2">cookie</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> HttpCookie(<span style="color:#2aa198">&#34;sid&#34;</span>, <span style="color:#2aa198">&#34;123456&#34;</span>);
+ServerCookieHelper.setCookie(headers, cookie, SameSite.STRICT);
 </pre>
 <h2>Persistent cookie jar</h2>
 

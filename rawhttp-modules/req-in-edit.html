@@ -50,19 +50,19 @@ the full syntax and examples of writing HTTP files.</p>
 
 <p>To execute a HTTP file, parse the file with the <code>com.athaydes.rawhttp.reqinedit.ReqInEditParser</code> class,
 then execute it with <code>com.athaydes.rawhttp.reqinedit.ReqInEditUnit</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36">var parser <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditParser<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+<pre style="color:#93a1a1;background-color:#002b36">var <span style="color:#268bd2">parser</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditParser();
 
-<span style="color:#719e07">try</span> <span style="color:#719e07">{</span>
-    var entries <span style="color:#719e07">=</span> parser<span style="color:#719e07">.</span>parse<span style="color:#719e07">(</span><span style="color:#719e07">new</span> File<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;my.http&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    var allSuccess <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditUnit<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>run<span style="color:#719e07">(</span>entries<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">if</span> <span style="color:#719e07">(</span>allSuccess<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
-        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;All tests passed&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">}</span> <span style="color:#719e07">else</span> <span style="color:#719e07">{</span>
-        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;There were test failures&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">}</span>
-<span style="color:#719e07">}</span> <span style="color:#719e07">catch</span> <span style="color:#719e07">(</span>IOException e<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+<span style="color:#719e07">try</span> {
+    var <span style="color:#268bd2">entries</span> <span style="color:#719e07">=</span> parser.parse(<span style="color:#719e07">new</span> File(<span style="color:#2aa198">&#34;my.http&#34;</span>));
+    var <span style="color:#268bd2">allSuccess</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditUnit().run(entries);
+    <span style="color:#719e07">if</span> (allSuccess) {
+        System.out.println(<span style="color:#2aa198">&#34;All tests passed&#34;</span>);
+    } <span style="color:#719e07">else</span> {
+        System.out.println(<span style="color:#2aa198">&#34;There were test failures&#34;</span>);
+    }
+} <span style="color:#719e07">catch</span> (IOException <span style="color:#268bd2">e</span>) {
     <span style="color:#586e75">// handle error
-</span><span style="color:#586e75"></span><span style="color:#719e07">}</span>
+</span><span style="color:#586e75"></span>}
 </pre>
 <h2>Customizing ReqInEditUnit</h2>
 
@@ -70,12 +70,12 @@ then execute it with <code>com.athaydes.rawhttp.reqinedit.ReqInEditUnit</code>:<
 to modify all behaviour, including the environment, HTTP parser, HTTP client, file reader, response storage and test reporter.</p>
 
 <p>Here&rsquo;s the full list of parameters in the main constructor:</p>
-<pre style="color:#93a1a1;background-color:#002b36">ReqInEditUnit<span style="color:#719e07">(</span>HttpEnvironment<span style="color:#719e07">,</span>
-              RawHttp<span style="color:#719e07">,</span>
-              RawHttpClient<span style="color:#719e07">,</span>
-              FileReader<span style="color:#719e07">,</span>
-              ResponseStorage<span style="color:#719e07">,</span> 
-              HttpTestsReporter<span style="color:#719e07">)</span>
+<pre style="color:#93a1a1;background-color:#002b36">ReqInEditUnit(HttpEnvironment,
+              RawHttp,
+              RawHttpClient,
+              FileReader,
+              ResponseStorage, 
+              HttpTestsReporter)
 </pre>
 <p>The default <code>HttpEnvironment</code>, <code>com.athaydes.rawhttp.reqinedit.js.JsEnvironment</code>, uses <a href="https://winterbe.com/posts/2014/04/05/java8-nashorn-tutorial/">Nashorn</a>
 to interpret response handlers, and it parses variables using the
