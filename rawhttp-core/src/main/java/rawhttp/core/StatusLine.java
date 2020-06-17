@@ -1,5 +1,6 @@
 package rawhttp.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -51,10 +52,7 @@ public class StatusLine implements StartLine {
 
     @Override
     public void writeTo(OutputStream outputStream) throws IOException {
-        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
-        outputStream.write(bytes);
-        outputStream.write('\r');
-        outputStream.write('\n');
+        writeTo(outputStream, true);
     }
 
     /**
@@ -62,15 +60,30 @@ public class StatusLine implements StartLine {
      */
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(httpVersion);
-        builder.append(' ');
-        builder.append(statusCode);
-        if (!reason.isEmpty()) {
-            builder.append(' ');
-            builder.append(reason);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(256);
+        try {
+            writeTo(out, false);
+        } catch (IOException e) {
+            // cannot happen, in-memory OutputStream used
         }
-        return builder.toString();
+        return new String(out.toByteArray(), StandardCharsets.US_ASCII);
+    }
+
+    private void writeTo(OutputStream outputStream, boolean newLine) throws IOException {
+        httpVersion.writeTo(outputStream);
+        outputStream.write(' ');
+        outputStream.write(Integer.toString(statusCode).getBytes(StandardCharsets.US_ASCII));
+        if (!reason.isEmpty()) {
+            outputStream.write(' ');
+            // interpret using UTF-8 as the spec allows basically any bytes in it, so this seems to be our best chance!
+            // reason-phrase = *( HTAB / SP / VCHAR / obs-text )
+            outputStream.write(reason.getBytes(StandardCharsets.UTF_8));
+        }
+
+        if (newLine) {
+            outputStream.write('\r');
+            outputStream.write('\n');
+        }
     }
 
     @Override
