@@ -1,9 +1,9 @@
 package rawhttp.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -67,10 +67,7 @@ public class RequestLine implements StartLine {
 
     @Override
     public void writeTo(OutputStream outputStream) throws IOException {
-        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
-        outputStream.write(bytes);
-        outputStream.write('\r');
-        outputStream.write('\n');
+        writeTo(outputStream, true);
     }
 
     /**
@@ -78,25 +75,38 @@ public class RequestLine implements StartLine {
      */
     @Override
     public String toString() {
-        URI pathURI;
-        String path = uri.getPath();
-        if (path == null || path.trim().isEmpty()) {
-            path = "/";
-        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream(256);
         try {
-            // only path and query are sent to the server
-            pathURI = new URI(null, null, null, -1, path, null, null);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+            writeTo(out, false);
+        } catch (IOException e) {
+            // cannot happen, in-memory OutputStream used
+        }
+        return new String(out.toByteArray(), StandardCharsets.US_ASCII);
+    }
+
+    private void writeTo(OutputStream outputStream, boolean newLine) throws IOException {
+        outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
+        outputStream.write(' ');
+
+        String path = uri.getRawPath();
+        if (path == null || path.isEmpty()) {
+            outputStream.write('/');
+        } else {
+            outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
         }
         String query = uri.getRawQuery();
-        if (query == null || query.trim().isEmpty()) {
-            query = "";
-        } else {
-            query = "?" + query;
+        if (query != null && !query.isEmpty()) {
+            outputStream.write('?');
+            outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
         }
 
-        return method + " " + pathURI + query + " " + httpVersion;
+        outputStream.write(' ');
+        httpVersion.writeTo(outputStream);
+
+        if (newLine) {
+            outputStream.write('\r');
+            outputStream.write('\n');
+        }
     }
 
     @Override
