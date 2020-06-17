@@ -85,12 +85,18 @@ public class RequestLine implements StartLine {
         }
         try {
             // only path and query are sent to the server
-            pathURI = new URI(null, null, null, -1, path, uri.getQuery(), null);
+            pathURI = new URI(null, null, null, -1, path, null, null);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+        String query = uri.getRawQuery();
+        if (query == null || query.trim().isEmpty()) {
+            query = "";
+        } else {
+            query = "?" + query;
+        }
 
-        return method + " " + pathURI + " " + httpVersion;
+        return method + " " + pathURI + query + " " + httpVersion;
     }
 
     @Override
