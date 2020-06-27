@@ -4,11 +4,13 @@ import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -323,6 +325,22 @@ public final class HttpMetadataParser {
                                                        int lineNumber,
                                                        BiFunction<String, Integer, RuntimeException> createError)
             throws IOException {
+        @Nullable
+        String headerName = parseHeaderName(inputStream, lineNumber, createError);
+
+        if (headerName == null) {
+            return null;
+        }
+
+        String headerValue = parseHeaderValue(inputStream, lineNumber, createError);
+
+        return new AbstractMap.SimpleEntry<>(headerName, headerValue);
+    }
+
+    private String parseHeaderName(InputStream inputStream,
+                                   int lineNumber,
+                                   BiFunction<String, Integer, RuntimeException> createError)
+            throws IOException {
         int b = inputStream.read();
 
         if (b == '\r') {
@@ -357,69 +375,82 @@ public final class HttpMetadataParser {
         }
 
         String headerName = "";
-        boolean parsingValue = false;
         StringBuilder metadataBuilder = new StringBuilder();
         int length = 0;
-        int lengthLimit = options.getHttpHeadersOptions().getMaxHeaderNameLength();
+        final int lengthLimit = options.getHttpHeadersOptions().getMaxHeaderNameLength();
 
         do {
             length++;
-            char c = (char) b;
-            if (!parsingValue) {
-                if (c == ':') {
-                    headerName = metadataBuilder.toString();
-                    if (headerName.isEmpty()) {
-                        throw createError.apply("Header name is missing", lineNumber);
-                    }
-                    metadataBuilder.delete(0, headerName.length());
-                    parsingValue = true;
-                    length = -1;
-                    lengthLimit = options.getHttpHeadersOptions().getMaxHeaderValueLength();
-                } else if (c == '\n' || c == '\r') {
-                    throw createError.apply("Invalid header: missing the ':' separator", lineNumber);
-                } else {
-                    if (length > lengthLimit) {
-                        throw createError.apply("Header name is too long", lineNumber);
-                    }
-                    if (FieldValues.isAllowedInTokens(c)) {
-                        metadataBuilder.append(c);
-                    } else {
-                        throw createError.apply("Illegal character in HTTP header name", lineNumber);
-                    }
-                }
-            } else { // parsing header value
-                if (c == '\r') {
-                    // expect new-line
-                    int next = inputStream.read();
-                    if (next < 0 || next == '\n') {
-                        break;
-                    } else {
-                        inputStream.close();
-                        throw createError.apply("Illegal character after return", lineNumber);
-                    }
-                } else if (c == '\n') {
-                    if (!allowNewLineWithoutReturn) {
-                        inputStream.close();
-                        throw createError.apply("Illegal new-line character without preceding return", lineNumber);
-                    }
 
-                    // unexpected, but let's accept new-line without returns
-                    break;
+            char c = (char) b;
+            if (c == ':') {
+                headerName = metadataBuilder.toString();
+                if (headerName.isEmpty()) {
+                    throw createError.apply("Header name is missing", lineNumber);
+                }
+                break;
+            } else if (c == '\n' || c == '\r') {
+                throw createError.apply("Invalid header: missing the ':' separator", lineNumber);
+            } else {
+                if (length > lengthLimit) {
+                    throw createError.apply("Header name is too long", lineNumber);
+                }
+                if (FieldValues.isAllowedInTokens(c)) {
+                    metadataBuilder.append(c);
                 } else {
-                    if (length > lengthLimit) {
-                        throw createError.apply("Header value is too long", lineNumber);
-                    }
-                    if (FieldValues.isAllowedInHeaderValue(c)) {
-                        metadataBuilder.append(c);
-                    } else {
-                        throw createError.apply("Illegal character in HTTP header value", lineNumber);
-                    }
+                    throw createError.apply("Illegal character in HTTP header name", lineNumber);
                 }
             }
         } while ((b = inputStream.read()) >= 0);
 
-        String headerValue = metadataBuilder.toString().trim();
-        return new AbstractMap.SimpleEntry<>(headerName, headerValue);
+        return metadataBuilder.toString().trim();
+    }
+
+    private String parseHeaderValue(InputStream inputStream,
+                                    int lineNumber,
+                                    BiFunction<String, Integer, RuntimeException> createError)
+            throws IOException {
+        final int lengthLimit = options.getHttpHeadersOptions().getMaxHeaderValueLength();
+        final boolean allowNewLineWithoutReturn = options.allowNewLineWithoutReturn();
+        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.min(lengthLimit, 64));
+        int length = 0;
+        int b;
+
+        while ((b = inputStream.read()) >= 0) {
+            if (b == '\r') {
+                // expect new-line
+                int next = inputStream.read();
+                if (next < 0 || next == '\n') {
+                    break;
+                } else {
+                    inputStream.close();
+                    throw createError.apply("Illegal character after return", lineNumber);
+                }
+            } else if (b == '\n') {
+                if (!allowNewLineWithoutReturn) {
+                    inputStream.close();
+                    throw createError.apply("Illegal new-line character without preceding return", lineNumber);
+                }
+
+                // unexpected, but let's accept new-line without returns
+                break;
+            } else {
+                if (length > lengthLimit) {
+                    throw createError.apply("Header value is too long", lineNumber);
+                }
+
+                if (FieldValues.isAllowedInHeaderValue(b)) {
+                    out.write(b);
+                } else {
+                    throw createError.apply("Illegal character in HTTP header value", lineNumber);
+                }
+            }
+            length++;
+        }
+
+        Charset charset = options.getHttpHeadersOptions().getHeaderValuesCharset();
+
+        return new String(out.toByteArray(), charset).trim();
     }
 
     /**

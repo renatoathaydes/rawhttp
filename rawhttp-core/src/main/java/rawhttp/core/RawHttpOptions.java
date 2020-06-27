@@ -4,6 +4,8 @@ import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.body.encoding.HttpMessageDecoder;
 import rawhttp.core.body.encoding.ServiceLoaderHttpBodyEncodingRegistry;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
@@ -141,20 +143,25 @@ public class RawHttpOptions {
         private final int maxHeaderNameLength;
         private final int maxHeaderValueLength;
         private final Consumer<RawHttpHeaders> headersValidator;
+        private final Charset headerValuesCharset;
 
         public static final HttpHeadersOptions DEFAULT = new HttpHeadersOptions(1000, 4000);
 
         public HttpHeadersOptions(int maxHeaderNameLength,
                                   int maxHeaderValueLength,
-                                  Consumer<RawHttpHeaders> headersValidator) {
+                                  Consumer<RawHttpHeaders> headersValidator,
+                                  Charset headerValuesCharset) {
             this.maxHeaderNameLength = maxHeaderNameLength;
             this.maxHeaderValueLength = maxHeaderValueLength;
             this.headersValidator = headersValidator;
+            this.headerValuesCharset = headerValuesCharset;
         }
 
         public HttpHeadersOptions(int maxHeaderNameLength, int maxHeaderValueLength) {
             this(maxHeaderNameLength, maxHeaderValueLength, ignore -> {
-            });
+                // default to using ISO due to the comment at https://tools.ietf.org/html/rfc7230#section-3.2.4:
+                // _Historically, HTTP has allowed field content with text in the ISO-8859-1 charset_
+            }, StandardCharsets.ISO_8859_1);
         }
 
         public int getMaxHeaderNameLength() {
@@ -167,6 +174,15 @@ public class RawHttpOptions {
 
         public Consumer<RawHttpHeaders> getHeadersValidator() {
             return headersValidator;
+        }
+
+        /**
+         * @return the encoding that should be used to interpret HTTP headers's values.
+         *
+         * If not set, defaults to ISO-8859-1 according to note at https://tools.ietf.org/html/rfc7230#section-3.2.4.
+         */
+        public Charset getHeaderValuesCharset() {
+            return headerValuesCharset;
         }
     }
 
@@ -332,7 +348,7 @@ public class RawHttpOptions {
              */
             public HttpHeadersOptionsBuilder withMaxHeaderNameLength(int length) {
                 options = new HttpHeadersOptions(length,
-                        options.maxHeaderValueLength, options.headersValidator);
+                        options.maxHeaderValueLength, options.headersValidator, options.headerValuesCharset);
                 return this;
             }
 
@@ -344,17 +360,47 @@ public class RawHttpOptions {
              */
             public HttpHeadersOptionsBuilder withMaxHeaderValueLength(int length) {
                 options = new HttpHeadersOptions(options.maxHeaderNameLength,
-                        length, options.headersValidator);
+                        length, options.headersValidator, options.headerValuesCharset);
                 return this;
             }
 
+            /**
+             * Set the validator to use to check HTTP headers for a HTTP message.
+             *
+             * @param validator the validator
+             * @return this
+             */
             public HttpHeadersOptionsBuilder withValidator(Consumer<RawHttpHeaders> validator) {
                 requireNonNull(validator, "Validator must not be null");
                 options = new HttpHeadersOptions(options.maxHeaderNameLength,
-                        options.maxHeaderValueLength, validator);
+                        options.maxHeaderValueLength, validator, options.headerValuesCharset);
                 return this;
             }
 
+            /**
+             * Set the {@link Charset} to use to interpret the values of HTTP headers.
+             * <p>
+             * Notice that RFC-7230 does not dictate a specific encoding for header values, allowing basically any
+             * bytes to be part of a header value. However, it encourages new header fields to limit values to US-ASCII.
+             * <p>
+             * See <a href="https://github.com/renatoathaydes/rawhttp/issues/28">Issue 28</a> for more details.
+             *
+             * @param headerValuesCharset the charset to use
+             * @return this
+             */
+            public HttpHeadersOptionsBuilder withValuesCharset(Charset headerValuesCharset) {
+                requireNonNull(headerValuesCharset, "headerValuesCharset must not be null");
+                options = new HttpHeadersOptions(options.maxHeaderNameLength,
+                        options.maxHeaderValueLength, options.headersValidator, headerValuesCharset);
+                return this;
+            }
+
+            /**
+             * Call this method to finalize the HTTP headers building process and return to the
+             * {@link Builder}.
+             *
+             * @return the builder for {@link RawHttpOptions}
+             */
             public Builder done() {
                 return Builder.this;
             }

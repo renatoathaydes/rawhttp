@@ -5,6 +5,7 @@ import rawhttp.core.internal.Bool;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,12 +43,15 @@ public class RawHttpHeaders implements Writable {
 
     private final Map<String, Header> headersByCapitalizedName;
     private final List<String> headerNames;
+    private final Charset headerValuesCharset;
 
     private static final Header NULL_HEADER = new Header(emptyList());
 
     private RawHttpHeaders(Map<String, Header> headersByCapitalizedName,
                            List<String> headerNames,
-                           boolean isModifiable) {
+                           boolean isModifiable,
+                           Charset headerValuesCharset) {
+        this.headerValuesCharset = headerValuesCharset;
         if (isModifiable) {
             Map<String, Header> headers = new LinkedHashMap<>(headersByCapitalizedName);
             headers.entrySet().forEach(entry -> entry.setValue(entry.getValue().freeze()));
@@ -311,10 +315,14 @@ public class RawHttpHeaders implements Writable {
 
     @Override
     public void writeTo(OutputStream outputStream) throws IOException {
-        byte[] bytes = toString().getBytes(StandardCharsets.US_ASCII);
-        outputStream.write(bytes);
-        outputStream.write('\r');
-        outputStream.write('\n');
+        forEachIO((name, value) -> {
+            outputStream.write(name.getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(':');
+            outputStream.write(' ');
+            outputStream.write(value.getBytes(headerValuesCharset));
+            outputStream.write('\r');
+            outputStream.write('\n');
+        });
     }
 
     /**
@@ -322,11 +330,13 @@ public class RawHttpHeaders implements Writable {
      */
     public static final class Builder {
 
-        private static final RawHttpHeaders EMPTY = new RawHttpHeaders(emptyMap(), emptyList(), false);
+        private static final RawHttpHeaders EMPTY = new RawHttpHeaders(
+                emptyMap(), emptyList(), false, StandardCharsets.ISO_8859_1);
 
         private final boolean validateHeaders;
         private final LinkedHashMap<String, Header> headersByCapitalizedName = new LinkedHashMap<>();
         private final List<String> headerNames = new ArrayList<>();
+        private Charset headerValuesCharset = StandardCharsets.ISO_8859_1;
 
         private Builder(boolean validateHeaders) {
             this.validateHeaders = validateHeaders;
@@ -466,10 +476,23 @@ public class RawHttpHeaders implements Writable {
         }
 
         /**
+         * Set the charset that should be used to encode header values.
+         * <p>
+         * By default, {@link StandardCharsets#ISO_8859_1} is used.
+         *
+         * @param headerValuesCharset charset for encoding header values
+         * @return this
+         */
+        public Builder withHeaderValuesCharset(Charset headerValuesCharset) {
+            this.headerValuesCharset = headerValuesCharset;
+            return this;
+        }
+
+        /**
          * @return new instance of {@link RawHttpHeaders} with all headers added to this builder.
          */
         public RawHttpHeaders build() {
-            return new RawHttpHeaders(headersByCapitalizedName, headerNames, true);
+            return new RawHttpHeaders(headersByCapitalizedName, headerNames, true, headerValuesCharset);
         }
 
         /**

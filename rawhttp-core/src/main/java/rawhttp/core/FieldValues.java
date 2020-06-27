@@ -54,6 +54,14 @@ public final class FieldValues {
     }
 
     /**
+     * @param b byte
+     * @return true if the given byte is allowed in token field-values, false otherwise.
+     */
+    public static boolean isAllowedInTokens(int b) {
+        return b < TOKEN_CHARS.length && TOKEN_CHARS[b];
+    }
+
+    /**
      * Check if the given value is allowed in a header field value.
      * <p>
      * If it is, an empty value is returned, otherwise, the index of the first character that is not allowed
@@ -82,18 +90,48 @@ public final class FieldValues {
     }
 
     /**
+     * @param b byte
+     * @return true if the given byte is allowed in VCHAR field-values, false otherwise.
+     */
+    public static boolean isAllowedInVCHARs(int b) {
+        return b >= 0x21 && b <= 0x7e;
+    }
+
+    /**
      * @param c character
      * @return true if the given char is allowed in obs-text, false otherwise.
+     * @deprecated this method doesn't make sense for a {@code char} because obs-text is defined in terms of a
+     * single byte.
+     * Use {@link FieldValues#isAllowedInObsText(int)} instead.
      */
     public static boolean isAllowedInObsText(char c) {
         return c >= 0x80 && c <= 0xff;
     }
 
     /**
+     * @param b byte
+     * @return true if the given byte is allowed in obs-text, false otherwise.
+     */
+    public static boolean isAllowedInObsText(int b) {
+        return b >= 0x80 && b <= 0xff;
+    }
+
+    /**
      * @param c character
      * @return true if the given char is allowed in a header value, false otherwise.
+     * @deprecated header values may contain bytes in any encoding, even though it is discouraged to use non-ASCII
+     * encodings. However, this method rejects non-ASCII characters, which is not strictly correct.
+     * Use {@link FieldValues#isAllowedInHeaderValue(int)} for a more correct version of this method.
      */
     public static boolean isAllowedInHeaderValue(char c) {
         return c == ' ' || c == '\t' || isAllowedInVCHARs(c) || isAllowedInObsText(c);
+    }
+
+    /**
+     * @param b byte
+     * @return true if the given byte is allowed in a header value, false otherwise.
+     */
+    public static boolean isAllowedInHeaderValue(int b) {
+        return b == ' ' || b == '\t' || isAllowedInVCHARs(b) || isAllowedInObsText(b);
     }
 }

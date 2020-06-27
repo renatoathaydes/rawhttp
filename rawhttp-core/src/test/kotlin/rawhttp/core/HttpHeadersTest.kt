@@ -7,6 +7,8 @@ import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
 import rawhttp.core.errors.InvalidHttpHeader
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 
 class HttpHeadersTest {
 
@@ -16,19 +18,24 @@ class HttpHeadersTest {
                 .with("hi", "aaa")
                 .with("hi", "bbb")
                 .with("ho", "ccc")
+                .with("X-F", "ö")
                 .build().run {
                     get("hi") shouldEqual listOf("aaa", "bbb")
                     get("ho") shouldEqual listOf("ccc")
+                    get("X-F") shouldEqual listOf("ö")
                     get("Hi") shouldEqual get("hi")
                     get("Hi") shouldEqual get("HI")
                     get("Ho") shouldEqual get("ho")
                     get("Ho") shouldEqual get("hO")
+                    get("X-F") shouldEqual get("x-f")
                     getFirst("hi") should bePresent { it shouldEqual "aaa" }
                     getFirst("HI") should bePresent { it shouldEqual "aaa" }
                     getFirst("ho") should bePresent { it shouldEqual "ccc" }
                     getFirst("Ho") should bePresent { it shouldEqual "ccc" }
+                    getFirst("X-F") should bePresent { it shouldEqual "ö" }
                     getFirst("HI") shouldEqual getFirst("hi")
                     getFirst("HO") shouldEqual getFirst("ho")
+                    getFirst("x-f") shouldEqual getFirst("X-f")
                     get("blah") should beEmpty()
                     getFirst("blah") should notBePresent()
 
@@ -37,10 +44,12 @@ class HttpHeadersTest {
                     contains("hI") shouldBe true
                     contains("HI") shouldBe true
                     contains("Ho") shouldBe true
+                    contains("x-f") shouldBe true
+                    contains("X-F") shouldBe true
                     contains("Blah") shouldBe false
 
-                    headerNames shouldEqual listOf("hi", "hi", "ho")
-                    uniqueHeaderNames shouldEqual setOf("HI", "HO")
+                    headerNames shouldEqual listOf("hi", "hi", "ho", "X-F")
+                    uniqueHeaderNames shouldEqual setOf("HI", "HO", "X-F")
                 }
     }
 
@@ -71,13 +80,21 @@ class HttpHeadersTest {
                 .with("Server", "nginx")
                 .with("Accept", "text/plain")
                 .with("Date", "22 March 2012")
-                .build().toString() shouldEqual "" +
-                "Content-Type: 33\r\n" +
-                "Accept: application/json\r\n" +
-                "Accept: text/html\r\n" +
-                "Server: nginx\r\n" +
-                "Accept: text/plain\r\n" +
-                "Date: 22 March 2012\r\n"
+                .build().run {
+                    val expectedHeaders = ""+
+                            "Content-Type: 33\r\n" +
+                            "Accept: application/json\r\n" +
+                            "Accept: text/html\r\n" +
+                            "Server: nginx\r\n" +
+                            "Accept: text/plain\r\n" +
+                            "Date: 22 March 2012\r\n"
+
+                    toString() shouldEqual expectedHeaders
+
+                    val out = ByteArrayOutputStream()
+                    writeTo(out)
+                    String(out.toByteArray(), Charsets.UTF_8) shouldEqual expectedHeaders
+                }
     }
 
     @Test
@@ -167,10 +184,16 @@ class HttpHeadersTest {
 
     @Test
     fun headerValuesMayContainInvalidCharactersIfSkippingValidation() {
-        RawHttpHeaders.newBuilderSkippingValidation().with("Hello", "hallå").build().run {
-            headerNames shouldBe listOf("Hello")
-            get("Hello") shouldBe listOf("hallå")
-        }
+        RawHttpHeaders.newBuilderSkippingValidation()
+                .withHeaderValuesCharset(StandardCharsets.UTF_8)
+                .with("Hello", "こんにちは").build().run {
+                    headerNames shouldBe listOf("Hello")
+                    get("Hello") shouldBe listOf("こんにちは")
+                    toString() shouldBe "Hello: こんにちは\r\n"
+                    val out = ByteArrayOutputStream()
+                    writeTo(out)
+                    out.toByteArray() shouldHaveSameElementsAs "Hello: こんにちは\r\n".toByteArray(charset = Charsets.UTF_8)
+                }
     }
 
     @Test

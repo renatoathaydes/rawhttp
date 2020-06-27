@@ -1,23 +1,18 @@
 package rawhttp.core
 
-import io.kotlintest.matchers.shouldBe
 import io.kotlintest.properties.forAll
 import io.kotlintest.properties.headers
 import io.kotlintest.properties.row
 import io.kotlintest.properties.table
-import io.kotlintest.specs.StringSpec
+import org.junit.Test
+import kotlin.test.assertEquals
 
-class FieldValuesTests : StringSpec({
+class FieldValuesTests {
 
-    /*
-    token          = 1*tchar
+    val asciiTable = (0..127).toList()
 
-    tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
-                     / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
-                     / DIGIT / ALPHA
-    ; any VCHAR, except delimiters
-     */
-    "Valid token values" {
+    @Test
+    fun `Valid token values`() {
         val myTable = table(
                 headers("Valid Token"),
                 row("hello"),
@@ -38,11 +33,12 @@ class FieldValuesTests : StringSpec({
                 row("^Accept`Do`")
         )
         forAll(myTable) { text ->
-            FieldValues.indexOfNotAllowedInTokens(text).orElse(-1) shouldBe -1
+            assertEquals(-1, FieldValues.indexOfNotAllowedInTokens(text).orElse(-1), "Example: $text")
         }
     }
 
-    "Invalid tokens" {
+    @Test
+    fun `Invalid tokens`() {
         val myTable = table(
                 headers("Invalid Token", "index"),
                 row(" ", 0),
@@ -61,46 +57,97 @@ class FieldValuesTests : StringSpec({
                 row("Piauí", 4)
         )
         forAll(myTable) { text, index ->
-            FieldValues.indexOfNotAllowedInTokens(text).orElse(-1) shouldBe index
+            assertEquals(index, FieldValues.indexOfNotAllowedInTokens(text).orElse(-1), "Example: $text")
         }
     }
 
-    "Valid VCHARS" {
-        val myTable = table(
-                headers("Valid VCHAR"),
-                row("hello"),
-                row("Accept"),
-                row("*/*"),
-                row("application/json"),
-                row("application/json+scim"),
-                row("read write"),
-                row("q=0.1,x=b,a:c"),
-                row("Hötorget"),
-                row("Åsa"),
-                row("pão"),
-                row("água"),
-                row("Paralelepípedo"),
-                row("Piauí"),
-                // just use every acceptable character in a single String
-                row(String((' '..'~').toList().toCharArray()))
-        )
-        forAll(myTable) { text ->
-            FieldValues.indexOfNotAllowedInHeaderValue(text).orElse(-1) shouldBe -1
+    @Test
+    fun `Comprehensively check every ASCII char and byte against validity in tokens`() {
+        /*
+            token          = 1*tchar
+
+            tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+                             / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+                             / DIGIT / ALPHA
+            ; any VCHAR, except delimiters
+
+            delimiters: (),/:;<=>?@[\]{}
+         */
+        for (b in asciiTable) {
+            val c = b.toChar()
+            val expectedInTokens = when {
+                c in 'a'..'z' -> true
+                c in 'A'..'Z' -> true
+                c in '0'..'9' -> true
+                else -> when (c) {
+                    '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~' -> true
+                    else -> false
+                }
+            }
+            assertEquals(expectedInTokens, FieldValues.isAllowedInTokens(b), "Example: $b")
+            assertEquals(expectedInTokens, FieldValues.isAllowedInTokens(c), "Example: '$c'")
         }
     }
 
-    "Invalid Header Values" {
+    @Test
+    fun `Comprehensively check every non-ASCII byte against validity in tokens`() {
+        for (b in 128..256) {
+            val c = b.toChar()
+            assertEquals(false, FieldValues.isAllowedInTokens(b), "Example: $b")
+            assertEquals(false, FieldValues.isAllowedInTokens(c), "Example: '$c'")
+        }
+    }
+
+    @Test
+    fun `Comprehensively check every byte against validity in VCHARS`() {
+        for (b in 0..256) {
+            val c = b.toChar()
+            val expectedInVchars = when {
+                c in 'a'..'z' -> true
+                c in 'A'..'Z' -> true
+                c in '0'..'9' -> true
+                else -> when (c) {
+                    '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~',
+                    '"', '(', ')', ',', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '{', '}' -> true
+                    else -> false
+                }
+            }
+            assertEquals(expectedInVchars, FieldValues.isAllowedInVCHARs(c), "char '$c'")
+            assertEquals(expectedInVchars, FieldValues.isAllowedInVCHARs(b), "byte $b")
+        }
+    }
+
+    @Test
+    fun `Typical valid Header Values`() {
+        val values = listOf("*/*", "text/html", "application/json; charset=utf-8", "Mon, 27 Jul 2009 12:28:53 GMT")
+        for (value in values) {
+            assertEquals(-1, FieldValues.indexOfNotAllowedInHeaderValue(value).orElse(-1), "Example: $value")
+        }
+    }
+
+    @Test
+    fun `Unusual but valid Header Values`() {
+        val values = listOf("Schrödinger", "pão-de-ló")
+        for (value in values) {
+            assertEquals(-1, FieldValues.indexOfNotAllowedInHeaderValue(value).orElse(-1), "Example: $value")
+        }
+    }
+
+    @Test
+    fun `Invalid Header Values`() {
         val myTable = table(
-                headers("Invalid VCHAR", "index"),
+                headers("Invalid Header Value", "index"),
                 row(("\u001f").toString(), 0),
                 row(("abc\u001fdef").toString(), 3),
                 row(("1234567\u001f").toString(), 7),
                 row(("\u007fboo").toString(), 0),
-                row(("boo\u007fbar").toString(), 3)
+                row(("boo\u007fbar").toString(), 3),
+                // non-ISO characters not allowed by default as it's not recommended
+                row("こんにちは", 0)
         )
         forAll(myTable) { text, index ->
-            FieldValues.indexOfNotAllowedInHeaderValue(text).orElse(-1) shouldBe index
+            assertEquals(index, FieldValues.indexOfNotAllowedInHeaderValue(text).orElse(-1), "Example: $text")
         }
     }
 
-})
+}

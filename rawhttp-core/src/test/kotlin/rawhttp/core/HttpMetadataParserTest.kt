@@ -2,6 +2,7 @@ package rawhttp.core
 
 import io.kotlintest.matchers.beEmpty
 import io.kotlintest.matchers.endWith
+import io.kotlintest.matchers.fail
 import io.kotlintest.matchers.include
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
@@ -27,6 +28,21 @@ class HttpMetadataParserTest {
     fun canParseEmptyHeader() {
         val headers = parser.parseHeaders("".byteInputStream(), errorCreator)
         headers.asMap().keys should beEmpty()
+    }
+
+    @Test
+    fun canParseHeaderWithEmptyValue() {
+        val headers = parser.parseHeaders("A:".byteInputStream(), errorCreator)
+        headers.asMap().keys shouldBe setOf("A")
+        headers.toString() shouldBe "A: \r\n"
+    }
+
+    @Test
+    fun shouldTrimHeaderValue() {
+        val headers = parser.parseHeaders("A:  abc   \r\n".byteInputStream(), errorCreator)
+        headers.asMap().keys shouldBe setOf("A")
+        headers["A"] shouldEqual listOf("abc")
+        headers.toString() shouldBe "A: abc\r\n"
     }
 
     @Test
@@ -150,6 +166,26 @@ class HttpMetadataParserTest {
     }
 
     @Test
+    fun shouldUseProvidedHeaderValueCharset() {
+        val utf8Valuesparser = HttpMetadataParser(RawHttpOptions.newBuilder()
+                .withHttpHeadersOptions()
+                .withValuesCharset(Charsets.UTF_8).done().build())
+
+        val headers = utf8Valuesparser.parseHeaders(("Hello: こんにちは\r\n" +
+                "Bye: さようなら\r\n").byteInputStream(Charsets.UTF_8), errorCreator)
+        headers["Hello"] shouldEqual listOf("こんにちは")
+        headers["Bye"] shouldEqual listOf("さようなら")
+    }
+
+    @Test
+    fun `should use ISO-8859-1 header value charset by default`() {
+        val headers = parser.parseHeaders(("Hello: Hallå\r\n" +
+                "Bye: hej då\r\n").byteInputStream(Charsets.ISO_8859_1), errorCreator)
+        headers["Hello"] shouldEqual listOf("Hallå")
+        headers["Bye"] shouldEqual listOf("hej då")
+    }
+
+    @Test
     fun cannotParseInvalidHeaderValues() {
         val badValues = listOf("hi\u007F", "ab\u0000c")
 
@@ -238,7 +274,11 @@ class HttpMetadataParserTest {
                         "Header: $headerValue".byteInputStream(), errorCreator)
             }
             if (shouldPass) {
-                val headers = parse()
+                val headers = try {
+                    parse()
+                } catch (e: InvalidHttpHeader) {
+                    fail("Example: '$headerValue' failed due to $e")
+                }
                 headers.asMap().size shouldBe 1
                 headers["Header"] shouldEqual listOf(headerValue)
             } else {
