@@ -323,6 +323,8 @@ public class RawHttpHeaders implements Writable {
             outputStream.write('\r');
             outputStream.write('\n');
         });
+        outputStream.write('\r');
+        outputStream.write('\n');
     }
 
     /**

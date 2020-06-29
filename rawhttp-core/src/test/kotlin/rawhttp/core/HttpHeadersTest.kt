@@ -93,7 +93,7 @@ class HttpHeadersTest {
 
                     val out = ByteArrayOutputStream()
                     writeTo(out)
-                    String(out.toByteArray(), Charsets.UTF_8) shouldEqual expectedHeaders
+                    String(out.toByteArray(), Charsets.UTF_8) shouldEqual (expectedHeaders + "\r\n")
                 }
     }
 
@@ -192,7 +192,7 @@ class HttpHeadersTest {
                     toString() shouldBe "Hello: こんにちは\r\n"
                     val out = ByteArrayOutputStream()
                     writeTo(out)
-                    out.toByteArray() shouldHaveSameElementsAs "Hello: こんにちは\r\n".toByteArray(charset = Charsets.UTF_8)
+                    out.toByteArray() shouldHaveSameElementsAs "Hello: こんにちは\r\n\r\n".toByteArray(charset = Charsets.UTF_8)
                 }
     }
 
