@@ -29,8 +29,6 @@ final class HttpResponses {
 
         final RawHttpHeaders basicHeaders = RawHttpHeaders.newBuilderSkippingValidation()
                 .with("Content-Type", "text/plain")
-                .with("Cache-Control", "no-cache")
-                .with("Pragma", "no-cache")
                 .build();
 
         OK_RESPONSE_HTTP1_0 = new EagerHttpResponse<>(null, null, STATUS_200_HTTP1_0, basicHeaders, null);
