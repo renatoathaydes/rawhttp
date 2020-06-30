@@ -97,6 +97,9 @@ class RequestLineTest {
                 headers("Request line", "Expected version", "Expected method", "Expected path", "Expected String"),
                 row("POST /hello HTTP/1.1", HttpVersion.HTTP_1_1, "POST", "/hello", "POST /hello HTTP/1.1"),
                 row("do /hello HTTP/1.0", HttpVersion.HTTP_1_0, "do", "/hello", "do /hello HTTP/1.0"),
+                row("PUT /test/test%40example.com/test HTTP/1.1", HttpVersion.HTTP_1_1, "PUT", "/test/test@example.com/test", "PUT /test/test%40example.com/test HTTP/1.1"),
+                row("PUT /test/test@example.org/test HTTP/1.1", HttpVersion.HTTP_1_1, "PUT", "/test/test@example.org/test", "PUT /test/test@example.org/test HTTP/1.1"),
+                row("GET /test/test%3Ffoo%3Dbar%26a%3Db/test HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/test/test?foo=bar&a=b/test", "GET /test/test%3Ffoo%3Dbar%26a%3Db/test HTTP/1.0"),
                 row("GET /hello?field=encoded%20value HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello",
                         "GET /hello?field=encoded%20value HTTP/1.0"),
                 row("GET /hello?a=1&b=2 HTTP/1.0", HttpVersion.HTTP_1_0, "GET", "/hello", "GET /hello?a=1&b=2 HTTP/1.0"))
