@@ -346,6 +346,7 @@ public class RawHttpHeaders implements Writable {
 
         private static Builder newBuilder(RawHttpHeaders headers, boolean validateHeaders) {
             Builder builder = new Builder(validateHeaders);
+            builder.headerValuesCharset = headers.headerValuesCharset;
             for (Map.Entry<String, Header> entry : headers.headersByCapitalizedName.entrySet()) {
                 builder.headersByCapitalizedName.put(entry.getKey(), entry.getValue().unfreeze());
             }

@@ -264,7 +264,9 @@ public final class HttpMetadataParser {
     private RawHttpHeaders.Builder buildHeaders(
             InputStream stream,
             BiFunction<String, Integer, RuntimeException> createError) throws IOException {
-        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilderSkippingValidation();
+        RawHttpHeaders.Builder builder = RawHttpHeaders.newBuilderSkippingValidation()
+                .withHeaderValuesCharset(options.getHttpHeadersOptions().getHeaderValuesCharset());
+
         int lineNumber = 1;
         Map.Entry<String, String> header;
         while ((header = parseHeaderField(stream, lineNumber, createError)) != null) {
