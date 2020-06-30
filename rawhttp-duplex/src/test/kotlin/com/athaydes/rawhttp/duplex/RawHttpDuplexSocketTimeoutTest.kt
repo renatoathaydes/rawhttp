@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class RawHttpDuplexSocketTimeoutTest {
     val duplex = RawHttpDuplex()
@@ -58,11 +59,10 @@ class RawHttpDuplexSocketTimeoutTest {
         val errorQueue = LinkedBlockingDeque<Throwable>(1)
 
         shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
-            var counter = 3
+            val counter = AtomicInteger(3)
             scheduler.scheduleAtFixedRate({
                 sender.ping()
-                counter--
-                if (counter == 0) {
+                if (counter.decrementAndGet() == 0) {
                     sender.close()
                     scheduler.shutdown()
                 }
