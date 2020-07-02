@@ -8,6 +8,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpOptions
+import rawhttp.core.RawHttpResponse
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.server.TcpRawHttpServer
@@ -15,7 +16,7 @@ import java.net.ServerSocket
 import java.time.Duration
 import java.util.Optional
 
-const val serverPort = 8094
+private const val serverPort = 8094
 
 val rawHttpWithFlexibleHeaderValues = RawHttp(RawHttpOptions.newBuilder()
         .withHttpHeadersOptions()
@@ -26,19 +27,19 @@ val rawHttpWithFlexibleHeaderValues = RawHttp(RawHttpOptions.newBuilder()
 class ServerAndClientRawHttp {
 
     companion object {
-        val server = TcpRawHttpServer(object : TcpRawHttpServer.TcpRawHttpServerOptions {
+        private val server = TcpRawHttpServer(object : TcpRawHttpServer.TcpRawHttpServerOptions {
             override fun getServerSocket() = ServerSocket(serverPort)
             override fun getRawHttp() = rawHttpWithFlexibleHeaderValues
         })
 
-        val response200 = rawHttpWithFlexibleHeaderValues.parseResponse("200 OK")
+        private val response200: RawHttpResponse<Void> =
+                rawHttpWithFlexibleHeaderValues.parseResponse("200 OK")
 
         @BeforeClass
         @JvmStatic
         fun setup() {
             server.start { req ->
                 // this example doesn't care about path, it just returns the request headers as the body
-                println("Received headers ${req.headers}")
                 Optional.of(response200.withBody(StringBody(req.headers.toString(), "text/plain")))
             }
             RawHttp.waitForPortToBeTaken(serverPort, Duration.ofSeconds(4))
