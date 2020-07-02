@@ -62,7 +62,7 @@ public class RequestLine implements StartLine {
      * @return a copy of this method line, but with the given host
      */
     public RequestLine withHost(String host) {
-        return new RequestLine(method, RawHttp.replaceHost(uri, host), httpVersion);
+        return new RequestLine(method, UriUtil.withHost(uri, host), httpVersion);
     }
 
     @Override
