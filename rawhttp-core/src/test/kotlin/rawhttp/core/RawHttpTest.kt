@@ -366,10 +366,28 @@ class CopyHttpRequestTests : StringSpec({
 
     }
 
-    "Can make a copy of a HTTP Request with a replaced request line" {
+    "Can make a copy of a HTTP Request with a replaced request line (different host)" {
+        RawHttp().parseRequest("GET /hello HTTP/1.0\nHost: example.org:8080")
+                .withRequestLine(RequestLine("GET", URI.create("http://localhost:8999/foo/bar"), HttpVersion.HTTP_1_1)).run {
+                    method shouldEqual "GET"
+                    uri.scheme shouldEqual "http"
+                    uri.host shouldEqual "localhost"
+                    uri.port shouldEqual 8999
+                    uri.path shouldEqual "/foo/bar"
+                    startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
+                    headers["Host"] shouldEqual listOf("localhost:8999")
+                    headers.asMap().size shouldEqual 1
+                    senderAddress should notBePresent()
+                }
+    }
+
+    "Can make a copy of a HTTP Request with a replaced request line (different port)" {
         RawHttp().parseRequest("GET /hello HTTP/1.0\nHost: localhost:8080")
                 .withRequestLine(RequestLine("GET", URI.create("http://localhost:8999/foo/bar"), HttpVersion.HTTP_1_1)).run {
                     method shouldEqual "GET"
+                    uri.scheme shouldEqual "http"
+                    uri.host shouldEqual "localhost"
+                    uri.port shouldEqual 8999
                     uri.path shouldEqual "/foo/bar"
                     startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
                     headers["Host"] shouldEqual listOf("localhost:8999")
