@@ -51,10 +51,9 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
      * @param options configuration for this client
      */
     public TcpRawHttpClient(@Nullable TcpRawHttpClientOptions options) {
-        this(options == null ? new DefaultOptions() : options,
-                new RawHttp(RawHttpOptions.newBuilder()
-                        .doNotAllowNewLineWithoutReturn()
-                        .build()));
+        this(options, new RawHttp(RawHttpOptions.newBuilder()
+                .doNotAllowNewLineWithoutReturn()
+                .build()));
     }
 
     /**
