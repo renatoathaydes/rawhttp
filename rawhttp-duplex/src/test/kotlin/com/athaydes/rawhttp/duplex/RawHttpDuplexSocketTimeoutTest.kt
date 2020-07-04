@@ -55,7 +55,7 @@ class RawHttpDuplexSocketTimeoutTest {
     @Test(timeout = 1500L)
     fun shouldNotTimeoutWithPing() {
         val scheduler = Executors.newSingleThreadScheduledExecutor()
-        val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 150 }))
+        val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 250 }))
         val errorQueue = LinkedBlockingDeque<Throwable>(1)
 
         shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
