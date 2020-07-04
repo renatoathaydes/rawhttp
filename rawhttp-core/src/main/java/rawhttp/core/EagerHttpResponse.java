@@ -93,19 +93,21 @@ public class EagerHttpResponse<Response> extends RawHttpResponse<Response> {
 
     @Override
     public EagerHttpResponse<Response> withHeaders(RawHttpHeaders headers, boolean append) {
-        return new EagerHttpResponse<>(getLibResponse().orElse(null),
-                getRequest().orElse(null),
-                getStartLine(),
-                append ? getHeaders().and(headers) : headers.and(getHeaders()),
-                getBody().orElse(null));
+        try {
+            return super.withHeaders(headers, append).eagerly();
+        } catch (IOException e) {
+            // this can never happen because eagerly() is not doing IO for an eager response
+            throw new IllegalStateException("unreachable");
+        }
     }
 
     public EagerHttpResponse<Response> withStatusLine(StatusLine statusLine) {
-        return new EagerHttpResponse<>(getLibResponse().orElse(null),
-                getRequest().orElse(null),
-                statusLine,
-                getHeaders(),
-                getBody().orElse(null));
+        try {
+            return super.withStatusLine(statusLine).eagerly();
+        } catch (IOException e) {
+            // this can never happen because eagerly() is not doing IO for an eager response
+            throw new IllegalStateException("unreachable");
+        }
     }
 
     @Override

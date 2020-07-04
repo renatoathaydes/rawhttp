@@ -87,14 +87,22 @@ public class EagerHttpRequest extends RawHttpRequest {
 
     @Override
     public EagerHttpRequest withHeaders(RawHttpHeaders headers, boolean append) {
-        return new EagerHttpRequest(getStartLine(),
-                append ? getHeaders().and(headers) : headers.and(getHeaders()),
-                getBody().orElse(null), getSenderAddress().orElse(null));
+        try {
+            return super.withHeaders(headers, append).eagerly();
+        } catch (IOException e) {
+            // this can never happen because eagerly() is not doing IO for an eager request
+            throw new IllegalStateException("unreachable");
+        }
     }
 
     @Override
     public EagerHttpRequest withRequestLine(RequestLine requestLine) {
-        return new EagerHttpRequest(requestLine, getHeaders(), getBody().orElse(null), getSenderAddress().orElse(null));
+        try {
+            return super.withRequestLine(requestLine).eagerly();
+        } catch (IOException e) {
+            // this can never happen because eagerly() is not doing IO for an eager request
+            throw new IllegalStateException("unreachable");
+        }
     }
 
     @Override
