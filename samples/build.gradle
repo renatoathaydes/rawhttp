@@ -2,6 +2,10 @@ plugins {
     id "org.jetbrains.kotlin.jvm"
 }
 
+test {
+    forkEvery 1
+}
+
 dependencies {
     compile project(':rawhttp-core')
     compile project(':rawhttp-httpcomponents')
