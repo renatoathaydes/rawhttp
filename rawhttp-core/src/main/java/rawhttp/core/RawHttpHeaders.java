@@ -3,8 +3,10 @@ package rawhttp.core;
 import rawhttp.core.errors.InvalidHttpHeader;
 import rawhttp.core.internal.Bool;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -60,6 +62,22 @@ public class RawHttpHeaders implements Writable {
         } else {
             this.headersByCapitalizedName = headersByCapitalizedName;
             this.headerNames = headerNames;
+        }
+    }
+
+    /**
+     * Get the "Host" header value for the given URI.
+     *
+     * @param uri to obtain a host from
+     * @return the host header value if possible, null if the URI has no host defined
+     * @see UriUtil#hasDefaultPort(URI)
+     */
+    @Nullable
+    public static String hostHeaderValueFor(URI uri) {
+        if (UriUtil.hasDefaultPort(uri) || uri.getPort() < 0) {
+            return uri.getHost();
+        } else {
+            return uri.getHost() + ":" + uri.getPort();
         }
     }
 

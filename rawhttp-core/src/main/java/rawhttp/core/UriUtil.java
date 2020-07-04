@@ -195,6 +195,21 @@ public class UriUtil {
     }
 
     /**
+     * Check if the given URI has the default port for its scheme.
+     * <p>
+     * This method only consider the "http" and "https" schemes.
+     *
+     * @param uri http URI
+     * @return true if the scheme is "http" and the port is 80 or if the scheme is "https" and the port 443,
+     * false otherwise.
+     */
+    public static boolean hasDefaultPort(URI uri) {
+        return (uri.getPort() < 0)
+                || ((uri.getPort() == 80) && ("http".equalsIgnoreCase(uri.getScheme())))
+                || ((uri.getPort() == 443) && ("https".equalsIgnoreCase(uri.getScheme())));
+    }
+
+    /**
      * Builder of {@link URI} instances.
      */
     public static final class Builder {

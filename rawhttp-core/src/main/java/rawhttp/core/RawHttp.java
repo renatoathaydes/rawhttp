@@ -400,7 +400,7 @@ public class RawHttp {
             if (requestLineHost == null) try {
                 RequestLine newRequestLine = requestLine.withHost(hostHeaderValues.iterator().next());
                 // cleanup the host header
-                headers.overwrite("Host", hostHeaderValueFor(newRequestLine.getUri()));
+                headers.overwrite("Host", RawHttpHeaders.hostHeaderValueFor(newRequestLine.getUri()));
                 return newRequestLine;
             } catch (IllegalArgumentException e) {
                 int lineNumber = headers.getLineNumberAt("Host", 0);
@@ -418,17 +418,4 @@ public class RawHttp {
         }
     }
 
-    private static String hostHeaderValueFor(URI uri) {
-        if (hasDefaultPort(uri)) {
-            return uri.getHost();
-        } else {
-            return uri.getHost() + ":" + uri.getPort();
-        }
-    }
-
-    private static boolean hasDefaultPort(URI uri) {
-        return (uri.getPort() < 0)
-                || ((uri.getPort() == 80) && ("http".equalsIgnoreCase(uri.getScheme())))
-                || ((uri.getPort() == 443) && ("https".equalsIgnoreCase(uri.getScheme())));
-    }
 }

@@ -101,12 +101,15 @@ public class RawHttpRequest extends HttpMessage {
      * @return copy of this HTTP message with the provided requestLine
      */
     public RawHttpRequest withRequestLine(RequestLine requestLine) {
-        String newHost = requestLine.getUri().getHost();
+        String newHost = RawHttpHeaders.hostHeaderValueFor(requestLine.getUri());
+        if (newHost == null) {
+            throw new IllegalArgumentException("RequestLine host must not be null");
+        }
         RawHttpHeaders headers;
         if (newHost.equalsIgnoreCase(getHeaders().getFirst("Host").orElse(""))) {
             headers = getHeaders();
         } else {
-            headers = RawHttpHeaders.newBuilder(getHeaders())
+            headers = RawHttpHeaders.newBuilderSkippingValidation(getHeaders())
                     .overwrite("Host", newHost)
                     .build();
         }
@@ -133,6 +136,7 @@ public class RawHttpRequest extends HttpMessage {
      *     <li>OPTIONS</li>
      *     <li>TRACE</li>
      * </ul>
+     *
      * @return true if the request method is one of the safe methods
      */
     public boolean usesSafeMethod() {
