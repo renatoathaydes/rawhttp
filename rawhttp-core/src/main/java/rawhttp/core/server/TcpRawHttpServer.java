@@ -185,9 +185,8 @@ public class TcpRawHttpServer implements RawHttpServer {
                 int failedAccepts = 0;
 
                 while (true) {
-                    Socket client;
                     try {
-                        client = socket.accept();
+                        Socket client = socket.accept();
                         executorService.submit(() -> handle(client));
                         failedAccepts = 0;
                     } catch (SocketException e) {
