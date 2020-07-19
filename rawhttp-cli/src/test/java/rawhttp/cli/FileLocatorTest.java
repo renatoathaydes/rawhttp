@@ -6,11 +6,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.nio.file.StandardOpenOption.CREATE;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -44,7 +47,8 @@ public class FileLocatorTest {
         Optional<FileLocator.FileResult> result = fileLocator.find("hello", emptyList());
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("hello").toFile(), result.get().file);
-        assertEquals(singletonList("application/octet-stream"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("application/octet-stream"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
     }
 
     @Test
@@ -52,7 +56,8 @@ public class FileLocatorTest {
         Optional<FileLocator.FileResult> result = fileLocator.find("p1/p2/hello", emptyList());
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("p1/p2/hello").toFile(), result.get().file);
-        assertEquals(singletonList("application/octet-stream"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("application/octet-stream"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
     }
 
     @Test
@@ -60,12 +65,14 @@ public class FileLocatorTest {
         Optional<FileLocator.FileResult> result = fileLocator.find("p1/hello.json", emptyList());
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("p1/hello.json").toFile(), result.get().file);
-        assertEquals(singletonList("application/json"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("application/json"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
 
         result = fileLocator.find("p1/hello.xml", emptyList());
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("p1/hello.xml").toFile(), result.get().file);
-        assertEquals(singletonList("text/xml"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("text/xml"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
     }
 
     @Test
@@ -79,9 +86,11 @@ public class FileLocatorTest {
         File actualFile = result.get().file;
 
         if (actualFile.equals(jsonFile)) {
-            assertEquals(singletonList("application/json"), result.get().contentTypeHeader.get("Content-Type"));
+            assertEquals(singletonList("application/json"), result.get().fileHttpHeaders.get("Content-Type"));
+            assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
         } else if (actualFile.equals(xmlFile)) {
-            assertEquals(singletonList("text/xml"), result.get().contentTypeHeader.get("Content-Type"));
+            assertEquals(singletonList("text/xml"), result.get().fileHttpHeaders.get("Content-Type"));
+            assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
         } else {
             fail("Found file is not as expected: " + actualFile);
         }
@@ -92,12 +101,14 @@ public class FileLocatorTest {
         Optional<FileLocator.FileResult> result = fileLocator.find("p1/hello", singletonList("application/json"));
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("p1/hello.json").toFile(), result.get().file);
-        assertEquals(singletonList("application/json"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("application/json"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
 
         result = fileLocator.find("p1/hello", singletonList("text/xml"));
         assertTrue(result.isPresent());
         assertEquals(rootDir.resolve("p1/hello.xml").toFile(), result.get().file);
-        assertEquals(singletonList("text/xml"), result.get().contentTypeHeader.get("Content-Type"));
+        assertEquals(singletonList("text/xml"), result.get().fileHttpHeaders.get("Content-Type"));
+        assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
     }
 
     @Test
@@ -111,9 +122,11 @@ public class FileLocatorTest {
         File actualFile = result.get().file;
 
         if (actualFile.equals(jsonFile)) {
-            assertEquals(singletonList("application/json"), result.get().contentTypeHeader.get("Content-Type"));
+            assertEquals(singletonList("application/json"), result.get().fileHttpHeaders.get("Content-Type"));
+            assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
         } else if (actualFile.equals(xmlFile)) {
-            assertEquals(singletonList("text/xml"), result.get().contentTypeHeader.get("Content-Type"));
+            assertEquals(singletonList("text/xml"), result.get().fileHttpHeaders.get("Content-Type"));
+            assertTimestampIsWithinSecondsAgo(result.get().fileHttpHeaders.getFirst("Last-Modified").orElse("none"));
         } else {
             fail("Found file is not as expected: " + actualFile);
         }
@@ -132,6 +145,17 @@ public class FileLocatorTest {
 
         result = fileLocator.find("does/not/exist", emptyList());
         assertFalse(result.isPresent());
+    }
+
+    private static void assertTimestampIsWithinSecondsAgo(String value) {
+        ZonedDateTime time = ZonedDateTime.from(RFC_1123_DATE_TIME.parse(value));
+        long timestamp = time.toEpochSecond();
+        long now = Instant.now().getEpochSecond();
+        long diff = now - timestamp;
+        if (diff < 0 || diff > 2) {
+            throw new AssertionError("Expected timestamp to be at most 2 seconds in the past, but got " + time +
+                    " (now: " + Instant.ofEpochSecond(now) + ")");
+        }
     }
 
 }

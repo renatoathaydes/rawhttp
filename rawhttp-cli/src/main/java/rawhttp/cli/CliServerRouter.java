@@ -82,7 +82,7 @@ final class CliServerRouter implements Router {
 
             response = resource.map(fileResult ->
                     HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
-                            .withHeaders(fileResult.contentTypeHeader)
+                            .withHeaders(fileResult.fileHttpHeaders)
                             .withBody(new FileBody(fileResult.file)));
         } else {
             response = Optional.of(HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion()));

@@ -4,11 +4,15 @@ import rawhttp.cli.util.MediaTypeUtil;
 import rawhttp.core.RawHttpHeaders;
 
 import java.io.File;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Collections.singletonList;
 
 final class FileLocator {
@@ -17,11 +21,11 @@ final class FileLocator {
 
     static final class FileResult {
         final File file;
-        final RawHttpHeaders contentTypeHeader;
+        final RawHttpHeaders fileHttpHeaders;
 
-        private FileResult(File file, RawHttpHeaders contentTypeHeader) {
+        private FileResult(File file, RawHttpHeaders fileHttpHeaders) {
             this.file = file;
-            this.contentTypeHeader = contentTypeHeader;
+            this.fileHttpHeaders = fileHttpHeaders;
         }
     }
 
@@ -69,7 +73,7 @@ final class FileLocator {
 
         // if anything is acceptable, return the first possible match
         if (accept.isEmpty() || accept.equals(ANY_CONTENT_TYPE)) {
-            return Optional.of(new FileResult(candidateFiles[0], contentTypeHeaderFor(candidateFiles[0].getName())));
+            return Optional.of(new FileResult(candidateFiles[0], fileHttpHeaders(candidateFiles[0])));
         }
 
         // try to match resources with the best possible accepted content-type
@@ -80,12 +84,13 @@ final class FileLocator {
         for (String acceptableMediaType : acceptableMediaTypes) {
             File bestCandidate = fileByContentType.get(acceptableMediaType);
             if (bestCandidate != null) {
-                return Optional.of(new FileResult(bestCandidate, contentTypeHeaderWithValue(acceptableMediaType)));
+                return Optional.of(new FileResult(bestCandidate,
+                        fileHttpHeaders(acceptableMediaType, bestCandidate.lastModified())));
             }
         }
 
         // no matching content-type found, return the first one
-        return Optional.of(new FileResult(candidateFiles[0], contentTypeHeaderFor(candidateFiles[0].getName())));
+        return Optional.of(new FileResult(candidateFiles[0], fileHttpHeaders(candidateFiles[0])));
     }
 
     private Map<String, File> groupCandidatesByMediaType(String resourceNameDot, File[] candidateFiles) {
@@ -105,19 +110,24 @@ final class FileLocator {
     private Optional<FileResult> findExactMatch(String path) {
         File exactMatch = new File(rootDir, path);
         if (exactMatch.isFile()) {
-            return Optional.of(new FileResult(exactMatch, contentTypeHeaderFor(path)));
+            return Optional.of(new FileResult(exactMatch, fileHttpHeaders(exactMatch)));
         }
         return Optional.empty();
     }
 
-    private RawHttpHeaders contentTypeHeaderFor(String resourceName) {
-        return contentTypeHeaderWithValue(mimeTypeOf(resourceName));
+    private RawHttpHeaders fileHttpHeaders(File resource) {
+        return fileHttpHeaders(mimeTypeOf(resource.getName()), resource.lastModified());
     }
 
-    private static RawHttpHeaders contentTypeHeaderWithValue(String value) {
+    private static RawHttpHeaders fileHttpHeaders(String contentType, long lastModified) {
         return RawHttpHeaders.newBuilder()
-                .with("Content-Type", value)
+                .with("Content-Type", contentType)
+                .with("Last-Modified", toDateField(lastModified))
                 .build();
+    }
+
+    private static String toDateField(long lastModified) {
+        return RFC_1123_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModified), ZoneOffset.UTC));
     }
 
     String mimeTypeOf(String resourceName) {
