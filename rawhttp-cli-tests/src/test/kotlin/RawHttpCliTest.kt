@@ -1,10 +1,13 @@
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.startsWith
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
+import java.lang.Thread.sleep
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -214,6 +217,84 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertTrue(jsonResponse.body.isPresent)
         assertThat(jsonResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
         assertThat(jsonResponse.headers["Content-Type"], equalTo(listOf("application/json")))
+    }
+
+    @Test
+    fun servedResourcesUseLastModifiedHeaders() {
+        val tempDir = createTempDir(javaClass.name)
+        val jsonFile = File(tempDir, "some.json")
+        jsonFile.writeText("true")
+        sleep(10L) // ensure different file modified timestamps
+        val textFile = File(tempDir, "some.txt")
+        textFile.writeText("foo")
+
+        val handle = runCli("serve", tempDir.absolutePath)
+
+        val (jsonResponse, textResponse) = try {
+            sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.json
+            Accept: application/json
+            """.trimIndent()).eagerly() to sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.txt
+            Accept: text/plain
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat(jsonResponse.statusCode, equalTo(200))
+        assertTrue(jsonResponse.body.isPresent)
+        assertThat(jsonResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
+        assertThat(jsonResponse.headers["Content-Type"], equalTo(listOf("application/json")))
+        assertThat(jsonResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(jsonFile))))
+
+        assertThat(textResponse.statusCode, equalTo(200))
+        assertTrue(textResponse.body.isPresent)
+        assertThat(textResponse.body.get().asRawBytes(), equalTo(textFile.readBytes()))
+        assertThat(textResponse.headers["Content-Type"], equalTo(listOf("text/plain")))
+        assertThat(textResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(textFile))))
+    }
+
+    @Test
+    fun doNotServeResourceIfNotModified() {
+        val tempDir = createTempDir(javaClass.name)
+        val jsonFile = File(tempDir, "some.json")
+        jsonFile.writeText("true")
+
+        val afterModified = Instant.now().plusSeconds(1)
+        val beforeModified = Instant.now().minusSeconds(10)
+
+        val handle = runCli("serve", tempDir.absolutePath)
+
+        val (afterModifiedResponse, beforeModifiedResponse) = try {
+            sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.json
+            If-Modified-Since: ${dateHeaderValue(afterModified)}
+            """.trimIndent()).eagerly() to sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.json
+            If-Modified-Since: ${dateHeaderValue(beforeModified)}
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat(afterModifiedResponse.statusCode, equalTo(304))
+        assertFalse(afterModifiedResponse.body.isPresent)
+        assertThat(afterModifiedResponse.headers.headerNames, equalTo(listOf("Date", "Server")))
+
+        assertThat(beforeModifiedResponse.statusCode, equalTo(200))
+        assertTrue(beforeModifiedResponse.body.isPresent)
+        assertThat(beforeModifiedResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
+        assertThat(beforeModifiedResponse.headers["Content-Type"], equalTo(listOf("application/json")))
+        assertThat(beforeModifiedResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(jsonFile))))
+
     }
 
     @Test

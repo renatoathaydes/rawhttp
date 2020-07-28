@@ -18,6 +18,9 @@ import java.io.File
 import java.io.IOException
 import java.lang.Thread.sleep
 import java.net.ServerSocket
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
 import java.util.concurrent.TimeUnit
 
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
@@ -425,3 +428,9 @@ class ManualTest : RawHttpCliTester() {
         }
     }
 }
+
+fun lastModifiedHeaderValue(file: File): String =
+        dateHeaderValue(Instant.ofEpochMilli(file.lastModified()))
+
+fun dateHeaderValue(instant: Instant): String =
+        RFC_1123_DATE_TIME.format(instant.atZone(ZoneOffset.UTC))

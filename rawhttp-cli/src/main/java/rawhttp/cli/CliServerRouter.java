@@ -7,6 +7,8 @@ import rawhttp.core.body.FileBody;
 import rawhttp.core.server.Router;
 
 import java.io.File;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,14 +82,36 @@ final class CliServerRouter implements Router {
 
             Optional<FileResult> resource = fileLocator.find(path, request.getHeaders().get("Accept"));
 
-            response = resource.map(fileResult ->
-                    HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
-                            .withHeaders(fileResult.fileHttpHeaders)
-                            .withBody(new FileBody(fileResult.file)));
+            response = resource.map(fileResult -> serveFileIfModified(request, fileResult));
         } else {
             response = Optional.of(HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion()));
         }
         return response;
+    }
+
+    private RawHttpResponse<Void> serveFileIfModified(RawHttpRequest request, FileResult fileResult) {
+        boolean mustServe = request.getHeaders()
+                .getFirst("If-Modified-Since")
+                .map(since -> isModified(fileResult.file.lastModified(), since))
+                .orElse(true);
+
+        if (mustServe) {
+            return HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
+                    .withHeaders(fileResult.fileHttpHeaders)
+                    .withBody(new FileBody(fileResult.file));
+        }
+
+        return HttpResponses.getNotModifiedResponse(request.getStartLine().getHttpVersion());
+    }
+
+    static boolean isModified(long fileLastModified, String since) {
+        ZonedDateTime sinceDate;
+        try {
+            sinceDate = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(since));
+        } catch (Exception e) {
+            return true;
+        }
+        return fileLastModified > sinceDate.toInstant().toEpochMilli();
     }
 
     private interface PathReader {

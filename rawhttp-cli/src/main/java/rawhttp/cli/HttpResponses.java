@@ -15,17 +15,23 @@ final class HttpResponses {
     private static final StatusLine STATUS_200_HTTP1_1;
     private static final StatusLine STATUS_405_HTTP1_0;
     private static final StatusLine STATUS_405_HTTP1_1;
+    private static final StatusLine STATUS_304_HTTP1_0;
+    private static final StatusLine STATUS_304_HTTP1_1;
 
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_0;
     private static final RawHttpResponse<Void> OK_RESPONSE_HTTP1_1;
     private static final EagerHttpResponse<Void> METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0;
     private static final EagerHttpResponse<Void> METHOD_NOT_ALLOWED_RESPONSE_HTTP1_1;
+    private static final RawHttpResponse<Void> NOT_MODIFIED_RESPONSE_HTTP1_0;
+    private static final RawHttpResponse<Void> NOT_MODIFIED_RESPONSE_HTTP1_1;
 
     static {
         STATUS_200_HTTP1_0 = new StatusLine(HttpVersion.HTTP_1_0, 200, "OK");
         STATUS_200_HTTP1_1 = new StatusLine(HttpVersion.HTTP_1_1, 200, "OK");
         STATUS_405_HTTP1_0 = new StatusLine(HttpVersion.HTTP_1_0, 405, "Method Not Allowed");
         STATUS_405_HTTP1_1 = new StatusLine(HttpVersion.HTTP_1_1, 405, "Method Not Allowed");
+        STATUS_304_HTTP1_0 = new StatusLine(HttpVersion.HTTP_1_0, 304, "Not Modified");
+        STATUS_304_HTTP1_1 = new StatusLine(HttpVersion.HTTP_1_1, 304, "Not Modified");
 
         final RawHttpHeaders basicHeaders = RawHttpHeaders.newBuilderSkippingValidation()
                 .with("Content-Type", "text/plain")
@@ -43,6 +49,12 @@ final class HttpResponses {
 
         METHOD_NOT_ALLOWED_RESPONSE_HTTP1_1 = METHOD_NOT_ALLOWED_RESPONSE_HTTP1_0
                 .withStatusLine(STATUS_405_HTTP1_1);
+
+        NOT_MODIFIED_RESPONSE_HTTP1_0 = new EagerHttpResponse<>(null, null,
+                STATUS_304_HTTP1_0, RawHttpHeaders.empty(), null);
+
+        NOT_MODIFIED_RESPONSE_HTTP1_1 = NOT_MODIFIED_RESPONSE_HTTP1_0
+                .withStatusLine(STATUS_304_HTTP1_1);
     }
 
     static RawHttpResponse<Void> getOkResponse(HttpVersion httpVersion) {
@@ -61,4 +73,9 @@ final class HttpResponses {
         }
     }
 
+    public static RawHttpResponse<Void> getNotModifiedResponse(HttpVersion httpVersion) {
+        return httpVersion.isOlderThan(HttpVersion.HTTP_1_1)
+                ? NOT_MODIFIED_RESPONSE_HTTP1_0
+                : NOT_MODIFIED_RESPONSE_HTTP1_1;
+    }
 }
