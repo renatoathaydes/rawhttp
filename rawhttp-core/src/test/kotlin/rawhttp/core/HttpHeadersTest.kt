@@ -81,7 +81,7 @@ class HttpHeadersTest {
                 .with("Accept", "text/plain")
                 .with("Date", "22 March 2012")
                 .build().run {
-                    val expectedHeaders = ""+
+                    val expectedHeaders = "" +
                             "Content-Type: 33\r\n" +
                             "Accept: application/json\r\n" +
                             "Accept: text/html\r\n" +
@@ -114,6 +114,17 @@ class HttpHeadersTest {
                     get("Accept") shouldEqual listOf("text/xml", "text/plain")
                     get("New") shouldEqual listOf("True")
                     headerNames shouldBe listOf("hi", "ho", "Accept", "Accept", "New")
+                }
+
+        RawHttpHeaders.newBuilder()
+                .with("Date", "today")
+                .with("Server", "RawHTTP")
+                .build()
+                .and(RawHttpHeaders.CONTENT_LENGTH_ZERO).run {
+                    get("Date") shouldEqual listOf("today")
+                    get("Server") shouldEqual listOf("RawHTTP")
+                    get("Content-Length") shouldEqual listOf("0")
+                    headerNames shouldBe listOf("Date", "Server", "Content-Length")
                 }
     }
 

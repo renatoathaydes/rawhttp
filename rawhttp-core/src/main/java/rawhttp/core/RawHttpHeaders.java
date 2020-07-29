@@ -43,6 +43,10 @@ import static java.util.stream.Collectors.toSet;
  */
 public class RawHttpHeaders implements Writable {
 
+    public static final RawHttpHeaders CONTENT_LENGTH_ZERO = newBuilderSkippingValidation()
+            .with("Content-Length", "0")
+            .build();
+
     private final Map<String, Header> headersByCapitalizedName;
     private final List<String> headerNames;
     private final Charset headerValuesCharset;
