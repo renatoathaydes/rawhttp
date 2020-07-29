@@ -77,6 +77,24 @@ assertEquals(asList(<span style="color:#2aa198">&#34;application/json&#34;</span
 assertEquals(asList(<span style="color:#2aa198">&#34;Host&#34;</span>, <span style="color:#2aa198">&#34;User-Agent&#34;</span>, <span style="color:#2aa198">&#34;Content-Length&#34;</span>, <span style="color:#2aa198">&#34;Content-Type&#34;</span>, <span style="color:#2aa198">&#34;Accept&#34;</span>),
     request.getHeaders().getHeaderNames());
 </pre>
+<h3>Specify a specific encoding for header values</h3>
+
+<p>By default, HTTP headers&rsquo;s values are decoded using US-ASCII as that is the <a href="https://tools.ietf.org/html/rfc7230#section-3.2.4">recommendation</a>.</p>
+
+<p>If you need to support other encodings, use a custom <code>RawHttp</code> instance to parse messages, as follows:</p>
+<pre style="color:#93a1a1;background-color:#002b36">var <span style="color:#268bd2">http</span> <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp(RawHttpOptions.newBuilder()
+        .withHttpHeadersOptions()
+        .withValuesCharset(StandardCharsets.UTF_8)
+        .done()
+        .build());
+
+<span style="color:#586e75">// now this will be allowed
+</span><span style="color:#586e75"></span>http.parseRequest(<span style="color:#2aa198">&#34;&#34;</span><span style="color:#2aa198">&#34;
+</span><span style="color:#2aa198">     GET / HTTP/1.1
+</span><span style="color:#2aa198">     Accept: こんにちは, text/plain
+</span><span style="color:#2aa198">     User-Agent: RawHTTP
+</span><span style="color:#2aa198">     Host: localhost:$serverPort&#34;</span><span style="color:#2aa198">&#34;&#34;</span>);
+</pre>
 <h3>Listen for HTTP requests (as a server)</h3>
 <pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> <span style="color:#268bd2">rawhttp</span>.core.<span style="color:#719e07">*</span>;
 <span style="color:#719e07">import</span> <span style="color:#268bd2">java</span>.net.ServerSocket;
