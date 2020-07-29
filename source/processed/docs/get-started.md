@@ -25,7 +25,7 @@ dependency 'com.athaydes.rawhttp:rawhttp-core:2.4.0'
 ### Download the CLI jar with curl
 
 ```
-curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.0/rawhttp-cli-1.3.0-all.jar -o rawhttp.jar
+curl -sSfL https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.0/rawhttp-cli-1.3.0-all.jar -o rawhttp.jar
 ```
 
 <hr>
