@@ -1,6 +1,7 @@
 package rawhttp.cli;
 
 import rawhttp.cli.FileLocator.FileResult;
+import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.FileBody;
@@ -82,26 +83,36 @@ final class CliServerRouter implements Router {
 
             Optional<FileResult> resource = fileLocator.find(path, request.getHeaders().get("Accept"));
 
-            response = resource.map(fileResult -> serveFileIfModified(request, fileResult));
+            response = resource.map(fileResult -> serveFile(request, fileResult));
         } else {
             response = Optional.of(HttpResponses.getMethodNotAllowedResponse(request.getStartLine().getHttpVersion()));
         }
         return response;
     }
 
-    private RawHttpResponse<Void> serveFileIfModified(RawHttpRequest request, FileResult fileResult) {
-        boolean mustServe = request.getHeaders()
-                .getFirst("If-Modified-Since")
-                .map(since -> isModified(fileResult.file.lastModified(), since))
-                .orElse(true);
-
-        if (mustServe) {
-            return HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
-                    .withHeaders(fileResult.fileHttpHeaders)
-                    .withBody(new FileBody(fileResult.file));
+    private RawHttpResponse<Void> serveFile(RawHttpRequest request, FileResult fileResult) {
+        RawHttpHeaders headers = request.getHeaders();
+        if (headers.contains("If-Modified-Since")) {
+            boolean isModified = request.getHeaders()
+                    .getFirst("If-Modified-Since")
+                    .map(since -> isModified(fileResult.file.lastModified(), since))
+                    .orElse(true);
+            if (!isModified) {
+                return HttpResponses.getNotModifiedResponse(request.getStartLine().getHttpVersion());
+            }
+        } else if (headers.contains("If-Unmodified-Since")) {
+            boolean isUnmodified = request.getHeaders()
+                    .getFirst("If-Unmodified-Since")
+                    .map(since -> !isModified(fileResult.file.lastModified(), since))
+                    .orElse(false);
+            if (!isUnmodified) {
+                return HttpResponses.getPreConditionFailedResponse(request.getStartLine().getHttpVersion());
+            }
         }
 
-        return HttpResponses.getNotModifiedResponse(request.getStartLine().getHttpVersion());
+        return HttpResponses.getOkResponse(request.getStartLine().getHttpVersion())
+                .withHeaders(fileResult.fileHttpHeaders)
+                .withBody(new FileBody(fileResult.file));
     }
 
     static boolean isModified(long fileLastModified, String since) {

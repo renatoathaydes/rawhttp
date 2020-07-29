@@ -298,6 +298,47 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun doNotServeResourceIfNotUnModified() {
+        val tempDir = createTempDir(javaClass.name)
+        val textFile = File(tempDir, "some.txt")
+        textFile.writeText("hi")
+
+        val afterModified = Instant.now().plusSeconds(1)
+        val beforeModified = Instant.now().minusSeconds(10)
+
+        val handle = runCli("serve", tempDir.absolutePath)
+
+        val (afterModifiedResponse, beforeModifiedResponse) = try {
+            sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.txt
+            If-Unmodified-Since: ${dateHeaderValue(afterModified)}
+            """.trimIndent()).eagerly() to sendHttpRequest("""
+            GET http://0.0.0.0:8080/some.txt
+            If-Unmodified-Since: ${dateHeaderValue(beforeModified)}
+            """.trimIndent()).eagerly()
+        } finally {
+            handle.sendStopSignalToRawHttpServer()
+        }
+
+        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+
+        assertThat(afterModifiedResponse.statusCode, equalTo(200))
+        assertTrue(afterModifiedResponse.body.isPresent)
+        assertThat(afterModifiedResponse.body.get().asRawBytes(), equalTo(textFile.readBytes()))
+        assertThat(afterModifiedResponse.headers["Content-Type"], equalTo(listOf("text/plain")))
+        assertThat(afterModifiedResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(textFile))))
+
+        assertThat(beforeModifiedResponse.statusCode, equalTo(412))
+
+        // 412 response must have a body, check it's empty
+        assertTrue(beforeModifiedResponse.body.isPresent)
+        assertThat(beforeModifiedResponse.body.get().asRawString(Charsets.US_ASCII), equalTo(""))
+        assertThat(beforeModifiedResponse.headers.headerNames, equalTo(listOf("Content-Length", "Date", "Server")))
+        assertThat(beforeModifiedResponse.headers["Content-Length"], equalTo(listOf("0")))
+    }
+
+    @Test
     fun canServeAnyDirectoryLoggingRequests() {
         val tempDir = createTempDir(javaClass.name)
         val someFile = File(tempDir, "my-file")

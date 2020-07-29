@@ -367,21 +367,24 @@ abstract class RawHttpCliTester {
         fun sendHttpRequest(request: String): RawHttpResponse<*> {
             var response: EagerHttpResponse<*>? = null
             var failedConnectionAttempts = 0
-            while (failedConnectionAttempts < 10) {
+            lateinit var error: Exception
+            while (failedConnectionAttempts < 5) {
                 try {
                     response = TcpRawHttpClient().use { client ->
                         client.send(RawHttp().parseRequest(request)).eagerly(false)
                     }
                     break
                 } catch (e: IOException) {
+                    error = e
                     failedConnectionAttempts++
                     println("Connection to server failed, retry attempt number $failedConnectionAttempts")
-                    sleep(150)
+                    sleep(250)
                 }
             }
 
             return response
-                    ?: throw AssertionError("Unable to connect to server after $failedConnectionAttempts failed attempts")
+                    ?: throw AssertionError("Unable to connect to server after " +
+                            "$failedConnectionAttempts failed attempts", error)
         }
 
         fun asClassPathFile(file: String): String =
