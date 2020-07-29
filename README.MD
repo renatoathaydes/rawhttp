@@ -5,6 +5,8 @@
 | rawhttp-core | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-core/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-core/_latestVersion) |
 | rawhttp-cli | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-cli/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-cli/_latestVersion) |
 | rawhttp-duplex | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-duplex/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-duplex/_latestVersion) |
+| rawhttp-cookies | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-cookies/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-cookies/_latestVersion) |
+| rawhttp-req-in-edit | [ ![Download](https://api.bintray.com/packages/renatoathaydes/maven/rawhttp-req-in-edit/images/download.svg) ](https://bintray.com/renatoathaydes/maven/rawhttp-req-in-edit/_latestVersion) |
 
 [![CircleCI](https://circleci.com/gh/renatoathaydes/rawhttp.svg?style=svg)](https://circleci.com/gh/renatoathaydes/rawhttp)
 
@@ -14,6 +16,10 @@ and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
 > For details about using RawHTTP and the motivation for this project, see the
  [blog post](https://sites.google.com/a/athaydes.com/renato-athaydes/posts/announcingrawhttp-ajvmlibraryforhandlingrawhttp)
  I wrote about it!
+
+> For testing HTTP servers, check out the [blog post I wrote about rawhttp-req-in-edit](https://renato.athaydes.com/posts/writing-http-files-for-testing.html),
+> which lets you write [HTTP files](https://www.jetbrains.com/help/idea/exploring-http-syntax.html) to send requests 
+> and assert responses using JS scripts. 
 
 For more documentation, [visit the website](https://renatoathaydes.github.io/rawhttp).
 
