@@ -4,6 +4,7 @@ plugins {
 
 test {
     forkEvery 1
+    enabled project.hasProperty('run-samples')
 }
 
 dependencies {
