@@ -32,6 +32,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class TcpRawHttpServer implements RawHttpServer {
 
+    public static final RawHttpHeaders CONTENT_LENGTH_ZERO = RawHttpHeaders.newBuilderSkippingValidation()
+            .with("Content-Length", "0")
+            .build();
+
     private static final RawHttpHeaders SERVER_HEADER = RawHttpHeaders.newBuilder()
             .with("Server", "RawHTTP")
             .build();
@@ -304,6 +308,10 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
             if (request.getMethod().equals("HEAD") && response.getBody().isPresent()) {
                 response = response.withBody(null, false);
+            } else if (!response.getBody().isPresent() &&
+                    RawHttp.responseHasBody(response.getStartLine(), request.getStartLine())) {
+                // we must tell the client the response is empty
+                response = response.withHeaders(CONTENT_LENGTH_ZERO, true);
             }
             return options.onResponse(request, response);
         }
