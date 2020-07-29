@@ -76,6 +76,27 @@ assertEquals(asList("Host", "User-Agent", "Content-Length", "Content-Type", "Acc
     request.getHeaders().getHeaderNames());
 ```
 
+### Specify a specific encoding for header values
+
+By default, HTTP headers's values are decoded using US-ASCII as that is the [recommendation](https://tools.ietf.org/html/rfc7230#section-3.2.4).
+
+If you need to support other encodings, use a custom `RawHttp` instance to parse messages, as follows:
+
+```java
+var http = new RawHttp(RawHttpOptions.newBuilder()
+        .withHttpHeadersOptions()
+        .withValuesCharset(StandardCharsets.UTF_8)
+        .done()
+        .build());
+
+// now this will be allowed
+http.parseRequest("""
+     GET / HTTP/1.1
+     Accept: こんにちは, text/plain
+     User-Agent: RawHTTP
+     Host: localhost:$serverPort""");
+```
+
 ### Listen for HTTP requests (as a server)
 
 ```java
