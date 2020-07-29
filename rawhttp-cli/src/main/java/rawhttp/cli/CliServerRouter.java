@@ -92,6 +92,22 @@ final class CliServerRouter implements Router {
 
     private RawHttpResponse<Void> serveFile(RawHttpRequest request, FileResult fileResult) {
         RawHttpHeaders headers = request.getHeaders();
+
+        // Precedence of conditions: https://tools.ietf.org/html/rfc7232#section-6
+        // 1. If-Match (true ? goto 3 : respond 412)
+        // 2. If-Unmodified-Since (true ? goto 3 : respond 412)
+        // 3. If-None-Match (true ? goto 5 : GET/HEAD ? respond 304 : respond 412)
+        // 4. If-Modified-Since (true ? goto 5 : respond 304)
+        // 5. If-Range (true ? respond 206 : OK)
+        if (headers.contains("If-Unmodified-Since")) {
+            boolean isUnmodified = request.getHeaders()
+                    .getFirst("If-Unmodified-Since")
+                    .map(since -> !isModified(fileResult.file.lastModified(), since))
+                    .orElse(false);
+            if (!isUnmodified) {
+                return HttpResponses.getPreConditionFailedResponse(request.getStartLine().getHttpVersion());
+            }
+        }
         if (headers.contains("If-Modified-Since")) {
             boolean isModified = request.getHeaders()
                     .getFirst("If-Modified-Since")
@@ -99,14 +115,6 @@ final class CliServerRouter implements Router {
                     .orElse(true);
             if (!isModified) {
                 return HttpResponses.getNotModifiedResponse(request.getStartLine().getHttpVersion());
-            }
-        } else if (headers.contains("If-Unmodified-Since")) {
-            boolean isUnmodified = request.getHeaders()
-                    .getFirst("If-Unmodified-Since")
-                    .map(since -> !isModified(fileResult.file.lastModified(), since))
-                    .orElse(false);
-            if (!isUnmodified) {
-                return HttpResponses.getPreConditionFailedResponse(request.getStartLine().getHttpVersion());
             }
         }
 
