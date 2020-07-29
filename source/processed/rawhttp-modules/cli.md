@@ -12,7 +12,7 @@ local files via a RawHTTP server.
 ## Download
 
 ```
-curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.2.3/rawhttp-cli-1.2.3-all.jar -o rawhttp.jar
+curl https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.0/rawhttp-cli-1.3.0-all.jar -o rawhttp.jar
 ```
 
 ## Usage
