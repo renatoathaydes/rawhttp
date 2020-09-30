@@ -25,22 +25,32 @@ final class CliServerRouter implements Router {
     static {
         Map<String, String> _mimeMapping = new HashMap<>(13);
 
-        _mimeMapping.put("html", "text/html");
-        _mimeMapping.put("txt", "text/plain");
-        _mimeMapping.put("json", "application/json");
-        _mimeMapping.put("js", "application/javascript");
-        _mimeMapping.put("xml", "text/xml");
-        _mimeMapping.put("jpg", "image/jpeg");
-        _mimeMapping.put("jpeg", "image/jpeg");
+        _mimeMapping.put("apng", "image/apng");
+        _mimeMapping.put("bmp", "image/bmp");
+        _mimeMapping.put("css", "text/css");
         _mimeMapping.put("gif", "image/gif");
+        _mimeMapping.put("html", "text/html");
+        _mimeMapping.put("ico", "image/x-icon");
+        _mimeMapping.put("jpeg", "image/jpeg");
+        _mimeMapping.put("jpg", "image/jpeg");
+        _mimeMapping.put("js", "application/javascript");
+        _mimeMapping.put("json", "application/json");
+        _mimeMapping.put("mp3", "audio/mpeg");
+        _mimeMapping.put("mp4", "video/mp4");
+        _mimeMapping.put("ogg", "application/ogg");
+        _mimeMapping.put("pdf", "application/pdf");
         _mimeMapping.put("png", "image/png");
+        _mimeMapping.put("rar", "application/x-rar-compressed");
+        _mimeMapping.put("svg", "image/svg+xml");
         _mimeMapping.put("tif", "image/tiff");
         _mimeMapping.put("tiff", "image/tiff");
-        _mimeMapping.put("ico", "image/x-icon");
-        _mimeMapping.put("pdf", "application/pdf");
-        _mimeMapping.put("css", "text/css");
-        _mimeMapping.put("svg", "image/svg+xml");
+        _mimeMapping.put("txt", "text/plain");
+        _mimeMapping.put("xhtml", "application/xhtml+xml");
+        _mimeMapping.put("xml", "application/xml");
         _mimeMapping.put("wasm", "application/wasm");
+        _mimeMapping.put("wav", "audio/wave");
+        _mimeMapping.put("webm", "video/webm");
+        _mimeMapping.put("webp", "image/webp");
 
         mimeByFileExtension = Collections.unmodifiableMap(_mimeMapping);
     }
