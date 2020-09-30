@@ -23,7 +23,7 @@ public class FileLocatorMimeMappingTest {
                 {"b.txt", "text/plain"},
                 {"cd.json", "application/json"},
                 {".js", "application/javascript"},
-                {"..xml", "text/xml"},
+                {"..xml", "application/xml"},
                 {"e.jpg", "image/jpeg"},
                 {"f.jpeg", "image/jpeg"},
                 {"gg.gif", "image/gif"},
