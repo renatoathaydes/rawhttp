@@ -57,6 +57,14 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                try {
+                    while ((bytesRead = encodedBytesReceiver.read(buffer, 0, bufferSize)) >= 0) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+
             }
         });
     }
