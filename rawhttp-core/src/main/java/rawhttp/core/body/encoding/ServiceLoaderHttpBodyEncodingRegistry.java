@@ -1,5 +1,7 @@
 package rawhttp.core.body.encoding;
 
+import rawhttp.core.RawHttp;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +21,8 @@ public final class ServiceLoaderHttpBodyEncodingRegistry implements HttpBodyEnco
 
     public ServiceLoaderHttpBodyEncodingRegistry() {
         Map<String, HttpMessageDecoder> encoderByName = new HashMap<>();
-        ServiceLoader<HttpMessageDecoder> loader = ServiceLoader.load(HttpMessageDecoder.class);
+        ServiceLoader<HttpMessageDecoder> loader = ServiceLoader.load(HttpMessageDecoder.class,
+                RawHttp.class.getClassLoader());
         for (HttpMessageDecoder encoder : loader) {
             encoderByName.put(encoder.encodingName().toLowerCase(), encoder);
         }
