@@ -47,20 +47,22 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
         encodedBytesSink.write(b, off, len);
     }
 
-    private void startReader() {
+    private void startReader() throws IOException {
+        //if the gzip header is bad, we should fail fast here instead of starting a new thread
+        GZIPInputStream decoderStreamInit = new GZIPInputStream(encodedBytesReceiver);
         readerExecution = executorService.submit(() -> {
             int bytesRead;
             byte[] buffer = new byte[bufferSize];
-            try (GZIPInputStream decoderStream = new GZIPInputStream(encodedBytesReceiver)) {
+            try (GZIPInputStream decoderStream = decoderStreamInit) {
                 while ((bytesRead = decoderStream.read(buffer, 0, bufferSize)) >= 0) {
                     out.write(buffer, 0, bytesRead);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 try {
-                    while ((bytesRead = encodedBytesReceiver.read(buffer, 0, bufferSize)) >= 0) {
-                        out.write(buffer, 0, bytesRead);
-                    }
+                    //pending writes may be stuck waiting on the input pipe, so we should close everything here.
+                    encodedBytesReceiver.close();
+                    encodedBytesSink.close();
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
