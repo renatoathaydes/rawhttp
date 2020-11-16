@@ -47,7 +47,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
         encodedBytesSink.write(b, off, len);
     }
 
-    private void startReader() throws IOException {
+    private void startReader() {
         readerExecution = executorService.submit(() -> {
             int bytesRead;
             byte[] buffer = new byte[bufferSize];
