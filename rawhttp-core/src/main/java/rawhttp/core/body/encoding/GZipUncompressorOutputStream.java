@@ -22,6 +22,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
     private final ExecutorService executorService;
     private final int bufferSize;
     private Future<?> readerExecution;
+    private IOException caughtException = null;
 
     GZipUncompressorOutputStream(OutputStream out, int bufferSize) {
         super(out);
@@ -61,6 +62,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                     //pending writes may be stuck waiting on the input pipe, so we should close everything here.
                     encodedBytesReceiver.close();
                     encodedBytesSink.close();
+                    caughtException = e;
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -94,6 +96,9 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
         }
 
         executorService.shutdown();
+        if (caughtException != null) {
+            throw caughtException;
+        }
     }
 
 }

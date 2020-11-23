@@ -12,6 +12,7 @@ import rawhttp.core.body.InputStreamChunkEncoder
 import rawhttp.core.shouldHaveSameElementsAs
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Optional
 import java.util.zip.GZIPOutputStream
@@ -125,4 +126,28 @@ class BodyDecodingTest {
         actualDecodedBody shouldBe "hello"
     }
 
+    @Test
+    fun corruptedChunkedGzippedBodyDoesNotHang() {
+        val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-chunked-and-gzipped-response.http")
+        val response = RawHttp().parseResponse(gzippedFileStream)
+        try {
+            response.body.get().decodeBodyToString(StandardCharsets.UTF_8)
+        } catch(e: IOException) {}
+
+        true shouldBe true
+    }
+
+    @Test
+    fun tryingToDecodeCorruptedGzippedBodyGeneratesException() {
+        var caughtException = false
+        val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-gzipped-response.http")
+        val response = RawHttp().parseResponse(gzippedFileStream)
+        try {
+            response.body.get().decodeBodyToString(StandardCharsets.UTF_8)
+        } catch(e: IOException) {
+            caughtException = true
+        }
+
+        caughtException shouldBe true
+    }
 }
