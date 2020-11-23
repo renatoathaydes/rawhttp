@@ -2,27 +2,20 @@ package rawhttp.core.body.encoding;
 
 import rawhttp.core.internal.Bool;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.io.*;
+import java.util.concurrent.*;
 import java.util.zip.GZIPInputStream;
 
 final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
     private final PipedInputStream encodedBytesReceiver;
     private final PipedOutputStream encodedBytesSink;
-    private final Bool readerRunning = new Bool();
+    private final Bool readerStarted = new Bool();
+    private final Bool hasError = new Bool();
     private final ExecutorService executorService;
     private final int bufferSize;
     private Future<?> readerExecution;
-    private IOException caughtException = null;
+    private final Thread callerThread;
 
     GZipUncompressorOutputStream(OutputStream out, int bufferSize) {
         super(out);
@@ -30,6 +23,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
         this.encodedBytesReceiver = new PipedInputStream();
         this.encodedBytesSink = new PipedOutputStream();
         this.executorService = Executors.newSingleThreadExecutor();
+        this.callerThread = Thread.currentThread();
     }
 
     @Override
@@ -41,11 +35,13 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        if (!readerRunning.getAndSet(true)) {
+        if (!readerStarted.getAndSet(true)) {
             encodedBytesSink.connect(encodedBytesReceiver);
             startReader();
         }
-        encodedBytesSink.write(b, off, len);
+        if (!hasError.get()) {
+            encodedBytesSink.write(b, off, len);
+        }
     }
 
     private void startReader() {
@@ -56,17 +52,12 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                 while ((bytesRead = decoderStream.read(buffer, 0, bufferSize)) >= 0) {
                     out.write(buffer, 0, bytesRead);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                try {
-                    //pending writes may be stuck waiting on the input pipe, so we should close everything here.
-                    encodedBytesReceiver.close();
-                    encodedBytesSink.close();
-                    caughtException = e;
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-
+                hasError.set(true);
+                // the caller thread needs to be unblocked by interrupting it as it won't receive any more bytes
+                callerThread.interrupt();
+                throw new WrappedException(e);
             }
         });
     }
@@ -79,25 +70,41 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
 
     @Override
     public void finishDecoding() throws IOException {
-        super.finishDecoding();
-        encodedBytesSink.close();
-
         try {
+            super.finishDecoding();
+            closeQuietly(encodedBytesSink);
             readerExecution.get(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            executorService.shutdownNow();
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
-            executorService.shutdownNow();
-            throw new RuntimeException(e.getCause());
+            Throwable cause = e.getCause();
+            if (cause instanceof WrappedException) {
+                cause = ((WrappedException) cause).cause;
+            }
+            throw new IOException(cause);
         } catch (TimeoutException e) {
-            executorService.shutdownNow();
             throw new RuntimeException("Timeout waiting for stream to close");
-        }
+        } finally {
+            closeQuietly(encodedBytesReceiver);
+            closeQuietly(encodedBytesSink);
 
-        executorService.shutdown();
-        if (caughtException != null) {
-            throw caughtException;
+            executorService.shutdownNow();
+        }
+    }
+
+    private static void closeQuietly(Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException e) {
+            // ignore errors closing streams
+        }
+    }
+
+    private static final class WrappedException extends RuntimeException {
+        final Exception cause;
+
+        WrappedException(Exception cause) {
+            this.cause = cause;
         }
     }
 

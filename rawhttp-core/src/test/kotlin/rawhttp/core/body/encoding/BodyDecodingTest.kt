@@ -1,6 +1,8 @@
 package rawhttp.core.body.encoding
 
+import io.kotlintest.matchers.beOfType
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttp
@@ -14,8 +16,10 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.Optional
+import java.util.*
 import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipException
+import kotlin.test.assertNotNull
 
 class BodyDecodingTest {
 
@@ -126,28 +130,27 @@ class BodyDecodingTest {
         actualDecodedBody shouldBe "hello"
     }
 
-    @Test
+    @Test(timeout = 2000L)
     fun corruptedChunkedGzippedBodyDoesNotHang() {
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-chunked-and-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)
-        try {
-            response.body.get().decodeBodyToString(StandardCharsets.UTF_8)
-        } catch(e: IOException) {}
-
-        true shouldBe true
+        val body = response.body.get()
+        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        assertNotNull(error.message)
+        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
+        assertNotNull(error.cause)
+        error.cause shouldBe beOfType<ZipException>()
     }
 
-    @Test
+    @Test(timeout = 2000L)
     fun tryingToDecodeCorruptedGzippedBodyGeneratesException() {
-        var caughtException = false
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)
-        try {
-            response.body.get().decodeBodyToString(StandardCharsets.UTF_8)
-        } catch(e: IOException) {
-            caughtException = true
-        }
-
-        caughtException shouldBe true
+        val body = response.body.get()
+        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        assertNotNull(error.message)
+        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
+        assertNotNull(error.cause)
+        error.cause shouldBe beOfType<ZipException>()
     }
 }

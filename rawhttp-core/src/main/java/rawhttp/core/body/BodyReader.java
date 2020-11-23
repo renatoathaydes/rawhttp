@@ -1,18 +1,15 @@
 package rawhttp.core.body;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.OptionalLong;
 import rawhttp.core.Writable;
 import rawhttp.core.body.encoding.DecodingOutputStream;
 import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.errors.UnknownEncodingException;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * HTTP message body reader.
@@ -112,8 +109,16 @@ public abstract class BodyReader implements Writable, Closeable {
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
         DecodingOutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
-        framedBody.getBodyConsumer().consumeDataInto(asRawStream(), decodedStream, bufferSize);
-        decodedStream.finishDecoding();
+        try {
+            framedBody.getBodyConsumer().consumeDataInto(asRawStream(), decodedStream, bufferSize);
+        } catch (InterruptedIOException e) {
+            // this thread is interrupted when there's an Exception in the consumer Thread...
+            // closing the stream should cause the original Exception to propagate to the caller
+            decodedStream.close();
+
+            // if close doesn't throw, we need to re-throw the error as things are not fine!
+            throw e;
+        }
     }
 
     /**
