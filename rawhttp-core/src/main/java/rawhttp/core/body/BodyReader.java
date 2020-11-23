@@ -111,6 +111,7 @@ public abstract class BodyReader implements Writable, Closeable {
         DecodingOutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
         try {
             framedBody.getBodyConsumer().consumeDataInto(asRawStream(), decodedStream, bufferSize);
+            decodedStream.finishDecoding();
         } catch (InterruptedIOException e) {
             // this thread is interrupted when there's an Exception in the consumer Thread...
             // closing the stream should cause the original Exception to propagate to the caller
