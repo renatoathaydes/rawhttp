@@ -1,6 +1,8 @@
 package rawhttp.core.body.encoding
 
+import io.kotlintest.matchers.beOfType
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttp
@@ -12,9 +14,12 @@ import rawhttp.core.body.InputStreamChunkEncoder
 import rawhttp.core.shouldHaveSameElementsAs
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Optional
 import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipException
+import kotlin.test.assertNotNull
 
 class BodyDecodingTest {
 
@@ -125,4 +130,27 @@ class BodyDecodingTest {
         actualDecodedBody shouldBe "hello"
     }
 
+    @Test(timeout = 2000L)
+    fun corruptedChunkedGzippedBodyDoesNotHang() {
+        val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-chunked-and-gzipped-response.http")
+        val response = RawHttp().parseResponse(gzippedFileStream)
+        val body = response.body.get()
+        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        assertNotNull(error.message)
+        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
+        assertNotNull(error.cause)
+        error.cause shouldBe beOfType<ZipException>()
+    }
+
+    @Test(timeout = 2000L)
+    fun tryingToDecodeCorruptedGzippedBodyGeneratesException() {
+        val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-gzipped-response.http")
+        val response = RawHttp().parseResponse(gzippedFileStream)
+        val body = response.body.get()
+        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        assertNotNull(error.message)
+        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
+        assertNotNull(error.cause)
+        error.cause shouldBe beOfType<ZipException>()
+    }
 }
