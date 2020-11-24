@@ -16,6 +16,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
     private final int bufferSize;
     private Future<?> readerExecution;
     private final Thread callerThread;
+    private IOException caughtException = null;
 
     GZipUncompressorOutputStream(OutputStream out, int bufferSize) {
         super(out);
@@ -52,7 +53,8 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                 while ((bytesRead = decoderStream.read(buffer, 0, bufferSize)) >= 0) {
                     out.write(buffer, 0, bytesRead);
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
+                caughtException = e;
                 e.printStackTrace();
                 hasError.set(true);
                 // the caller thread needs to be unblocked by interrupting it as it won't receive any more bytes
@@ -75,7 +77,12 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
             closeQuietly(encodedBytesSink);
             readerExecution.get(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            if (caughtException != null) {
+                throw new IOException(caughtException);
+            }
+            else {
+                throw new RuntimeException(e);
+            }
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof WrappedException) {
