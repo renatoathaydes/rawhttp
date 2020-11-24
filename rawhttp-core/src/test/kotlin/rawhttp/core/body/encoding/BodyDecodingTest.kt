@@ -16,7 +16,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Optional
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipException
 import kotlin.test.assertNotNull

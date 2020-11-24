@@ -2,8 +2,18 @@ package rawhttp.core.body.encoding;
 
 import rawhttp.core.internal.Bool;
 
-import java.io.*;
-import java.util.concurrent.*;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 final class GZipUncompressorOutputStream extends DecodingOutputStream {
@@ -11,12 +21,11 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
     private final PipedInputStream encodedBytesReceiver;
     private final PipedOutputStream encodedBytesSink;
     private final Bool readerStarted = new Bool();
-    private final Bool hasError = new Bool();
     private final ExecutorService executorService;
     private final int bufferSize;
     private Future<?> readerExecution;
-    private final Thread callerThread;
-    private IOException caughtException = null;
+    private final Thread writerThread;
+    private final AtomicReference<IOException> readerException = new AtomicReference<>();
 
     GZipUncompressorOutputStream(OutputStream out, int bufferSize) {
         super(out);
@@ -24,7 +33,7 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
         this.encodedBytesReceiver = new PipedInputStream();
         this.encodedBytesSink = new PipedOutputStream();
         this.executorService = Executors.newSingleThreadExecutor();
-        this.callerThread = Thread.currentThread();
+        this.writerThread = Thread.currentThread();
     }
 
     @Override
@@ -40,9 +49,13 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
             encodedBytesSink.connect(encodedBytesReceiver);
             startReader();
         }
-        if (!hasError.get()) {
+        if (isReaderActive()) {
             encodedBytesSink.write(b, off, len);
         }
+    }
+
+    private boolean isReaderActive() {
+        return readerException.get() == null;
     }
 
     private void startReader() {
@@ -54,11 +67,10 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                     out.write(buffer, 0, bytesRead);
                 }
             } catch (IOException e) {
-                caughtException = e;
+                readerException.set(e);
                 e.printStackTrace();
-                hasError.set(true);
-                // the caller thread needs to be unblocked by interrupting it as it won't receive any more bytes
-                callerThread.interrupt();
+                // the writer thread needs to be unblocked by interrupting it as it won't be able to push any more bytes
+                writerThread.interrupt();
                 throw new WrappedException(e);
             }
         });
@@ -77,10 +89,10 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
             closeQuietly(encodedBytesSink);
             readerExecution.get(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            if (caughtException != null) {
-                throw new IOException(caughtException);
-            }
-            else {
+            IOException readerError = readerException.get();
+            if (readerError != null) {
+                throw new IOException(readerError);
+            } else {
                 throw new RuntimeException(e);
             }
         } catch (ExecutionException e) {
