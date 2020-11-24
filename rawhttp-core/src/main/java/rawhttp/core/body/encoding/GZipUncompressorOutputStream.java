@@ -68,7 +68,6 @@ final class GZipUncompressorOutputStream extends DecodingOutputStream {
                 }
             } catch (IOException e) {
                 readerException.set(e);
-                e.printStackTrace();
                 // the writer thread needs to be unblocked by interrupting it as it won't be able to push any more bytes
                 writerThread.interrupt();
                 throw new WrappedException(e);
