@@ -13,10 +13,7 @@ public final class IdentityDecoder implements HttpMessageDecoder {
     }
 
     @Override
-    public DecodingOutputStream decode(OutputStream out) {
-        if (out instanceof DecodingOutputStream) {
-            return (DecodingOutputStream) out;
-        }
-        return new DecodingOutputStream(out);
+    public OutputStream decode(OutputStream out) {
+        return out;
     }
 }

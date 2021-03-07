@@ -28,7 +28,7 @@ public class GzipDecoder implements HttpMessageDecoder {
     }
 
     @Override
-    public DecodingOutputStream decode(OutputStream out) {
+    public OutputStream decode(OutputStream out) {
         return new GZipUncompressorOutputStream(out, bufferSize);
     }
 

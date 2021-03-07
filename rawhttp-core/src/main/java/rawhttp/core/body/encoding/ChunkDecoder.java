@@ -13,7 +13,7 @@ public class ChunkDecoder implements HttpMessageDecoder {
     }
 
     @Override
-    public DecodingOutputStream decode(OutputStream outputStream) {
+    public OutputStream decode(OutputStream outputStream) {
         return new ChunkedOutputStream(outputStream);
     }
 

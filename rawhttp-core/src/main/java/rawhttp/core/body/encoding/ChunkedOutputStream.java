@@ -1,9 +1,10 @@
 package rawhttp.core.body.encoding;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-final class ChunkedOutputStream extends DecodingOutputStream {
+final class ChunkedOutputStream extends FilterOutputStream {
 
     private static class ChunkSizeParser {
         char[] chars = new char[4];

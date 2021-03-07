@@ -13,8 +13,7 @@ public class DeflateDecoder implements HttpMessageDecoder {
     }
 
     @Override
-    public DecodingOutputStream decode(OutputStream outputStream) {
-        return new DecodingOutputStream(new InflaterOutputStream(outputStream));
+    public OutputStream decode(OutputStream outputStream) {
+        return new InflaterOutputStream(outputStream);
     }
-
 }

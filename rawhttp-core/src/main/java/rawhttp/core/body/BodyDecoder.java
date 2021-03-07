@@ -1,8 +1,8 @@
 package rawhttp.core.body;
 
-import rawhttp.core.body.encoding.DecodingOutputStream;
 import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.body.encoding.HttpMessageDecoder;
+import rawhttp.core.body.encoding.UnCloseableOutputStream;
 import rawhttp.core.errors.UnknownEncodingException;
 
 import java.io.IOException;
@@ -47,29 +47,27 @@ public class BodyDecoder {
     }
 
     /**
-     * Create a {@link DecodingOutputStream} that decodes the contents written to it before passing it on
+     * Create a decoder {@link OutputStream} that decodes the contents written to it before passing it on
      * to the given {@link OutputStream}.
      *
      * @param out receiver of decoded contents
      * @return a stream that decodes the bytes written into it, then writes the decoded bytes into another stream
      * @throws IOException if an error occurs while writing to the given stream
      */
-    public DecodingOutputStream decoding(OutputStream out) throws IOException {
+    public OutputStream decoding(OutputStream out) throws IOException {
         ArrayList<HttpMessageDecoder> decoders = getDecoders();
 
-        DecodingOutputStream decoderStream = new DecodingOutputStream(out);
+        OutputStream decoderStream = new UnCloseableOutputStream(out);
 
-        if (decoders.isEmpty()) {
-            return decoderStream;
-        }
+        if (!decoders.isEmpty()) {
+            if (decoders.get(decoders.size() - 1).encodingName().equalsIgnoreCase("chunked")) {
+                // when the chunked encoding is used to frame the message, we don't need to to decode its contents
+                decoders.remove(decoders.size() - 1);
+            }
 
-        if (decoders.get(decoders.size() - 1).encodingName().equalsIgnoreCase("chunked")) {
-            // when the chunked encoding is used to frame the message, we don't need to to decode its contents
-            decoders.remove(decoders.size() - 1);
-        }
-
-        for (HttpMessageDecoder decoder : decoders) {
-            decoderStream = decoder.decode(decoderStream);
+            for (HttpMessageDecoder decoder : decoders) {
+                decoderStream = decoder.decode(decoderStream);
+            }
         }
 
         return decoderStream;

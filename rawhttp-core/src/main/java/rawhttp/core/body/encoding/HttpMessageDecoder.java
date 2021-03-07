@@ -21,6 +21,5 @@ public interface HttpMessageDecoder {
      * @return a stream into which encoded messages can be written to be decoded
      * @throws IOException if an error occurs while creating the decoder stream
      */
-    DecodingOutputStream decode(OutputStream out) throws IOException;
-
+    OutputStream decode(OutputStream out) throws IOException;
 }

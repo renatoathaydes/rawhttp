@@ -1,7 +1,6 @@
 package rawhttp.core.body;
 
 import rawhttp.core.Writable;
-import rawhttp.core.body.encoding.DecodingOutputStream;
 import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
 import rawhttp.core.errors.UnknownEncodingException;
 
@@ -113,7 +112,7 @@ public abstract class BodyReader implements Writable, Closeable {
      *                                  by the {@link HttpBodyEncodingRegistry}.
      */
     public void writeDecodedTo(OutputStream out, int bufferSize) throws IOException {
-        DecodingOutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
+        OutputStream decodedStream = framedBody.getBodyDecoder().decoding(out);
         try {
             framedBody.getBodyConsumer().consumeDataInto(asRawStream(), decodedStream, bufferSize);
             decodedStream.close();
