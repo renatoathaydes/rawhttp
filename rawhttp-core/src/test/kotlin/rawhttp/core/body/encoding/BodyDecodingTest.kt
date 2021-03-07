@@ -1,6 +1,5 @@
 package rawhttp.core.body.encoding
 
-import io.kotlintest.matchers.beOfType
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldThrow
 import org.junit.Test
@@ -14,7 +13,6 @@ import rawhttp.core.body.InputStreamChunkEncoder
 import rawhttp.core.shouldHaveSameElementsAs
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Optional
 import java.util.zip.GZIPOutputStream
@@ -135,11 +133,9 @@ class BodyDecodingTest {
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-chunked-and-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)
         val body = response.body.get()
-        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        val error = shouldThrow<ZipException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
         assertNotNull(error.message)
-        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
-        assertNotNull(error.cause)
-        error.cause shouldBe beOfType<ZipException>()
+        error.message shouldBe "Not in GZIP format"
     }
 
     @Test(timeout = 2000L)
@@ -147,10 +143,8 @@ class BodyDecodingTest {
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)
         val body = response.body.get()
-        val error = shouldThrow<IOException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
+        val error = shouldThrow<ZipException> { body.decodeBodyToString(StandardCharsets.UTF_8) }
         assertNotNull(error.message)
-        error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
-        assertNotNull(error.cause)
-        error.cause shouldBe beOfType<ZipException>()
+        error.message shouldBe "Not in GZIP format"
     }
 }
