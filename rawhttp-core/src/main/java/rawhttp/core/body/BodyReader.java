@@ -206,8 +206,19 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while consuming the message body
      */
     public byte[] decodeBody() throws IOException {
+        return decodeBody(BodyConsumer.DEFAULT_BUFFER_SIZE);
+    }
+
+    /**
+     * Unframe and decode the HTTP message's body.
+     *
+     * @param bufferSize size of the buffer to use for writing, if possible
+     * @return the unframed, decoded message body
+     * @throws IOException if an error occurs while consuming the message body
+     */
+    public byte[] decodeBody(int bufferSize) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        writeDecodedTo(out, BodyConsumer.DEFAULT_BUFFER_SIZE);
+        writeDecodedTo(out, bufferSize);
         return out.toByteArray();
     }
 
@@ -219,7 +230,18 @@ public abstract class BodyReader implements Writable, Closeable {
      * @throws IOException if an error occurs while consuming the message body
      */
     public String decodeBodyToString(Charset charset) throws IOException {
-        return new String(decodeBody(), charset);
+        return decodeBodyToString(charset, BodyConsumer.DEFAULT_BUFFER_SIZE);
     }
 
+    /**
+     * Unframe and decode the HTTP message's body, then turn it into a String using the given charset.
+     *
+     * @param charset to use to convert the body into a String
+     * @param bufferSize size of the buffer to use for writing, if possible
+     * @return the decoded message body as a String
+     * @throws IOException if an error occurs while consuming the message body
+     */
+    public String decodeBodyToString(Charset charset, int bufferSize) throws IOException {
+        return new String(decodeBody(bufferSize), charset);
+    }
 }
