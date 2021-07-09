@@ -1,16 +1,8 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0"
-    }
-}
-
 plugins {
-    id 'java'
+    id 'java-library'
     id "org.jetbrains.kotlin.jvm"
-    id 'maven'
+    id 'maven-publish'
+    id 'signing'
 }
 
 description = 'RawHTTP req-in-edit module (Jetbrains HTTP format)'
@@ -19,17 +11,13 @@ version rawHttpReqInEditVersion
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-repositories {
-    jcenter()
-}
-
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
 
 dependencies {
-    implementation project(':rawhttp-core')
-    implementation project(':rawhttp-cookies')
+    api project(':rawhttp-core')
+    api project(':rawhttp-cookies')
     implementation 'org.webjars.npm:mustache:3.1.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testImplementation project(':rawhttp-core')
@@ -62,79 +50,61 @@ task javadocJar(type: Jar) {
 
 /* Publishing config */
 
-artifacts {
-    archives javadocJar, sourcesJar
-}
+publishing {
+    publications {
+        mavenJava( MavenPublication ) {
+            artifactId = 'rawhttp-req-in-edit'
+            from components.java
+            versionMapping {
+                usage( 'java-api' ) {
+                    fromResolutionOf( 'runtimeClasspath' )
+                }
+                usage( 'java-runtime' ) {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                inceptionYear = '2020'
+                name = project.name
+                packaging = 'jar'
+                description = project.description
 
-// add all the info required by Maven Central to the pom
-configure(install.repositories.mavenInstaller) {
-    pom.project {
-        inceptionYear '2020'
-        name project.name
-        packaging 'jar'
-        description project.description
+                url = 'https://renatoathaydes.github.io/rawhttp'
 
-        url 'https://renatoathaydes.github.io/rawhttp'
+                scm {
+                    connection = 'git@github.com:renatoathaydes/rawhttp.git'
+                    developerConnection = 'git@github.com:renatoathaydes/rawhttp.git'
+                    url = 'https://github.com/renatoathaydes/rawhttp'
+                }
 
-        scm {
-            connection 'git@github.com:renatoathaydes/rawhttp.git'
-            developerConnection 'git@github.com:renatoathaydes/rawhttp.git'
-            url 'https://github.com/renatoathaydes/rawhttp'
-        }
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
 
-        licenses {
-            license {
-                name 'The Apache License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                developers {
+                    developer {
+                        id = 'renatoathaydes'
+                        name = 'Renato Athaydes'
+                        email = 'renato@athaydes.com'
+                    }
+                }
             }
         }
-
-        developers {
-            developer {
-                id 'renatoathaydes'
-                name 'Renato Athaydes'
-                email 'renato@athaydes.com'
+    }
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username project.properties[ 'ossrhUsername' ]?.toString()
+                password project.properties[ 'ossrhPassword' ]?.toString()
             }
         }
     }
 }
 
-apply plugin: 'com.jfrog.bintray'
-
-final rawHttpGradle = new RawHttpGradle(project)
-
-bintray {
-    user = rawHttpGradle.getGradleProperty("bintrayUserName")
-    key = rawHttpGradle.getGradleProperty("bintrayApiKey")
-    configurations = ['archives']
-    publish = true
-    pkg {
-        repo = 'maven'
-        name = 'rawhttp-req-in-edit'
-        licenses = ['Apache-2.0']
-        desc = project.description
-        vcsUrl = 'https://github.com/renatoathaydes/rawhttp.git'
-        websiteUrl = 'https://renatoathaydes.github.io/rawhttp/rawhttp-modules/req-in-edit.html'
-        issueTrackerUrl = 'https://github.com/renatoathaydes/rawhttp/issues'
-        labels = ['http', 'java', 'http-template', 'http-test']
-        publicDownloadNumbers = true
-
-        //noinspection GroovyAssignabilityCheck
-        version {
-            name = project.version
-            vcsTag = project.version
-            gpg {
-                sign = true
-            }
-            mavenCentralSync {
-                sync = true
-                user = project.hasProperty("ossrhUsername") ? ossrhUsername : null
-                password = project.hasProperty("ossrhPassword") ? ossrhPassword : null
-                close = '1' // '0' to NOT close
-            }
-        }
-    }
-
+signing {
+    sign publishing.publications.mavenJava
 }
-
-bintrayUpload.dependsOn build, sourcesJar

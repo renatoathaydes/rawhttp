@@ -8,21 +8,18 @@ subprojects {
 
     repositories {
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
 }
 
 subprojects {
-    apply plugin: 'java'
-
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions.jvmTarget = "1.8"
     }
 }
 
-task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/test-results")
-    // Include the results from the `test` task in all subprojects
-    reportOn subprojects*.test
-}
-
+//task testReport(type: TestReport) {
+//    destinationDir = file("$buildDir/test-results")
+//    // Include the results from the `test` task in all subprojects
+//    reportOn subprojects*.test
+//}

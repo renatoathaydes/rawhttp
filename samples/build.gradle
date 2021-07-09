@@ -8,12 +8,11 @@ test {
 }
 
 dependencies {
-    compile project(':rawhttp-core')
-    compile project(':rawhttp-httpcomponents')
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    compile 'com.sparkjava:spark-core:2.9.1'
-    testCompile "io.kotlintest:kotlintest:2.0.7", {
+    implementation project(':rawhttp-core')
+    implementation project(':rawhttp-httpcomponents')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    implementation 'com.sparkjava:spark-core:2.9.1'
+    testImplementation "io.kotlintest:kotlintest:2.0.7", {
         exclude group: 'org.jetbrains.kotlin'
     }
-
 }
