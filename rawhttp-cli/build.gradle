@@ -45,6 +45,7 @@ task fatJar(type: Jar, group: 'build') {
     classifier "all"
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
+    dependsOn jar
 }
 
 ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
