@@ -76,7 +76,7 @@ data class ProcessHandle(val process: Process,
                          private val errStream: ByteArrayOutputStream) {
 
     fun waitForEndAndGetStatus(): Int {
-        val completed = process.waitFor(if (IS_DEBUG) 500 else 3, TimeUnit.SECONDS)
+        val completed = process.waitFor(if (IS_DEBUG) 500 else 5, TimeUnit.SECONDS)
 
         if (!completed) {
             process.destroyForcibly()
