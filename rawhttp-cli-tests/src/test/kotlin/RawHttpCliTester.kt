@@ -43,11 +43,17 @@ object CliRunner {
 
         val java = sequenceOf(
             Paths.get(javaHome, "bin", "java").toFile(),
-            Paths.get(javaHome, "jre", "bin", "java").toFile(),
-            Paths.get(javaHome, "java").toFile()
+            Paths.get(javaHome, "jre", "bin", "java").toFile()
         ).filter { it.isFile }.firstOrNull()
-            ?: throw IllegalStateException("Cannot locate the java command under $javaHome. " +
-                    "Contents of JAVA_HOME: ${File(javaHome).listFiles()?.joinToString { it.name }}"
+            ?: throw IllegalStateException(
+                "Cannot locate the java command under " +
+                        "JAVA_HOME/bin or JAVA_HOME/jre/bin.\n" +
+                        "Contents of JAVA_HOME/bin: ${
+                            Paths.get(javaHome, "bin").toFile().listFiles()?.joinToString { it.name }
+                        }\n" +
+                        "Contents of JAVA_HOME/jre/bin: ${
+                            Paths.get(javaHome, "jre", "bin").toFile().listFiles()?.joinToString { it.name }
+                        }"
             )
 
         if (!java.canExecute()) {
