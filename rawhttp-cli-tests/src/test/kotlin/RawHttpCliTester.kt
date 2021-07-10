@@ -18,6 +18,7 @@ import java.io.File
 import java.io.IOException
 import java.lang.Thread.sleep
 import java.net.ServerSocket
+import java.nio.file.Paths
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
@@ -40,40 +41,54 @@ object CliRunner {
             throw IllegalStateException("The CLI launcher does not exist: $cliJar")
         }
 
-        val java = File(javaHome, "bin/java")
+        val java = sequenceOf(
+            Paths.get(javaHome, "bin", "java").toFile(),
+            Paths.get(javaHome, "jre", "bin", "java").toFile(),
+            Paths.get(javaHome, "java").toFile()
+        ).filter { it.isFile }.firstOrNull()
+            ?: throw IllegalStateException("Cannot locate the java command under $javaHome. " +
+                    "Contents of JAVA_HOME: ${File(javaHome).listFiles()?.joinToString { it.name }}"
+            )
+
         if (!java.canExecute()) {
             throw IllegalStateException("Cannot execute java: $java")
         }
 
         CLI_EXECUTABLE = if (IS_DEBUG)
-            arrayOf(java.absolutePath, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000",
-                    "-jar", cliJar.absolutePath)
+            arrayOf(
+                java.absolutePath, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000",
+                "-jar", cliJar.absolutePath
+            )
         else arrayOf(java.absolutePath, "-jar", cliJar.absolutePath)
 
-        println("Running tests with executable (${if (IS_DEBUG) "debug mode" else "no debug"}): " +
-                CLI_EXECUTABLE.joinToString(" "))
+        println(
+            "Running tests with executable (${if (IS_DEBUG) "debug mode" else "no debug"}): " +
+                    CLI_EXECUTABLE.joinToString(" ")
+        )
     }
 
     private fun tryLocateRawHttpCliJar(): String {
         val guessLocation: () -> String? = {
             val workingDir = File(System.getProperty("user.dir"))
             listOf(".", "..")
-                    .map { File(workingDir, "$it/rawhttp-cli/build/libs/rawhttp.jar").canonicalFile }
-                    .filter { it.isFile }
-                    .map { it.absolutePath }
-                    .firstOrNull()
+                .map { File(workingDir, "$it/rawhttp-cli/build/libs/rawhttp.jar").canonicalFile }
+                .filter { it.isFile }
+                .map { it.absolutePath }
+                .firstOrNull()
         }
 
         return System.getProperty("rawhttp.cli.jar")
-                ?: guessLocation()
-                ?: throw IllegalStateException("rawhttp.cli.jar system property must be set")
+            ?: guessLocation()
+            ?: throw IllegalStateException("rawhttp.cli.jar system property must be set")
     }
 
 }
 
-data class ProcessHandle(val process: Process,
-                         private val outputStream: ByteArrayOutputStream,
-                         private val errStream: ByteArrayOutputStream) {
+data class ProcessHandle(
+    val process: Process,
+    private val outputStream: ByteArrayOutputStream,
+    private val errStream: ByteArrayOutputStream
+) {
 
     fun waitForEndAndGetStatus(): Int {
         val completed = process.waitFor(if (IS_DEBUG) 500 else 5, TimeUnit.SECONDS)
@@ -175,25 +190,35 @@ abstract class RawHttpCliTester {
                                     when (request.uri.path) {
                                         "/saysomething" ->
                                             http.parseResponse(SUCCESS_HTTP_RESPONSE)
-                                                    .writeTo(client.getOutputStream())
+                                                .writeTo(client.getOutputStream())
                                         "/foo" ->
                                             when (request.method) {
                                                 "GET" -> http.parseResponse(SUCCESS_GET_FOO_HTTP_RESPONSE)
-                                                        .writeTo(client.getOutputStream())
+                                                    .writeTo(client.getOutputStream())
                                                 "POST" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
-                                                        .withBody(request.body.map { StringBody(it.decodeBodyToString(Charsets.UTF_8)) }
-                                                                .orElse(null))
-                                                        .writeTo(client.getOutputStream())
+                                                    .withBody(request.body.map {
+                                                        StringBody(
+                                                            it.decodeBodyToString(
+                                                                Charsets.UTF_8
+                                                            )
+                                                        )
+                                                    }
+                                                        .orElse(null))
+                                                    .writeTo(client.getOutputStream())
                                                 else -> http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
-                                                        .writeTo(client.getOutputStream())
+                                                    .writeTo(client.getOutputStream())
                                             }
                                         "/reply" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
-                                                .withBody(StringBody(request.body.map { "Received:" + it.decodeBodyToString(Charsets.UTF_8) }
-                                                        .orElse("Did not receive anything")))
-                                                .writeTo(client.getOutputStream())
+                                            .withBody(StringBody(request.body.map {
+                                                "Received:" + it.decodeBodyToString(
+                                                    Charsets.UTF_8
+                                                )
+                                            }
+                                                .orElse("Did not receive anything")))
+                                            .writeTo(client.getOutputStream())
                                         else ->
                                             http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
-                                                    .writeTo(client.getOutputStream())
+                                                .writeTo(client.getOutputStream())
                                     }
                                 } catch (e: InvalidHttpRequest) {
                                     // likely EOF
@@ -277,12 +302,15 @@ abstract class RawHttpCliTester {
 
         fun assertReplyResponseStoredInFile() {
             assertTrue(replyResponseFile.exists())
-            assertThat(replyResponseFile.readText(), equalTo(
+            assertThat(
+                replyResponseFile.readText(), equalTo(
                     "HTTP/1.1 200 OK\r\n" +
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 29\r\n" +
                             "\r\n" +
-                            "Received:This is the foo file"))
+                            "Received:This is the foo file"
+                )
+            )
         }
 
         fun assertGetFooThenPostFooRequestsAndStats(handle: ProcessHandle) {
@@ -321,16 +349,26 @@ abstract class RawHttpCliTester {
         private fun assertStatistics(output: String) {
             output.lines().run {
                 assertThat("Expected 6 element, got: " + toString(), size, equalTo(6))
-                assertTrue("Expected 'Connect time', got " + get(0),
-                        get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms")))
-                assertTrue("Expected 'First received byte time', got " + get(1),
-                        get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms")))
-                assertTrue("Expected 'Total response time', got " + get(2),
-                        get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms")))
-                assertTrue("Expected 'Total response time', got " + get(3),
-                        get(3).matches(Regex("Bytes received: \\d+")))
-                assertTrue("Expected 'Throughput (bytes/sec)', got " + get(4),
-                        get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+")))
+                assertTrue(
+                    "Expected 'Connect time', got " + get(0),
+                    get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms"))
+                )
+                assertTrue(
+                    "Expected 'First received byte time', got " + get(1),
+                    get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms"))
+                )
+                assertTrue(
+                    "Expected 'Total response time', got " + get(2),
+                    get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms"))
+                )
+                assertTrue(
+                    "Expected 'Total response time', got " + get(3),
+                    get(3).matches(Regex("Bytes received: \\d+"))
+                )
+                assertTrue(
+                    "Expected 'Throughput (bytes/sec)', got " + get(4),
+                    get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+"))
+                )
                 assertEquals(get(5), "")
             }
         }
@@ -383,12 +421,14 @@ abstract class RawHttpCliTester {
             }
 
             return response
-                    ?: throw AssertionError("Unable to connect to server after " +
-                            "$failedConnectionAttempts failed attempts", error)
+                ?: throw AssertionError(
+                    "Unable to connect to server after " +
+                            "$failedConnectionAttempts failed attempts", error
+                )
         }
 
         fun asClassPathFile(file: String): String =
-                RawHttpCliTester::class.java.getResource("/$file").file
+            RawHttpCliTester::class.java.getResource("/$file").file
 
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
@@ -433,7 +473,7 @@ class ManualTest : RawHttpCliTester() {
 }
 
 fun lastModifiedHeaderValue(file: File): String =
-        dateHeaderValue(Instant.ofEpochMilli(file.lastModified()))
+    dateHeaderValue(Instant.ofEpochMilli(file.lastModified()))
 
 fun dateHeaderValue(instant: Instant): String =
-        RFC_1123_DATE_TIME.format(instant.atZone(ZoneOffset.UTC))
+    RFC_1123_DATE_TIME.format(instant.atZone(ZoneOffset.UTC))
