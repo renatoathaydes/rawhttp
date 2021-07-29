@@ -181,7 +181,7 @@ public final class HttpMetadataParser {
                 return new RequestLine(method, uri, httpVersion, true);
             }
         }
-        return new RequestLine(method, uri, httpVersion, false);
+        return new RequestLine(method, uri, httpVersion);
     }
 
     /**

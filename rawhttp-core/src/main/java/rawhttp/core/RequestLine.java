@@ -27,7 +27,14 @@ public class RequestLine implements StartLine {
      * @param uri         URI of the request target
      * @param httpVersion HTTP version of the message
      */
-    public RequestLine(String method, URI uri, HttpVersion httpVersion, boolean absoluteFormURI) {
+    public RequestLine(String method, URI uri, HttpVersion httpVersion) {
+        this.method = method;
+        this.uri = uri;
+        this.httpVersion = httpVersion;
+        this.absoluteFormURI = false;
+    }
+
+    public RequestLine(String method, URI uri, HttpVersion httpVersion,boolean absoluteFormURI) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
