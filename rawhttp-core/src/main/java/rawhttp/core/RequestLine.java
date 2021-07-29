@@ -15,6 +15,7 @@ public class RequestLine implements StartLine {
     private final String method;
     private final URI uri;
     private final HttpVersion httpVersion;
+    private final boolean absoluteFormURI;
 
     /**
      * Create a new {@link RequestLine}.
@@ -26,10 +27,11 @@ public class RequestLine implements StartLine {
      * @param uri         URI of the request target
      * @param httpVersion HTTP version of the message
      */
-    public RequestLine(String method, URI uri, HttpVersion httpVersion) {
+    public RequestLine(String method, URI uri, HttpVersion httpVersion, boolean absoluteFormURI) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
+        this.absoluteFormURI = absoluteFormURI;
     }
 
     /**
@@ -62,7 +64,7 @@ public class RequestLine implements StartLine {
      * @return a copy of this method line, but with the given host
      */
     public RequestLine withHost(String host) {
-        return new RequestLine(method, UriUtil.withHost(uri, host), httpVersion);
+        return new RequestLine(method, UriUtil.withHost(uri, host), httpVersion, absoluteFormURI);
     }
 
     @Override
@@ -88,16 +90,22 @@ public class RequestLine implements StartLine {
         outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
         outputStream.write(' ');
 
-        String path = uri.getRawPath();
-        if (path == null || path.isEmpty()) {
-            outputStream.write('/');
-        } else {
+        String path;
+        if (absoluteFormURI){
+            path = uri.getScheme() + ":" + uri.getSchemeSpecificPart();
             outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
-        }
-        String query = uri.getRawQuery();
-        if (query != null && !query.isEmpty()) {
-            outputStream.write('?');
-            outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+        } else {
+            path = uri.getRawPath();
+            if (path == null || path.isEmpty()) {
+                outputStream.write('/');
+            } else {
+                outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
+            }
+            String query = uri.getRawQuery();
+            if (query != null && !query.isEmpty()) {
+                outputStream.write('?');
+                outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+            }
         }
 
         outputStream.write(' ');

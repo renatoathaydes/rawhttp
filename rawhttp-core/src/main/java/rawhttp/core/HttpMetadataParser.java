@@ -176,8 +176,12 @@ public final class HttpMetadataParser {
         }
 
         URI uri = parseUri(uriPart);
-
-        return new RequestLine(method, uri, httpVersion);
+        if (!options.allowAbsoluteFormUrl()){
+            if (!uri.getScheme().equalsIgnoreCase("https") && uriPart.toLowerCase().startsWith("http://")){
+                return new RequestLine(method, uri, httpVersion, true);
+            }
+        }
+        return new RequestLine(method, uri, httpVersion, false);
     }
 
     /**

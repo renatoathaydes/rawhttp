@@ -82,7 +82,7 @@ public class RedirectingRawHttpClient<Response> implements RawHttpClient<Respons
             method = request.getMethod();
         }
         return request.withRequestLine(new RequestLine(
-                method, newUri, request.getStartLine().getHttpVersion()));
+                method, newUri, request.getStartLine().getHttpVersion(),false));
     }
 
 }
