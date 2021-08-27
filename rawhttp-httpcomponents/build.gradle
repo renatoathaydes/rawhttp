@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'java-library'
 }
 
 sourceCompatibility = 1.8
@@ -9,6 +9,6 @@ description = 'RawHTTP interface with HTTP-Components library implementation'
 
 dependencies {
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
-    implementation project(':rawhttp-core')
-    implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+    api project(':rawhttp-core')
+    api 'org.apache.httpcomponents:httpclient:4.5.3'
 }
