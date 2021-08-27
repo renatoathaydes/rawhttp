@@ -27,7 +27,7 @@ class RawHttpCliCookiesTest {
                 "something"
 
         private const val REDIRECT_TO_LOGIN_HTTP_RESPONSE = "HTTP/1.1 302\n" +
-                "Location: http://localhost:8084/login\n" +
+                "Location: http://localhost:8086/login\n" +
                 "Content-Length: 0"
 
         private const val BAD_CREDENTIALS_RESPONSE = "HTTP/1.1 401 Bad Credentials\n" +
@@ -42,7 +42,7 @@ class RawHttpCliCookiesTest {
         @BeforeClass
         @JvmStatic
         fun startHttpServer() {
-            val server = ServerSocket(8084)
+            val server = ServerSocket(8086)
 
             httpServerThread = Thread {
                 try {
@@ -113,7 +113,7 @@ class RawHttpCliCookiesTest {
         @AfterClass
         @JvmStatic
         fun stopHttpServer() {
-            httpServerThread!!.interrupt()
+            httpServerThread?.interrupt()
         }
 
         @JvmStatic
@@ -147,7 +147,7 @@ class RawHttpCliCookiesTest {
         outLines should haveSize(21)
 
         outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
-                "Location: http://localhost:8084/login",
+                "Location: http://localhost:8086/login",
                 "Content-Length: 0",
                 "",
                 "HTTP/1.1 200 OK",
@@ -214,7 +214,7 @@ class RawHttpCliCookiesTest {
         outLines should haveSize(29)
 
         outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
-                "Location: http://localhost:8084/login",
+                "Location: http://localhost:8086/login",
                 "Content-Length: 0",
                 "",
                 "HTTP/1.1 200 OK",
