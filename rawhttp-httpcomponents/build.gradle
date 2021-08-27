@@ -10,5 +10,5 @@ description = 'RawHTTP interface with HTTP-Components library implementation'
 dependencies {
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
     api project(':rawhttp-core')
-    api 'org.apache.httpcomponents:httpclient:4.5.3'
+    api 'org.apache.httpcomponents:httpclient:4.5.13'
 }
