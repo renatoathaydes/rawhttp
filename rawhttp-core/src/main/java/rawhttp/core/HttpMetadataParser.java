@@ -175,12 +175,9 @@ public final class HttpMetadataParser {
             throw new InvalidHttpRequest("Missing request target", 1);
         }
 
+        // this is always an absolute URI after parsed
         URI uri = parseUri(uriPart);
-        if (!options.allowAbsoluteFormUrl()){
-            if (!uri.getScheme().equalsIgnoreCase("https") && uriPart.toLowerCase().startsWith("http://")){
-                return new RequestLine(method, uri, httpVersion, true);
-            }
-        }
+
         return new RequestLine(method, uri, httpVersion);
     }
 

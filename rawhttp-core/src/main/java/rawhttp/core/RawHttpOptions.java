@@ -18,7 +18,6 @@ import static java.util.Objects.requireNonNull;
 public class RawHttpOptions {
 
     private static final RawHttpOptions DEFAULT_INSTANCE = Builder.newBuilder().build();
-    private final boolean allowAbsoluteFormUrl;
     private final boolean insertHostHeaderIfMissing;
     private final boolean insertHttpVersionIfMissing;
     private final boolean allowNewLineWithoutReturn;
@@ -34,7 +33,6 @@ public class RawHttpOptions {
                            boolean ignoreLeadingEmptyLine,
                            boolean allowIllegalStartLineCharacters,
                            boolean allowComments,
-                           boolean allowAbsoluteFormUrl,
                            HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
@@ -43,7 +41,6 @@ public class RawHttpOptions {
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
         this.allowIllegalStartLineCharacters = allowIllegalStartLineCharacters;
         this.allowComments = allowComments;
-        this.allowAbsoluteFormUrl = allowAbsoluteFormUrl;
         this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
@@ -100,13 +97,6 @@ public class RawHttpOptions {
      */
     public boolean ignoreLeadingEmptyLine() {
         return ignoreLeadingEmptyLine;
-    }
-
-    /**
-     * @return whether or not to allow absolute-form url in start-line.
-     */
-    public boolean allowAbsoluteFormUrl() {
-        return allowAbsoluteFormUrl;
     }
 
     /**
@@ -187,7 +177,7 @@ public class RawHttpOptions {
 
         /**
          * @return the encoding that should be used to interpret HTTP headers's values.
-         *
+         * <p>
          * If not set, defaults to ISO-8859-1 according to note at https://tools.ietf.org/html/rfc7230#section-3.2.4.
          */
         public Charset getHeaderValuesCharset() {
@@ -206,7 +196,6 @@ public class RawHttpOptions {
         private boolean insertHttpVersionIfMissing = true;
         private boolean allowIllegalStartLineCharacters = false;
         private boolean allowComments = false;
-        private boolean allowAbsoluteFormUrl = false;
         private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
@@ -297,21 +286,6 @@ public class RawHttpOptions {
         }
 
         /**
-         * Configure {@link RawHttp} to allow absolute-form url in request-line
-         * <p>
-         * this allows client to send absolute-form url in start-line,for example
-         * {@code GET http://example.com/path HTTP/1.1}
-         * will be sent as is instead of  {@code GET /path HTTP/1.1}
-         * <p>
-         * see https://datatracker.ietf.org/doc/html/rfc7230#section-5.3.2
-         * @return this
-         */
-        public Builder allowAbsoluteFormUrl() {
-            this.allowAbsoluteFormUrl = true;
-            return this;
-        }
-
-        /**
          * Allow comments in HTTP messages.
          * <p>
          * Any line before the message body starting with the '#' character will be considered a comment if this option
@@ -357,8 +331,8 @@ public class RawHttpOptions {
                     : encodingRegistry;
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
-                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters, allowComments, allowAbsoluteFormUrl,
-                    httpHeadersOptionsBuilder.getOptions(), registry);
+                    allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters,
+                    allowComments, httpHeadersOptionsBuilder.getOptions(), registry);
         }
 
         public class HttpHeadersOptionsBuilder {
