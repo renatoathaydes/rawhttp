@@ -435,7 +435,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             """.trimIndent()).eagerly() to
                     sendHttpRequest("""
             GET http://0.0.0.0:8080/hello
-            Accept: text/xml
+            Accept: application/xml
             """.trimIndent()).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
