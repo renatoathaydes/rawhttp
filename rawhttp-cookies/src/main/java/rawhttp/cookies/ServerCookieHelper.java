@@ -14,7 +14,6 @@ import java.util.List;
  * Utility static methods to help HTTP servers set cookies.
  * <p>
  * Example usage:
- * <p>
  * <pre>
  * {@code
  * var headers = RawHttpHeaders.newBuilder();

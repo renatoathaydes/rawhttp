@@ -40,7 +40,14 @@ task fatJar(type: Jar, group: 'build') {
     manifest {
         attributes 'Main-Class': mainClassName
     }
-
+    final taskInputs = inputs
+    // declare dependency on other project jars
+    [project(':rawhttp-core'), project(':rawhttp-cookies'), project(':rawhttp-req-in-edit')].each { p ->
+        p.tasks.withType(org.gradle.jvm.tasks.Jar) {
+            taskInputs.file(it.archiveFile)
+        }
+    }
+    taskInputs.file(jar.archiveFile)
     archiveName = runnableJarName
     classifier "all"
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
@@ -51,21 +58,21 @@ task fatJar(type: Jar, group: 'build') {
 ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
 
 task generateJavaSources(
-        description: 'Generates Java sources based on the java-templates directory' ) {
+        description: 'Generates Java sources based on the java-templates directory') {
     def properties = project.properties
-    def templates = fileTree( dir: 'src/main/java-templates' )
-    def destination = file( generatedJavaSources )
+    def templates = fileTree(dir: 'src/main/java-templates')
+    def destination = file(generatedJavaSources)
 
     doLast {
         templates.visit { item ->
             def file = item.file
-            if ( file.isFile() ) {
-                def transformedTemplate = new SimpleTemplateEngine().createTemplate( file ).make( properties )
-                new File( destination, item.relativePath.toString() ).withWriter {
+            if (file.isFile()) {
+                def transformedTemplate = new SimpleTemplateEngine().createTemplate(file).make(properties)
+                new File(destination, item.relativePath.toString()).withWriter {
                     transformedTemplate.writeTo it
                 }
             } else {
-                new File( destination, item.relativePath.toString() ).mkdirs()
+                new File(destination, item.relativePath.toString()).mkdirs()
             }
         }
     }
@@ -88,14 +95,14 @@ task javadocJar(type: Jar) {
 
 publishing {
     publications {
-        mavenJava( MavenPublication ) {
+        mavenJava(MavenPublication) {
             artifactId = 'rawhttp-cli'
             from components.java
             versionMapping {
-                usage( 'java-api' ) {
-                    fromResolutionOf( 'runtimeClasspath' )
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
                 }
-                usage( 'java-runtime' ) {
+                usage('java-runtime') {
                     fromResolutionResult()
                 }
             }
@@ -134,8 +141,8 @@ publishing {
         maven {
             url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
             credentials {
-                username project.properties[ 'ossrhUsername' ]?.toString()
-                password project.properties[ 'ossrhPassword' ]?.toString()
+                username project.properties['ossrhUsername']?.toString()
+                password project.properties['ossrhPassword']?.toString()
             }
         }
     }
