@@ -40,10 +40,13 @@ object CliRunner {
         if (!cliJar.isFile) {
             throw IllegalStateException("The CLI launcher does not exist: $cliJar")
         }
+        val javaExec =
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) "java.exe"
+            else "java"
 
         val java = sequenceOf(
-            Paths.get(javaHome, "bin", "java").toFile(),
-            Paths.get(javaHome, "jre", "bin", "java").toFile()
+            Paths.get(javaHome, "bin", javaExec).toFile(),
+            Paths.get(javaHome, "jre", "bin", javaExec).toFile()
         ).filter { it.isFile }.firstOrNull()
             ?: throw IllegalStateException(
                 "Cannot locate the java command under " +
