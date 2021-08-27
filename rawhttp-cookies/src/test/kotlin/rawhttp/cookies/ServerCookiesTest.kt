@@ -18,7 +18,7 @@ class ServerCookiesTest {
 
     companion object {
         val HTTP = RawHttp()
-        val port = 8084
+        val port = 8089
         var server: TcpRawHttpServer? = null
 
         object Responses {
