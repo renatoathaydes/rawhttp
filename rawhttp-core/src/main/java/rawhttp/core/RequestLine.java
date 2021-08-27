@@ -15,7 +15,7 @@ public class RequestLine implements StartLine {
     private final String method;
     private final URI uri;
     private final HttpVersion httpVersion;
-    private final boolean absoluteFormURI;
+    private final boolean useAbsoluteURI;
 
     /**
      * Create a new {@link RequestLine}.
@@ -29,17 +29,27 @@ public class RequestLine implements StartLine {
      * @param httpVersion HTTP version of the message
      */
     public RequestLine(String method, URI uri, HttpVersion httpVersion) {
-        this.method = method;
-        this.uri = uri;
-        this.httpVersion = httpVersion;
-        this.absoluteFormURI = false;
+        this(method, uri, httpVersion, false);
     }
 
-    public RequestLine(String method, URI uri, HttpVersion httpVersion, boolean absoluteFormURI) {
+    /**
+     * Create a new {@link RequestLine}.
+     * <p>
+     * This constructor does not validate the method name. If validation is
+     * required, use the
+     * {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
+     *
+     * @param method         name of the HTTP method
+     * @param uri            URI of the request target
+     * @param httpVersion    HTTP version of the message
+     * @param useAbsoluteURI use absolute URI on request-line.
+     *                       This is useful to make requests targeting proxies.
+     */
+    public RequestLine(String method, URI uri, HttpVersion httpVersion, boolean useAbsoluteURI) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
-        this.absoluteFormURI = absoluteFormURI;
+        this.useAbsoluteURI = useAbsoluteURI;
     }
 
     /**
@@ -73,7 +83,7 @@ public class RequestLine implements StartLine {
      * @return a copy of this method line, but with the given host
      */
     public RequestLine withHost(String host) {
-        return new RequestLine(method, UriUtil.withHost(uri, host), httpVersion, absoluteFormURI);
+        return new RequestLine(method, UriUtil.withHost(uri, host), httpVersion, useAbsoluteURI);
     }
 
     @Override
@@ -99,12 +109,19 @@ public class RequestLine implements StartLine {
         outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
         outputStream.write(' ');
 
-        String path;
-        if (absoluteFormURI) {
-            path = uri.getScheme() + ":" + uri.getSchemeSpecificPart();
-            outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
+        if (useAbsoluteURI) {
+            String scheme = uri.getScheme();
+            if (scheme == null) {
+                scheme = "http";
+            }
+            outputStream.write(scheme.getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(':');
+            if (uri.getHost() == null) {
+                outputStream.write("//".getBytes(StandardCharsets.UTF_8));
+            }
+            outputStream.write(uri.getRawSchemeSpecificPart().getBytes(StandardCharsets.US_ASCII));
         } else {
-            path = uri.getRawPath();
+            String path = uri.getRawPath();
             if (path == null || path.isEmpty()) {
                 outputStream.write('/');
             } else {
