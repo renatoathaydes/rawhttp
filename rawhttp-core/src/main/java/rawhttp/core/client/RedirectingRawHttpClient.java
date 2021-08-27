@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * A {@link RawHttpClient} that wraps another {@link RawHttpClient}, enhancing it with the ability to follow redirects.
  *
- * @param <Response>
+ * @param <Response> type of response
  */
 public class RedirectingRawHttpClient<Response> implements RawHttpClient<Response> {
     private final RawHttpClient<Response> delegate;

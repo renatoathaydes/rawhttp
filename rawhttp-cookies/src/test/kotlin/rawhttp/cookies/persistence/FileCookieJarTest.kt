@@ -1,5 +1,6 @@
 package rawhttp.cookies.persistence
 
+import io.kotlintest.matchers.between
 import io.kotlintest.matchers.shouldBe
 import org.junit.Test
 import rawhttp.cookies.persist.FileCookieJar
@@ -85,7 +86,9 @@ class FileCookieJarTest {
                 HttpCookie("a", "b"), HttpCookie("b", "c"))
 
         // the equals method of HttpCookie ignores most attributes, so check them
-        cookieJar[URI.create("foo.com")].map { it.maxAge } shouldBe listOf(30L, 30L)
+        cookieJar[URI.create("foo.com")].forEach { cookie ->
+            cookie.maxAge shouldBe between(29, 31)
+        }
 
         cookieJar[URI.create("https://bar.com")].first().run {
             domain shouldBe "foo"
