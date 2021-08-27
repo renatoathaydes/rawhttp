@@ -20,8 +20,9 @@ public class RequestLine implements StartLine {
     /**
      * Create a new {@link RequestLine}.
      * <p>
-     * This constructor does not validate the method name. If validation is required,
-     * use the {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
+     * This constructor does not validate the method name. If validation is
+     * required, use the
+     * {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
      *
      * @param method      name of the HTTP method
      * @param uri         URI of the request target
@@ -34,7 +35,7 @@ public class RequestLine implements StartLine {
         this.absoluteFormURI = false;
     }
 
-    public RequestLine(String method, URI uri, HttpVersion httpVersion,boolean absoluteFormURI) {
+    public RequestLine(String method, URI uri, HttpVersion httpVersion, boolean absoluteFormURI) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
@@ -65,7 +66,8 @@ public class RequestLine implements StartLine {
      * <p>
      * The new host may include a port using the "host:port" syntax.
      * <p>
-     * The new URI never maintains the old URI's port, even if the port is omitted from the new host String.
+     * The new URI never maintains the old URI's port, even if the port is omitted
+     * from the new host String.
      *
      * @param host the host to be used in the method line's URI.
      * @return a copy of this method line, but with the given host
@@ -98,7 +100,7 @@ public class RequestLine implements StartLine {
         outputStream.write(' ');
 
         String path;
-        if (absoluteFormURI){
+        if (absoluteFormURI) {
             path = uri.getScheme() + ":" + uri.getSchemeSpecificPart();
             outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
         } else {
@@ -126,12 +128,12 @@ public class RequestLine implements StartLine {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         RequestLine that = (RequestLine) o;
-        return method.equals(that.method) &&
-                uri.equals(that.uri) &&
-                httpVersion == that.httpVersion;
+        return method.equals(that.method) && uri.equals(that.uri) && httpVersion == that.httpVersion;
     }
 
     @Override
