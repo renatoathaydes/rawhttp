@@ -170,7 +170,7 @@ class RawHttpCliCookiesTest {
         outLines[20] shouldBe ""
 
         assertSysErrOutput(handle, "expected 200 response, but status was 401$EOL" +
-                "FAIL: There were test failures!")
+                "FAIL: There were test failures!$EOL")
     }
 
     @Test
@@ -203,8 +203,8 @@ class RawHttpCliCookiesTest {
 
         assertSysErrOutput(handle2, """
             expected to go to login page, got response: Hello user
-            FAIL: There were test failures!
-        """.trimIndent().trimEnd())
+            FAIL: There were test failures!$EOL
+        """.trimIndent())
     }
 
     private fun assertHttpFileRanSuccessfully(handle: ProcessHandle) {

@@ -410,17 +410,15 @@ abstract class RawHttpCliTester {
             assertSysErrOutput(handle, "")
         }
 
-        fun assertSysErrOutput(handle: ProcessHandle, expectedOutput: String, trim: Boolean = true) {
+        fun assertSysErrOutput(handle: ProcessHandle, expectedOutput: String) {
             val errOut = handle.err
                 .lines()
                 .filter {
                     !it.startsWith("Picked up _JAVA_OPTIONS") &&
                             // FIXME #49 - replace Nashorn with GraalVM.js
                             !it.startsWith("Warning: Nashorn")
-                }.joinToString("\n").let {
-                    if (trim) it.trim() else it
                 }
-            assertThat(errOut, equalTo(expectedOutput))
+            assertThat(errOut, equalTo(expectedOutput.lines()))
         }
 
         fun sendHttpRequest(request: String): RawHttpResponse<*> {
