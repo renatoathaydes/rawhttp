@@ -1,4 +1,4 @@
-GET http://localhost:8084/me
+GET http://localhost:8086/me
 Accept: */*
 
 # The HTTP client is supposed to follow redirects
@@ -13,7 +13,7 @@ if (client.global.get("password") === undefined) client.global.set("password", "
 
 ###
 
-POST http://localhost:8084/login
+POST http://localhost:8086/login
 Content-Type: text/plain
 
 my password is NOT {{ password }}
@@ -26,7 +26,7 @@ client.test("We get the bad credentials response", function () {
 
 ###
 
-POST http://localhost:8084/login
+POST http://localhost:8086/login
 Content-Type: text/plain
 
 my password is {{ password }}
@@ -40,7 +40,7 @@ client.test("We get the SID cookie", function () {
 
 ###
 
-GET http://localhost:8084/me
+GET http://localhost:8086/me
 Accept: */*
 
 > {%

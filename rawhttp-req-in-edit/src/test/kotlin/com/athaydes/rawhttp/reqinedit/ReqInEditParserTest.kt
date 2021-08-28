@@ -1,9 +1,8 @@
 package com.athaydes.rawhttp.reqinedit
 
-import io.kotlintest.matchers.beEmpty
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import java.io.FileNotFoundException
 import java.nio.file.Path
 
@@ -23,7 +22,7 @@ class ReqInEditParserTest {
             request shouldBe """
                 GET http://example.org
             """.trimIndent()
-            requestBody should beEmpty()
+            requestBody shouldHaveSize 0
             script.isPresent shouldBe false
             responseRef.isPresent shouldBe false
         }
@@ -67,7 +66,7 @@ class ReqInEditParserTest {
                 Accept: text/html
                 
             """.trimIndent()
-            requestBody should beEmpty()
+            requestBody shouldHaveSize 0
             responseRef.isPresent shouldBe false
             script.isPresent shouldBe false
         }
@@ -91,7 +90,7 @@ class ReqInEditParserTest {
                 Accept: application/json
                 
             """.trimIndent()
-            requestBody should beEmpty()
+            requestBody shouldHaveSize 0
             responseRef.isPresent shouldBe false
             script.isPresent shouldBe false
         }
@@ -122,7 +121,7 @@ class ReqInEditParserTest {
                 GET http://example.org
                 
             """.trimIndent()
-            requestBody should beEmpty()
+            requestBody shouldHaveSize 0
             script.isPresent shouldBe false
             responseRef.isPresent shouldBe true
             responseRef.get() shouldBe "first-response"
@@ -133,7 +132,7 @@ class ReqInEditParserTest {
                 GET http://another.com
                 
             """.trimIndent()
-            requestBody should beEmpty()
+            requestBody shouldHaveSize 0
             script.isPresent shouldBe false
             responseRef.isPresent shouldBe true
             responseRef.get() shouldBe "second-response"

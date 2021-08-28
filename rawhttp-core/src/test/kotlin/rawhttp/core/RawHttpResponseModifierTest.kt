@@ -1,7 +1,7 @@
 package rawhttp.core
 
-import io.kotlintest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.body.StringBody
 
 class RawHttpResponseModifierTest {

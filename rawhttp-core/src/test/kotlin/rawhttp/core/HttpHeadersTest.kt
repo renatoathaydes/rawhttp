@@ -1,11 +1,11 @@
 package rawhttp.core
 
-import io.kotlintest.matchers.beEmpty
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.matchers.shouldThrow
-import org.junit.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.optional.beEmpty
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.errors.InvalidHttpHeader
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
@@ -20,24 +20,24 @@ class HttpHeadersTest {
                 .with("ho", "ccc")
                 .with("X-F", "ö")
                 .build().run {
-                    get("hi") shouldEqual listOf("aaa", "bbb")
-                    get("ho") shouldEqual listOf("ccc")
-                    get("X-F") shouldEqual listOf("ö")
-                    get("Hi") shouldEqual get("hi")
-                    get("Hi") shouldEqual get("HI")
-                    get("Ho") shouldEqual get("ho")
-                    get("Ho") shouldEqual get("hO")
-                    get("X-F") shouldEqual get("x-f")
-                    getFirst("hi") should bePresent { it shouldEqual "aaa" }
-                    getFirst("HI") should bePresent { it shouldEqual "aaa" }
-                    getFirst("ho") should bePresent { it shouldEqual "ccc" }
-                    getFirst("Ho") should bePresent { it shouldEqual "ccc" }
-                    getFirst("X-F") should bePresent { it shouldEqual "ö" }
-                    getFirst("HI") shouldEqual getFirst("hi")
-                    getFirst("HO") shouldEqual getFirst("ho")
-                    getFirst("x-f") shouldEqual getFirst("X-f")
-                    get("blah") should beEmpty()
-                    getFirst("blah") should notBePresent()
+                    get("hi") shouldBe listOf("aaa", "bbb")
+                    get("ho") shouldBe listOf("ccc")
+                    get("X-F") shouldBe listOf("ö")
+                    get("Hi") shouldBe get("hi")
+                    get("Hi") shouldBe get("HI")
+                    get("Ho") shouldBe get("ho")
+                    get("Ho") shouldBe get("hO")
+                    get("X-F") shouldBe get("x-f")
+                    getFirst("hi") shouldBePresent  { it shouldBe "aaa" }
+                    getFirst("HI") shouldBePresent { it shouldBe "aaa" }
+                    getFirst("ho") shouldBePresent { it shouldBe "ccc" }
+                    getFirst("Ho") shouldBePresent { it shouldBe "ccc" }
+                    getFirst("X-F") shouldBePresent { it shouldBe "ö" }
+                    getFirst("HI") shouldBe getFirst("hi")
+                    getFirst("HO") shouldBe getFirst("ho")
+                    getFirst("x-f") shouldBe getFirst("X-f")
+                    get("blah") shouldHaveSize(0)
+                    getFirst("blah") shouldBe beEmpty<String>()
 
                     contains("hi") shouldBe true
                     contains("Hi") shouldBe true
@@ -48,8 +48,8 @@ class HttpHeadersTest {
                     contains("X-F") shouldBe true
                     contains("Blah") shouldBe false
 
-                    headerNames shouldEqual listOf("hi", "hi", "ho", "X-F")
-                    uniqueHeaderNames shouldEqual setOf("HI", "HO", "X-F")
+                    headerNames shouldBe listOf("hi", "hi", "ho", "X-F")
+                    uniqueHeaderNames shouldBe setOf("HI", "HO", "X-F")
                 }
     }
 
@@ -61,13 +61,13 @@ class HttpHeadersTest {
                 .with("ho", "ccc xxx")
                 .with("hi", "ddd, eee,fff")
                 .build().run {
-                    get("hi") shouldEqual listOf("aaa, ccc", "bbb", "ddd, eee,fff")
-                    get("hi", ",\\s*") shouldEqual listOf("aaa", "ccc", "bbb", "ddd", "eee", "fff")
-                    get("ho") shouldEqual listOf("ccc xxx")
-                    get("ho", " ") shouldEqual listOf("ccc", "xxx")
+                    get("hi") shouldBe listOf("aaa, ccc", "bbb", "ddd, eee,fff")
+                    get("hi", ",\\s*") shouldBe listOf("aaa", "ccc", "bbb", "ddd", "eee", "fff")
+                    get("ho") shouldBe listOf("ccc xxx")
+                    get("ho", " ") shouldBe listOf("ccc", "xxx")
 
-                    headerNames shouldEqual listOf("hi", "hi", "ho", "hi")
-                    uniqueHeaderNames shouldEqual setOf("HI", "HO")
+                    headerNames shouldBe listOf("hi", "hi", "ho", "hi")
+                    uniqueHeaderNames shouldBe setOf("HI", "HO")
                 }
     }
 
@@ -89,11 +89,11 @@ class HttpHeadersTest {
                             "Accept: text/plain\r\n" +
                             "Date: 22 March 2012\r\n"
 
-                    toString() shouldEqual expectedHeaders
+                    toString() shouldBe expectedHeaders
 
                     val out = ByteArrayOutputStream()
                     writeTo(out)
-                    String(out.toByteArray(), Charsets.UTF_8) shouldEqual (expectedHeaders + "\r\n")
+                    String(out.toByteArray(), Charsets.UTF_8) shouldBe (expectedHeaders + "\r\n")
                 }
     }
 
@@ -109,10 +109,10 @@ class HttpHeadersTest {
                         .with("Accept", "text/xml")
                         .with("Accept", "text/plain")
                         .with("New", "True").build()).run {
-                    get("hi") shouldEqual listOf("bye")
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("text/xml", "text/plain")
-                    get("New") shouldEqual listOf("True")
+                    get("hi") shouldBe listOf("bye")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("text/xml", "text/plain")
+                    get("New") shouldBe listOf("True")
                     headerNames shouldBe listOf("hi", "ho", "Accept", "Accept", "New")
                 }
 
@@ -121,9 +121,9 @@ class HttpHeadersTest {
                 .with("Server", "RawHTTP")
                 .build()
                 .and(RawHttpHeaders.CONTENT_LENGTH_ZERO).run {
-                    get("Date") shouldEqual listOf("today")
-                    get("Server") shouldEqual listOf("RawHTTP")
-                    get("Content-Length") shouldEqual listOf("0")
+                    get("Date") shouldBe listOf("today")
+                    get("Server") shouldBe listOf("RawHTTP")
+                    get("Content-Length") shouldBe listOf("0")
                     headerNames shouldBe listOf("Date", "Server", "Content-Length")
                 }
     }
@@ -139,10 +139,10 @@ class HttpHeadersTest {
                 .with("Accept", "text/xml")
                 .with("Accept", "text/plain")
                 .with("New", "True").build().run {
-                    get("hi") shouldEqual listOf("aaa", "bbb", "bye")
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("application/json", "text/xml", "text/plain")
-                    get("New") shouldEqual listOf("True")
+                    get("hi") shouldBe listOf("aaa", "bbb", "bye")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("application/json", "text/xml", "text/plain")
+                    get("New") shouldBe listOf("True")
                     headerNames shouldBe listOf("hi", "hi", "ho", "Accept", "hi", "Accept", "Accept", "New")
                 }
     }
@@ -159,10 +159,10 @@ class HttpHeadersTest {
                         .with("Accept", "text/xml")
                         .with("Accept", "text/plain")
                         .with("New", "True").build()).build().run {
-                    get("hi") shouldEqual listOf("aaa", "bbb", "bye")
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("application/json", "text/xml", "text/plain")
-                    get("New") shouldEqual listOf("True")
+                    get("hi") shouldBe listOf("aaa", "bbb", "bye")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("application/json", "text/xml", "text/plain")
+                    get("New") shouldBe listOf("True")
                     headerNames shouldBe listOf("hi", "hi", "ho", "Accept", "hi", "Accept", "Accept", "New")
                 }
     }
@@ -173,7 +173,7 @@ class HttpHeadersTest {
             RawHttpHeaders.newBuilder()
                     .with("ABC(D)", "aaa").build()
         }
-        error.message shouldEqual "Invalid header name (contains illegal character at index 3)"
+        error.message shouldBe "Invalid header name (contains illegal character at index 3)"
     }
 
     @Test
@@ -190,7 +190,7 @@ class HttpHeadersTest {
             RawHttpHeaders.newBuilder()
                     .with("Hello", "hal\u007Fl").build()
         }
-        error.message shouldEqual "Invalid header value (contains illegal character at index 3)"
+        error.message shouldBe "Invalid header value (contains illegal character at index 3)"
     }
 
     @Test
@@ -217,8 +217,8 @@ class HttpHeadersTest {
                 .remove("hi")
                 .build().run {
                     get("hi") shouldBe emptyList<String>()
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("application/json")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("application/json")
                     headerNames shouldBe listOf("ho", "Accept")
                 }
     }
@@ -235,8 +235,8 @@ class HttpHeadersTest {
                 .build().run {
                     get("hi") shouldBe emptyList<String>()
                     get("Foo") shouldBe emptyList<String>()
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("application/json")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("application/json")
                     headerNames shouldBe listOf("ho", "Accept")
                 }
     }
@@ -250,9 +250,9 @@ class HttpHeadersTest {
                 .with("Accept", "application/json")
                 .overwrite("hi", "z")
                 .build().run {
-                    get("hi") shouldEqual listOf("z")
-                    get("ho") shouldEqual listOf("ccc")
-                    get("Accept") shouldEqual listOf("application/json")
+                    get("hi") shouldBe listOf("z")
+                    get("ho") shouldBe listOf("ccc")
+                    get("Accept") shouldBe listOf("application/json")
                     headerNames shouldBe listOf("hi", "ho", "Accept")
                 }
     }

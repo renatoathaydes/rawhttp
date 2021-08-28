@@ -1,11 +1,11 @@
 package rawhttp.core.body
 
-import io.kotlintest.matchers.beEmpty
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldThrow
-import org.junit.Ignore
-import org.junit.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttpOptions
 import rawhttp.core.internal.Bool
@@ -81,7 +81,7 @@ class InputStreamChunkDecoderTest {
     }
 
     @Test
-    @Ignore("Cannot parse extensions without a value") // FIXME
+    @Disabled("Cannot parse extensions without a value") // FIXME
     fun canDecodeChunkedBodyContainingExtensionsAndTrailer() {
         val chunkedBody = """
             4;foo=bar

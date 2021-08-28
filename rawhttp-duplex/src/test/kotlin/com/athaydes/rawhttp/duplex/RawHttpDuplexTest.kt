@@ -1,13 +1,10 @@
 package com.athaydes.rawhttp.duplex
 
 import http
-import io.kotlintest.matchers.beEmpty
-import io.kotlintest.matchers.haveSize
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttpHeaders
-import java.util.ArrayList
 import java.util.Arrays.asList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -53,8 +50,8 @@ class RawHttpDuplexTest {
         }
 
         textMessages shouldBe asList("received message")
-        binaryMessages should beEmpty()
-        errors should beEmpty()
+        binaryMessages shouldHaveSize 0
+        errors shouldHaveSize 0
 
         val responseBody = response.body.orElseThrow { AssertionError("Response should have body") }
 
@@ -62,7 +59,7 @@ class RawHttpDuplexTest {
         val chunkedResponseBody = responseBody.asChunkedBodyContents()
                 .orElseThrow { AssertionError("Cannot get body contents") }
 
-        chunkedResponseBody.chunks should haveSize(2)
+        chunkedResponseBody.chunks shouldHaveSize 2
 
         val firstChunk = chunkedResponseBody.chunks[0]
         val lastChunk = chunkedResponseBody.chunks[1]
@@ -71,7 +68,7 @@ class RawHttpDuplexTest {
         firstChunk.extensions.getFirst("Charset").orElse("NOT FOUND") shouldBe "UTF-8"
         java.lang.String(firstChunk.data, Charsets.UTF_8) shouldBe "hello duplex"
 
-        lastChunk.extensions.headerNames should beEmpty()
+        lastChunk.extensions.headerNames shouldHaveSize 0
         java.lang.String(lastChunk.data) shouldBe ""
     }
 
@@ -127,13 +124,13 @@ class RawHttpDuplexTest {
             throw AssertionError("Did not close handler within timeout")
         }
 
-        textMessages should beEmpty()
+        textMessages shouldHaveSize 0
         binaryMessages.map { it.asList() } shouldBe listOf(
                 listOf<Byte>(49, 50, 51, 52, 53), listOf<Byte>(50, 49))
-        errors should beEmpty()
+        errors shouldHaveSize 0
 
         extensionsList.size shouldBe 2
-        extensionsList[0].headerNames should beEmpty()
+        extensionsList[0].headerNames shouldHaveSize 0
         extensionsList[1].headerNames shouldBe listOf("something", "other")
         extensionsList[1].asMap() shouldBe mapOf(
                 "SOMETHING" to listOf("true"),
@@ -145,15 +142,15 @@ class RawHttpDuplexTest {
         val chunkedResponseBody = responseBody.asChunkedBodyContents()
                 .orElseThrow { AssertionError("Cannot get body contents") }
 
-        chunkedResponseBody.chunks should haveSize(2)
+        chunkedResponseBody.chunks shouldHaveSize 2
 
         val firstChunk = chunkedResponseBody.chunks[0]
         val lastChunk = chunkedResponseBody.chunks[1]
 
-        firstChunk.extensions.headerNames should beEmpty()
+        firstChunk.extensions.headerNames shouldHaveSize 0
         firstChunk.data.asList() shouldBe listOf<Byte>(10, 9, 8, 7, 6, 5)
 
-        lastChunk.extensions.headerNames should beEmpty()
+        lastChunk.extensions.headerNames shouldHaveSize 0
         java.lang.String(lastChunk.data) shouldBe ""
     }
 

@@ -1,12 +1,9 @@
 package com.athaydes.rawhttp.reqinedit
 
 import com.athaydes.rawhttp.reqinedit.js.JsEnvironment
-import io.kotlintest.matchers.beGreaterThanOrEqualTo
-import io.kotlintest.matchers.beLessThanOrEqualTo
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import org.junit.Test
+import io.kotest.matchers.longs.shouldBeInRange
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.HttpVersion
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpHeaders
@@ -34,12 +31,13 @@ class ReqInEditUnitTest {
     fun canRunSingleRequest() {
         val httpEnv = JsEnvironment()
 
-        val response = RawHttpResponse<Unit>(null, null,
-                StatusLine(HttpVersion.HTTP_1_1, 200, "OK"),
-                RawHttpHeaders.newBuilder()
-                        .with("Content-Type", "application/json")
-                        .build(),
-                StringBody("""{ "foo": "bar" }""").toBodyReader()
+        val response = RawHttpResponse<Unit>(
+            null, null,
+            StatusLine(HttpVersion.HTTP_1_1, 200, "OK"),
+            RawHttpHeaders.newBuilder()
+                .with("Content-Type", "application/json")
+                .build(),
+            StringBody("""{ "foo": "bar" }""").toBodyReader()
         ).eagerly()
 
         val receivedRequests = mutableListOf<RawHttpRequest>()
@@ -50,42 +48,43 @@ class ReqInEditUnitTest {
         }
 
         val request = RawHttpRequest(
-                RequestLine("GET", URI.create("http://hello.com/foo/bar"), HttpVersion.HTTP_1_1),
-                RawHttpHeaders.newBuilder()
-                        .with("Accept", "application/json")
-                        .with("Host", "hello.com")
-                        .build(),
-                null, null
+            RequestLine("GET", URI.create("http://hello.com/foo/bar"), HttpVersion.HTTP_1_1),
+            RawHttpHeaders.newBuilder()
+                .with("Accept", "application/json")
+                .with("Host", "hello.com")
+                .build(),
+            null, null
         ).eagerly()
 
         val unit = ReqInEditUnit(httpEnv, http, fakeClient)
 
         unit.run(listOf(ReqInEditEntry(request.toString(), emptyList(), null, null)))
 
-        receivedRequests shouldEqual listOf(request)
+        receivedRequests shouldBe listOf(request)
     }
 
     @Test
     fun canRunSingleRequestWithResponseHandler() {
         val httpEnv = JsEnvironment()
 
-        val response = RawHttpResponse<Unit>(null, null,
-                StatusLine(HttpVersion.HTTP_1_1, 404, "Not Found"),
-                RawHttpHeaders.newBuilder()
-                        .with("Content-Type", "application/json")
-                        .build(),
-                StringBody("""{ "error": "not here" }""").toBodyReader()
+        val response = RawHttpResponse<Unit>(
+            null, null,
+            StatusLine(HttpVersion.HTTP_1_1, 404, "Not Found"),
+            RawHttpHeaders.newBuilder()
+                .with("Content-Type", "application/json")
+                .build(),
+            StringBody("""{ "error": "not here" }""").toBodyReader()
         ).eagerly()
 
         val fakeClient = RawHttpClient { response }
 
         val request = RawHttpRequest(
-                RequestLine("GET", URI.create("http://hello.com/bar"), HttpVersion.HTTP_1_1),
-                RawHttpHeaders.newBuilder()
-                        .with("Accept", "application/json")
-                        .with("Host", "hello.com")
-                        .build(),
-                null, null
+            RequestLine("GET", URI.create("http://hello.com/bar"), HttpVersion.HTTP_1_1),
+            RawHttpHeaders.newBuilder()
+                .with("Accept", "application/json")
+                .with("Host", "hello.com")
+                .build(),
+            null, null
         ).eagerly()
 
         val script = """
@@ -144,12 +143,13 @@ class ReqInEditUnitTest {
             storedResponseRef = responseRef
         }
 
-        val response = RawHttpResponse<Unit>(null, null,
-                StatusLine(HttpVersion.HTTP_1_1, 200, "OK"),
-                RawHttpHeaders.newBuilder()
-                        .with("Content-Type", "application/json")
-                        .build(),
-                StringBody("""{ "foo": "bar" }""").toBodyReader()
+        val response = RawHttpResponse<Unit>(
+            null, null,
+            StatusLine(HttpVersion.HTTP_1_1, 200, "OK"),
+            RawHttpHeaders.newBuilder()
+                .with("Content-Type", "application/json")
+                .build(),
+            StringBody("""{ "foo": "bar" }""").toBodyReader()
         ).eagerly()
 
         val fakeClient = RawHttpClient { response }
@@ -158,16 +158,13 @@ class ReqInEditUnitTest {
 
         unit.run(listOf(ReqInEditEntry("GET http://hello.com/", emptyList(), null, "my-response.http")))
 
-        storedResponse shouldEqual response
-        storedResponseRef shouldEqual "my-response.http"
+        storedResponse shouldBe response
+        storedResponseRef shouldBe "my-response.http"
     }
 
     private infix fun HttpTestResult.shouldEndAfterStartAnd(beforeTestsTime: Long) {
-        startTime should beGreaterThanOrEqualTo(beforeTestsTime)
-                .and(beLessThanOrEqualTo(System.currentTimeMillis()))
-
-        endTime should beGreaterThanOrEqualTo(startTime)
-                .and(beLessThanOrEqualTo(System.currentTimeMillis()))
+        startTime shouldBeInRange (beforeTestsTime..System.currentTimeMillis())
+        endTime shouldBeInRange (startTime..System.currentTimeMillis())
     }
 
 }

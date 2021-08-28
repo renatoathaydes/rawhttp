@@ -7,9 +7,9 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
@@ -29,23 +29,21 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JavaSample {
 
     private static final int PORT = 8083;
 
-    @BeforeClass
+    @BeforeAll
     public static void startServer() throws Exception {
         Spark.port(PORT);
         Spark.get("/hello", "text/plain", (req, res) -> "Hello");
         RawHttp.waitForPortToBeTaken(PORT, Duration.ofSeconds(2));
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopServer() {
         Spark.stop();
     }
@@ -107,9 +105,9 @@ public class JavaSample {
             throw new RuntimeException(e);
         }
 
-        assertThat(rawHttpContentType, equalTo(httpComponentsContentType));
-        assertThat(rawHttpStatusCode, equalTo(httpComponentStatusCode));
-        assertThat(rawHttpResponseBody, equalTo(httpComponentsResponseBody));
+        assertEquals(rawHttpContentType, httpComponentsContentType);
+        assertEquals(rawHttpStatusCode, httpComponentStatusCode);
+        assertEquals(rawHttpResponseBody, httpComponentsResponseBody);
     }
 
     @Test
@@ -118,9 +116,9 @@ public class JavaSample {
         RawHttpRequest request = new RawHttp().parseRequest(String.format("GET localhost:%d/hello HTTP/1.0", PORT));
         EagerHttpResponse<?> response = client.send(request).eagerly();
 
-        assertThat(response.getStatusCode(), is(200));
-        assertThat(response.getBody().map(EagerBodyReader::toString)
-                .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
+        assertEquals(response.getStatusCode(), 200);
+        assertEquals(response.getBody().map(EagerBodyReader::toString)
+                .orElseThrow(() -> new RuntimeException("No body")), "Hello");
     }
 
     @Test
@@ -140,7 +138,7 @@ public class JavaSample {
         // call "eagerly()" in order to download the body
         System.out.println(response.eagerly());
 
-        assertThat(response.getStatusCode(), equalTo(200));
+        assertEquals(response.getStatusCode(), 200);
         assertTrue(response.getBody().isPresent());
 
         File responseFile = Files.createTempFile("rawhttp", ".http").toFile();
@@ -162,9 +160,9 @@ public class JavaSample {
 
         EagerHttpResponse<?> response = rawHttp.parseResponse(socket.getInputStream()).eagerly();
 
-        assertThat(response.getStatusCode(), is(200));
-        assertThat(response.getBody().map(EagerBodyReader::toString)
-                .orElseThrow(() -> new RuntimeException("No body")), equalTo("Hello"));
+        assertEquals(response.getStatusCode(), 200);
+        assertEquals(response.getBody().map(EagerBodyReader::toString)
+                .orElseThrow(() -> new RuntimeException("No body")), "Hello");
     }
 
     @Test
@@ -219,9 +217,9 @@ public class JavaSample {
             CloseableHttpResponse response = httpClient.execute(httpRequest);
             System.out.println("RESPONSE:\n" + response);
 
-            assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
-            assertThat(response.getEntity().getContentLength(), equalTo(9L));
-            assertThat(EntityUtils.toString(response.getEntity()), equalTo("something"));
+            assertEquals(response.getStatusLine().getStatusCode(), 200);
+            assertEquals(response.getEntity().getContentLength(), 9L);
+            assertEquals(EntityUtils.toString(response.getEntity()), "something");
         } finally {
             httpClient.close();
             server.close();

@@ -1,12 +1,12 @@
 package rawhttp.core.client
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldThrow
-import org.junit.Test
+import io.kotest.assertions.fail
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpRequest
 import java.net.URI
-import kotlin.test.fail
 
 // a real HTTP response send by GitHub
 const val LARGE_REDIRECT = """

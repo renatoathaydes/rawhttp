@@ -1,10 +1,10 @@
 package com.athaydes.rawhttp.duplex
 
-import io.kotlintest.matchers.beEmpty
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldThrow
-import org.junit.After
-import org.junit.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSize
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.client.TcpRawHttpClient
@@ -28,12 +28,13 @@ class RawHttpDuplexSocketTimeoutTest {
         server = startServer()
     }
 
-    @After
+    @AfterEach
     fun cleanup() {
         server.stop()
     }
 
-    @Test(timeout = 1500L)
+    @Test
+    @Timeout(2, unit = TimeUnit.SECONDS)
     fun shouldTimeoutWithoutPing() {
         val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 }))
         shouldThrow<SocketTimeoutException> {
@@ -49,10 +50,11 @@ class RawHttpDuplexSocketTimeoutTest {
             if (throwable != null) throw throwable
         }
 
-        serverMessages should beEmpty()
+        serverMessages shouldHaveSize 0
     }
 
-    @Test(timeout = 1500L)
+    @Test
+    @Timeout(2, unit = TimeUnit.SECONDS)
     fun shouldNotTimeoutWithPing() {
         val scheduler = Executors.newSingleThreadScheduledExecutor()
         val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 250 }))
@@ -77,7 +79,7 @@ class RawHttpDuplexSocketTimeoutTest {
         val throwable = errorQueue.poll(500, TimeUnit.MILLISECONDS)
         if (throwable != null) throw throwable
 
-        serverMessages should beEmpty()
+        serverMessages shouldHaveSize 0
     }
 
     private fun startServer(): RawHttpServer {

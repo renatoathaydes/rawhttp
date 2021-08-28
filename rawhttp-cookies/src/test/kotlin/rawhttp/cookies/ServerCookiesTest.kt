@@ -1,9 +1,9 @@
 package rawhttp.cookies
 
-import io.kotlintest.matchers.shouldBe
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpHeaders
 import rawhttp.core.RawHttpResponse
@@ -18,7 +18,7 @@ class ServerCookiesTest {
 
     companion object {
         val HTTP = RawHttp()
-        val port = 8084
+        val port = 8089
         var server: TcpRawHttpServer? = null
 
         object Responses {
@@ -26,7 +26,7 @@ class ServerCookiesTest {
         }
 
         @JvmStatic
-        @BeforeClass
+        @BeforeAll
         fun setupServer() {
             server = TcpRawHttpServer(port).apply {
                 start { req ->
@@ -75,7 +75,7 @@ class ServerCookiesTest {
         }
 
         @JvmStatic
-        @AfterClass
+        @AfterAll
         fun stopServer() {
             server?.stop()
         }

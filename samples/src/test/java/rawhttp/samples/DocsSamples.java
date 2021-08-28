@@ -1,7 +1,7 @@
 package rawhttp.samples;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
@@ -34,10 +34,11 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore("Do not run these tests automatically.")
+@Disabled("Do not run these tests automatically.")
 public class DocsSamples {
 
     @Test
@@ -281,17 +282,16 @@ public class DocsSamples {
         System.out.println(requestWithBody.eagerly());
     }
 
-    @Test(expected = FileNotFoundException.class)
+    @Test
     public void replacingBodyWithFile() throws Throwable {
         RawHttp http = new RawHttp();
         RawHttpRequest request = http.parseRequest("POST http://example.com/hello");
-        try {
+        RuntimeException error = assertThrows(RuntimeException.class, () -> {
             RawHttpRequest requestWithBody = request.withBody(
                     new FileBody(new File("hello.request"), "text/plain"));
             System.out.println(requestWithBody.eagerly());
-        } catch (RuntimeException e) {
-            throw e.getCause();
-        }
+        });
+        assertEquals(error.getCause().getClass(), FileNotFoundException.class);
     }
 
     @Test

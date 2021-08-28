@@ -1,11 +1,10 @@
 package rawhttp.core.server
 
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
-import rawhttp.core.bePresent
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.errors.InvalidHttpRequest
@@ -67,7 +66,7 @@ class RawHttpServerTests {
             val response = httpClient.send(request).eagerly()
 
             response.statusCode shouldBe 200
-            response.body should bePresent {
+            response.body shouldBePresent {
                 it.asRawString(Charsets.UTF_8) shouldBe "Hello RawHTTP!"
             }
         } finally {

@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit
 
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
 
+val IS_WINDOWS = System.getProperty("os.name").lowercase().contains("windows")
+
+val EOL = if (IS_WINDOWS) "\r\n" else "\n"
+
 val replyResponseFile = File("response.txt")
 
 object CliRunner {
@@ -41,9 +45,11 @@ object CliRunner {
             throw IllegalStateException("The CLI launcher does not exist: $cliJar")
         }
 
+        val javaExec = if (IS_WINDOWS) "java.exe" else "java"
+
         val java = sequenceOf(
-            Paths.get(javaHome, "bin", "java").toFile(),
-            Paths.get(javaHome, "jre", "bin", "java").toFile()
+            Paths.get(javaHome, "bin", javaExec).toFile(),
+            Paths.get(javaHome, "jre", "bin", javaExec).toFile()
         ).filter { it.isFile }.firstOrNull()
             ?: throw IllegalStateException(
                 "Cannot locate the java command under " +
@@ -259,23 +265,23 @@ abstract class RawHttpCliTester {
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIsSuccessResponseAndThenStatistics(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            val separator = "\n---------------------------------\n"
+            val separator = "$EOL---------------------------------$EOL"
             val separatorIndex = handle.out.indexOf(separator)
             assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
-            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + EOL))
             assertStatistics(handle.out.substring(separatorIndex + separator.length))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
@@ -284,7 +290,8 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
+                    EOL + SUCCESS_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
@@ -302,7 +309,7 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseReplyToFiles(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("Received:This is the foo file\n"))
+            assertThat(handle.out, equalTo("Received:This is the foo file$EOL"))
             assertNoSysErrOutput(handle)
         }
 
@@ -322,7 +329,7 @@ abstract class RawHttpCliTester {
         fun assertGetFooThenPostFooRequestsAndStats(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
 
-            val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n\n"
+            val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n$EOL"
             assertThat(handle.out, startsWith(getFooRequest))
 
             var out = handle.out.substring(getFooRequest.length)
@@ -332,7 +339,7 @@ abstract class RawHttpCliTester {
             assertStatistics(firstStats)
 
             val postFooRequest = "POST /foo HTTP/1.1\r\nContent-Type: application/json\r\n" +
-                    "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}\n"
+                    "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}$EOL"
             out = out.substring(secondRequestIndex)
             assertThat(out, startsWith(postFooRequest))
 
@@ -345,10 +352,10 @@ abstract class RawHttpCliTester {
         fun assertGetFooResponseThenPostFooResponse(handle: ProcessHandle, postFooBody: String) {
             val postResponse = SUCCESS_POST_FOO_HTTP_RESPONSE +
                     "\r\nContent-Length: ${postFooBody.length}" +
-                    "\r\n\r\n$postFooBody\n"
+                    "\r\n\r\n$postFooBody$EOL"
 
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + "\n" + postResponse))
+            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + EOL + postResponse))
             assertNoSysErrOutput(handle)
         }
 
@@ -381,7 +388,7 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseBody(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("something\n"))
+            assertThat(handle.out, equalTo("something$EOL"))
             assertNoSysErrOutput(handle)
         }
 
@@ -397,15 +404,22 @@ abstract class RawHttpCliTester {
                 assertEquals(get(5), "")
             }
 
-            assertThat(handle.err, equalTo(""))
+            assertNoSysErrOutput(handle)
         }
 
         fun assertNoSysErrOutput(handle: ProcessHandle) {
-            var errOut = handle.err
-            if (errOut.startsWith("Picked up _JAVA_OPTIONS")) {
-                errOut = errOut.lines().drop(1).joinToString("\n")
-            }
-            assertThat(errOut, equalTo(""))
+            assertSysErrOutput(handle, "")
+        }
+
+        fun assertSysErrOutput(handle: ProcessHandle, expectedOutput: String) {
+            val errOut = handle.err
+                .lines()
+                .filter {
+                    !it.startsWith("Picked up _JAVA_OPTIONS") &&
+                            // FIXME #49 - replace Nashorn with GraalVM.js
+                            !it.startsWith("Warning: Nashorn")
+                }
+            assertThat(errOut, equalTo(expectedOutput.lines()))
         }
 
         fun sendHttpRequest(request: String): RawHttpResponse<*> {
@@ -439,10 +453,14 @@ abstract class RawHttpCliTester {
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
             if (statusCode != expectedExitCode) {
-                println("Process sysout:\n$out")
-                println("Process syserr:\n$err")
-                throw AssertionError("Expected process to exit with code $expectedExitCode but was $statusCode")
+                throw AssertionError("Expected process to exit with code $expectedExitCode " +
+                        "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err")
             }
+        }
+
+        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode(){
+            val sigKillCode = if (IS_WINDOWS) 1 else 143
+            verifyProcessTerminatedWithExitCode(sigKillCode)
         }
 
         fun ProcessHandle.sendStopSignalToRawHttpServer() {

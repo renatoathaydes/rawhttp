@@ -1,10 +1,9 @@
 package rawhttp.core.server
 
-import io.kotlintest.matchers.between
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.matchers.shouldHave
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.ints.between
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldHave
 import rawhttp.core.RawHttpHeaders
 import rawhttp.core.validDateHeader
 import java.lang.Thread.sleep
@@ -56,7 +55,7 @@ class DateHeaderProviderTests : StringSpec({
         latch.await(500, TimeUnit.MILLISECONDS) shouldBe true
 
         // as we set the Date values to each Thread ID
-        dateHeaderValues shouldEqual threadIds
+        dateHeaderValues shouldBe threadIds
 
         // the test runs for at least totalTime = (repeatRunsPerThread * sleepPerRun) ms.
         // so the number of times the factory method should be called is:

@@ -1,8 +1,8 @@
 package com.athaydes.rawhttp.duplex
 
-import io.kotlintest.matchers.shouldBe
-import org.junit.After
-import org.junit.Test
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
 import rawhttp.core.server.RawHttpServer
@@ -25,7 +25,7 @@ class RawHttpDuplexIntegrationTest {
         server = startEchoDuplexServer()
     }
 
-    @After
+    @AfterEach
     fun cleanup() {
         server.stop()
     }
