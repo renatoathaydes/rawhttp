@@ -26,7 +26,9 @@ import java.util.concurrent.TimeUnit
 
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
 
-val EOL = if (System.getProperty("os.name").toLowerCase().contains("windows")) "\r\n" else "\n"
+val IS_WINDOWS = System.getProperty("os.name").lowercase().contains("windows")
+
+val EOL = if (IS_WINDOWS) "\r\n" else "\n"
 
 val replyResponseFile = File("response.txt")
 
@@ -42,9 +44,8 @@ object CliRunner {
         if (!cliJar.isFile) {
             throw IllegalStateException("The CLI launcher does not exist: $cliJar")
         }
-        val javaExec =
-            if (System.getProperty("os.name").toLowerCase().contains("windows")) "java.exe"
-            else "java"
+
+        val javaExec = if (IS_WINDOWS) "java.exe" else "java"
 
         val java = sequenceOf(
             Paths.get(javaHome, "bin", javaExec).toFile(),
@@ -264,23 +265,23 @@ abstract class RawHttpCliTester {
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIsSuccessResponseAndThenStatistics(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            val separator = "\n---------------------------------\n"
+            val separator = "$EOL---------------------------------$EOL"
             val separatorIndex = handle.out.indexOf(separator)
             assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
-            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + EOL))
             assertStatistics(handle.out.substring(separatorIndex + separator.length))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
@@ -354,7 +355,7 @@ abstract class RawHttpCliTester {
                     "\r\n\r\n$postFooBody$EOL"
 
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + "\n" + postResponse))
+            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + EOL + postResponse))
             assertNoSysErrOutput(handle)
         }
 
