@@ -122,7 +122,8 @@ class AllResponsePrinter implements ResponsePrinter {
     void printStats(RequestStatistics statistics, boolean printSeparators) {
         runAsync(() -> {
             if (printSeparators) {
-                System.out.println("\n---------------------------------");
+                System.out.println();
+                System.out.println("---------------------------------");
             }
             statistics.writeTo(System.out);
         });
