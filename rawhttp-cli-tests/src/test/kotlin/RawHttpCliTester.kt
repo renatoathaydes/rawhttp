@@ -309,7 +309,7 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseReplyToFiles(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("Received:This is the foo file\n"))
+            assertThat(handle.out, equalTo("Received:This is the foo file$EOL"))
             assertNoSysErrOutput(handle)
         }
 
@@ -456,6 +456,11 @@ abstract class RawHttpCliTester {
                 throw AssertionError("Expected process to exit with code $expectedExitCode " +
                         "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err")
             }
+        }
+
+        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode(){
+            val sigKillCode = if (IS_WINDOWS) 1 else 143
+            verifyProcessTerminatedWithExitCode(sigKillCode)
         }
 
         fun ProcessHandle.sendStopSignalToRawHttpServer() {

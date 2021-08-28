@@ -131,7 +131,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(response.statusCode, equalTo(200))
         assertTrue(response.body.isPresent)
@@ -170,7 +170,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(response.statusCode, equalTo(200))
         assertTrue(response.body.isPresent)
@@ -206,7 +206,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(mp3response.statusCode, equalTo(200))
         assertTrue(mp3response.body.isPresent)
@@ -243,7 +243,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(jsonResponse.statusCode, equalTo(200))
         assertTrue(jsonResponse.body.isPresent)
@@ -283,7 +283,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(afterModifiedResponse.statusCode, equalTo(304))
         assertFalse(afterModifiedResponse.body.isPresent)
@@ -321,7 +321,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat(afterModifiedResponse.statusCode, equalTo(200))
         assertTrue(afterModifiedResponse.body.isPresent)
@@ -356,8 +356,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        val sigKillCode = if (IS_WINDOWS) 1 else 143
-        handle.verifyProcessTerminatedWithExitCode(sigKillCode)
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(200))
@@ -411,7 +410,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat("Server returned unexpected status code\n$handle",
                 response.statusCode, equalTo(404))
@@ -443,7 +442,7 @@ class RawHttpCliTest : RawHttpCliTester() {
             handle.sendStopSignalToRawHttpServer()
         }
 
-        handle.verifyProcessTerminatedWithExitCode(143) // SIGKILL
+        handle.verifyProcessTerminatedWithSigKillExitCode()
 
         assertThat("Server returned unexpected status code\n$handle",
                 jsonResponse.statusCode, equalTo(200))
