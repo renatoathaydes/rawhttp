@@ -1,8 +1,8 @@
 package rawhttp.samples;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpResponse;
@@ -18,8 +18,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProxySample {
     private static final int PROXY_PORT = 8988;
@@ -28,7 +27,7 @@ public class ProxySample {
     private TcpRawHttpServer proxyServer;
     private TcpRawHttpClient proxyClient;
 
-    @Before
+    @BeforeEach
     public void startTargetServer() throws Exception {
         Spark.port(TARGET_SERVER_PORT);
         Spark.get("/hello", "text/plain", (req, res) -> {
@@ -40,7 +39,7 @@ public class ProxySample {
         RawHttp.waitForPortToBeTaken(TARGET_SERVER_PORT, Duration.ofSeconds(2));
     }
 
-    @Before
+    @BeforeEach
     public void startProxyServer() throws Exception {
         proxyServer = new TcpRawHttpServer(PROXY_PORT);
         proxyClient = new TcpRawHttpClient();
@@ -69,7 +68,7 @@ public class ProxySample {
         RawHttp.waitForPortToBeTaken(PROXY_PORT, Duration.ofSeconds(2));
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws IOException {
         Spark.stop();
         proxyServer.stop();
@@ -86,24 +85,24 @@ public class ProxySample {
             RawHttpResponse<Void> resp = testClient.send(http.parseRequest(
                     "GET /hello\nHost: localhost:" + PROXY_PORT));
 
-            assertThat(resp.getStatusCode(), equalTo(200));
-            assertThat(resp.getBody().map(decodeBody()).orElse("<nothing>"), equalTo("Hello"));
+            assertEquals(resp.getStatusCode(), 200);
+            assertEquals(resp.getBody().map(decodeBody()).orElse("<nothing>"), "Hello");
 
             // POST request
             RawHttpResponse<Void> resp2 = testClient.send(http.parseRequest(
                     "POST /echo\nHost: localhost:" + PROXY_PORT)
                     .withBody(new StringBody("hi there", "text/plain")));
 
-            assertThat(resp2.getStatusCode(), equalTo(200));
-            assertThat(resp2.getBody().map(decodeBody()).orElse("<nothing>"), equalTo("hi there"));
+            assertEquals(resp2.getStatusCode(), 200);
+            assertEquals(resp2.getBody().map(decodeBody()).orElse("<nothing>"), "hi there");
 
             // PUT request
             RawHttpResponse<Void> resp3 = testClient.send(http.parseRequest(
                     "PUT /echo\nHost: localhost:" + PROXY_PORT)
                     .withBody(new StringBody("this is a PUT request", "text/plain")));
 
-            assertThat(resp3.getStatusCode(), equalTo(200));
-            assertThat(resp3.getBody().map(decodeBody()).orElse("<nothing>"), equalTo("this is a PUT request"));
+            assertEquals(resp3.getStatusCode(), 200);
+            assertEquals(resp3.getBody().map(decodeBody()).orElse("<nothing>"), "this is a PUT request");
         }
     }
 

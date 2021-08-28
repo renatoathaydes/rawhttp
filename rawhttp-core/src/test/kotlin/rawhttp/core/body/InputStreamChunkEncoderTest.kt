@@ -1,6 +1,6 @@
 package rawhttp.core.body
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import rawhttp.core.shouldHaveSameElementsAs
 import java.io.ByteArrayInputStream
 

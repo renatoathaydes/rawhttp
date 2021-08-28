@@ -1,11 +1,10 @@
 package rawhttp.samples
 
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.AfterClass
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.BeforeClass
-import org.junit.Test
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.client.TcpRawHttpClient
 import spark.Spark
@@ -33,14 +32,14 @@ fun stopSparkServer() {
 class KotlinSamples {
 
     companion object {
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setup() {
             startSparkServer()
             RawHttp.waitForPortToBeTaken(testPort, Duration.ofSeconds(4))
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun cleanup() {
             stopSparkServer()
@@ -49,11 +48,10 @@ class KotlinSamples {
 
     @Test
     fun simpleRawHTTPKotlinSample() {
-        val req = RawHttp().parseRequest("GET /hello\r\nHost: localhost:$testPort").eagerly().run {
-            assertThat(method, equalTo("GET"))
-            assertThat(uri, equalTo(URI.create("http://localhost:$testPort/hello")))
-            assertThat(headers["Host"], equalTo(listOf("localhost:$testPort")))
-            this
+        val req = RawHttp().parseRequest("GET /hello\r\nHost: localhost:$testPort").eagerly().apply {
+            method shouldBe "GET"
+            uri shouldBe URI.create("http://localhost:$testPort/hello")
+            headers["Host"] shouldBe listOf("localhost:$testPort")
         }
 
         // send request to the Spark server
@@ -62,12 +60,13 @@ class KotlinSamples {
 
         // check the response
         RawHttp().parseResponse(socket.getInputStream()).run {
-            assertThat(statusCode, equalTo(200))
-            assertTrue(body.isPresent)
-            if (body.get().isChunked) {
-                assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo("Hello"))
-            } else {
-                assertThat(body.get().asRawString(UTF_8), equalTo("Hello"))
+            statusCode shouldBe 200
+            body shouldBePresent { b ->
+                if (b.isChunked) {
+                    b.asChunkedBodyContents().get().asString(UTF_8) shouldBe "Hello"
+                } else {
+                    b.asRawString(UTF_8) shouldBe "Hello"
+                }
             }
         }
     }
@@ -76,23 +75,24 @@ class KotlinSamples {
     fun postSomethingUsingTheTCPClient() {
         val client = TcpRawHttpClient()
 
-        val req = RawHttp().parseRequest("""
+        val req = RawHttp().parseRequest(
+            """
                 POST /repeat?text=helloKotlin&count=1000
                 User-Agent: RawHTTP
-                Host: localhost:$testPort""".trimIndent())
+                Host: localhost:$testPort""".trimIndent()
+        )
 
         val res = client.send(req)
 
         res.run {
-            assertThat(statusCode, equalTo(200))
-            assertTrue(body.isPresent)
-
-            val expectedBody = "helloKotlin".repeat(1_000)
-
-            if (body.get().isChunked) {
-                assertThat(body.get().asChunkedBodyContents().get().asString(UTF_8), equalTo(expectedBody))
-            } else {
-                assertThat(body.get().asRawString(UTF_8), equalTo(expectedBody))
+            statusCode shouldBe 200
+            body shouldBePresent { b ->
+                val expectedBody = "helloKotlin".repeat(1_000)
+                if (b.isChunked) {
+                    b.asChunkedBodyContents().get().asString(UTF_8) shouldBe expectedBody
+                } else {
+                    b.asRawString(UTF_8) shouldBe expectedBody
+                }
             }
         }
     }

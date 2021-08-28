@@ -3,12 +3,11 @@ package com.athaydes.rawhttp.reqinedit.js
 import com.athaydes.rawhttp.reqinedit.HttpTestResult
 import com.athaydes.rawhttp.reqinedit.HttpTestsReporter
 import com.athaydes.rawhttp.reqinedit.ReqInEditParserTest
-import io.kotlintest.matchers.between
-import io.kotlintest.matchers.match
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldThrow
-import org.junit.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.longs.shouldBeInRange
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldMatch
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import java.io.File
 import javax.script.ScriptException
@@ -20,18 +19,18 @@ class JsEnvironmentTest {
 
     @Test
     fun canComputeRandomInt() {
-        jsEnv.renderTemplate("number is {{ \$randomInt }}") should match("number is \\d+")
+        jsEnv.renderTemplate("number is {{ \$randomInt }}") shouldMatch("number is \\d+")
     }
 
     @Test
     fun canComputeRandomUUID() {
-        jsEnv.renderTemplate("rand UUID {{ \$uuid }}") should match("rand UUID [a-f0-9-]{36}")
+        jsEnv.renderTemplate("rand UUID {{ \$uuid }}") shouldMatch("rand UUID [a-f0-9-]{36}")
     }
 
     @Test
     fun canComputeTimestamp() {
         val now = System.currentTimeMillis()
-        jsEnv.renderTemplate("{{\$timestamp}}").toLong() shouldBe between(now, now + 5000L)
+        jsEnv.renderTemplate("{{\$timestamp}}").toLong() shouldBeInRange(now..now + 5000L)
     }
 
     @Test

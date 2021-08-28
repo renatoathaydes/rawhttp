@@ -1,8 +1,8 @@
 package rawhttp.cookies.persistence
 
-import io.kotlintest.matchers.between
-import io.kotlintest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.longs.shouldBeInRange
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.cookies.persist.FileCookieJar
 import rawhttp.cookies.persist.OnWriteFlushStrategy
 import java.io.File
@@ -87,7 +87,7 @@ class FileCookieJarTest {
 
         // the equals method of HttpCookie ignores most attributes, so check them
         cookieJar[URI.create("foo.com")].forEach { cookie ->
-            cookie.maxAge shouldBe between(29, 31)
+            cookie.maxAge shouldBeInRange(29L..31L)
         }
 
         cookieJar[URI.create("https://bar.com")].first().run {

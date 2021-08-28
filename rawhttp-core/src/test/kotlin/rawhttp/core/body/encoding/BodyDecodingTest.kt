@@ -1,9 +1,11 @@
 package rawhttp.core.body.encoding
 
-import io.kotlintest.matchers.beOfType
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldThrow
-import org.junit.Test
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.beOfType
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpOptions
@@ -17,9 +19,9 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Optional
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipException
-import kotlin.test.assertNotNull
 
 class BodyDecodingTest {
 
@@ -130,7 +132,8 @@ class BodyDecodingTest {
         actualDecodedBody shouldBe "hello"
     }
 
-    @Test(timeout = 2000L)
+    @Test
+    @Timeout(2L, unit = TimeUnit.SECONDS)
     fun corruptedChunkedGzippedBodyDoesNotHang() {
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-chunked-and-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)
@@ -139,10 +142,11 @@ class BodyDecodingTest {
         assertNotNull(error.message)
         error.message shouldBe "java.util.zip.ZipException: Not in GZIP format"
         assertNotNull(error.cause)
-        error.cause shouldBe beOfType<ZipException>()
+        error.cause shouldBe beOfType(ZipException::class)
     }
 
-    @Test(timeout = 2000L)
+    @Test
+    @Timeout(2L, unit = TimeUnit.SECONDS)
     fun tryingToDecodeCorruptedGzippedBodyGeneratesException() {
         val gzippedFileStream = BodyDecodingTest::class.java.getResourceAsStream("corrupted-gzipped-response.http")
         val response = RawHttp().parseResponse(gzippedFileStream)

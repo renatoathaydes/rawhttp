@@ -1,11 +1,11 @@
 package rawhttp.cookies.persistence
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldNotBe
-import io.kotlintest.mock.mock
-import org.junit.Test
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import org.junit.jupiter.api.Test
 import rawhttp.cookies.persist.PeriodicFlushStrategy
 import java.time.Duration
+import java.util.concurrent.Delayed
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
@@ -25,12 +25,12 @@ class PeriodicFlushStrategyTest {
                 initialDelay shouldBe 1000L
                 period shouldBe 1000L
                 unit shouldBe TimeUnit.MILLISECONDS
-                return mock()
+                return MockScheduledFuture
             }
 
             override fun submit(task: Runnable): Future<*> {
                 task.run()
-                return mock()
+                return MockScheduledFuture
             }
         }
 
@@ -51,7 +51,7 @@ class PeriodicFlushStrategyTest {
         count shouldBe 0
 
         // WHEN we update the cookie store
-        strategy.onUpdate(mock())
+        strategy.onUpdate(MockCookieStore)
 
         // AND run the flush action
         flushAction?.run()
@@ -59,4 +59,33 @@ class PeriodicFlushStrategyTest {
         // THEN flush should be called
         count shouldBe 1
     }
+}
+
+object MockScheduledFuture: ScheduledFuture<Unit> {
+    override fun compareTo(other: Delayed?): Int {
+        return -1
+    }
+
+    override fun getDelay(unit: TimeUnit): Long {
+        return 0L
+    }
+
+    override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+        return false
+    }
+
+    override fun isCancelled(): Boolean {
+        return false
+    }
+
+    override fun isDone(): Boolean {
+        return false
+    }
+
+    override fun get() {
+    }
+
+    override fun get(timeout: Long, unit: TimeUnit) {
+    }
+
 }

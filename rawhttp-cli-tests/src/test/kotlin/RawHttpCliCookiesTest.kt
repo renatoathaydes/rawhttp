@@ -1,8 +1,9 @@
+import RawHttpCliTester.Companion.assertNoSysErrOutput
+import RawHttpCliTester.Companion.assertSysErrOutput
 import RawHttpCliTester.Companion.verifyProcessTerminatedWithExitCode
-import io.kotlintest.matchers.haveSize
-import io.kotlintest.matchers.match
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldMatch
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -144,7 +145,7 @@ class RawHttpCliCookiesTest {
 
         val outLines = handle.out.lines()
 
-        outLines should haveSize(21)
+        outLines shouldHaveSize(21)
 
         outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
                 "Location: http://localhost:8086/login",
@@ -155,21 +156,21 @@ class RawHttpCliCookiesTest {
                 "Content-Length: 28",
                 "",
                 "Send your credentials to me!")
-        outLines[9] should match("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
+        outLines[9] shouldMatch("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
         outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
                 "Content-Length: 0",
                 "",
                 "")
-        outLines[14] should match("TEST OK \\(\\d+ms\\): We get the bad credentials response")
+        outLines[14] shouldMatch("TEST OK \\(\\d+ms\\): We get the bad credentials response")
         outLines.subList(15, 19) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
                 "Content-Length: 0",
                 "",
                 "")
-        outLines[19] should match("TEST FAILED \\(\\d+ms\\): We get the SID cookie")
+        outLines[19] shouldMatch("TEST FAILED \\(\\d+ms\\): We get the SID cookie")
         outLines[20] shouldBe ""
 
-        handle.err.trim() shouldBe "expected 200 response, but status was 401$EOL" +
-                "FAIL: There were test failures!"
+        assertSysErrOutput(handle, "expected 200 response, but status was 401$EOL" +
+                "FAIL: There were test failures!")
     }
 
     @Test
@@ -200,16 +201,16 @@ class RawHttpCliCookiesTest {
                 "",
                 "Hello user")
 
-        handle2.err.trim() shouldBe """
+        assertSysErrOutput(handle2, """
             expected to go to login page, got response: Hello user
             FAIL: There were test failures!
-        """.trimIndent().trimEnd()
+        """.trimIndent().trimEnd())
     }
 
     private fun assertHttpFileRanSuccessfully(handle: ProcessHandle) {
         val outLines = handle.out.lines()
 
-        outLines should haveSize(29)
+        outLines shouldHaveSize(29)
 
         outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
                 "Location: http://localhost:8086/login",
@@ -220,28 +221,28 @@ class RawHttpCliCookiesTest {
                 "Content-Length: 28",
                 "",
                 "Send your credentials to me!")
-        outLines[9] should match("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
+        outLines[9] shouldMatch("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
         outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
                 "Content-Length: 0",
                 "",
                 "")
-        outLines[14] should match("TEST OK \\(\\d+ms\\): We get the bad credentials response")
+        outLines[14] shouldMatch("TEST OK \\(\\d+ms\\): We get the bad credentials response")
         outLines.subList(15, 21) shouldBe listOf("HTTP/1.1 200 OK",
                 "Content-Type: text/plain",
                 "Content-Length: 9",
                 "Set-Cookie: sid=\"foo\"; Max-Age=120",
                 "",
                 "something")
-        outLines[21] should match("TEST OK \\(\\d+ms\\): We get the SID cookie")
+        outLines[21] shouldMatch("TEST OK \\(\\d+ms\\): We get the SID cookie")
         outLines.subList(22, 27) shouldBe listOf("HTTP/1.1 200 OK",
                 "Content-Type: text/plain",
                 "Content-Length: 10",
                 "",
                 "Hello user")
-        outLines[27] should match("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted")
+        outLines[27] shouldMatch("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted")
         outLines[28] shouldBe ""
 
-        handle.err shouldBe ""
+        assertNoSysErrOutput(handle)
     }
 
 }

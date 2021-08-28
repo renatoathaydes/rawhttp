@@ -1,12 +1,10 @@
 package rawhttp.core.body
 
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
 import rawhttp.core.HttpVersion
 import rawhttp.core.RawHttp
-import rawhttp.core.bePresent
 import rawhttp.core.fileFromResource
 import rawhttp.core.shouldHaveSameElementsAs
 import java.net.URI
@@ -21,12 +19,12 @@ class FileBodyTest : StringSpec({
         request.withBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
-            uri shouldEqual URI.create("http://localhost:8080/404")
-            headers.asMap() shouldEqual mapOf(
+            uri shouldBe URI.create("http://localhost:8080/404")
+            headers.asMap() shouldBe mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "HOST" to listOf("localhost"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body shouldBePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -40,12 +38,12 @@ class FileBodyTest : StringSpec({
         request.withBody(fileBody).eagerly().run {
             method shouldBe "PUT"
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1 // the default
-            uri shouldEqual URI.create("http://localhost:8080/404")
-            headers.asMap() shouldEqual mapOf(
+            uri shouldBe URI.create("http://localhost:8080/404")
+            headers.asMap() shouldBe mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "HOST" to listOf("localhost"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body shouldBePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -57,12 +55,12 @@ class FileBodyTest : StringSpec({
         response.withBody(fileBody).eagerly().run {
             statusCode shouldBe 200
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
-            startLine.reason shouldEqual "OK"
-            headers.asMap() shouldEqual mapOf(
+            startLine.reason shouldBe "OK"
+            headers.asMap() shouldBe mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "SERVER" to listOf("Apache"),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body shouldBePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 
@@ -76,11 +74,11 @@ class FileBodyTest : StringSpec({
         response.withBody(fileBody).eagerly().run {
             statusCode shouldBe 201
             startLine.httpVersion shouldBe HttpVersion.HTTP_1_1
-            startLine.reason shouldEqual "CREATED"
-            headers.asMap() shouldEqual mapOf(
+            startLine.reason shouldBe "CREATED"
+            headers.asMap() shouldBe mapOf(
                     "CONTENT-LENGTH" to listOf(fileBody.file.length().toString()),
                     "CONTENT-TYPE" to listOf("image/png"))
-            body should bePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
+            body shouldBePresent { it.asRawBytes() shouldHaveSameElementsAs fileBody.file.readBytes() }
         }
     }
 

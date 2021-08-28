@@ -16,7 +16,7 @@ public final class JsTestReporter {
         long endTime = System.currentTimeMillis();
         httpTestsReporter.report(new HttpTestResult(
                 (String) objectMirror.get("name"),
-                (long) objectMirror.get("time"),
+                ((Number) objectMirror.get("time")).longValue(),
                 endTime,
                 null));
     }
@@ -25,7 +25,7 @@ public final class JsTestReporter {
         long endTime = System.currentTimeMillis();
         httpTestsReporter.report(new HttpTestResult(
                 (String) objectMirror.get("name"),
-                (long) objectMirror.get("time"),
+                ((Number) objectMirror.get("time")).longValue(),
                 endTime,
                 objectMirror.get("error").toString()));
     }

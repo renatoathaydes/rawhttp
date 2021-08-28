@@ -403,15 +403,24 @@ abstract class RawHttpCliTester {
                 assertEquals(get(5), "")
             }
 
-            assertThat(handle.err, equalTo(""))
+            assertNoSysErrOutput(handle)
         }
 
         fun assertNoSysErrOutput(handle: ProcessHandle) {
-            var errOut = handle.err
-            if (errOut.startsWith("Picked up _JAVA_OPTIONS")) {
-                errOut = errOut.lines().drop(1).joinToString("\n")
-            }
-            assertThat(errOut, equalTo(""))
+            assertSysErrOutput(handle, "")
+        }
+
+        fun assertSysErrOutput(handle: ProcessHandle, expectedOutput: String, trim: Boolean = true) {
+            val errOut = handle.err
+                .lines()
+                .filter {
+                    !it.startsWith("Picked up _JAVA_OPTIONS") &&
+                            // FIXME #49 - replace Nashorn with GraalVM.js
+                            !it.startsWith("Warning: Nashorn")
+                }.joinToString("\n").let {
+                    if (trim) it.trim() else it
+                }
+            assertThat(errOut, equalTo(expectedOutput))
         }
 
         fun sendHttpRequest(request: String): RawHttpResponse<*> {
@@ -445,9 +454,8 @@ abstract class RawHttpCliTester {
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
             if (statusCode != expectedExitCode) {
-                println("Process sysout:\n$out")
-                println("Process syserr:\n$err")
-                throw AssertionError("Expected process to exit with code $expectedExitCode but was $statusCode")
+                throw AssertionError("Expected process to exit with code $expectedExitCode " +
+                        "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err")
             }
         }
 

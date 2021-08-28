@@ -1,14 +1,12 @@
 package rawhttp.core.body
 
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
 import rawhttp.core.HttpMetadataParser
 import rawhttp.core.RawHttpHeaders
 import rawhttp.core.RawHttpHeaders.Builder.emptyRawHttpHeaders
 import rawhttp.core.RawHttpOptions
-import rawhttp.core.bePresent
 import rawhttp.core.body.FramedBody.Chunked
 import rawhttp.core.body.FramedBody.CloseTerminated
 import rawhttp.core.body.FramedBody.ContentLength
@@ -73,19 +71,19 @@ class LazyBodyReaderTest : StringSpec({
         // verify chunks
         createReader().run {
             framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
-            asChunkedBodyContents() should bePresent {
+            asChunkedBodyContents() shouldBePresent {
                 it.data shouldHaveSameElementsAs "Hi there".toByteArray()
                 it.chunks.size shouldBe 2
 
                 it.chunks[0].data shouldHaveSameElementsAs "Hi there".toByteArray()
-                it.chunks[0].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[0].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[0].size() shouldBe 8
 
                 it.chunks[1].data.size shouldBe 0
-                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[1].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
+                it.trailerHeaders shouldBe emptyRawHttpHeaders()
             }
         }
 
@@ -112,24 +110,24 @@ class LazyBodyReaderTest : StringSpec({
 
         createReader().run {
             framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), metadataParser)
-            asChunkedBodyContents() should bePresent {
+            asChunkedBodyContents() shouldBePresent {
                 it.data shouldHaveSameElementsAs "1234598".toByteArray()
                 it.chunks.size shouldBe 3
 
                 it.chunks[0].data shouldHaveSameElementsAs "12345".toByteArray()
-                it.chunks[0].extensions shouldEqual RawHttpHeaders.newBuilder()
+                it.chunks[0].extensions shouldBe RawHttpHeaders.newBuilder()
                         .with("abc", "123").build()
                 it.chunks[0].size() shouldBe 5
 
                 it.chunks[1].data shouldHaveSameElementsAs "98".toByteArray()
-                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[1].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 2
 
                 it.chunks[2].data.size shouldBe 0
-                it.chunks[2].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[2].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[2].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
+                it.trailerHeaders shouldBe emptyRawHttpHeaders()
             }
         }
 
@@ -160,12 +158,12 @@ class LazyBodyReaderTest : StringSpec({
 
         createReader().run {
             framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
-            asChunkedBodyContents() should bePresent {
+            asChunkedBodyContents() shouldBePresent {
                 it.data shouldHaveSameElementsAs "".toByteArray()
                 it.chunks.size shouldBe 1
 
                 it.chunks[0].data.size shouldBe 0
-                it.chunks[0].extensions shouldEqual RawHttpHeaders.newBuilder()
+                it.chunks[0].extensions shouldBe RawHttpHeaders.newBuilder()
                         .with("hi", "true")
                         .with("hi", "22")
                         .with("bye", "false,maybe")
@@ -173,7 +171,7 @@ class LazyBodyReaderTest : StringSpec({
                         .build()
                 it.chunks[0].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual emptyRawHttpHeaders()
+                it.trailerHeaders shouldBe emptyRawHttpHeaders()
             }
         }
 
@@ -198,19 +196,19 @@ class LazyBodyReaderTest : StringSpec({
 
         reader.run {
             framedBody shouldBe Chunked(BodyDecoder(registry, listOf("chunked")), strictMetadataParser)
-            asChunkedBodyContents() should bePresent {
+            asChunkedBodyContents() shouldBePresent {
                 it.data shouldHaveSameElementsAs "98".toByteArray()
                 it.chunks.size shouldBe 2
 
                 it.chunks[0].data shouldHaveSameElementsAs "98".toByteArray()
-                it.chunks[0].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[0].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[0].size() shouldBe 2
 
                 it.chunks[1].data.size shouldBe 0
-                it.chunks[1].extensions shouldEqual emptyRawHttpHeaders()
+                it.chunks[1].extensions shouldBe emptyRawHttpHeaders()
                 it.chunks[1].size() shouldBe 0
 
-                it.trailerHeaders shouldEqual RawHttpHeaders.newBuilder()
+                it.trailerHeaders shouldBe RawHttpHeaders.newBuilder()
                         .with("Hello", "hi there")
                         .with("Bye", "true")
                         .with("Hello", "wow")
@@ -219,7 +217,7 @@ class LazyBodyReaderTest : StringSpec({
         }
 
         // verify that the parser stopped at the correct body ending
-        stream.readBytes().toString(UTF_8) shouldEqual "IGNORED"
+        stream.readBytes().toString(UTF_8) shouldBe "IGNORED"
     }
 
 })

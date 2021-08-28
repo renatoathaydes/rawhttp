@@ -1,11 +1,10 @@
 package rawhttp.samples
 
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.AfterClass
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.BeforeClass
-import org.junit.Test
+import io.kotest.matchers.optional.shouldBePresent
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpOptions
 import rawhttp.core.RawHttpResponse
@@ -18,11 +17,13 @@ import java.util.Optional
 
 private const val serverPort = 8094
 
-val rawHttpWithFlexibleHeaderValues = RawHttp(RawHttpOptions.newBuilder()
+val rawHttpWithFlexibleHeaderValues = RawHttp(
+    RawHttpOptions.newBuilder()
         .withHttpHeadersOptions()
         .withValuesCharset(Charsets.UTF_8)
         .done()
-        .build())
+        .build()
+)
 
 class ServerAndClientRawHttp {
 
@@ -33,9 +34,9 @@ class ServerAndClientRawHttp {
         })
 
         private val response200: RawHttpResponse<Void> =
-                rawHttpWithFlexibleHeaderValues.parseResponse("200 OK")
+            rawHttpWithFlexibleHeaderValues.parseResponse("200 OK")
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun setup() {
             server.start { req ->
@@ -45,7 +46,7 @@ class ServerAndClientRawHttp {
             RawHttp.waitForPortToBeTaken(serverPort, Duration.ofSeconds(4))
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun cleanup() {
             server.stop()
@@ -56,21 +57,25 @@ class ServerAndClientRawHttp {
     fun canUseHttpHeaderValueWithSpecificEncoding() {
         val client = TcpRawHttpClient()
 
-        val req = rawHttpWithFlexibleHeaderValues.parseRequest("""
+        val req = rawHttpWithFlexibleHeaderValues.parseRequest(
+            """
                 GET / HTTP/1.1
                 Accept: こんにちは, text/plain
                 User-Agent: RawHTTP
-                Host: localhost:$serverPort""".trimIndent())
+                Host: localhost:$serverPort
+            """.trimIndent()
+        )
 
         val res = client.send(req)
 
         res.run {
-            assertThat(statusCode, equalTo(200))
-            assertTrue(body.isPresent)
-            assertThat(body.get().decodeBodyToString(Charsets.UTF_8),
-                    equalTo("Accept: こんにちは, text/plain\r\n" +
-                            "User-Agent: RawHTTP\r\n" +
-                            "Host: localhost:${serverPort}\r\n"))
+            statusCode shouldBe 200
+            body shouldBePresent { b ->
+                b.decodeBodyToString(Charsets.UTF_8) shouldBe "" +
+                        "Accept: こんにちは, text/plain\r\n" +
+                        "User-Agent: RawHTTP\r\n" +
+                        "Host: localhost:${serverPort}\r\n"
+            }
         }
     }
 

@@ -1,8 +1,7 @@
 package rawhttp.core
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import org.junit.Test
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.body.BytesBody
 
 class EagerHttpResponseTest {
@@ -18,7 +17,7 @@ class EagerHttpResponseTest {
                 body).eagerly().run {
             getBody().isPresent shouldBe true
             getBody().get().decodeBodyToString(Charsets.UTF_8) shouldBe "98"
-            headers.asMap() shouldEqual mapOf(
+            headers.asMap() shouldBe mapOf(
                     "CONTENT-TYPE" to listOf("http/response"),
                     "TRANSFER-ENCODING" to listOf("chunked"),
                     "HELLO" to listOf("hi there", "wow"),
@@ -46,7 +45,7 @@ class EagerHttpRequestTest {
                 body).eagerly().run {
             getBody().isPresent shouldBe true
             getBody().get().decodeBodyToString(Charsets.UTF_8) shouldBe "98"
-            headers.asMap() shouldEqual mapOf(
+            headers.asMap() shouldBe mapOf(
                     "HOST" to listOf("localhost"),
                     "CONTENT-TYPE" to listOf("http/request"),
                     "TRANSFER-ENCODING" to listOf("chunked"),
