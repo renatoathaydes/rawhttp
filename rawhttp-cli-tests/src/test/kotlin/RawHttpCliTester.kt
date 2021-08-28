@@ -26,6 +26,8 @@ import java.util.concurrent.TimeUnit
 
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
 
+val EOL = if (System.getProperty("os.name").toLowerCase().contains("windows")) "\r\n" else "\n"
+
 val replyResponseFile = File("response.txt")
 
 object CliRunner {
@@ -287,7 +289,8 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n\n" + SUCCESS_HTTP_RESPONSE + "\n"))
+            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
+                    EOL + SUCCESS_HTTP_RESPONSE + EOL))
             assertNoSysErrOutput(handle)
         }
 
@@ -325,7 +328,7 @@ abstract class RawHttpCliTester {
         fun assertGetFooThenPostFooRequestsAndStats(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
 
-            val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n\n"
+            val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n$EOL"
             assertThat(handle.out, startsWith(getFooRequest))
 
             var out = handle.out.substring(getFooRequest.length)
@@ -335,7 +338,7 @@ abstract class RawHttpCliTester {
             assertStatistics(firstStats)
 
             val postFooRequest = "POST /foo HTTP/1.1\r\nContent-Type: application/json\r\n" +
-                    "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}\n"
+                    "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}$EOL"
             out = out.substring(secondRequestIndex)
             assertThat(out, startsWith(postFooRequest))
 
@@ -348,7 +351,7 @@ abstract class RawHttpCliTester {
         fun assertGetFooResponseThenPostFooResponse(handle: ProcessHandle, postFooBody: String) {
             val postResponse = SUCCESS_POST_FOO_HTTP_RESPONSE +
                     "\r\nContent-Length: ${postFooBody.length}" +
-                    "\r\n\r\n$postFooBody\n"
+                    "\r\n\r\n$postFooBody$EOL"
 
             handle.verifyProcessTerminatedWithExitCode(0)
             assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + "\n" + postResponse))
@@ -384,7 +387,7 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseBody(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("something\n"))
+            assertThat(handle.out, equalTo("something$EOL"))
             assertNoSysErrOutput(handle)
         }
 

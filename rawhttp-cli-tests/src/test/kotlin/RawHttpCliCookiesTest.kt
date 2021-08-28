@@ -168,10 +168,9 @@ class RawHttpCliCookiesTest {
         outLines[19] should match("TEST FAILED \\(\\d+ms\\): We get the SID cookie")
         outLines[20] shouldBe ""
 
-        handle.err shouldBe "expected 200 response, but status was 401\n" +
-                "FAIL: There were test failures!\n"
+        handle.err.trim() shouldBe "expected 200 response, but status was 401$EOL" +
+                "FAIL: There were test failures!"
     }
-
 
     @Test
     fun canRunHttpFileUsingPreLoadedCookies() {
@@ -201,11 +200,10 @@ class RawHttpCliCookiesTest {
                 "",
                 "Hello user")
 
-        handle2.err shouldBe """
+        handle2.err.trim() shouldBe """
             expected to go to login page, got response: Hello user
             FAIL: There were test failures!
-            
-        """.trimIndent()
+        """.trimIndent().trimEnd()
     }
 
     private fun assertHttpFileRanSuccessfully(handle: ProcessHandle) {
