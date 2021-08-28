@@ -1,7 +1,11 @@
 .gradle/
 .idea/
+.classpath
+.project
+.settings/
 build/
 out/
+bin/
 dist/
 
 # published website on branch "gh-pages"
