@@ -66,7 +66,9 @@ class DateHeaderProviderTests {
         val expectedFactoryCalls = threadCount * (totalTime / cacheDurationMillis)
 
         // a few extra calls to the factory method are allowed because we don't synchronize
-        createDateHeaderCounter.get() shouldBe between(expectedFactoryCalls.toInt(), expectedFactoryCalls.toInt() + 5)
+        createDateHeaderCounter.get() shouldBe between(
+            expectedFactoryCalls.toInt(),
+            expectedFactoryCalls.toInt() + 10)
     }
 
 }
