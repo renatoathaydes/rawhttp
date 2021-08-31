@@ -82,7 +82,7 @@ class RawHttpErrorsTest {
     }
 
     @Test
-    fun `Cannot parse invalid request (invalid trailing-part header)` {
+    fun `Cannot parse invalid request (invalid trailing-part header)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
