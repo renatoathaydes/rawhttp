@@ -2,15 +2,15 @@ package rawhttp.core
 
 import io.kotest.assertions.fail
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.headers
 import io.kotest.data.row
 import io.kotest.data.table
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.errors.InvalidHttpResponse
 
-class StatusLineTest : StringSpec({
+class StatusLineTest {
 
     val metadataParser = HttpMetadataParser(RawHttpOptions.defaultInstance())
 
@@ -20,7 +20,8 @@ class StatusLineTest : StringSpec({
             .doNotInsertHttpVersionIfMissing()
             .build())
 
-    "Can parse legal status-line (allow missing HTTP version)" {
+    @Test
+    fun `Can parse legal status-line (allow missing HTTP version)`() {
         val table = table(headers("Status Line", "Expected version", "Expected status code", "Expected phrase"),
                 row("200", HttpVersion.HTTP_1_1, 200, ""),
                 row("200 OK", HttpVersion.HTTP_1_1, 200, "OK"),
@@ -47,7 +48,8 @@ class StatusLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal status-line (allow missing HTTP version)" {
+    @Test
+    fun `Cannot parse illegal status-line (allow missing HTTP version)`() {
         val table = table(headers("Status Line", "Expected error"),
                 row("", "No content"),
                 row("OK", "Invalid status code"),
@@ -63,7 +65,8 @@ class StatusLineTest : StringSpec({
         }
     }
 
-    "Can parse legal status-line (strict)" {
+    @Test
+    fun `Can parse legal status-line (strict)`() {
         val table = table(headers("Status Line", "Expected version", "Expected status code", "Expected phrase"),
                 row("HTTP/1.0 200 OK", HttpVersion.HTTP_1_0, 200, "OK"),
                 row("HTTP/1.1 404", HttpVersion.HTTP_1_1, 404, ""),
@@ -85,7 +88,8 @@ class StatusLineTest : StringSpec({
         }
     }
 
-    "Cannot parse illegal status-line (strict)" {
+    @Test
+    fun `Cannot parse illegal status-line (strict)`() {
         val table = table(headers("Status Line", "Expected error"),
                 row("", "No content"),
                 row("OK", "Missing HTTP version"),
@@ -104,4 +108,4 @@ class StatusLineTest : StringSpec({
             error.lineNumber shouldBe if (statusLine.isEmpty()) 0 else 1
         }
     }
-})
+}

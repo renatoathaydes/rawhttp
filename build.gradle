@@ -4,11 +4,21 @@ plugins {
 }
 
 subprojects {
+    apply plugin: 'java'
     group 'com.athaydes.rawhttp'
 
     repositories {
         mavenLocal()
         mavenCentral()
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    dependencies {
+        testImplementation(platform('org.junit:junit-bom:5.7.2'))
+        testImplementation('org.junit.jupiter:junit-jupiter')
     }
 }
 

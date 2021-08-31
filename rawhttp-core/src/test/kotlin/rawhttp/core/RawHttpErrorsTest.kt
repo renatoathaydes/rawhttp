@@ -1,17 +1,18 @@
 package rawhttp.core
 
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.headers
 import io.kotest.data.row
 import io.kotest.data.table
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
 import rawhttp.core.errors.InvalidHttpRequest
 
-class RawHttpErrorsTest : StringSpec({
+class RawHttpErrorsTest {
 
-    "Cannot parse invalid request" {
+    @Test
+    fun `Cannot parse invalid request`() {
         val examples = table(
                 headers("Request", "lineNumber", "message"),
                 row("", 0, "No content"),
@@ -36,7 +37,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (strict Host header requirement)" {
+    @Test
+    fun `Cannot parse invalid request (strict Host header requirement)`() {
         shouldThrow<InvalidHttpRequest> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotInsertHostHeaderIfMissing()
@@ -47,7 +49,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (strict CRLF checks)" {
+    @Test
+    fun `Cannot parse invalid request (strict CRLF checks)`() {
         val examples = table(
                 headers("Request", "lineNumber", "message"),
                 row("GET / HTTP/1.1\nAccept: all\r\n", 1, "Illegal new-line character without preceding return"),
@@ -66,7 +69,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (strict CRLF checks on trailing-part headers)" {
+    @Test
+    fun `Cannot parse invalid request (strict CRLF checks on trailing-part headers)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -77,7 +81,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (invalid trailing-part header)" {
+    @Test
+    fun `Cannot parse invalid request (invalid trailing-part header)` {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -88,7 +93,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (chunk too big)" {
+    @Test
+    fun `Cannot parse invalid request (chunk too big)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -99,7 +105,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (chunk-size invalid)" {
+    @Test
+    fun `Cannot parse invalid request (chunk-size invalid)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -110,7 +117,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (EOF while reading chunk)" {
+    @Test
+    fun `Cannot parse invalid request (EOF while reading chunk)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -121,7 +129,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (missing 0-size chunk)" {
+    @Test
+    fun `Cannot parse invalid request (missing 0-size chunk)`() {
         shouldThrow<IllegalStateException> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotAllowNewLineWithoutReturn()
@@ -132,7 +141,8 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-    "Cannot parse invalid request (starting with new-line, if configured to not allow it)" {
+    @Test
+    fun `Cannot parse invalid request (starting with new-line, if configured to not allow it)`() {
         shouldThrow<InvalidHttpRequest> {
             RawHttp(RawHttpOptions.Builder.newBuilder()
                     .doNotIgnoreLeadingEmptyLine()
@@ -144,4 +154,4 @@ class RawHttpErrorsTest : StringSpec({
         }
     }
 
-})
+}

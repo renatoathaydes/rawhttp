@@ -12,6 +12,7 @@ dependencies {
     implementation project(':rawhttp-httpcomponents')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation 'com.sparkjava:spark-core:2.9.1'
+
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
 }
