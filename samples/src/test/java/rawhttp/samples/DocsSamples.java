@@ -1,6 +1,5 @@
 package rawhttp.samples;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpRequest;
@@ -16,7 +15,6 @@ import rawhttp.core.server.TcpRawHttpServer;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -38,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Disabled("Do not run these tests automatically.")
 public class DocsSamples {
 
     @Test
@@ -291,7 +288,7 @@ public class DocsSamples {
                     new FileBody(new File("hello.request"), "text/plain"));
             System.out.println(requestWithBody.eagerly());
         });
-        assertEquals(error.getCause().getClass(), FileNotFoundException.class);
+        assertEquals(error.getCause().getClass(), IOException.class);
     }
 
     @Test
