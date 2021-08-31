@@ -1,9 +1,9 @@
 package rawhttp.core.server
 
-import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.between
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldHave
+import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttpHeaders
 import rawhttp.core.validDateHeader
 import java.lang.Thread.sleep
@@ -14,15 +14,17 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
-class DateHeaderProviderTests : StringSpec({
+class DateHeaderProviderTests {
 
-    "Should be able to get a header once" {
+    @Test
+    fun `Should be able to get a header once`() {
         val dateHeaderContainer = DateHeaderProvider(Duration.ofMillis(100)).get()
         dateHeaderContainer.asMap().size shouldBe 1
         dateHeaderContainer shouldHave validDateHeader()
     }
 
-    "Should cache the Date Header for the requested Duration" {
+    @Test
+    fun `Should cache the Date Header for the requested Duration`() {
         val createDateHeaderCounter = AtomicInteger()
         val dateHeaderMock = Supplier<RawHttpHeaders> {
             createDateHeaderCounter.incrementAndGet()
@@ -67,4 +69,4 @@ class DateHeaderProviderTests : StringSpec({
         createDateHeaderCounter.get() shouldBe between(expectedFactoryCalls.toInt(), expectedFactoryCalls.toInt() + 5)
     }
 
-})
+}
