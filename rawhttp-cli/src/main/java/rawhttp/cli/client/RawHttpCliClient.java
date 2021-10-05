@@ -1,5 +1,6 @@
 package rawhttp.cli.client;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.cli.PrintResponseMode;
 import rawhttp.cli.util.RequestStatistics;
 import rawhttp.cookies.ClientOptionsWithCookies;
@@ -10,7 +11,6 @@ import rawhttp.core.RawHttpResponse;
 import rawhttp.core.StatusLine;
 import rawhttp.core.client.TcpRawHttpClient;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;

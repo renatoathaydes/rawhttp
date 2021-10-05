@@ -1,5 +1,6 @@
 package rawhttp.cookies
 
+import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -91,17 +92,25 @@ class ClientCookiesTest {
         val client = TcpRawHttpClient(ClientOptionsWithCookies())
 
         // ask the server to set a couple of cookies
-        val response = client.send(HTTP.parseRequest("""
+        val response = client.send(
+            HTTP.parseRequest(
+                """
             POST http://localhost:$port/cookies HTTP/1.1
-        """.trimIndent()).withBody(StringBody(
-                "path=/&name=foo&value=bar\n" +
-                        "path=/&name=abc&value=def"))).eagerly()
+        """.trimIndent()
+            ).withBody(
+                StringBody(
+                    "path=/&name=foo&value=bar\n" +
+                            "path=/&name=abc&value=def"
+                )
+            )
+        ).eagerly()
 
         response.statusCode shouldBe 200
 
         response.headers["Set-Cookie"] shouldBe listOf(
-                """foo="bar"; Path=/""",
-                """abc="def"; Path=/""")
+            """foo="bar"; Path=/""",
+            """abc="def"; Path=/"""
+        )
 
         // make a normal request that returns the headers we sent
         val headersResponse = client.send(HTTP.parseRequest("GET http://localhost:$port/headers")).eagerly()
@@ -126,33 +135,52 @@ class ClientCookiesTest {
     @Test
     fun clientDoesNotSendCookiesForWrongDomainOrPath() {
         // this client will just send all requests to localhost, regardless of the domain
-        val client = TcpRawHttpClient(ClientOptionsWithCookies(
-                CookieManager(null, CookiePolicy.ACCEPT_ALL), ClientOptionsIgnoresDomain()))
+        val client = TcpRawHttpClient(
+            ClientOptionsWithCookies(
+                CookieManager(null, CookiePolicy.ACCEPT_ALL), ClientOptionsIgnoresDomain()
+            )
+        )
 
         // ask the server to set a couple of cookies
-        val response = client.send(HTTP.parseRequest("""
+        val response = client.send(
+            HTTP.parseRequest(
+                """
             POST http://a.b.localhost:$port/cookies HTTP/1.1
-        """.trimIndent()).withBody(StringBody(
-                "path=/headers&name=foo&value=bar&domain=b.localhost\n" +
-                        "path=/headers/two&name=abc&value=def"))).eagerly()
+        """.trimIndent()
+            ).withBody(
+                StringBody(
+                    "path=/headers&name=foo&value=bar&domain=b.localhost\n" +
+                            "path=/headers/two&name=abc&value=def"
+                )
+            )
+        ).eagerly()
 
         response.statusCode shouldBe 200
 
         response.headers["Set-Cookie"] shouldBe listOf(
-                """foo="bar"; Domain=b.localhost; Path=/headers""",
-                """abc="def"; Path=/headers/two""")
+            """foo="bar"; Domain=b.localhost; Path=/headers""",
+            """abc="def"; Path=/headers/two"""
+        )
 
-        data class Ex(val domain: String, val path: String, val expectedCookies: List<String>)
+        data class Ex(val domain: String, val path: String, val expectedCookies: List<List<String>>)
+
+        fun options(vararg option: List<String>): List<List<String>> {
+            return if (option.isEmpty()) listOf(emptyList())
+            else option.toList()
+        }
 
         val examples = listOf(
-                Ex(domain = "localhost", path = "headers", expectedCookies = listOf()),
-                Ex(domain = "localhost", path = "headers/two", expectedCookies = listOf()),
-                Ex(domain = "c.localhost", path = "headers/two", expectedCookies = listOf()),
-                Ex(domain = "other-domain", path = "headers", expectedCookies = listOf()),
-                Ex(domain = "b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "a.b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "a.b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar; abc=def"))
+            Ex(domain = "localhost", path = "headers", expectedCookies = options()),
+            Ex(domain = "localhost", path = "headers/two", expectedCookies = options()),
+            Ex(domain = "c.localhost", path = "headers/two", expectedCookies = options()),
+            Ex(domain = "other-domain", path = "headers", expectedCookies = options()),
+            Ex(domain = "b.localhost", path = "headers", expectedCookies = options(listOf("foo=bar"))),
+            Ex(domain = "b.localhost", path = "headers/two", expectedCookies = options(listOf("foo=bar"))),
+            Ex(domain = "a.b.localhost", path = "headers", expectedCookies = options(listOf("foo=bar"))),
+            Ex(
+                domain = "a.b.localhost", path = "headers/two",
+                expectedCookies = options(listOf("foo=bar; abc=def"), listOf("abc=def; foo=bar"))
+            )
         )
 
         for ((domain, path, expectedCookies) in examples) {
@@ -161,7 +189,7 @@ class ClientCookiesTest {
 
             headersResponse.statusCode shouldBe 200
 
-            headersResponse.headers["Cookie"] shouldBe expectedCookies
+            headersResponse.headers["Cookie"] shouldBeIn expectedCookies
         }
     }
 

@@ -183,7 +183,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canServeResourceUsingCustomMediaTypes() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val mp3File = File(tempDir, "resource.mp3")
         mp3File.writeText("Music!!")
         val jsonFile = File(tempDir, "some.json")
@@ -222,7 +222,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun servedResourcesUseLastModifiedHeaders() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val jsonFile = File(tempDir, "some.json")
         jsonFile.writeText("true")
         sleep(10L) // ensure different file modified timestamps
@@ -262,7 +262,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun doNotServeResourceIfNotModified() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val jsonFile = File(tempDir, "some.json")
         jsonFile.writeText("true")
 
@@ -300,7 +300,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun doNotServeResourceIfNotUnModified() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val textFile = File(tempDir, "some.txt")
         textFile.writeText("hi")
 
@@ -394,7 +394,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun doesNotExposeParentDirectoryWhenServingDirectory() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val parentDirFile = File(tempDir.parentFile, tempDir.name + ".test")
         parentDirFile.writeText("not visible")
         parentDirFile.deleteOnExit()
@@ -420,7 +420,7 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canFindResourceWithoutExtension() {
-        val tempDir = createTempDir(javaClass.name)
+        val tempDir = createTempDirectory(javaClass.name).toFile()
         val jsonFile = File(tempDir, "hello.json")
         val xmlFile = File(tempDir, "hello.xml")
         jsonFile.writeText("{\"hello\": true}")

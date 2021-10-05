@@ -1,7 +1,7 @@
 var System = Java.type("java.lang.System");
 var UUID = Java.type("java.util.UUID");
 var Random = Java.type("java.util.Random");
-var JsTestReporter = Java.type("com.athaydes.rawhttp.reqinedit.js.JsTestReporter");
+var JsTestReporter = Java.type("com.athaydes.rawhttp.reqinedit.js.internal.JsTestReporter");
 
 // turn off all HTML escaping
 Mustache.escape = function (text) {
@@ -84,7 +84,7 @@ function __setResponse__(status, headers, contentType, bodyGetter) {
     response.status = status;
     response.headers = __jsHeaders__(headers);
     response.contentType = contentType;
-    response.body = contentType.mimeType === "application/json" ? JSON.parse(bodyGetter.call()) : bodyGetter.call();
+    response.body = contentType.get('mimeType') === "application/json" ? JSON.parse(bodyGetter.call()) : bodyGetter.call();
 }
 
 function __jsHeaders__(javaHeaders) {
@@ -103,7 +103,7 @@ function __runAllTests__(testsReporter) {
     var tests = client.__tests__;
     var allTestsOk = true;
 
-    for each (var test in tests) {
+    for (var test of tests) {
         var time = System.currentTimeMillis();
         try {
             test.check();

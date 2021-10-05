@@ -7,8 +7,8 @@ plugins {
     id 'signing'
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 description = 'RawHTTP CLI Tool'
 version = rawHttpCliVersion
@@ -24,7 +24,7 @@ dependencies {
     implementation project(':rawhttp-core')
     implementation project(':rawhttp-cookies')
     implementation project(':rawhttp-req-in-edit')
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    compileOnly 'org.jetbrains:annotations:22.0.0'
     testImplementation 'junit:junit:4.12'
 }
 

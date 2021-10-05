@@ -1,9 +1,9 @@
 package rawhttp.core;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.errors.InvalidHttpHeader;
 import rawhttp.core.internal.Bool;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -62,7 +62,7 @@ public class RawHttpHeaders implements Writable {
             Map<String, Header> headers = new LinkedHashMap<>(headersByCapitalizedName);
             headers.entrySet().forEach(entry -> entry.setValue(entry.getValue().freeze()));
             this.headersByCapitalizedName = unmodifiableMap(headers);
-            this.headerNames = unmodifiableList(new ArrayList<>(headerNames));
+            this.headerNames = List.copyOf(headerNames);
         } else {
             this.headersByCapitalizedName = headersByCapitalizedName;
             this.headerNames = headerNames;

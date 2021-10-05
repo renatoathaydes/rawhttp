@@ -1,9 +1,9 @@
 package com.athaydes.rawhttp.reqinedit.js;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +55,6 @@ final class JsLoader {
     }
 
     private static String read(File file) throws IOException {
-        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+        return Files.readString(file.toPath());
     }
 }

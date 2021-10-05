@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.reqinedit;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,5 +1,6 @@
 package rawhttp.core;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.body.BodyDecoder;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.FramedBody;
@@ -9,7 +10,6 @@ import rawhttp.core.errors.InvalidHttpResponse;
 import rawhttp.core.errors.InvalidMessageFrame;
 import rawhttp.core.internal.CollectionUtil;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -371,6 +371,7 @@ public class RawHttp {
      * @return a new URI with the host replaced
      * @deprecated use {@link UriUtil#withHost(URI, String)} instead
      */
+    @Deprecated
     public static URI replaceHost(URI uri, String newHost) {
         return UriUtil.withHost(uri, newHost);
     }

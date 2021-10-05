@@ -3,7 +3,6 @@ package com.athaydes.rawhttp.reqinedit;
 
 import rawhttp.core.RawHttpResponse;
 
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.nio.file.Path;
 

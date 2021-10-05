@@ -1,15 +1,16 @@
 package com.athaydes.rawhttp.duplex.body;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.body.ChunkedBody;
 import rawhttp.core.body.ChunkedBodyContents;
 import rawhttp.core.body.FramedBody;
 import rawhttp.core.body.LazyBodyReader;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
 
 import static rawhttp.core.HttpMetadataParser.createStrictHttpMetadataParser;
 

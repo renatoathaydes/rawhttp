@@ -1,16 +1,17 @@
 package rawhttp.core.body;
 
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.HttpMetadataParser;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.body.encoding.ChunkDecoder;
 import rawhttp.core.body.encoding.HttpBodyEncodingRegistry;
+
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * This class encodes the contents of a {@link InputStream} with the "chunked" Transfer-Encoding.

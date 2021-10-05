@@ -249,9 +249,9 @@ public class Main {
 
     private static CliError runHttpFile(HttpFileOptions httpFileOptions) {
         ReqInEditParser parser = new ReqInEditParser();
-        JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
 
-        try (RawHttpCliClient httpClient = RawHttpCliClient.create(
+        try (JsEnvironment env = JsEnvironment.loadEnvironment(httpFileOptions.httpFile, httpFileOptions.envName);
+             RawHttpCliClient httpClient = RawHttpCliClient.create(
                 httpFileOptions.logRequest, httpFileOptions.printResponseMode,
                 httpFileOptions.ignoreTlsCert, httpFileOptions.cookieJar)) {
             List<ReqInEditEntry> entries = parser.parse(httpFileOptions.httpFile);

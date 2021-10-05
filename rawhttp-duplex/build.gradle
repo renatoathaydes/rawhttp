@@ -9,6 +9,9 @@ version rawHttpDuplexVersion
 description 'rawhttp-duplex provides a mechanism for full duplex communications based on the ' +
         'HTTP/1.1 chunked transfer-encoding.'
 
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
@@ -16,8 +19,8 @@ compileTestKotlin {
 configurations.create('exampleApp')
 
 dependencies {
+    compileOnly 'org.jetbrains:annotations:22.0.0'
     api project(':rawhttp-core')
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect"
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
@@ -46,8 +49,7 @@ jar {
     manifest {
         attributes 'Implementation-Title': 'rawhttp.duplex',
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'Renato Athaydes',
-                'Automatic-Module-Name': 'rawhttp.duplex'
+                'Implementation-Vendor': 'Renato Athaydes'
     }
 }
 

@@ -1,8 +1,9 @@
 package rawhttp.core.body;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayInputStream;
 import java.util.OptionalLong;
-import javax.annotation.Nullable;
 
 /**
  * A simple {@link HttpMessageBody} whose contents are given by a byte array.

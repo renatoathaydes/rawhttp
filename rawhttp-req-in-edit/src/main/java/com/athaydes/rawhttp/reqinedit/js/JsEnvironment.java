@@ -2,14 +2,16 @@ package com.athaydes.rawhttp.reqinedit.js;
 
 import com.athaydes.rawhttp.reqinedit.HttpEnvironment;
 import com.athaydes.rawhttp.reqinedit.HttpTestsReporter;
-import jdk.nashorn.api.scripting.NashornScriptEngine;
+import com.athaydes.rawhttp.reqinedit.ScriptException;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.EagerBodyReader;
 
-import javax.annotation.Nullable;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +40,9 @@ import java.util.concurrent.Callable;
  * For help writing Nashorn-based JS, please see the
  * <a href="https://winterbe.com/posts/2014/04/05/java8-nashorn-tutorial/">Nashorn Tutorial</a>.
  */
-public final class JsEnvironment implements HttpEnvironment {
+public final class JsEnvironment implements HttpEnvironment, AutoCloseable {
 
-    private final NashornScriptEngine jsEngine;
+    private final Context jsEngine;
 
     @Nullable
     private final File projectDir;
@@ -68,15 +70,19 @@ public final class JsEnvironment implements HttpEnvironment {
                 ? Collections.emptyList()
                 : JsLoader.getJsObjects(projectDir);
 
-        jsEngine = (NashornScriptEngine) new ScriptEngineManager().getEngineByName("nashorn");
-        StringBuilder builder = new StringBuilder();
-        loadLibraryInto(builder, "Mustache", "/META-INF/resources/webjars/mustache/3.1.0/mustache.js");
+        jsEngine = Context.newBuilder("js")
+                .allowAllAccess(true)
+                .build();
+
+        loadLibrary("Mustache", "/META-INF/resources/webjars/mustache/3.1.0/mustache.js");
+
+        var builder = new StringBuilder();
         readResource("response_handler.js", builder);
 
         try {
-            jsEngine.eval(builder.toString());
-        } catch (ScriptException e) {
-            throw new RuntimeException(e);
+            jsEngine.eval(Source.newBuilder("js", builder, "response_handler.js").build());
+        } catch (PolyglotException | IOException e) {
+            throw new ScriptException(e);
         }
 
         if (!environments.isEmpty()) {
@@ -94,18 +100,22 @@ public final class JsEnvironment implements HttpEnvironment {
 
     @Override
     public String renderTemplate(String line) {
-        return invoke("__mustacheRender__", line).toString();
+        return invoke("__mustacheRender__", line).asString();
     }
 
-    Object eval(String script) throws ScriptException {
-        return jsEngine.eval(script);
+    Value eval(String script) throws ScriptException {
+        try {
+            return jsEngine.eval("js", script);
+        } catch (PolyglotException e) {
+            throw new ScriptException(e);
+        }
     }
 
     @Override
     public boolean runResponseHandler(String responseHandler,
                                       RawHttpResponse<?> response,
                                       HttpTestsReporter testsReporter)
-            throws IOException, ScriptException {
+            throws IOException {
         setResponse(response.eagerly());
         eval(responseHandler);
         return runAllTests(testsReporter);
@@ -118,22 +128,25 @@ public final class JsEnvironment implements HttpEnvironment {
     }
 
     boolean runAllTests(HttpTestsReporter reporter) {
-        return (boolean) invoke("__runAllTests__", reporter);
+        return invoke("__runAllTests__", reporter).asBoolean();
     }
 
-    private Object invoke(String name, Object... args) {
+    private Value invoke(String name, Object... args) {
         try {
-            return jsEngine.invokeFunction(name, args);
-        } catch (ScriptException | NoSuchMethodException e) {
+            return jsEngine.getBindings("js")
+                    .getMember(name).execute(args);
+        } catch (PolyglotException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void loadLibraryInto(StringBuilder builder, String name, String path) {
+    private void loadLibrary(String name, String path) {
+        var builder = new StringBuilder();
         builder.append("var exports = {};var module = {};\n");
         readResource(path, builder);
         builder.append("\nvar ").append(name).append(" = Object.keys(exports).length > 0 ? exports : module.exports;" +
                 " exports = {}; module = {};\n");
+        jsEngine.eval("js", builder);
     }
 
     private static void readResource(String path, StringBuilder builder) {
@@ -180,4 +193,8 @@ public final class JsEnvironment implements HttpEnvironment {
         return () -> body.decodeBodyToString(Charset.forName(contentType.getOrDefault("charset", "UTF-8")));
     }
 
+    @Override
+    public void close() {
+        jsEngine.close();
+    }
 }

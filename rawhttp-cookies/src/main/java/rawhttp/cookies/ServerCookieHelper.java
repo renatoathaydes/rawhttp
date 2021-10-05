@@ -1,10 +1,10 @@
 package rawhttp.cookies;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 
-import javax.annotation.Nullable;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collections;

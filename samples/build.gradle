@@ -2,6 +2,9 @@ plugins {
     id "org.jetbrains.kotlin.jvm"
 }
 
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
 test {
     forkEvery 1
     enabled project.hasProperty('run-samples')

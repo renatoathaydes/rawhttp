@@ -1,9 +1,9 @@
 package rawhttp.core;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.errors.InvalidHttpRequest;
 import rawhttp.core.errors.InvalidHttpResponse;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,6 +1,7 @@
 package rawhttp.core;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;

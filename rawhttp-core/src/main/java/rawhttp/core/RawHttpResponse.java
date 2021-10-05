@@ -1,9 +1,9 @@
 package rawhttp.core;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.HttpMessageBody;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Optional;
 

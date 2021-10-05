@@ -1,11 +1,12 @@
 package rawhttp.core.body;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.OptionalLong;
-import javax.annotation.Nullable;
 
 /**
  * A {@link HttpMessageBody} containing the contents of a {@link File}.

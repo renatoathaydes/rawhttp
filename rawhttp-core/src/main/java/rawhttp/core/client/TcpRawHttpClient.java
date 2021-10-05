@@ -1,5 +1,6 @@
 package rawhttp.core.client;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.HttpVersion;
 import rawhttp.core.IOSupplier;
 import rawhttp.core.RawHttp;
@@ -7,7 +8,6 @@ import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 
-import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.Closeable;
 import java.io.IOException;

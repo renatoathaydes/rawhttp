@@ -1,8 +1,5 @@
 package rawhttp.httpcomponents;
 
-import java.io.IOException;
-import java.util.Arrays;
-import javax.annotation.Nullable;
 import org.apache.http.Header;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -11,6 +8,7 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
+import org.jetbrains.annotations.Nullable;
 import rawhttp.core.HttpVersion;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
@@ -20,6 +18,9 @@ import rawhttp.core.StatusLine;
 import rawhttp.core.body.FramedBody;
 import rawhttp.core.body.LazyBodyReader;
 import rawhttp.core.client.RawHttpClient;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 import static java.util.stream.Collectors.joining;
 

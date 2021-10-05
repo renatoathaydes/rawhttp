@@ -10,7 +10,6 @@ import rawhttp.core.body.BytesBody;
 import rawhttp.core.client.RawHttpClient;
 import rawhttp.core.client.TcpRawHttpClient;
 
-import javax.script.ScriptException;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.FileOutputStream;

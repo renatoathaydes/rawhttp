@@ -1,6 +1,6 @@
 package com.athaydes.rawhttp.reqinedit;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Result of running a single test for a HTTP response.

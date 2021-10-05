@@ -1,7 +1,8 @@
 package rawhttp.core.body;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ public final class EagerBodyReader extends BodyReader {
      * @throws IOException if the inputStream throws
      */
     public EagerBodyReader(FramedBody framedBody,
-                           @Nonnull InputStream inputStream) throws IOException {
+                           @NotNull InputStream inputStream) throws IOException {
         super(framedBody);
         this.rawInputStream = inputStream;
         this.rawBytes = framedBody.getBodyConsumer().consume(inputStream);

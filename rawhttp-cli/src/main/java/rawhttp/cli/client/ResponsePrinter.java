@@ -1,12 +1,12 @@
 package rawhttp.cli.client;
 
+import org.jetbrains.annotations.Nullable;
 import rawhttp.cli.PrintResponseMode;
 import rawhttp.cli.util.RequestStatistics;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.StatusLine;
 import rawhttp.core.body.BodyReader;
 
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;

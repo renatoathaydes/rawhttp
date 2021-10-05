@@ -1,7 +1,8 @@
 package rawhttp.core.body;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.charset.Charset;
-import javax.annotation.Nullable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
