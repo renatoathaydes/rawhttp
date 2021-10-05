@@ -32,8 +32,22 @@ jar {
     manifest {
         attributes 'Implementation-Title': 'rawhttp.cli',
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'Renato Athaydes'
+                'Implementation-Vendor': 'Renato Athaydes',
+                'Main-Class': 'rawhttp.cli.Main'
     }
+}
+
+task createClasspathDir(type: Copy) {
+    from configurations.runtimeClasspath
+    into "$buildDir/classpath"
+}
+
+task nativeExec(type: Exec) {
+    dependsOn createClasspathDir, jar
+    // native-image --language:js --enable-https -cp "build/classpath/*" -jar build/libs/rawhttp-cli-1.3.2.jar
+    commandLine 'native-image', '--language:js', '--enable-https' ,'-cp', "$buildDir/classpath/*",
+            '-jar', jar.archiveFile.get(), 'rawhttp'
+    workingDir projectDir
 }
 
 task fatJar(type: Jar, group: 'build') {
