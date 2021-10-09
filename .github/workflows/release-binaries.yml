@@ -12,7 +12,7 @@ jobs:
       - name: Setup GraalVM
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
-          graalvm: '21.0.0.2'
+          graalvm: '21.2.0'
           java: 'java11'
 
       - name: Install native-image
@@ -42,7 +42,7 @@ jobs:
       - name: Setup GraalVM
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
-          graalvm: '21.0.0.2'
+          graalvm: '21.2.0'
           java: 'java11'
 
       - name: Install native-image
@@ -74,7 +74,7 @@ jobs:
       - name: Setup GraalVM
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
-          graalvm: '21.0.0.2'
+          graalvm: '21.2.0'
           java: 'java11'
 
       - name: Install native-image
