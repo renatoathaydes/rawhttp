@@ -1,0 +1,99 @@
+name: Release Binaries
+on:
+  release:
+    types: [created]
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@5.0
+        with:
+          graalvm: '21.0.0.2'
+          java: 'java11'
+
+      - name: Install native-image
+        run: gu install native-image
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Package Java Image
+        run: ./gradlew :rawhttp-cli:nativeExec
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: rawhttp-cli/build/rawhttp.tar.gz
+          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-linux.tar.gz
+          asset_content_type: application/gzip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@5.0
+        with:
+          graalvm: '21.0.0.2'
+          java: 'java11'
+
+      - name: Install native-image
+        run: gu install native-image
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Package Java Image
+        run: ./gradlew :rawhttp-cli:nativeExec
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: rawhttp-cli/build/rawhttp.tar.gz
+          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-macos.tar.gz
+          asset_content_type: application/gzip
+
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ilammy/msvc-dev-cmd@v1.5.0
+      - uses: microsoft/setup-msbuild@v1
+
+      - name: Setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@5.0
+        with:
+          graalvm: '21.0.0.2'
+          java: 'java11'
+
+      - name: Install native-image
+        run: gu.cmd install native-image
+        shell: bash
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        shell: bash
+
+      - name: Package Java Image
+        run: ./gradlew.bat :rawhttp-cli:nativeExec
+        shell: bash
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: rawhttp-cli/build/rawhttp.zip
+          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-windows.zip
+          asset_content_type: application/zip
