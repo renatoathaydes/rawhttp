@@ -45,12 +45,19 @@ task createClasspathDir(type: Copy) {
 
 task nativeExec(type: Exec) {
     dependsOn createClasspathDir, jar
-    finalizedBy(Os.isFamily(Os.FAMILY_WINDOWS) ? 'zipNativeExec' : 'tarNativeExec')
-    def execExt = Os.isFamily(Os.FAMILY_WINDOWS) ? '.cmd' : ''
     outputs.file("$buildDir/rawhttp")
+    String nativeImageExec
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        finalizedBy 'zipNativeExec'
+        nativeImageExec = 'native-image.cmd'
+    } else {
+        finalizedBy 'tarNativeExec'
+        nativeImageExec = 'native-image'
+    }
+
     // native-image --language:js --enable-https -cp "build/classpath/*" -jar build/libs/rawhttp-cli-1.3.2.jar
-    commandLine "native-image$execExt", '--language:js', '--enable-https' ,'-cp', "$buildDir/classpath/*",
-            '-jar', jar.archiveFile.get(), "$buildDir/rawhttp"
+    commandLine nativeImageExec, '--language:js', '--enable-https' ,'-cp', "$buildDir/classpath/*",
+            '-jar', jar.archiveFile.get(), outputs.files.first().path
     workingDir projectDir
 }
 
