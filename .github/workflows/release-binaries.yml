@@ -87,7 +87,7 @@ jobs:
         shell: bash
 
       - name: Package Java Image
-        run: ./gradlew.bat :rawhttp-cli:nativeExec
+        run: ./gradlew.bat :rawhttp-cli:nativeExec --info
         shell: bash
 
       - uses: actions/upload-release-asset@v1
