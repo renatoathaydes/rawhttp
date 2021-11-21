@@ -16,5 +16,7 @@ include 'rawhttp-core',
         'rawhttp-cli-tests',
         'rawhttp-duplex',
         'rawhttp-req-in-edit',
-        'rawhttp-cookies'
+        'rawhttp-cookies',
+        'patched-jars:icu4j',
+        'patched-jars:mustache'
 

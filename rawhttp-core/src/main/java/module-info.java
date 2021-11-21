@@ -22,4 +22,5 @@ module rawhttp.core {
     exports rawhttp.core.body.encoding;
     provides HttpMessageDecoder
             with ChunkDecoder, GzipDecoder, DeflateDecoder, IdentityDecoder;
+    uses HttpMessageDecoder;
 }

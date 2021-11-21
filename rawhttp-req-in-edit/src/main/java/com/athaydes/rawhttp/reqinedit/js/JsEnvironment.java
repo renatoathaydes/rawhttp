@@ -8,6 +8,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.Nullable;
+import org.webjars.mustache.Mustache;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.EagerBodyReader;
@@ -72,12 +73,13 @@ public final class JsEnvironment implements HttpEnvironment, AutoCloseable {
 
         jsEngine = Context.newBuilder("js")
                 .allowAllAccess(true)
+                .allowNativeAccess(true)
                 .build();
 
-        loadLibrary("Mustache", "/META-INF/resources/webjars/mustache/3.1.0/mustache.js");
+        loadLibrary(Mustache.class, "Mustache", "/META-INF/resources/webjars/mustache/4.2.0/mustache.js");
 
         var builder = new StringBuilder();
-        readResource("response_handler.js", builder);
+        readResource(JsEnvironment.class, "response_handler.js", builder);
 
         try {
             jsEngine.eval(Source.newBuilder("js", builder, "response_handler.js").build());
@@ -140,17 +142,17 @@ public final class JsEnvironment implements HttpEnvironment, AutoCloseable {
         }
     }
 
-    private void loadLibrary(String name, String path) {
+    private void loadLibrary(Class<?> typeInModule, String name, String path) {
         var builder = new StringBuilder();
         builder.append("var exports = {};var module = {};\n");
-        readResource(path, builder);
+        readResource(typeInModule, path, builder);
         builder.append("\nvar ").append(name).append(" = Object.keys(exports).length > 0 ? exports : module.exports;" +
                 " exports = {}; module = {};\n");
         jsEngine.eval("js", builder);
     }
 
-    private static void readResource(String path, StringBuilder builder) {
-        try (InputStream s = JsEnvironment.class.getResourceAsStream(path)) {
+    private static void readResource(Class<?> typeInModule, String path, StringBuilder builder) {
+        try (InputStream s = getResourceAsStream(typeInModule, path)) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(s, StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -196,5 +198,13 @@ public final class JsEnvironment implements HttpEnvironment, AutoCloseable {
     @Override
     public void close() {
         jsEngine.close();
+    }
+
+    private static InputStream getResourceAsStream(Class<?> typeInModule, String path) {
+        var resource = typeInModule.getResourceAsStream(path);
+        if (resource == null) {
+            throw new IllegalArgumentException("Unable to find resource in classpath: '" + path + "'");
+        }
+        return resource;
     }
 }

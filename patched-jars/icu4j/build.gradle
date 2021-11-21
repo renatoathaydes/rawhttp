@@ -1,0 +1,12 @@
+plugins {
+    id "com.lazan.java-monkey-patch" version "1.0"
+}
+
+version = '1.0'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+monkeyPatch {
+    target = 'com.ibm.icu:icu4j:69.1'
+}

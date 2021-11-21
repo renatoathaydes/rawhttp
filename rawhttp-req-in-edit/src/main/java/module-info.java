@@ -10,6 +10,7 @@
 module rawhttp.req_in_edit {
     requires transitive rawhttp.core;
     requires transitive rawhttp.cookies;
+    requires org.webjars.mustache;
     requires org.graalvm.sdk;
     exports com.athaydes.rawhttp.reqinedit;
     exports com.athaydes.rawhttp.reqinedit.js;

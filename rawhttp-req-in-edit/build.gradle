@@ -15,22 +15,22 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
 
-ext.graalVersion = '20.2.0'
+ext.graalVersion = '21.3.0'
 
 dependencies {
     api project(':rawhttp-core')
     api project(':rawhttp-cookies')
     implementation "org.graalvm.sdk:graal-sdk:$graalVersion"
-    implementation "org.graalvm.js:js:$graalVersion"
-    implementation 'org.webjars.npm:mustache:3.1.0'
+    implementation project(':patched-jars:mustache')
     compileOnly 'org.jetbrains:annotations:22.0.0'
+    runtimeOnly "org.graalvm.truffle:truffle-api:$graalVersion"
+    runtimeOnly "org.graalvm.js:js:$graalVersion"
     testImplementation project(':rawhttp-core')
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect"
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
 }
-
 
 jar {
     manifest {
