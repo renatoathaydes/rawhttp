@@ -1,7 +1,6 @@
 var System = Java.type("java.lang.System");
 var UUID = Java.type("java.util.UUID");
 var Random = Java.type("java.util.Random");
-var JsTestReporter = Java.type("com.athaydes.rawhttp.reqinedit.js.internal.JsTestReporter");
 
 // turn off all HTML escaping
 Mustache.escape = function (text) {
@@ -98,8 +97,7 @@ function __jsHeaders__(javaHeaders) {
     };
 }
 
-function __runAllTests__(testsReporter) {
-    var reporter = new JsTestReporter(testsReporter);
+function __runAllTests__(reporter) {
     var tests = client.__tests__;
     var allTestsOk = true;
 

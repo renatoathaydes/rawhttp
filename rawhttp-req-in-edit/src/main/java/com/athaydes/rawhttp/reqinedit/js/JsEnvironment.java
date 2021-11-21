@@ -3,6 +3,7 @@ package com.athaydes.rawhttp.reqinedit.js;
 import com.athaydes.rawhttp.reqinedit.HttpEnvironment;
 import com.athaydes.rawhttp.reqinedit.HttpTestsReporter;
 import com.athaydes.rawhttp.reqinedit.ScriptException;
+import com.athaydes.rawhttp.reqinedit.js.internal.JsTestReporter;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
@@ -130,7 +131,7 @@ public final class JsEnvironment implements HttpEnvironment, AutoCloseable {
     }
 
     boolean runAllTests(HttpTestsReporter reporter) {
-        return invoke("__runAllTests__", reporter).asBoolean();
+        return invoke("__runAllTests__", new JsTestReporter(reporter)).asBoolean();
     }
 
     private Value invoke(String name, Object... args) {
