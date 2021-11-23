@@ -103,7 +103,6 @@ task deps( type: Copy ) {
 
 task jlink( type: Exec ) {
     dependsOn jar, deps
-//    finalizedBy copyShellScriptToImage, project( ':splash-maker' ).tasks.withType( JavaExec )
     inputs.files( sourceSets*.allSource )
     outputs.dir( image )
     def options = [
@@ -113,15 +112,20 @@ task jlink( type: Exec ) {
                     'org.graalvm.sdk,org.graalvm.truffle,org.graalvm.js,org.webjars.mustache,' +
                     'rawhttp.req_in_edit,rawhttp.core,rawhttp.cookies,rawhttp.cli',
             '--output', image,
-    //        '--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages'
+            '--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages',
     ]
     def jlink = System.getProperty( 'java.home' ) + '/bin/jlink'
     commandLine( [ jlink ] + options )
     doFirst { new File( image ).deleteDir() }
+    doLast {
+        copy {
+            from "src/main/sh/rawhttp${Os.isFamily(Os.FAMILY_WINDOWS) ? '.bat' : ''}"
+            into "$image/bin"
+        }
+    }
 }
 
 task packageImage( type: Zip ) {
-    outputs.upToDateWhen { false }
     dependsOn jlink
     from image
     into "rawhttp"

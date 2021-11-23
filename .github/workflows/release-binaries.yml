@@ -15,24 +15,21 @@ jobs:
           graalvm: '21.2.0'
           java: 'java11'
 
-      - name: Install native-image
-        run: gu install native-image
-
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       - name: Package Java Image
-        run: ./gradlew :rawhttp-cli:nativeExec
+        run: ./gradlew :rawhttp-cli:packageImage
 
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: rawhttp-cli/build/rawhttp.tar.gz
-          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-linux.tar.gz
-          asset_content_type: application/gzip
+          asset_path: rawhttp-cli/build/rawhttp-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-linux.zip
+          asset_content_type: application/zip
 
   build-macos:
     runs-on: macos-latest
@@ -45,24 +42,21 @@ jobs:
           graalvm: '21.2.0'
           java: 'java11'
 
-      - name: Install native-image
-        run: gu install native-image
-
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       - name: Package Java Image
-        run: ./gradlew :rawhttp-cli:nativeExec
+        run: ./gradlew :rawhttp-cli:packageImage
 
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: rawhttp-cli/build/rawhttp.tar.gz
-          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-macos.tar.gz
-          asset_content_type: application/gzip
+          asset_path: rawhttp-cli/build/rawhttp-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-macos.zip
+          asset_content_type: application/zip
 
   build-win:
     runs-on: windows-latest
@@ -77,17 +71,13 @@ jobs:
           graalvm: '21.2.0'
           java: 'java11'
 
-      - name: Install native-image
-        run: gu.cmd install native-image
-        shell: bash
-
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
         shell: bash
 
       - name: Package Java Image
-        run: ./gradlew.bat :rawhttp-cli:nativeExec --info
+        run: ./gradlew.bat :rawhttp-cli:packageImage
         shell: bash
 
       - uses: actions/upload-release-asset@v1
@@ -95,6 +85,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: rawhttp-cli/build/rawhttp.zip
+          asset_path: rawhttp-cli/build/rawhttp-${{ steps.get_version.outputs.VERSION }}.zip
           asset_name: rawhttp-${{ steps.get_version.outputs.VERSION }}-windows.zip
           asset_content_type: application/zip
