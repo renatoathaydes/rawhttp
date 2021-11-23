@@ -130,7 +130,7 @@ task packageImage( type: Zip ) {
     from image
     into "rawhttp"
     include '**/*'
-    archiveName "rawhttp-${project.version}.zip"
+    archiveName "rawhttp-cli-${project.version}.zip"
     destinationDir buildDir
 }
 
