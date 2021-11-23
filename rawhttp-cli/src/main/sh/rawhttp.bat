@@ -2,4 +2,4 @@
 
 set DIR=%~dp0
 
-"%DIR%java" -m rawhttp.cli/rawhttp.cli.Main %*
+"%DIR%java" -Dpolyglot.engine.WarnInterpreterOnly=false -m rawhttp.cli/rawhttp.cli.Main %*
