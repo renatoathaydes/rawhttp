@@ -1,5 +1,11 @@
 #!/bin/sh
 
-DIR=$(dirname "$0")
+LINK_TARGET=$(readlink "$0")
 
-$DIR/java -Dpolyglot.engine.WarnInterpreterOnly=false -m rawhttp.cli/rawhttp.cli.Main "$@"
+if [ "$LINK_TARGET" ] ; then
+  DIR=$(dirname "$LINK_TARGET")
+else
+  DIR=$(dirname "$0")
+fi
+
+"$DIR"/java -Dpolyglot.engine.WarnInterpreterOnly=false -m rawhttp.cli/rawhttp.cli.Main "$@"
