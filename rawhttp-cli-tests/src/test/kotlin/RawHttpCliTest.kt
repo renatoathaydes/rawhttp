@@ -1,10 +1,13 @@
+import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.startsWith
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.Test
+import org.hamcrest.Description
+import org.hamcrest.Matcher
+import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.lang.Thread.sleep
 import java.time.Instant
@@ -14,8 +17,15 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.io.path.createTempDirectory
 
+class RawHttpFatJarCliTest : RawHttpCliTest() {
+    override val cliRunner = CliRunner.FatJar
+}
 
-class RawHttpCliTest : RawHttpCliTester() {
+class RawHttpJavaImageCliTest : RawHttpCliTest() {
+    override val cliRunner = CliRunner.JavaImage
+}
+
+abstract class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canPrintHelp() {
@@ -115,15 +125,17 @@ class RawHttpCliTest : RawHttpCliTester() {
     fun canServeLocalDirectory() {
         val workDir = File(".")
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
-                ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
+            ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
 
         val handle = runCli("serve", ".")
 
         val response = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/${someFileInWorkDir.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } catch (e: AssertionError) {
             println(handle)
             throw e
@@ -142,16 +154,18 @@ class RawHttpCliTest : RawHttpCliTester() {
     fun canServeLocalDirectoryFromCustomRootPath() {
         val workDir = File(".")
         val someFileInWorkDir = workDir.listFiles()?.firstOrNull { it.isFile }
-                ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
+            ?: return fail("Cannot run test, no files found in the working directory: ${workDir.absolutePath}")
         val contextPath = "some/example"
 
         val handle = runCli("serve", ".", "-r", contextPath)
 
         val response = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/$contextPath/${someFileInWorkDir.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } catch (e: AssertionError) {
             println(handle)
             handle.sendStopSignalToRawHttpServer()
@@ -159,10 +173,12 @@ class RawHttpCliTest : RawHttpCliTester() {
         }
 
         val responseToStandardPath = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/${someFileInWorkDir.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } catch (e: AssertionError) {
             println(handle)
             throw e
@@ -195,13 +211,17 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath, "--media-types", mediaTypesFile.absolutePath)
 
         val (mp3response, jsonResponse) = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/${mp3File.name}
             Accept: */*
-            """.trimIndent()).eagerly() to sendHttpRequest("""
+            """.trimIndent()
+            ).eagerly() to sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/${jsonFile.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
@@ -232,13 +252,17 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath)
 
         val (jsonResponse, textResponse) = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.json
             Accept: application/json
-            """.trimIndent()).eagerly() to sendHttpRequest("""
+            """.trimIndent()
+            ).eagerly() to sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.txt
             Accept: text/plain
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
@@ -249,15 +273,21 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertTrue(jsonResponse.body.isPresent)
         assertThat(jsonResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
         assertThat(jsonResponse.headers["Content-Type"], equalTo(listOf("application/json")))
-        assertThat(jsonResponse.headers["Last-Modified"], equalTo(
-                listOf(lastModifiedHeaderValue(jsonFile))))
+        assertThat(
+            jsonResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(jsonFile))
+            )
+        )
 
         assertThat(textResponse.statusCode, equalTo(200))
         assertTrue(textResponse.body.isPresent)
         assertThat(textResponse.body.get().asRawBytes(), equalTo(textFile.readBytes()))
         assertThat(textResponse.headers["Content-Type"], equalTo(listOf("text/plain")))
-        assertThat(textResponse.headers["Last-Modified"], equalTo(
-                listOf(lastModifiedHeaderValue(textFile))))
+        assertThat(
+            textResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(textFile))
+            )
+        )
     }
 
     @Test
@@ -272,13 +302,17 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath)
 
         val (afterModifiedResponse, beforeModifiedResponse) = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.json
             If-Modified-Since: ${dateHeaderValue(afterModified)}
-            """.trimIndent()).eagerly() to sendHttpRequest("""
+            """.trimIndent()
+            ).eagerly() to sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.json
             If-Modified-Since: ${dateHeaderValue(beforeModified)}
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
@@ -293,8 +327,11 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertTrue(beforeModifiedResponse.body.isPresent)
         assertThat(beforeModifiedResponse.body.get().asRawBytes(), equalTo(jsonFile.readBytes()))
         assertThat(beforeModifiedResponse.headers["Content-Type"], equalTo(listOf("application/json")))
-        assertThat(beforeModifiedResponse.headers["Last-Modified"], equalTo(
-                listOf(lastModifiedHeaderValue(jsonFile))))
+        assertThat(
+            beforeModifiedResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(jsonFile))
+            )
+        )
 
     }
 
@@ -310,13 +347,17 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath)
 
         val (afterModifiedResponse, beforeModifiedResponse) = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.txt
             If-Unmodified-Since: ${dateHeaderValue(afterModified)}
-            """.trimIndent()).eagerly() to sendHttpRequest("""
+            """.trimIndent()
+            ).eagerly() to sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/some.txt
             If-Unmodified-Since: ${dateHeaderValue(beforeModified)}
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
@@ -327,8 +368,11 @@ class RawHttpCliTest : RawHttpCliTester() {
         assertTrue(afterModifiedResponse.body.isPresent)
         assertThat(afterModifiedResponse.body.get().asRawBytes(), equalTo(textFile.readBytes()))
         assertThat(afterModifiedResponse.headers["Content-Type"], equalTo(listOf("text/plain")))
-        assertThat(afterModifiedResponse.headers["Last-Modified"], equalTo(
-                listOf(lastModifiedHeaderValue(textFile))))
+        assertThat(
+            afterModifiedResponse.headers["Last-Modified"], equalTo(
+                listOf(lastModifiedHeaderValue(textFile))
+            )
+        )
 
         assertThat(beforeModifiedResponse.statusCode, equalTo(412))
 
@@ -348,18 +392,22 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath, "--log-requests")
 
         val response = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/${someFile.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
 
         handle.verifyProcessTerminatedWithSigKillExitCode()
 
-        assertThat("Server returned unexpected status code\n$handle",
-                response.statusCode, equalTo(200))
+        assertThat(
+            "Server returned unexpected status code\n$handle",
+            response.statusCode, equalTo(200)
+        )
         assertTrue(response.body.isPresent)
         assertThat(response.body.get().asRawString(Charsets.UTF_8), equalTo("Hello RawHTTP!"))
 
@@ -378,16 +426,19 @@ class RawHttpCliTest : RawHttpCliTester() {
 
         // should be able to parse the date with the formatter used in Common Log Format
         val dateFormat = DateTimeFormatter
-                .ofPattern("d/MMM/yyyy:HH:mm:ss z")
-                .withLocale(Locale.getDefault())
-                .withZone(ZoneId.systemDefault())
+            .ofPattern("d/MMM/yyyy:HH:mm:ss z")
+            .withLocale(Locale.getDefault())
+            .withZone(ZoneId.systemDefault())
 
         val parsedLogDate = LocalDateTime.parse(logDate, dateFormat)
 
         // should be very recent date
-        assertTrue("Parsed Date seems too different from the expected: $parsedLogDate",
-                parsedLogDate.isBefore(LocalDateTime.now().plusSeconds(5)) &&
-                        parsedLogDate.isAfter(LocalDateTime.now().minusSeconds(10)))
+        assertThat(
+            parsedLogDate, isBetween(
+                LocalDateTime.now().minusSeconds(10),
+                LocalDateTime.now().plusSeconds(5)
+            )
+        )
 
         assertNoSysErrOutput(handle)
     }
@@ -402,18 +453,22 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath)
 
         val response = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/../${parentDirFile.name}
             Accept: */*
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+            ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
 
         handle.verifyProcessTerminatedWithSigKillExitCode()
 
-        assertThat("Server returned unexpected status code\n$handle",
-                response.statusCode, equalTo(404))
+        assertThat(
+            "Server returned unexpected status code\n$handle",
+            response.statusCode, equalTo(404)
+        )
         assertTrue(response.body.isPresent)
         assertThat(response.body.get().asRawString(Charsets.UTF_8), equalTo("Resource was not found."))
     }
@@ -430,27 +485,35 @@ class RawHttpCliTest : RawHttpCliTester() {
         val handle = runCli("serve", tempDir.absolutePath)
 
         val (jsonResponse, xmlResponse) = try {
-            sendHttpRequest("""
+            sendHttpRequest(
+                """
             GET http://0.0.0.0:8080/hello
             Accept: application/json
-            """.trimIndent()).eagerly() to
-                    sendHttpRequest("""
+            """.trimIndent()
+            ).eagerly() to
+                    sendHttpRequest(
+                        """
             GET http://0.0.0.0:8080/hello
             Accept: application/xml
-            """.trimIndent()).eagerly()
+            """.trimIndent()
+                    ).eagerly()
         } finally {
             handle.sendStopSignalToRawHttpServer()
         }
 
         handle.verifyProcessTerminatedWithSigKillExitCode()
 
-        assertThat("Server returned unexpected status code\n$handle",
-                jsonResponse.statusCode, equalTo(200))
+        assertThat(
+            "Server returned unexpected status code\n$handle",
+            jsonResponse.statusCode, equalTo(200)
+        )
         assertTrue(jsonResponse.body.isPresent)
         assertThat(jsonResponse.body.get().asRawString(Charsets.UTF_8), equalTo(jsonFile.readText()))
 
-        assertThat("Server returned unexpected status code\n$handle",
-                xmlResponse.statusCode, equalTo(200))
+        assertThat(
+            "Server returned unexpected status code\n$handle",
+            xmlResponse.statusCode, equalTo(200)
+        )
         assertTrue(xmlResponse.body.isPresent)
         assertThat(xmlResponse.body.get().asRawString(Charsets.UTF_8), equalTo(xmlFile.readText()))
     }
@@ -478,24 +541,42 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canRunHttpFileWithEnvironmentAndPrintStats() {
-        val handleProd = runCli("run", asClassPathFile("reqin-edit-tests/with-env/file.http"),
-                "-l", "-e", "prod", "-p", "stats")
+        val handleProd = runCli(
+            "run", asClassPathFile("reqin-edit-tests/with-env/file.http"),
+            "-l", "-e", "prod", "-p", "stats"
+        )
         assertGetFooThenPostFooRequestsAndStats(handleProd)
     }
 
     @Test
     fun canRunHttpFileUsingExternalFiles() {
-        val handle = runCli("run", asClassPathFile("reqin-edit-tests/files/post.http"),
-                "-p", "body")
+        val handle = runCli(
+            "run", asClassPathFile("reqin-edit-tests/files/post.http"),
+            "-p", "body"
+        )
         assertSuccessResponseReplyToFiles(handle)
         assertReplyResponseStoredInFile()
     }
 
     @Test
     fun canRunHttpFileWithTests() {
-        val handle = runCli("run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
-                "-p", "status")
+        val handle = runCli(
+            "run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
+            "-p", "status"
+        )
         assertHttpTestResults(handle)
+    }
+
+    private fun isBetween(min: LocalDateTime, max: LocalDateTime): Matcher<in LocalDateTime> {
+        return object : BaseMatcher<LocalDateTime>() {
+            override fun describeTo(desc: Description) {
+                desc.appendText("between ").appendValue(min).appendText(" and ").appendValue(max)
+            }
+
+            override fun matches(actual: Any?): Boolean = if (actual is LocalDateTime) {
+                !actual.isBefore(min) && !actual.isAfter(max)
+            } else false
+        }
     }
 
 }

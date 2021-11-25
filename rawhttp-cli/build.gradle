@@ -33,7 +33,6 @@ dependencies {
     patchedJar project(':patched-jars:icu4j')
     patchedJar project(':patched-jars:mustache')
     compileOnly 'org.jetbrains:annotations:22.0.0'
-    testImplementation 'junit:junit:4.12'
 }
 
 jar {
@@ -45,27 +44,7 @@ jar {
     }
 }
 
-task fatJar(type: Jar, group: 'build') {
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-    final taskInputs = inputs
-    // declare dependency on other project jars
-    [project(':rawhttp-core'), project(':rawhttp-cookies'), project(':rawhttp-req-in-edit')].each { p ->
-        p.tasks.withType(org.gradle.jvm.tasks.Jar) {
-            taskInputs.file(it.archiveFile)
-        }
-    }
-    taskInputs.file(jar.archiveFile)
-    archiveName = runnableJarName
-    classifier "all"
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
-    with jar
-    dependsOn jar
-}
-
-ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
+ext.runnableJar = new File(buildDir, runnableJarName).absolutePath
 
 task generateJavaSources(
         description: 'Generates Java sources based on the java-templates directory') {
@@ -93,12 +72,36 @@ compileJava.dependsOn generateJavaSources
 def libs = "${buildDir}/libs"
 def image = "${buildDir}/image"
 
+ext.cliJavaImage = image
+
 task deps( type: Copy ) {
+    dependsOn jar
     from configurations.runtimeClasspath, {
         exclude 'mustache-*', 'icu4j-*'
     }
     from configurations.patchedJar
     into libs
+}
+
+task fatJar(type: Jar, group: 'build') {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    final taskInputs = inputs
+    // declare dependency on other project jars
+    [project(':rawhttp-core'), project(':rawhttp-cookies'), project(':rawhttp-req-in-edit')].each { p ->
+        p.tasks.withType(org.gradle.jvm.tasks.Jar) {
+            taskInputs.file(it.archiveFile)
+        }
+    }
+    taskInputs.file(jar.archiveFile)
+    archiveName = runnableJarName
+    classifier "all"
+    destinationDir buildDir
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    with jar
+    dependsOn deps
 }
 
 task jlink( type: Exec ) {

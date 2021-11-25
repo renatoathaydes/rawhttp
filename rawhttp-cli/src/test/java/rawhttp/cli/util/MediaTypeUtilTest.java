@@ -1,20 +1,20 @@
 package rawhttp.cli.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MediaTypeUtilTest {
 
     @SuppressWarnings("unchecked")
     @Test
     public void canSplitupAcceptHeadersIntoPreferredMediaTypes() {
-        List[] examples = new List[]{
+        var examples = new List[]{
                 emptyList(), emptyList(),
                 singletonList(""), emptyList(),
                 singletonList("*/*"), singletonList("*/*"),
@@ -32,7 +32,7 @@ public class MediaTypeUtilTest {
             List<String> accept = examples[i];
             List<String> expectedSortedAccepts = examples[i + 1];
             List<String> result = MediaTypeUtil.getSortedAcceptableMediaTypes(accept);
-            assertEquals("Example index: " + (i / 2), expectedSortedAccepts, result);
+            assertEquals(expectedSortedAccepts, result, "Example index: " + (i / 2));
         }
     }
 }

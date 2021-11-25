@@ -1,12 +1,12 @@
-import CliRunner.CLI_EXECUTABLE
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.CoreMatchers.startsWith
-import org.junit.AfterClass
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.BeforeClass
+import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeAll
 import rawhttp.core.EagerHttpResponse
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpResponse
@@ -32,7 +32,25 @@ val EOL = if (IS_WINDOWS) "\r\n" else "\n"
 
 val replyResponseFile = File("response.txt")
 
-object CliRunner {
+object JavaImageCliRunner {
+    val CLI_EXECUTABLE: Array<String>
+
+    init {
+        val javaImageDir = System.getProperty("rawhttp.cli.image")
+        val imageDir = File(javaImageDir)
+        if (!imageDir.isDirectory) {
+            throw IllegalStateException("The CLI Java Image does not exist: $imageDir")
+        }
+        val cliExec = File(imageDir, if (IS_WINDOWS) "bin\\rawhttp.bat" else "bin/rawhttp")
+        if (!cliExec.isFile) {
+            throw IllegalStateException("The CLI executable inside the Java Image does not exist: $cliExec")
+        }
+
+        CLI_EXECUTABLE = arrayOf(cliExec.absolutePath)
+    }
+}
+
+object FatJarCliRunner {
     val CLI_EXECUTABLE: Array<String>
 
     init {
@@ -107,7 +125,7 @@ data class ProcessHandle(
 
         if (!completed) {
             process.destroyForcibly()
-            fail("Process not completed within the timeout:\n$this")
+            fail<Unit>("Process not completed within the timeout:\n$this")
         }
         return process.exitValue()
     }
@@ -124,22 +142,38 @@ data class ProcessHandle(
 
 }
 
-fun runCli(vararg args: String): ProcessHandle {
-    val process = ProcessBuilder().command(*CLI_EXECUTABLE, *args).start()
-    val outputStream = ByteArrayOutputStream(1024)
-    val errStream = ByteArrayOutputStream(1024)
+sealed class CliRunner {
+    abstract val command: Array<String>
 
-    Thread {
-        process.inputStream.copyTo(outputStream)
-    }.start()
-    Thread {
-        process.errorStream.copyTo(errStream)
-    }.start()
+    object FatJar : CliRunner() {
+        override val command: Array<String>
+            get() = FatJarCliRunner.CLI_EXECUTABLE
+    }
 
-    return ProcessHandle(process, outputStream, errStream)
+    object JavaImage : CliRunner() {
+        override val command: Array<String>
+            get() = JavaImageCliRunner.CLI_EXECUTABLE
+    }
 }
 
 abstract class RawHttpCliTester {
+
+    abstract val cliRunner: CliRunner
+
+    fun runCli(vararg args: String): ProcessHandle {
+        val process = ProcessBuilder().command(*cliRunner.command, *args).start()
+        val outputStream = ByteArrayOutputStream(1024)
+        val errStream = ByteArrayOutputStream(1024)
+
+        Thread {
+            process.inputStream.copyTo(outputStream)
+        }.start()
+        Thread {
+            process.errorStream.copyTo(errStream)
+        }.start()
+
+        return ProcessHandle(process, outputStream, errStream)
+    }
 
     companion object {
 
@@ -181,7 +215,7 @@ abstract class RawHttpCliTester {
 
         private var httpServerThread: Thread? = null
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun startHttpServer() {
             val http = RawHttp()
@@ -257,7 +291,7 @@ abstract class RawHttpCliTester {
             }
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun stopHttpServer() {
             httpServerThread!!.interrupt()
@@ -273,7 +307,10 @@ abstract class RawHttpCliTester {
             handle.verifyProcessTerminatedWithExitCode(0)
             val separator = "$EOL---------------------------------$EOL"
             val separatorIndex = handle.out.indexOf(separator)
-            assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
+            assertThat(
+                "Expected to find separator in output:\n${handle.out}",
+                separatorIndex, CoreMatchers.allOf(not(0), not(-1))
+            )
             assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + EOL))
             assertStatistics(handle.out.substring(separatorIndex + separator.length))
             assertNoSysErrOutput(handle)
@@ -290,8 +327,12 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
-                    EOL + SUCCESS_HTTP_RESPONSE + EOL))
+            assertThat(
+                handle.out, equalTo(
+                    SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
+                            EOL + SUCCESS_HTTP_RESPONSE + EOL
+                )
+            )
             assertNoSysErrOutput(handle)
         }
 
@@ -363,26 +404,26 @@ abstract class RawHttpCliTester {
             output.lines().run {
                 assertThat("Expected 6 element, got: " + toString(), size, equalTo(6))
                 assertTrue(
-                    "Expected 'Connect time', got " + get(0),
-                    get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms"))
+                    get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms")),
+                    "Expected 'Connect time', got " + get(0)
                 )
                 assertTrue(
-                    "Expected 'First received byte time', got " + get(1),
-                    get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms"))
+                    get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms")),
+                    "Expected 'First received byte time', got " + get(1)
                 )
                 assertTrue(
-                    "Expected 'Total response time', got " + get(2),
-                    get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms"))
+                    get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms")),
+                    "Expected 'Total response time', got " + get(2)
                 )
                 assertTrue(
-                    "Expected 'Total response time', got " + get(3),
-                    get(3).matches(Regex("Bytes received: \\d+"))
+                    get(3).matches(Regex("Bytes received: \\d+")),
+                    "Expected 'Total response time', got " + get(3)
                 )
                 assertTrue(
-                    "Expected 'Throughput (bytes/sec)', got " + get(4),
-                    get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+"))
+                    get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+")),
+                    "Expected 'Throughput (bytes/sec)', got " + get(4)
                 )
-                assertEquals(get(5), "")
+                assertThat(get(5), equalTo(""))
             }
         }
 
@@ -397,11 +438,11 @@ abstract class RawHttpCliTester {
             handle.out.lines().run {
                 assertThat(size, equalTo(6))
                 assertThat(get(0), equalTo("HTTP/1.1 200 OK"))
-                assertTrue(get(1), get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200")))
+                assertThat(get(1), get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200")))
                 assertThat(get(2), equalTo("HTTP/1.1 200 OK"))
-                assertTrue(get(3), get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200")))
-                assertTrue(get(4), get(4).matches(Regex("TEST OK \\(\\d+ms\\): body is as expected")))
-                assertEquals(get(5), "")
+                assertThat(get(3), get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200")))
+                assertThat(get(4), get(4).matches(Regex("TEST OK \\(\\d+ms\\): body is as expected")))
+                assertThat(get(5), equalTo(""))
             }
 
             assertNoSysErrOutput(handle)
@@ -453,12 +494,14 @@ abstract class RawHttpCliTester {
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
             if (statusCode != expectedExitCode) {
-                throw AssertionError("Expected process to exit with code $expectedExitCode " +
-                        "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err")
+                throw AssertionError(
+                    "Expected process to exit with code $expectedExitCode " +
+                            "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err"
+                )
             }
         }
 
-        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode(){
+        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode() {
             val sigKillCode = if (IS_WINDOWS) 1 else 143
             verifyProcessTerminatedWithExitCode(sigKillCode)
         }
@@ -494,6 +537,9 @@ class ManualTest : RawHttpCliTester() {
             stopHttpServer()
         }
     }
+
+    override val cliRunner: CliRunner
+        get() = CliRunner.JavaImage
 }
 
 fun lastModifiedHeaderValue(file: File): String =

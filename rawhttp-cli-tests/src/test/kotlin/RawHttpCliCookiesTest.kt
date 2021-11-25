@@ -1,12 +1,13 @@
-import RawHttpCliTester.Companion.assertNoSysErrOutput
-import RawHttpCliTester.Companion.assertSysErrOutput
-import RawHttpCliTester.Companion.verifyProcessTerminatedWithExitCode
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldMatch
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+import org.hamcrest.BaseMatcher
+import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.Description
+import org.hamcrest.Matcher
+import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import rawhttp.cookies.ServerCookieHelper
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpRequest
@@ -18,7 +19,15 @@ import java.io.IOException
 import java.net.HttpCookie
 import java.net.ServerSocket
 
-class RawHttpCliCookiesTest {
+class RawHttpCliCookiesFatJarCliTest : RawHttpCliCookiesTest() {
+    override val cliRunner = CliRunner.FatJar
+}
+
+class RawHttpCliCookiesJavaImageCliTest : RawHttpCliCookiesTest() {
+    override val cliRunner = CliRunner.JavaImage
+}
+
+abstract class RawHttpCliCookiesTest : RawHttpCliTest() {
 
     companion object {
         private const val SUCCESS_HTTP_RESPONSE = "HTTP/1.1 200 OK\n" +
@@ -40,7 +49,7 @@ class RawHttpCliCookiesTest {
         val http = RawHttp()
         private var httpServerThread: Thread? = null
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun startHttpServer() {
             val server = ServerSocket(8086)
@@ -92,18 +101,18 @@ class RawHttpCliCookiesTest {
                         http.parseResponse(REDIRECT_TO_LOGIN_HTTP_RESPONSE)
                     else // we don't even check the SID value :D
                         http.parseResponse(SUCCESS_HTTP_RESPONSE)
-                                .withBody(StringBody("Hello user"))
+                            .withBody(StringBody("Hello user"))
                 }
                 "/login" ->
                     when (request.method) {
                         "POST" -> (if (request.body.map { it.decodeBodyToString(Charsets.UTF_8) }
-                                        .orElse("") == "my password is 123")
+                                .orElse("") == "my password is 123")
                             ServerCookieHelper.setCookie(
-                                    http.parseResponse(SUCCESS_HTTP_RESPONSE),
-                                    HttpCookie("sid", "foo").apply { maxAge = 120 })
+                                http.parseResponse(SUCCESS_HTTP_RESPONSE),
+                                HttpCookie("sid", "foo").apply { maxAge = 120 })
                         else http.parseResponse(BAD_CREDENTIALS_RESPONSE))
                         "GET" -> http.parseResponse(SUCCESS_HTTP_RESPONSE)
-                                .withBody(StringBody("Send your credentials to me!"))
+                            .withBody(StringBody("Send your credentials to me!"))
                         else -> http.parseResponse(ERROR_HTTP_RESPONSE)
                     }
                 else ->
@@ -111,7 +120,7 @@ class RawHttpCliCookiesTest {
             }
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun stopHttpServer() {
             httpServerThread?.interrupt()
@@ -145,39 +154,59 @@ class RawHttpCliCookiesTest {
 
         val outLines = handle.out.lines()
 
-        outLines shouldHaveSize(21)
+        assertThat(outLines.size, equalTo(21))
 
-        outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
-                "Location: http://localhost:8086/login",
-                "Content-Length: 0",
-                "",
-                "HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 28",
-                "",
-                "Send your credentials to me!")
-        outLines[9] shouldMatch("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
-        outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
-                "Content-Length: 0",
-                "",
-                "")
-        outLines[14] shouldMatch("TEST OK \\(\\d+ms\\): We get the bad credentials response")
-        outLines.subList(15, 19) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
-                "Content-Length: 0",
-                "",
-                "")
-        outLines[19] shouldMatch("TEST FAILED \\(\\d+ms\\): We get the SID cookie")
-        outLines[20] shouldBe ""
+        assertThat(
+            outLines.subList(0, 9), equalTo(
+                listOf(
+                    "HTTP/1.1 302",
+                    "Location: http://localhost:8086/login",
+                    "Content-Length: 0",
+                    "",
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 28",
+                    "",
+                    "Send your credentials to me!"
+                )
+            )
+        )
+        assertThat(outLines[9], matches("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page"))
+        assertThat(
+            outLines.subList(10, 14), equalTo(
+                listOf(
+                    "HTTP/1.1 401 Bad Credentials",
+                    "Content-Length: 0",
+                    "",
+                    ""
+                )
+            )
+        )
+        assertThat(outLines[14], matches("TEST OK \\(\\d+ms\\): We get the bad credentials response"))
+        assertThat(
+            outLines.subList(15, 19), equalTo(
+                listOf(
+                    "HTTP/1.1 401 Bad Credentials",
+                    "Content-Length: 0",
+                    "",
+                    ""
+                )
+            )
+        )
+        assertThat(outLines[19], matches("TEST FAILED \\(\\d+ms\\): We get the SID cookie"))
+        assertThat(outLines[20], equalTo(""))
 
-        assertSysErrOutput(handle, "expected 200 response, but status was 401$EOL" +
-                "FAIL: There were test failures!$EOL")
+        assertSysErrOutput(
+            handle, "expected 200 response, but status was 401$EOL" +
+                    "FAIL: There were test failures!$EOL"
+        )
     }
 
     @Test
     fun canRunHttpFileUsingPreLoadedCookies() {
         val basicHttpFile = RawHttpCliTester::class.java.getResource("/reqin-edit-tests/login/login.http").file
         val cookieJar = File("temp_cookie_jar")
-        cookieJar.exists() shouldBe false
+        assertFalse(cookieJar.exists())
         cookieJar.deleteOnExit()
 
         val handle1 = runCli("run", basicHttpFile, "--cookiejar", cookieJar.absolutePath)
@@ -185,7 +214,7 @@ class RawHttpCliCookiesTest {
         handle1.verifyProcessTerminatedWithExitCode(0)
 
         assertHttpFileRanSuccessfully(handle1)
-        cookieJar.exists() shouldBe true
+        assertTrue(cookieJar.exists())
 
         // run file again, this time re-using the cookies from the previous run
         val handle2 = runCli("run", basicHttpFile, "--cookiejar", cookieJar.absolutePath)
@@ -195,54 +224,98 @@ class RawHttpCliCookiesTest {
         val outLines = handle2.out.lines()
 
         // the client went straight to the Hello User response because it already had a persisted cookie
-        outLines.subList(0, 5) shouldBe listOf("HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 10",
-                "",
-                "Hello user")
+        assertThat(
+            outLines.subList(0, 5), equalTo(
+                listOf(
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 10",
+                    "",
+                    "Hello user"
+                )
+            )
+        )
 
-        assertSysErrOutput(handle2, """
+        assertSysErrOutput(
+            handle2, """
             expected to go to login page, got response: Hello user
             FAIL: There were test failures!$EOL
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     private fun assertHttpFileRanSuccessfully(handle: ProcessHandle) {
         val outLines = handle.out.lines()
 
-        outLines shouldHaveSize(29)
+        assertThat(outLines.size, equalTo(29))
 
-        outLines.subList(0, 9) shouldBe listOf("HTTP/1.1 302",
-                "Location: http://localhost:8086/login",
-                "Content-Length: 0",
-                "",
-                "HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 28",
-                "",
-                "Send your credentials to me!")
-        outLines[9] shouldMatch("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page")
-        outLines.subList(10, 14) shouldBe listOf("HTTP/1.1 401 Bad Credentials",
-                "Content-Length: 0",
-                "",
-                "")
-        outLines[14] shouldMatch("TEST OK \\(\\d+ms\\): We get the bad credentials response")
-        outLines.subList(15, 21) shouldBe listOf("HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 9",
-                "Set-Cookie: sid=\"foo\"; Max-Age=120",
-                "",
-                "something")
-        outLines[21] shouldMatch("TEST OK \\(\\d+ms\\): We get the SID cookie")
-        outLines.subList(22, 27) shouldBe listOf("HTTP/1.1 200 OK",
-                "Content-Type: text/plain",
-                "Content-Length: 10",
-                "",
-                "Hello user")
-        outLines[27] shouldMatch("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted")
-        outLines[28] shouldBe ""
+        assertThat(
+            outLines.subList(0, 9), equalTo(
+                listOf(
+                    "HTTP/1.1 302",
+                    "Location: http://localhost:8086/login",
+                    "Content-Length: 0",
+                    "",
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 28",
+                    "",
+                    "Send your credentials to me!"
+                )
+            )
+        )
+        assertThat(outLines[9], matches("TEST OK \\(\\d+ms\\): We are automatically redirected to the login page"))
+        assertThat(
+            outLines.subList(10, 14), equalTo(
+                listOf(
+                    "HTTP/1.1 401 Bad Credentials",
+                    "Content-Length: 0",
+                    "",
+                    ""
+                )
+            )
+        )
+        assertThat(outLines[14], matches("TEST OK \\(\\d+ms\\): We get the bad credentials response"))
+        assertThat(
+            outLines.subList(15, 21), equalTo(
+                listOf(
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 9",
+                    "Set-Cookie: sid=\"foo\"; Max-Age=120",
+                    "",
+                    "something"
+                )
+            )
+        )
+        assertThat(outLines[21], matches("TEST OK \\(\\d+ms\\): We get the SID cookie"))
+        assertThat(
+            outLines.subList(22, 27), equalTo(
+                listOf(
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 10",
+                    "",
+                    "Hello user"
+                )
+            )
+        )
+        assertThat(outLines[27], matches("TEST OK \\(\\d+ms\\): With the login cookie, we can get what we wanted"))
+        assertThat(outLines[28], equalTo(""))
 
         assertNoSysErrOutput(handle)
     }
 
+    private fun matches(pattern: String): Matcher<in String> {
+        val regex = Regex(pattern)
+        return object : BaseMatcher<String>() {
+            override fun describeTo(desc: Description) {
+                desc.appendText("match ").appendValue(regex)
+            }
+
+            override fun matches(actual: Any?): Boolean = if (actual is String) {
+                regex.matches(actual)
+            } else false
+        }
+    }
 }

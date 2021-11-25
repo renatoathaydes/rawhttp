@@ -15,8 +15,9 @@ compileKotlin {
 
 test {
     systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
+    systemProperty 'rawhttp.cli.image', project(':rawhttp-cli').ext.cliJavaImage
 //    systemProperty 'rawhttp-cli-tester-debug', 'true'
-    dependsOn ':rawhttp-cli:fatJar'
+    dependsOn ':rawhttp-cli:fatJar', ':rawhttp-cli:packageImage'
     testLogging {
         events "failed"
         exceptionFormat "full"
@@ -24,13 +25,10 @@ test {
 }
 
 dependencies {
+    implementation 'org.hamcrest:hamcrest:2.2'
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation 'junit:junit:4.12'
     testImplementation project(':rawhttp-core')
     testImplementation project(':rawhttp-cookies')
     testImplementation project(':rawhttp-cli')
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect"
-    testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
-    testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
 }
