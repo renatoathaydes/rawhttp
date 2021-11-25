@@ -22,6 +22,7 @@ import java.nio.file.Paths
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 val IS_DEBUG = System.getProperty("rawhttp-cli-tester-debug") != null
@@ -220,8 +221,10 @@ abstract class RawHttpCliTester {
         fun startHttpServer() {
             val http = RawHttp()
             val server = ServerSocket(8083)
+            val starterLatch = CountDownLatch(1)
 
             httpServerThread = Thread {
+                starterLatch.countDown()
                 try {
                     while (true) {
                         val client = server.accept()
@@ -282,12 +285,16 @@ abstract class RawHttpCliTester {
                     }
                 } catch (e: InterruptedException) {
                     println("RawHttpCliTest HTTP Server stopped")
+                    server.close()
                 } catch (e: IOException) {
                     e.printStackTrace()
                 }
             }.apply {
                 isDaemon = true
                 start()
+                val ok = starterLatch.await(5, TimeUnit.SECONDS)
+                assertTrue(ok, "Server did not start up in time")
+                sleep(100L) // make sure the test won't start before the server socket is ready
             }
         }
 
@@ -295,6 +302,7 @@ abstract class RawHttpCliTester {
         @JvmStatic
         fun stopHttpServer() {
             httpServerThread!!.interrupt()
+            httpServerThread = null
         }
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
