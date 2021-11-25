@@ -14,6 +14,7 @@ jobs:
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm: 'nightly'
+          personal-token: ${{ secrets.GITHUB_TOKEN }}
           java: java${{ matrix.java }}
 
       - name: Build and execute tests
