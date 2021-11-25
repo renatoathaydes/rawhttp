@@ -180,7 +180,7 @@ public class OptionsParserTest {
                             (f, o) -> f.getName(),
                             (t, o) -> "text"),
                     h -> "run", s -> "server", h -> "help");
-            assertEquals("Example: " + exampleText, expectedFileName, result);
+            assertEquals(expectedFileName, result, "Example: " + exampleText);
         }
     }
 
@@ -211,8 +211,7 @@ public class OptionsParserTest {
                             (f, o) -> "file",
                             (t, o) -> t),
                     h -> "run ", s -> "server", h -> "help");
-            assertEquals("Example: " + exampleText,
-                    expectedRequestText, result);
+            assertEquals(expectedRequestText, result, "Example: " + exampleText);
         }
     }
 
@@ -232,8 +231,7 @@ public class OptionsParserTest {
                             (f, o) -> "" + o.logRequest,
                             (t, o) -> "" + o.logRequest),
                     h -> "run ", s -> "server", h -> "help");
-            assertEquals("Example: " + exampleText,
-                    "true", result);
+            assertEquals("true", result, "Example: " + exampleText);
         }
 
         String[][] noLogExamples = new String[][]{
@@ -250,8 +248,7 @@ public class OptionsParserTest {
                             (f, o) -> "" + o.logRequest,
                             (t, o) -> "" + o.logRequest),
                     h -> "run ", s -> "server", h -> "help");
-            assertEquals("Example: " + exampleText,
-                    "false", result);
+            assertEquals("false", result, "Example: " + exampleText);
         }
     }
 
@@ -289,7 +286,7 @@ public class OptionsParserTest {
             String expectedBody = example[2];
             String actualBody = result.run(f -> null, c -> c);
             assertNotNull(actualBody);
-            assertEquals("Example: " + exampleText, expectedBody, actualBody);
+            assertEquals(expectedBody, actualBody, "Example: " + exampleText);
         }
     }
 
@@ -357,8 +354,8 @@ public class OptionsParserTest {
                 OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "The --body-text option can only be used once", e.getMessage());
+                assertEquals("The --body-text option can only be used once", e.getMessage(),
+                        "Example: " + exampleText);
             }
         }
     }
@@ -379,8 +376,8 @@ public class OptionsParserTest {
                 OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "The --body-file option can only be used once", e.getMessage());
+                assertEquals("The --body-file option can only be used once", e.getMessage(),
+                        "Example: " + exampleText);
             }
         }
     }
@@ -415,8 +412,8 @@ public class OptionsParserTest {
                 OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "the --file option can only be used once", e.getMessage());
+                assertEquals("the --file option can only be used once", e.getMessage(),
+                        "Example: " + exampleText);
             }
         }
     }
@@ -755,8 +752,8 @@ public class OptionsParserTest {
                 OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "the --port option can only be used once", e.getMessage());
+                assertEquals("the --port option can only be used once", e.getMessage(),
+                        "Example: " + exampleText);
             }
         }
     }
@@ -779,8 +776,8 @@ public class OptionsParserTest {
                 Options options = OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText + ": Result = " + options);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText,
-                        "Unrecognized option: " + invalidOption, e.getMessage());
+                assertEquals("Unrecognized option: " + invalidOption, e.getMessage(),
+                        "Example: " + exampleText);
             }
         };
 
@@ -800,9 +797,10 @@ public class OptionsParserTest {
                 OptionsParser.parse(example);
                 fail("Did not fail to parse example: " + exampleText);
             } catch (OptionsException e) {
-                assertEquals("Example: " + exampleText, "Missing argument for " +
-                        example[example.length - 1] +
-                        " flag", e.getMessage());
+                assertEquals("Missing argument for " +
+                                example[example.length - 1] +
+                                " flag", e.getMessage(),
+                        "Example: " + exampleText);
             }
         }
     }
