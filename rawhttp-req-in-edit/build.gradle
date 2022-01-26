@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id "org.jetbrains.kotlin.jvm"
+    id 'me.champeau.mrjar' version "0.1"
     id 'maven-publish'
     id 'signing'
 }
@@ -8,25 +9,35 @@ plugins {
 description = 'RawHTTP req-in-edit module (Jetbrains HTTP format)'
 version rawHttpReqInEditVersion
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
 
+multiRelease {
+    targetVersions 8, 17
+}
+
+final externalNashornLibrary = 'org.openjdk.nashorn:nashorn-core:15.3'
+
 dependencies {
     api project(':rawhttp-core')
     api project(':rawhttp-cookies')
-    implementation 'org.webjars.npm:mustache:3.1.0'
+    implementation 'org.webjars.npm:mustache:4.0.1'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+
+    // this is only needed on Java 17+ (as Nashorn was removed from the JDK itself)
+    java17Implementation externalNashornLibrary
+    if (JavaVersion.current().ordinal() >= JavaVersion.VERSION_17.ordinal()) {
+        // include the library in the CLI's runtime classpath
+        implementation externalNashornLibrary
+    }
+
     testImplementation project(':rawhttp-core')
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect"
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
 }
-
 
 jar {
     manifest {
@@ -51,14 +62,14 @@ task javadocJar(type: Jar) {
 
 publishing {
     publications {
-        mavenJava( MavenPublication ) {
+        mavenJava(MavenPublication) {
             artifactId = 'rawhttp-req-in-edit'
             from components.java
             versionMapping {
-                usage( 'java-api' ) {
-                    fromResolutionOf( 'runtimeClasspath' )
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
                 }
-                usage( 'java-runtime' ) {
+                usage('java-runtime') {
                     fromResolutionResult()
                 }
             }
@@ -97,8 +108,8 @@ publishing {
         maven {
             url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
             credentials {
-                username project.properties[ 'ossrhUsername' ]?.toString()
-                password project.properties[ 'ossrhPassword' ]?.toString()
+                username project.properties['ossrhUsername']?.toString()
+                password project.properties['ossrhPassword']?.toString()
             }
         }
     }

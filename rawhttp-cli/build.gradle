@@ -38,7 +38,8 @@ jar {
 
 task fatJar(type: Jar, group: 'build') {
     manifest {
-        attributes 'Main-Class': mainClassName
+        attributes 'Main-Class': mainClassName,
+                'Multi-Release': true
     }
     final taskInputs = inputs
     // declare dependency on other project jars
@@ -48,7 +49,7 @@ task fatJar(type: Jar, group: 'build') {
         }
     }
     taskInputs.file(jar.archiveFile)
-    archiveName = runnableJarName
+    archiveFileName = runnableJarName
     classifier "all"
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     duplicatesStrategy DuplicatesStrategy.EXCLUDE

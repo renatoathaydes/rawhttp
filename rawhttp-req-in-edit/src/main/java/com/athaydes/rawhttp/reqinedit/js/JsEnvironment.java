@@ -2,13 +2,11 @@ package com.athaydes.rawhttp.reqinedit.js;
 
 import com.athaydes.rawhttp.reqinedit.HttpEnvironment;
 import com.athaydes.rawhttp.reqinedit.HttpTestsReporter;
-import jdk.nashorn.api.scripting.NashornScriptEngine;
 import rawhttp.core.EagerHttpResponse;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.EagerBodyReader;
 
 import javax.annotation.Nullable;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,7 +38,7 @@ import java.util.concurrent.Callable;
  */
 public final class JsEnvironment implements HttpEnvironment {
 
-    private final NashornScriptEngine jsEngine;
+    private final ScriptEngineWrapper jsEngine;
 
     @Nullable
     private final File projectDir;
@@ -68,9 +66,9 @@ public final class JsEnvironment implements HttpEnvironment {
                 ? Collections.emptyList()
                 : JsLoader.getJsObjects(projectDir);
 
-        jsEngine = (NashornScriptEngine) new ScriptEngineManager().getEngineByName("nashorn");
+        jsEngine = new ScriptEngineWrapper();
         StringBuilder builder = new StringBuilder();
-        loadLibraryInto(builder, "Mustache", "/META-INF/resources/webjars/mustache/3.1.0/mustache.js");
+        loadLibraryInto(builder, "Mustache", "/META-INF/resources/webjars/mustache/4.0.1/mustache.js");
         readResource("response_handler.js", builder);
 
         try {
