@@ -14,7 +14,8 @@ description = 'RawHTTP CLI Tool'
 version = rawHttpCliVersion
 
 mainClassName = 'rawhttp.cli.Main'
-final runnableJarName = 'rawhttp.jar'
+final File runnableJar = new File(buildDir, 'libs/rawhttp.jar')
+final File runnableJarJdk17 = new File(buildDir, 'libs/rawhttp-jdk17.jar')
 
 final generatedJavaSources = "$buildDir/java-generated-sources"
 
@@ -49,8 +50,7 @@ task fatJar(type: Jar, group: 'build') {
         }
     }
     taskInputs.file(jar.archiveFile)
-    archiveFileName = runnableJarName
-    classifier "all"
+    archiveFileName = runnableJar.name
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
     with jar
@@ -64,7 +64,7 @@ task fatJarWithNashorn(type: Jar, group: 'build') {
     }
     with fatJar
     from { project(':rawhttp-req-in-edit').configurations.java17RuntimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    classifier "all-jdk17"
+    archiveFileName = runnableJarJdk17.name
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
 }
 
@@ -74,7 +74,9 @@ task createCliRuntime(type: Copy) {
     into "$buildDir/cli-runtime"
 }
 
-ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
+def isJava17OrNewer = JavaVersion.current().ordinal() >= JavaVersion.VERSION_17.ordinal()
+
+ext.runnableJar = (isJava17OrNewer ? runnableJarJdk17 : runnableJar).absolutePath
 
 task generateJavaSources(
         description: 'Generates Java sources based on the java-templates directory') {

@@ -16,7 +16,7 @@ compileKotlin {
 test {
     systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
 //    systemProperty 'rawhttp-cli-tester-debug', 'true'
-    dependsOn ':rawhttp-cli:fatJar'
+    dependsOn project(':rawhttp-cli').tasks.withType(Jar)
     testLogging {
         events "failed"
         exceptionFormat "full"

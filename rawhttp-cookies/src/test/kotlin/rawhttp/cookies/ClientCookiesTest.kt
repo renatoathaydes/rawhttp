@@ -142,17 +142,17 @@ class ClientCookiesTest {
                 """foo="bar"; Domain=b.localhost; Path=/headers""",
                 """abc="def"; Path=/headers/two""")
 
-        data class Ex(val domain: String, val path: String, val expectedCookies: List<String>)
+        data class Ex(val domain: String, val path: String, val expectedCookies: Set<String>)
 
         val examples = listOf(
-                Ex(domain = "localhost", path = "headers", expectedCookies = listOf()),
-                Ex(domain = "localhost", path = "headers/two", expectedCookies = listOf()),
-                Ex(domain = "c.localhost", path = "headers/two", expectedCookies = listOf()),
-                Ex(domain = "other-domain", path = "headers", expectedCookies = listOf()),
-                Ex(domain = "b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "a.b.localhost", path = "headers", expectedCookies = listOf("foo=bar")),
-                Ex(domain = "a.b.localhost", path = "headers/two", expectedCookies = listOf("foo=bar; abc=def"))
+                Ex(domain = "localhost", path = "headers", expectedCookies = setOf()),
+                Ex(domain = "localhost", path = "headers/two", expectedCookies = setOf()),
+                Ex(domain = "c.localhost", path = "headers/two", expectedCookies = setOf()),
+                Ex(domain = "other-domain", path = "headers", expectedCookies = setOf()),
+                Ex(domain = "b.localhost", path = "headers", expectedCookies = setOf("foo=bar")),
+                Ex(domain = "b.localhost", path = "headers/two", expectedCookies = setOf("foo=bar")),
+                Ex(domain = "a.b.localhost", path = "headers", expectedCookies = setOf("foo=bar")),
+                Ex(domain = "a.b.localhost", path = "headers/two", expectedCookies = setOf("foo=bar", "abc=def"))
         )
 
         for ((domain, path, expectedCookies) in examples) {
@@ -161,7 +161,9 @@ class ClientCookiesTest {
 
             headersResponse.statusCode shouldBe 200
 
-            headersResponse.headers["Cookie"] shouldBe expectedCookies
+            headersResponse.headers["Cookie"].flatMap {
+                it.split(";").map { s -> s.trim() }
+            }.toSet() shouldBe expectedCookies
         }
     }
 

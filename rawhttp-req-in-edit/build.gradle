@@ -27,10 +27,6 @@ dependencies {
 
     // this is only needed on Java 17+ (as Nashorn was removed from the JDK itself)
     java17Implementation externalNashornLibrary
-    if (JavaVersion.current().ordinal() >= JavaVersion.VERSION_17.ordinal()) {
-        // include the library in the CLI's runtime classpath
-        implementation externalNashornLibrary
-    }
 
     testImplementation project(':rawhttp-core')
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
