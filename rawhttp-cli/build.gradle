@@ -57,6 +57,23 @@ task fatJar(type: Jar, group: 'build') {
     dependsOn jar
 }
 
+task fatJarWithNashorn(type: Jar, group: 'build') {
+    manifest {
+        attributes 'Main-Class': mainClassName,
+                'Multi-Release': true
+    }
+    with fatJar
+    from { project(':rawhttp-req-in-edit').configurations.java17RuntimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    classifier "all-jdk17"
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+task createCliRuntime(type: Copy) {
+    from jar, configurations.runtimeClasspath
+    from { project(':rawhttp-req-in-edit').configurations.java17RuntimeClasspath }
+    into "$buildDir/cli-runtime"
+}
+
 ext.runnableJar = new File(buildDir, 'libs/' + runnableJarName).absolutePath
 
 task generateJavaSources(
