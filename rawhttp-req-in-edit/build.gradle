@@ -56,6 +56,11 @@ task javadocJar(type: Jar) {
 
 /* Publishing config */
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
