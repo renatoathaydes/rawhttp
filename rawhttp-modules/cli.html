@@ -23,7 +23,16 @@
 local files via a RawHTTP server.</p>
 
 <h2>Download</h2>
-<pre style="color:#93a1a1;background-color:#002b36">curl -sSfL https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.0/rawhttp-cli-1.3.0-all.jar -o rawhttp.jar
+
+<p>To run on Java 8 through 14:</p>
+<pre style="color:#93a1a1;background-color:#002b36">curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.4.0/rawhttp-cli-1.4.0-all.jar -o rawhttp-all.jar
+</pre>
+<p>To run on Java 17+:</p>
+
+<blockquote>
+<p>A different jar is needed because Nashorn is not included in the JDK anymore, so it must be included in the jar:</p>
+</blockquote>
+<pre style="color:#93a1a1;background-color:#002b36">curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.4.0/rawhttp-cli-1.4.0-jdk17.jar -o rawhttp-jdk17.jar
 </pre>
 <h2>Usage</h2>
 
@@ -98,9 +107,9 @@ print only parts of the response, and statistics about the request.</p>
 <p>Or print statistics about it:</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp send my-request.req -p stats
 
-Connect time: <span style="color:#2aa198">179</span>.35 ms
-First received byte time: <span style="color:#2aa198">698</span>.79 ms
-Total response time: <span style="color:#2aa198">713</span>.03 ms
+Connect time: 179.35 ms
+First received byte time: 698.79 ms
+Total response time: 713.03 ms
 Bytes received: <span style="color:#2aa198">464</span>
 Throughput <span style="color:#719e07">(</span>bytes/sec<span style="color:#719e07">)</span>: <span style="color:#2aa198">32572</span>
 </pre>
@@ -137,7 +146,7 @@ Throughput <span style="color:#719e07">(</span>bytes/sec<span style="color:#719e
 
 <h3>Using the <code>run</code> command</h3>
 
-<p>The <code>run</code> sub-command executes a HTTP file as defined by <a href="https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html">Jetbrains</a>.</p>
+<p>The <code>run</code> sub-command executes an HTTP file as defined by <a href="https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html">Jetbrains</a>.</p>
 
 <p>Usage:</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp run &lt;http-file&gt; <span style="color:#719e07">[</span>options<span style="color:#719e07">]</span>
