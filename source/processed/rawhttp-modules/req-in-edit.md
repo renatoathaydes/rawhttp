@@ -93,4 +93,20 @@ client.test("Request executed successfully", function() {
 <> response.json
 ```
 
+## Supported Java versions
+
+RawHTTP modules are still compiled on **Java 8** in order to support older code bases, but it's tested also on
+**Java 11** and **Java 17**.
+
+When running on Java 17, this module only works since version `0.3.0` due to the removal of Nashorn from the JDK.
+Since that version, `rawhttp-req-in-edit` is published as a [multi-release jar](https://openjdk.java.net/jeps/238),
+which means that:
+
+* when running on **Java 8**, the JDK-native Nashorn script engine is used
+* when running on **Java 17+**, Nashorn is expected to be present in the classpath as a library, on a different 
+  package (`org.openjdk.nashorn` instead of the old `jdk.nashorn`).
+
+See the [openjdk/nashorn](https://github.com/openjdk/nashorn) repository for details about using Nashorn as a library.
+In short, it should work exactly the same as on previous Java versions.
+
 {{ include /processed/fragments/_footer.html }}

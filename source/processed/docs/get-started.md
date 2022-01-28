@@ -12,21 +12,21 @@
 <dependency>
     <groupId>com.athaydes.rawhttp</groupId>
     <artifactId>rawhttp-core</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-dependency 'com.athaydes.rawhttp:rawhttp-core:2.4.0'
+dependency 'com.athaydes.rawhttp:rawhttp-core:2.4.1'
 ```
 
-### Download the CLI jar with curl
+### RawHTTP CLI
 
-```
-curl -sSfL https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.1/rawhttp-cli-1.3.1-all.jar -o rawhttp.jar
-```
+Please check out the [CLI Documentation]({{eval baseURL }}/rawhttp-modules/cli.html) if you want to use RawHTTP as
+a CLI utility to run HTTP servers and clients. It includes support for running [HTTP files](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html),
+which is basically the equivalent of a [PostMan](https://www.postman.com/) on the terminal.
 
 <hr>
 

@@ -11,8 +11,18 @@ local files via a RawHTTP server.
 
 ## Download
 
+To run on Java 8 through 14:
+
+```curl
+curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.4.0/rawhttp-cli-1.4.0-all.jar -o rawhttp-all.jar
 ```
-curl -sSfL https://jcenter.bintray.com/com/athaydes/rawhttp/rawhttp-cli/1.3.1/rawhttp-cli-1.3.1-all.jar -o rawhttp.jar
+
+To run on Java 17+:
+
+> A different jar is needed because Nashorn is not included in the JDK anymore, so it must be included in the jar:
+
+```
+curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.4.0/rawhttp-cli-1.4.0-jdk17.jar -o rawhttp-jdk17.jar
 ```
 
 ## Usage
@@ -156,7 +166,7 @@ Content-Type: application/json
 
 ### Using the `run` command
 
-The `run` sub-command executes a HTTP file as defined by [Jetbrains](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html).
+The `run` sub-command executes an HTTP file as defined by [Jetbrains](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html).
 
 Usage:
 
