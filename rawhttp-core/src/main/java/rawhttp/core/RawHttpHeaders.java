@@ -95,7 +95,7 @@ public class RawHttpHeaders implements Writable {
      * separated by a ','), then use {@link RawHttpHeaders#get(String, String)} to split the values.
      */
     public List<String> get(String headerName) {
-        return headersByCapitalizedName.getOrDefault(headerName.toUpperCase(Locale.US), NULL_HEADER).values;
+        return headersByCapitalizedName.getOrDefault(headerName.toUpperCase(Locale.ROOT), NULL_HEADER).values;
     }
 
     /**
