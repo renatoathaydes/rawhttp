@@ -21,6 +21,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+import java.util.Locale;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -94,7 +95,7 @@ public class RawHttpHeaders implements Writable {
      * separated by a ','), then use {@link RawHttpHeaders#get(String, String)} to split the values.
      */
     public List<String> get(String headerName) {
-        return headersByCapitalizedName.getOrDefault(headerName.toUpperCase(), NULL_HEADER).values;
+        return headersByCapitalizedName.getOrDefault(headerName.toUpperCase(Locale.ROOT), NULL_HEADER).values;
     }
 
     /**
