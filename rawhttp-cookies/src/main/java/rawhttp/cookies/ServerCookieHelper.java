@@ -271,7 +271,7 @@ public final class ServerCookieHelper {
 
     private static String unquoted(String s) {
         if (s.length() > 1 && s.startsWith("\"") && s.endsWith("\"")) {
-            return s.substring(1, s.length() - 2);
+            return s.substring(1, s.length() - 1);
         }
         return s;
     }
