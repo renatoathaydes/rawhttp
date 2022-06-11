@@ -5,22 +5,10 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.concurrent.TimeoutException
-
-fun <T> T.becomesTrueIn(timeout: Duration, errorMessage: String, check: T.() -> Boolean) {
-    val timeLimit = Instant.now() + timeout
-    while (!check(this)) {
-        Thread.sleep(100)
-        if (Instant.now().isAfter(timeLimit)) {
-            throw TimeoutException("Timeout in $timeout: $errorMessage")
-        }
-    }
-}
 
 infix fun ByteArray.shouldHaveSameElementsAs(other: ByteArray) {
     val expected = other.toList()

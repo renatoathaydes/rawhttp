@@ -4,18 +4,19 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttp.waitForPortToBeTaken
-import rawhttp.core.becomesTrueIn
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
-import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URI
 import java.time.Duration
 import java.util.Optional
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 class TcpRawHttpServerRestartingTests {
 
@@ -97,10 +98,7 @@ class TcpRawHttpServerRestartingTests {
 
         stopServer()
 
-        socket.becomesTrueIn(
-            Duration.ofMillis(800),
-            errorMessage = "Client socket should be closed when server stops"
-        ) { !isClientSocketStillWorking() }
+        socket.shouldBeClosedWithin(Duration.ofSeconds(1))
     }
 
     @Test
@@ -116,22 +114,27 @@ class TcpRawHttpServerRestartingTests {
         socket.isClosed shouldBe false
 
         // let the server timeout the on client Socket read
-        Thread.sleep(1050)
-
-        // too late to send more requests
-        socket.isClientSocketStillWorking() shouldBe false
+        socket.shouldBeClosedWithin(Duration.ofSeconds(2))
     }
 
-    private fun Socket.isClientSocketStillWorking(): Boolean {
-        return try {
-            http.parseRequest(
-                "GET http://localhost:$PORT/\n" +
-                        "Connection: keep-alive"
-            ).writeTo(getOutputStream())
-            true
-        } catch (e: IOException) {
-            println("Socket is not working: $e")
-            false
+    private fun Socket.shouldBeClosedWithin(timeout: Duration) {
+        val result = CompletableFuture<Boolean>()
+        Thread {
+            try {
+                val b = getInputStream().read()
+                if (b == -1) {
+                    result.complete(true)
+                } else {
+                    result.complete(false)
+                }
+            } catch (e: Exception) {
+                result.completeExceptionally(e)
+            }
+        }.start()
+
+        val ok = result.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        if (!ok) {
+            fail("Socket was not closed")
         }
     }
 
