@@ -358,7 +358,7 @@ public class RawHttp {
                 }
             }
         }
-        throw new TimeoutException("Port $port was not taken within the timeout");
+        throw new TimeoutException("Port " + port + " was not taken within the timeout");
     }
 
     /**

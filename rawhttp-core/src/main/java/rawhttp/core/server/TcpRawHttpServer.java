@@ -14,10 +14,12 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -104,6 +106,20 @@ public class TcpRawHttpServer implements RawHttpServer {
         ServerSocket getServerSocket() throws IOException;
 
         /**
+         * Configure a client socket just as it's connection has been accepted.
+         * <p>
+         * The default implementation sets the socket read timeout to 5 seconds.
+         *
+         * @param socket client socket
+         * @return the configured socket
+         * @throws IOException if configuring the socket causes an error
+         */
+        default Socket configureClientSocket(Socket socket) throws IOException {
+            socket.setSoTimeout(5_000);
+            return socket;
+        }
+
+        /**
          * @return the {@link RawHttp} instance to use to parse requests and responses
          */
         default RawHttp getRawHttp() {
@@ -187,7 +203,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                 while (true) {
                     try {
                         Socket client = socket.accept();
-                        executorService.submit(() -> handle(client));
+                        executorService.submit(() -> handle(client, socket));
                         failedAccepts = 0;
                     } catch (SocketException e) {
                         break; // server socket was closed or got broken
@@ -202,12 +218,27 @@ public class TcpRawHttpServer implements RawHttpServer {
             }, "tcp-raw-http-server").start();
         }
 
-        private void handle(Socket client) {
+        private void handle(Socket client, ServerSocket serverSocket) {
             RawHttpRequest request;
             boolean serverWillCloseConnection = false;
+            try {
+                client = options.configureClientSocket(client);
+            } catch (IOException e) {
+                e.printStackTrace();
+                try {
+                    client.close();
+                } catch (IOException e2) {
+                    // nothing to do without a properly configured client socket
+                    return;
+                }
+            }
 
             while (!serverWillCloseConnection) {
                 try {
+                    if (serverSocket.isClosed()) {
+                        client.close();
+                        break;
+                    }
                     request = http.parseRequest(
                             client.getInputStream(),
                             ((InetSocketAddress) client.getRemoteSocketAddress()).getAddress());
@@ -261,6 +292,8 @@ public class TcpRawHttpServer implements RawHttpServer {
                     } finally {
                         closeBodyOf(response);
                     }
+                } catch (SocketTimeoutException e) {
+                    serverWillCloseConnection = true;
                 } catch (Exception e) {
                     if (!(e instanceof SocketException)) {
                         // only print stack trace if this is not due to a client closing the connection
@@ -269,11 +302,6 @@ public class TcpRawHttpServer implements RawHttpServer {
 
                         if (!clientClosedConnection) {
                             e.printStackTrace();
-                        }
-                        try {
-                            client.close();
-                        } catch (IOException ignore) {
-                            // we wanted to forget the client, so this is fine
                         }
                     }
 
@@ -319,6 +347,15 @@ public class TcpRawHttpServer implements RawHttpServer {
                 throw new RuntimeException(e);
             } finally {
                 executorService.shutdown();
+                boolean ok = false;
+                try {
+                    ok = executorService.awaitTermination(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                if (!ok) {
+                    executorService.shutdownNow();
+                }
             }
         }
 

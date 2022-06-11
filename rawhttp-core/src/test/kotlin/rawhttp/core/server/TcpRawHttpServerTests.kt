@@ -56,7 +56,7 @@ class TcpRawHttpServerTests {
         }
     }
 
-    private object TestRouter : Router {
+    object TestRouter : Router {
         override fun route(req: RawHttpRequest): Optional<RawHttpResponse<*>> {
             return Optional.ofNullable(
                 when (req.uri.path) {
