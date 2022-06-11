@@ -161,11 +161,17 @@ public class RawHttpResponse<Response> extends HttpMessage {
      * @return whether the connection should be closed
      */
     public static boolean shouldCloseConnectionAfter(RawHttpResponse<?> httpResponse) {
-        return httpResponse.getHeaders()
+        return httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)
+                || !responseHasFramingInformation(httpResponse.getHeaders())
+                || httpResponse.getHeaders()
                 .getFirst("Connection")
                 .orElse("")
-                .equalsIgnoreCase("close") ||
-                httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1);
+                .equalsIgnoreCase("close");
+    }
+
+    private static boolean responseHasFramingInformation(RawHttpHeaders headers) {
+        return !headers.getFirst("Content-Length").orElse("").isEmpty() ||
+                !headers.getFirst("Transfer-Encoding").orElse("").isEmpty();
     }
 
 }

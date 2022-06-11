@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static rawhttp.core.RawHttp.responseHasBody;
-import static rawhttp.core.RawHttpResponse.shouldCloseConnectionAfter;
 
 /**
  * Simple implementation of {@link RawHttpServer}.
@@ -291,7 +290,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                         if (response == null) {
                             response = route(request);
                         }
-                        serverWillCloseConnection |= shouldCloseResponse(request, response);
+                        serverWillCloseConnection |= RawHttpResponse.shouldCloseConnectionAfter(response);
                         response.writeTo(client.getOutputStream());
                     } finally {
                         closeBodyOf(response);
@@ -320,17 +319,6 @@ public class TcpRawHttpServer implements RawHttpServer {
                     }
                 }
             }
-        }
-
-        private static Boolean shouldCloseResponse(RawHttpRequest request, RawHttpResponse<?> response) {
-            return shouldCloseConnectionAfter(response) ||
-                    (responseHasBody(response.getStartLine(), request.getStartLine())
-                            && !responseHasFramingInformation(response.getHeaders()));
-        }
-
-        private static boolean responseHasFramingInformation(RawHttpHeaders headers) {
-            return !headers.getFirst("Content-Length").orElse("").isEmpty() ||
-                    !headers.getFirst("Transfer-Encoding").orElse("").isEmpty();
         }
 
         @SuppressWarnings("unchecked")
