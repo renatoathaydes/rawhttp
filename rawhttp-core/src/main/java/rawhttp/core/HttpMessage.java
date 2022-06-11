@@ -4,6 +4,7 @@ import rawhttp.core.body.BodyReader;
 import rawhttp.core.body.HttpMessageBody;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
@@ -149,8 +150,12 @@ public abstract class HttpMessage implements Writable {
      * @throws IOException if an error occurs while writing the message
      */
     public void writeTo(OutputStream out, int bufferSize) throws IOException {
-        getStartLine().writeTo(out);
-        getHeaders().writeTo(out);
+        // Write all metadata to a buffer in memory before flushing it all at once to the real Stream.
+        // This is a lot more efficient than emitting a few bytes at a time.
+        ByteArrayOutputStream metadata = new ByteArrayOutputStream(Math.min(bufferSize, 4096));
+        getStartLine().writeTo(metadata);
+        getHeaders().writeTo(metadata);
+        metadata.writeTo(out);
         Optional<? extends BodyReader> body = getBody();
         if (body.isPresent()) {
             body.get().writeTo(out, bufferSize);
