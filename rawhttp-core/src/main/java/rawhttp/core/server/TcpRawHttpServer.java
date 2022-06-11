@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static rawhttp.core.RawHttp.responseHasBody;
+import static rawhttp.core.RawHttpResponse.shouldCloseConnectionAfter;
+
 /**
  * Simple implementation of {@link RawHttpServer}.
  * <p>
@@ -288,6 +291,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                         if (response == null) {
                             response = route(request);
                         }
+                        serverWillCloseConnection |= shouldCloseResponse(request, response);
                         response.writeTo(client.getOutputStream());
                     } finally {
                         closeBodyOf(response);
@@ -318,6 +322,17 @@ public class TcpRawHttpServer implements RawHttpServer {
             }
         }
 
+        private static Boolean shouldCloseResponse(RawHttpRequest request, RawHttpResponse<?> response) {
+            return shouldCloseConnectionAfter(response) ||
+                    (responseHasBody(response.getStartLine(), request.getStartLine())
+                            && !responseHasFramingInformation(response.getHeaders()));
+        }
+
+        private static boolean responseHasFramingInformation(RawHttpHeaders headers) {
+            return !headers.getFirst("Content-Length").orElse("").isEmpty() ||
+                    !headers.getFirst("Transfer-Encoding").orElse("").isEmpty();
+        }
+
         @SuppressWarnings("unchecked")
         private RawHttpResponse<?> route(RawHttpRequest request) throws IOException {
             RawHttpResponse<Void> response;
@@ -333,7 +348,7 @@ public class TcpRawHttpServer implements RawHttpServer {
             if (request.getMethod().equals("HEAD") && response.getBody().isPresent()) {
                 response = response.withBody(null, false);
             } else if (!response.getBody().isPresent() &&
-                    RawHttp.responseHasBody(response.getStartLine(), request.getStartLine())) {
+                    responseHasBody(response.getStartLine(), request.getStartLine())) {
                 // we must tell the client the response is empty
                 response = response.withHeaders(RawHttpHeaders.CONTENT_LENGTH_ZERO, true);
             }

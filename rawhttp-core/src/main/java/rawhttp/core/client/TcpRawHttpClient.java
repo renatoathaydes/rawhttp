@@ -6,14 +6,18 @@ import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpOptions;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
+import rawhttp.core.RequestLine;
+import rawhttp.core.body.BodyReader;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,31 +77,44 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
 
     @Override
     public RawHttpResponse<Void> send(RawHttpRequest request) throws IOException {
-        Socket socket;
-        try {
-            socket = options.getSocket(request.getUri());
-        } catch (RuntimeException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-                throw (IOException) cause;
-            }
-            throw e;
-        }
-
         final RawHttpRequest finalRequest = options.onRequest(request);
+        RequestLine startLine = finalRequest.getStartLine();
+        Socket socket = getSocket(startLine.getUri());
+        return send(finalRequest, startLine, socket, true);
+    }
 
-        boolean expectContinue = !finalRequest.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1) &&
+    private RawHttpResponse<Void> send(RawHttpRequest finalRequest,
+                                       RequestLine startLine,
+                                       Socket socket,
+                                       boolean retryOnSocketError) throws IOException {
+        boolean expectContinue = !startLine.getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1) &&
                 finalRequest.expectContinue();
 
         OutputStream outputStream = socket.getOutputStream();
         InputStream inputStream = socket.getInputStream();
+
+        // probe the socket before continuing as it may have been closed by the server
+        try {
+            startLine.writeTo(outputStream);
+            outputStream.flush(); // make sure the bytes are actually sent
+        } catch (SocketException e) {
+            socket.close();
+
+            // there's a good chance we can retry it without side effects
+            // as the request could not have been fully accepted by the server yet
+            if (retryOnSocketError) {
+                Socket replacementSocket = getSocket(startLine.getUri());
+                return send(finalRequest, startLine, replacementSocket, false);
+            }
+            throw e;
+        }
 
         options.getExecutorService().submit(requestSender(finalRequest, outputStream, expectContinue));
 
         RawHttpResponse<Void> response;
         if (expectContinue) {
             ResponseWaiter responseWaiter = new ResponseWaiter(() ->
-                    rawHttp.parseResponse(inputStream, finalRequest.getStartLine()));
+                    rawHttp.parseResponse(inputStream, startLine));
             try {
                 if (options.shouldContinue(responseWaiter)) {
                     //noinspection OptionalGetWithoutIsPresent (Expect continue is only valid when there is a body)
@@ -120,7 +137,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                         "request not being continued", e);
             }
         } else {
-            response = rawHttp.parseResponse(inputStream, finalRequest.getStartLine());
+            response = rawHttp.parseResponse(inputStream, startLine);
         }
 
         if (response.getStatusCode() == 100) {
@@ -128,27 +145,60 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             options.onResponse(socket, finalRequest.getUri(), response);
 
             return options.onResponse(socket, finalRequest.getUri(),
-                    rawHttp.parseResponse(socket.getInputStream(), finalRequest.getStartLine()));
+                    rawHttp.parseResponse(socket.getInputStream(), startLine));
         }
 
         return options.onResponse(socket, finalRequest.getUri(), response);
     }
 
+    private Socket getSocket(URI uri) throws IOException {
+        try {
+            return options.getSocket(uri);
+        } catch (RuntimeException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * This method returns a {@link Runnable} that when called, submits the request
+     * to the server.
+     * <p>
+     * Notice that since RawHTTP 2.5.0, this method does not send the {@link rawhttp.core.StartLine}
+     * because that is sent first to "probe" whether the HTTP server is accepting requests. Only
+     * after that succeeds, does RawHTTP send the rest of the HTTP request asynchronously
+     * while waiting for the response at the same time.
+     *
+     * @param request        current request to send
+     * @param outputStream   stream connected to a HTTP server
+     * @param expectContinue whether this request expects a 100-Continue response
+     * @return a Runnable that submits the request when called.
+     */
     protected Runnable requestSender(RawHttpRequest request,
                                      OutputStream outputStream,
                                      boolean expectContinue) {
         return () -> {
             try {
-                if (expectContinue) {
-                    request.getStartLine().writeTo(outputStream);
-                    request.getHeaders().writeTo(outputStream);
-                } else {
-                    request.writeTo(outputStream);
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream(4096);
+                request.getHeaders().writeTo(buffer);
+                buffer.writeTo(outputStream);
+                if (!expectContinue) {
+                    Optional<? extends BodyReader> body = request.getBody();
+                    if (body.isPresent()) {
+                        body.get().writeTo(outputStream);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                try {
+                    outputStream.close();
+                } catch (IOException ex) {
+                    // nothing better to do here
+                }
             }
-
         };
     }
 
@@ -310,13 +360,9 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                                                 URI uri,
                                                 RawHttpResponse<Void> httpResponse) throws IOException {
             if (RawHttpResponse.shouldCloseConnectionAfter(httpResponse)) {
-                socketByHost.remove(uri.getHost());
-
                 // resolve the full response before closing the socket
-                try {
+                try (Socket ignore = socketByHost.remove(uri.getHost())) {
                     return httpResponse.eagerly(false);
-                } finally {
-                    socket.close();
                 }
             }
 
