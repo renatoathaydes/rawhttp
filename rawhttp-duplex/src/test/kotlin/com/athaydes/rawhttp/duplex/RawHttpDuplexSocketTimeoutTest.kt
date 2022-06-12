@@ -34,12 +34,13 @@ class RawHttpDuplexSocketTimeoutTest {
     }
 
     @Test
-    @Timeout(2, unit = TimeUnit.SECONDS)
+    @Timeout(4, unit = TimeUnit.SECONDS)
     fun shouldTimeoutWithoutPing() {
-        val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 }))
+        val client = TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 })
+        val shortTimeoutDuplex = RawHttpDuplex(client)
         shouldThrow<SocketTimeoutException> {
             val errorQueue = LinkedBlockingDeque<Throwable>(1)
-            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { _ ->
+            shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) {
                 object : MessageHandler {
                     override fun onError(error: Throwable) {
                         errorQueue.push(error)
@@ -51,13 +52,16 @@ class RawHttpDuplexSocketTimeoutTest {
         }
 
         serverMessages shouldHaveSize 0
+
+        client.close()
     }
 
     @Test
-    @Timeout(2, unit = TimeUnit.SECONDS)
+    @Timeout(4, unit = TimeUnit.SECONDS)
     fun shouldNotTimeoutWithPing() {
         val scheduler = Executors.newSingleThreadScheduledExecutor()
-        val shortTimeoutDuplex = RawHttpDuplex(TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 250 }))
+        val client = TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 250 })
+        val shortTimeoutDuplex = RawHttpDuplex(client)
         val errorQueue = LinkedBlockingDeque<Throwable>(1)
 
         shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
@@ -76,10 +80,12 @@ class RawHttpDuplexSocketTimeoutTest {
             }
         }
 
-        val throwable = errorQueue.poll(500, TimeUnit.MILLISECONDS)
+        val throwable = errorQueue.poll(750, TimeUnit.MILLISECONDS)
         if (throwable != null) throw throwable
 
         serverMessages shouldHaveSize 0
+
+        client.close()
     }
 
     private fun startServer(): RawHttpServer {
