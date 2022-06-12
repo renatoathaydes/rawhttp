@@ -20,7 +20,8 @@ public final class TlsCertificateIgnorer {
 
     private static volatile SSLSocketFactory unsafeSocketFactory;
 
-    private static SSLSocketFactory create() throws KeyManagementException, NoSuchAlgorithmException {
+    private static SSLSocketFactory createUnsafeClientSocketFactory()
+            throws KeyManagementException, NoSuchAlgorithmException {
         TrustManager[] trustManagers = new TrustManager[]{
                 new X509TrustManager() {
                     public X509Certificate[] getAcceptedIssuers() {
@@ -39,12 +40,12 @@ public final class TlsCertificateIgnorer {
         return ctx.getSocketFactory();
     }
 
-    private static SSLSocketFactory get() {
+    private static SSLSocketFactory getUnsafeClientSocketFactory() {
         if (unsafeSocketFactory == null) {
             synchronized (UnsafeHttpClientOptions.class) {
                 if (unsafeSocketFactory == null) {
                     try {
-                        unsafeSocketFactory = create();
+                        unsafeSocketFactory = createUnsafeClientSocketFactory();
                     } catch (KeyManagementException | NoSuchAlgorithmException e) {
                         throw new RuntimeException(e);
                     }
@@ -75,7 +76,7 @@ public final class TlsCertificateIgnorer {
      * @throws IOException on IO errors
      */
     public static SSLSocket createUnsafeSocket(String host, int port) throws IOException {
-        return (SSLSocket) get().createSocket(host, port);
+        return (SSLSocket) getUnsafeClientSocketFactory().createSocket(host, port);
     }
 
     /**
@@ -97,7 +98,7 @@ public final class TlsCertificateIgnorer {
      * @throws IOException on IO errors
      */
     public static SSLSocket createUnsafeSocket() throws IOException {
-        return (SSLSocket) get().createSocket();
+        return (SSLSocket) getUnsafeClientSocketFactory().createSocket();
     }
 
     /**
