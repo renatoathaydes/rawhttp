@@ -46,14 +46,19 @@ jar {
 
 /* Publishing config */
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 publishing {
     publications {
-        mavenJava( MavenPublication ) {
+        mavenJava(MavenPublication) {
             artifactId = 'rawhttp-core'
             from components.java
             versionMapping {
-                usage( 'java-api' ) {
-                    fromResolutionOf( 'runtimeClasspath' )
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
                 }
                 usage( 'java-runtime' ) {
                     fromResolutionResult()
