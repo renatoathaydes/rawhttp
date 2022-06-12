@@ -79,6 +79,19 @@ The default options used by the server creates an unlimited, cached Thread pool 
 and automatically inserts a `Server` and `Date` headers to all responses by implementing
 the `autoHeadersSupplier()` method. If you provide your own options, this behaviour is overridden.
 
+### Using a TLS certificate
+
+By implementing `TcpRawHttpServerOptions`, you can provide `SSLSocket`s using whatever Socket factory you have
+hanging around... but to make it easier, RawHTTP provides the helper class `rawhttp.core.server.TlsConfiguration`. 
+
+For example, to configure your server to use TLS with a certain keystore:
+
+```java
+var sslContext = TlsConfiguration.createSSLContext(KEYSTORE, KEYSTORE_PASS);
+
+var server = new TcpRawHttpServer(TlsConfiguration.serverOptions(sslContext, PORT))
+```
+
 <hr>
 
 {{ include /processed/fragments/_footer.html }}

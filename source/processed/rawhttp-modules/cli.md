@@ -66,22 +66,24 @@ rawhttp send [options]
 Options:
 
 ```bash
-* -f --file <file>
+  * -f --file <file>
       read request from a file
-* -t --text <request-text>
+  * -t --text <request-text>
       read request as text
-* -p --print-response-mode <option>
+  * -i --ignore-tls-cert
+      ignore TLS certificate when connecting to servers.
+  * -p --print-response-mode <option>
       option is one of: response|all|body|status|stats
         - response: (default) print the full response
         - all: print the full response and statistics about the request
         - body: print the response body
         - status: print the response status-line
         - stats: print statistics about the request
-* -l --log-request
+  * -l --log-request
       log the request
-* -b --body-text <text>
+  * -b --body-text <text>
       replace message body with the text
-* -g --body-file <file>
+  * -g --body-file <file>
       replace message body with the contents of the file
 ```
 
@@ -177,18 +179,20 @@ rawhttp run <http-file> [options]
 Options:
 
 ```bash
-* -e --environment <name>
+  * -e --environment <name>
       the name of the environment to use
-* -c --cookiejar <file>
+  * -c --cookiejar <file>
       the file to use as a cookie jar
-* -p --print-response-mode
+  * -i --ignore-tls-cert
+      ignore TLS certificate when connecting to servers.
+  * -p --print-response-mode
       one of: response|all|body|status|stats
         - response: (default) print the full responses
         - all: print the full response and statistics about each request
         - body: print the response bodies
         - status: print the response status-lines
         - stats: print statistics about each request
-* -l --log-request
+  * -l --log-request
       log the request
 ```
 
@@ -321,12 +325,18 @@ rawhttp serve <dir> [options]
 Options:
 
 ```bash
-* -l --log-requests
+  * -l --log-requests
       log requests received by the server
-* -m --media-types <file>
+  * -m --media-types <file>
       use custom Media-Type mappings
-* -p --port <port-number>
+  * -p --port <port-number>
       the port to listen on
+  * -k --keystore
+      the keystore to use for TLS connections.
+  * -w --keystore-password
+      the keystore password. Ignored if keystore not given.
+  * -r --root-path <path>
+      the path to use as the root path (not incl. in file path, only URL)
 ```
 
 #### Serve files from a local directory
@@ -343,10 +353,10 @@ Enable a request logger (prints to stdout):
 rawhttp serve public/ -l
 ```
 
-Use a different port, say 8082:
+Use a different port, say 8082, and accept only HTTPS by providing a keystore containing a TLS certificate:
 
 ```bash
-rawhttp serve public/ -p 8082
+rawhttp serve public/ -k mykeystore.jks -w password -p 8082
 ```
 
 #### Provide custom media-type mapping

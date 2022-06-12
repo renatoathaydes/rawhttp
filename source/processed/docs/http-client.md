@@ -84,6 +84,26 @@ class SafeHttpClientOptions implements TcpRawHttpClient.TcpRawHttpClientOptions 
 }
 ```
 
+To configure a HTTP Client to support TLS connections using a specific keystore/truststore,
+you can use the `rawhttp.core.server.TlsConfiguration` class as follows:
+
+```java
+var sslContext = TlsConfiguration.createSSLContext(
+    keystoreURL, KEYSTORE_PASS,
+    truststoreURL, TRUSTSTORE_PASS);
+
+var safeHttpClient = new TcpRawHttpClient(TlsConfiguration.clientOptions(sslContext));
+```
+
+Conversely, you can also create a HTTP client that is unsafe to use, but handy for quickly testing something,
+by ignoring TLS certificates:
+
+```java
+var unsafeClient = new TcpRawHttpClient(new TlsCertificateIgnorer.UnsafeHttpClientOptions());
+```
+
+> Do not blame me if this is used in production and you get hacked!
+
 <hr>
 
 {{ include /processed/fragments/_footer.html }}
