@@ -101,7 +101,7 @@ public class Main {
                         "  rawhttp serve <directory> [options]\n" +
                         "\n" +
                         "Help Command Usage:\n" +
-                        "  rawhttp help send|serve\n" +
+                        "  rawhttp help send|serve|run\n" +
                         "\n" +
                         "Detailed documentation at https://renatoathaydes.github.io/rawhttp\n");
                 break;
