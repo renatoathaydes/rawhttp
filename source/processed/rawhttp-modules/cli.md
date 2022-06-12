@@ -255,7 +255,7 @@ Dynamic variables generate a value each time you run a request:
 For example:
 
 ```http
-GET http://localhost/api/get?id={{$uuid}}
+GET http://localhost/api/get?id=\{{$uuid}}
 ```
 
 #### Environments
@@ -291,12 +291,12 @@ two environments, `development` and `production`:
 The following request could be used with this environment:
 
 ```http
-GET http://{{host}}/api/json/get?id={{id-value}}
-Authorization: Basic {{username}} {{password}}
+GET http://\{{host}}/api/json/get?id=\{{id-value}}
+Authorization: Basic \{{username}} \{{password}}
 Content-Type: application/json
 
 {
-"key": {{my-var}}
+"key": \{{my-var}}
 }
 ```
 
