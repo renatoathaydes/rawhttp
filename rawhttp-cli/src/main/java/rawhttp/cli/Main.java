@@ -101,7 +101,7 @@ public class Main {
                         "  rawhttp serve <directory> [options]\n" +
                         "\n" +
                         "Help Command Usage:\n" +
-                        "  rawhttp help send|serve\n" +
+                        "  rawhttp help send|serve|run\n" +
                         "\n" +
                         "Detailed documentation at https://renatoathaydes.github.io/rawhttp\n");
                 break;
@@ -119,6 +119,8 @@ public class Main {
                         "      read request from a file\n" +
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
+                        "  * -i --ignore-tls-cert\n" +
+                        "      ignore TLS certificate when connecting to servers.\n" +
                         "  * -p --print-response-mode <option>\n" +
                         "      option is one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full response\n" +
@@ -158,6 +160,8 @@ public class Main {
                         "      the name of the environment to use\n" +
                         "  * -c --cookiejar <file>\n" +
                         "      the file to use as a cookie jar\n" +
+                        "  * -i --ignore-tls-cert\n" +
+                        "      ignore TLS certificate when connecting to servers.\n" +
                         "  * -p --print-response-mode\n" +
                         "      one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full responses\n" +
@@ -191,6 +195,10 @@ public class Main {
                         "      use custom Media-Type mappings\n" +
                         "  * -p --port <port-number>\n" +
                         "      the port to listen on\n" +
+                        "  * -k --keystore\n" +
+                        "      the keystore to use for TLS connections.\n" +
+                        "  * -w --keystore-password\n" +
+                        "      the keystore password. Ignored if keystore not given.\n" +
                         "  * -r --root-path <path>\n" +
                         "      the path to use as the root path (not incl. in file path, only URL)\n");
                 break;
@@ -282,7 +290,10 @@ public class Main {
         RequestLogger requestLogger = options.logRequests
                 ? new AsyncSysoutRequestLogger()
                 : new NoopRequestLogger();
-        RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port, requestLogger));
+
+        RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port,
+                options.keystore, options.keystorePass, requestLogger));
+
         Optional<File> mediaTypesFile = options.getMediaTypesFile();
         if (mediaTypesFile.isPresent()) {
             Properties mediaTypeProperties = new Properties();

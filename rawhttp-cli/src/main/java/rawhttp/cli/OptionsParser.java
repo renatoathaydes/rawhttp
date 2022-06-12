@@ -2,6 +2,8 @@ package rawhttp.cli;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -17,15 +19,20 @@ final class ServerOptions {
     final int port;
     final boolean logRequests;
     final String rootPath;
+    final URL keystore;
+    final String keystorePass;
     private final File mediaTypesFile;
 
     ServerOptions(File dir, int port, boolean logRequests,
-                  File mediaTypesFile, String rootPath) {
+                  File mediaTypesFile, String rootPath,
+                  URL keystore, String keystorePass) {
         this.dir = dir;
         this.port = port;
         this.logRequests = logRequests;
         this.mediaTypesFile = mediaTypesFile;
         this.rootPath = rootPath;
+        this.keystore = keystore;
+        this.keystorePass = keystorePass;
     }
 
     public Optional<File> getMediaTypesFile() {
@@ -346,21 +353,23 @@ final class OptionsParser {
     }
 
     private static Options parseRunCommand(String[] args) throws OptionsException {
-        File httpFile;
+        File httpFile = null;
         @Nullable File cookieJar = null;
         @Nullable String envName = null;
         PrintResponseMode printResponseMode = null;
         boolean logRequest = false;
         boolean ignoreTlsCert = false;
 
-        if (args.length < 2) {
-            throw new OptionsException("No http requests file provided");
-        }
-
-        httpFile = new File(args[1]);
-
-        for (int i = 2; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             String arg = args[i];
+            if (!arg.startsWith("-")) {
+                if (httpFile == null) {
+                    httpFile = new File(arg);
+                } else {
+                    throw new OptionsException("Can only specify one http-file to run");
+                }
+                continue;
+            }
             switch (arg) {
                 case "-e":
                 case "--environment":
@@ -411,6 +420,10 @@ final class OptionsParser {
             }
         }
 
+        if (httpFile == null) {
+            throw new OptionsException("No http-file specified to run.");
+        }
+
         if (printResponseMode == null) {
             printResponseMode = PrintResponseMode.RESPONSE;
         }
@@ -420,17 +433,22 @@ final class OptionsParser {
     }
 
     private static Options parseServeCommand(String[] args) throws OptionsException {
-        if (args.length == 1) {
-            throw new OptionsException("The serve sub-command requires a directory");
-        }
-        File dir = new File(args[1]);
+        File dir = null;
         boolean logRequests = false;
         File mediaTypesFile = null;
         Integer port = null;
-        String rootPath = "";
+        String rootPath = "", keystore = null, keystorePass = null;
 
-        for (int i = 2; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             String arg = args[i];
+            if (!arg.startsWith("-")) {
+                if (dir == null) {
+                    dir = new File(arg);
+                } else {
+                    throw new OptionsException("Can only specify one directory to serve");
+                }
+                continue;
+            }
             switch (arg) {
                 case "-l":
                 case "--log-requests":
@@ -439,7 +457,7 @@ final class OptionsParser {
                 case "-m":
                 case "--media-types":
                     if (mediaTypesFile != null) {
-                        throw new OptionsException("the --media-types option can only be used once");
+                        throw new OptionsException("The --media-types option can only be used once");
                     }
                     if (i + 1 < args.length) {
                         mediaTypesFile = new File(args[i + 1]);
@@ -451,7 +469,7 @@ final class OptionsParser {
                 case "-p":
                 case "--port":
                     if (port != null) {
-                        throw new OptionsException("the --port option can only be used once");
+                        throw new OptionsException("The --port option can only be used once");
                     }
                     if (i + 1 < args.length) {
                         try {
@@ -459,6 +477,30 @@ final class OptionsParser {
                         } catch (NumberFormatException e) {
                             throw new OptionsException("Invalid port number, not a number: " + args[i + 1]);
                         }
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-k":
+                case "--keystore":
+                    if (keystore != null) {
+                        throw new OptionsException("The --keystore option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        keystore = args[i + 1];
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-w":
+                case "--keystore-password":
+                    if (keystorePass != null) {
+                        throw new OptionsException("The --keystore-password option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        keystorePass = args[i + 1];
                         i++;
                     } else {
                         throw new OptionsException("Missing argument for " + arg + " flag");
@@ -478,13 +520,30 @@ final class OptionsParser {
             }
         }
 
+        if (dir == null) {
+            throw new OptionsException("No directory specified to serve from.");
+        }
+
+        URL keystoreURL = null;
+        if (keystore != null) {
+            try {
+                keystoreURL = keystore.contains("://")
+                        ? new URL(keystore)
+                        : new File(keystore).toURI().toURL();
+            } catch (MalformedURLException e) {
+                throw new OptionsException("Invalid URL: " + keystore);
+            }
+        }
+
         return Options.withServerOptions(
                 new ServerOptions(dir, port == null
                         ? ServerOptions.DEFAULT_SERVER_PORT
                         : port,
                         logRequests,
                         mediaTypesFile,
-                        rootPath));
+                        rootPath,
+                        keystoreURL,
+                        keystorePass));
     }
 
 }

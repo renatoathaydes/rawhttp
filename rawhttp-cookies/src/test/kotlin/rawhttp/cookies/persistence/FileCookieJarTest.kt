@@ -98,7 +98,7 @@ class FileCookieJarTest {
             portlist shouldBe "8080,8081"
             version shouldBe 0
             secure shouldBe true
-            maxAge shouldBe 30L
+            maxAge shouldBeInRange (29L..31L)
         }
 
         // the default cookieJar implementation ignores the scheme in the URIs

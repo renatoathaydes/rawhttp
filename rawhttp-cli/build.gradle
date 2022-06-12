@@ -1,4 +1,9 @@
 import groovy.text.SimpleTemplateEngine
+buildscript {
+    dependencies {
+        classpath 'org.codehaus.groovy:groovy-templates:3.0.9'
+    }
+}
 
 plugins {
     id 'java'
