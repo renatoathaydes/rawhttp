@@ -1,18 +1,18 @@
 import CliRunner.CLI_EXECUTABLE
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.startsWith
-import org.junit.AfterClass
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.BeforeClass
+import io.kotest.assertions.fail
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import rawhttp.core.EagerHttpResponse
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpResponse
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.errors.InvalidHttpRequest
+import rawhttp.core.internal.TlsCertificateIgnorer
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -103,7 +103,7 @@ data class ProcessHandle(
 ) {
 
     fun waitForEndAndGetStatus(): Int {
-        val completed = process.waitFor(if (IS_DEBUG) 500 else 5, TimeUnit.SECONDS)
+        val completed = process.waitFor(if (IS_DEBUG) 500 else 10, TimeUnit.SECONDS)
 
         if (!completed) {
             process.destroyForcibly()
@@ -181,7 +181,7 @@ abstract class RawHttpCliTester {
 
         private var httpServerThread: Thread? = null
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun startHttpServer() {
             val http = RawHttp()
@@ -257,7 +257,7 @@ abstract class RawHttpCliTester {
             }
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun stopHttpServer() {
             httpServerThread!!.interrupt()
@@ -265,7 +265,7 @@ abstract class RawHttpCliTester {
 
         fun assertOutputIsSuccessResponse(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE + EOL))
+            handle.out shouldBe (SUCCESS_HTTP_RESPONSE + EOL)
             assertNoSysErrOutput(handle)
         }
 
@@ -273,15 +273,15 @@ abstract class RawHttpCliTester {
             handle.verifyProcessTerminatedWithExitCode(0)
             val separator = "$EOL---------------------------------$EOL"
             val separatorIndex = handle.out.indexOf(separator)
-            assertTrue("Expected to find separator in output:\n${handle.out}", separatorIndex > 0)
-            assertThat(handle.out.substring(0 until separatorIndex), equalTo(SUCCESS_HTTP_RESPONSE + EOL))
+            separatorIndex shouldBeGreaterThan 0
+            handle.out.substring(0 until separatorIndex) shouldBe (SUCCESS_HTTP_RESPONSE + EOL)
             assertStatistics(handle.out.substring(separatorIndex + separator.length))
             assertNoSysErrOutput(handle)
         }
 
         fun assertOutputIs404Response(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(NOT_FOUND_HTTP_RESPONSE + EOL))
+            handle.out shouldBe (NOT_FOUND_HTTP_RESPONSE + EOL)
             assertNoSysErrOutput(handle)
         }
 
@@ -290,14 +290,14 @@ abstract class RawHttpCliTester {
 
             // there should be a new-line between the request and the response,
             // plus 2 new-lines to indicate the end of the request
-            assertThat(handle.out, equalTo(SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
-                    EOL + SUCCESS_HTTP_RESPONSE + EOL))
+            handle.out shouldBe (SUCCESS_LOGGED_HTTP_REQUEST + "\r\n\r\n" +
+                    EOL + SUCCESS_HTTP_RESPONSE + EOL)
             assertNoSysErrOutput(handle)
         }
 
         fun assertSuccessResponseStatus(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_HTTP_RESPONSE.substring(0..16)))
+            handle.out shouldBe (SUCCESS_HTTP_RESPONSE.substring(0..16))
             assertNoSysErrOutput(handle)
         }
 
@@ -309,39 +309,37 @@ abstract class RawHttpCliTester {
 
         fun assertSuccessResponseReplyToFiles(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("Received:This is the foo file$EOL"))
+            handle.out shouldBe ("Received:This is the foo file$EOL")
             assertNoSysErrOutput(handle)
         }
 
         fun assertReplyResponseStoredInFile() {
-            assertTrue(replyResponseFile.exists())
-            assertThat(
-                replyResponseFile.readText(), equalTo(
+            replyResponseFile.exists() shouldBe true
+            replyResponseFile.readText() shouldBe (
                     "HTTP/1.1 200 OK\r\n" +
                             "Content-Type: text/plain\r\n" +
                             "Content-Length: 29\r\n" +
                             "\r\n" +
                             "Received:This is the foo file"
-                )
-            )
+                    )
         }
 
         fun assertGetFooThenPostFooRequestsAndStats(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
 
             val getFooRequest = "GET /foo HTTP/1.1\r\nAccept: */*\r\nHost: localhost\r\n\r\n$EOL"
-            assertThat(handle.out, startsWith(getFooRequest))
+            handle.out shouldStartWith (getFooRequest)
 
             var out = handle.out.substring(getFooRequest.length)
             val secondRequestIndex = out.indexOf("POST")
-            assertTrue(secondRequestIndex > 0)
+            secondRequestIndex shouldBeGreaterThan 0
             val firstStats = out.substring(0, secondRequestIndex)
             assertStatistics(firstStats)
 
             val postFooRequest = "POST /foo HTTP/1.1\r\nContent-Type: application/json\r\n" +
                     "Host: localhost\r\nContent-Length: 12\r\n\r\n{prod: true}$EOL"
             out = out.substring(secondRequestIndex)
-            assertThat(out, startsWith(postFooRequest))
+            out shouldStartWith (postFooRequest)
 
             out = out.substring(postFooRequest.length)
             assertStatistics(out)
@@ -355,53 +353,64 @@ abstract class RawHttpCliTester {
                     "\r\n\r\n$postFooBody$EOL"
 
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo(SUCCESS_GET_FOO_HTTP_RESPONSE + EOL + postResponse))
+            handle.out shouldBe (SUCCESS_GET_FOO_HTTP_RESPONSE + EOL + postResponse)
             assertNoSysErrOutput(handle)
         }
 
         private fun assertStatistics(output: String) {
             output.lines().run {
-                assertThat("Expected 6 element, got: " + toString(), size, equalTo(6))
+                size shouldBe (6)
                 assertTrue(
-                    "Expected 'Connect time', got " + get(0),
                     get(0).matches(Regex("Connect time: \\d+\\.\\d{2} ms"))
-                )
+                ) {
+                    "Expected 'Connect time', got " + get(0)
+                }
                 assertTrue(
-                    "Expected 'First received byte time', got " + get(1),
                     get(1).matches(Regex("First received byte time: \\d+\\.\\d{2} ms"))
-                )
+                ) {
+                    "Expected 'First received byte time', got " + get(1)
+                }
                 assertTrue(
-                    "Expected 'Total response time', got " + get(2),
                     get(2).matches(Regex("Total response time: \\d+\\.\\d{2} ms"))
-                )
+                ) {
+                    "Expected 'Total response time', got " + get(2)
+                }
                 assertTrue(
-                    "Expected 'Total response time', got " + get(3),
                     get(3).matches(Regex("Bytes received: \\d+"))
-                )
+                ) {
+                    "Expected 'Total response time', got " + get(3)
+                }
                 assertTrue(
-                    "Expected 'Throughput (bytes/sec)', got " + get(4),
                     get(4).matches(Regex("Throughput \\(bytes/sec\\): \\d+"))
-                )
-                assertEquals(get(5), "")
+                ) {
+                    "Expected 'Throughput (bytes/sec)', got " + get(4)
+                }
+                get(5) shouldBe ""
             }
         }
 
         fun assertSuccessResponseBody(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
-            assertThat(handle.out, equalTo("something$EOL"))
+            handle.out shouldBe ("something$EOL")
             assertNoSysErrOutput(handle)
         }
 
         fun assertHttpTestResults(handle: ProcessHandle) {
             handle.verifyProcessTerminatedWithExitCode(0)
             handle.out.lines().run {
-                assertThat(size, equalTo(6))
-                assertThat(get(0), equalTo("HTTP/1.1 200 OK"))
-                assertTrue(get(1), get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200")))
-                assertThat(get(2), equalTo("HTTP/1.1 200 OK"))
-                assertTrue(get(3), get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200")))
-                assertTrue(get(4), get(4).matches(Regex("TEST OK \\(\\d+ms\\): body is as expected")))
-                assertEquals(get(5), "")
+                size shouldBe (6)
+                get(0) shouldBe ("HTTP/1.1 200 OK")
+                assertTrue(get(1).matches(Regex("TEST OK \\(\\d+ms\\): response is 200"))) {
+                    "Not OK: ${get(1)}"
+                }
+                get(2) shouldBe ("HTTP/1.1 200 OK")
+                assertTrue(get(3).matches(Regex("TEST OK \\(\\d+ms\\): response again is 200"))) {
+                    "Not OK: ${get(3)}"
+                }
+                assertTrue(get(4).matches(Regex("TEST OK \\(\\d+ms\\): body is as expected"))) {
+                    "Not OK: ${get(4)}"
+                }
+                get(5) shouldBe ""
             }
 
             assertNoSysErrOutput(handle)
@@ -419,16 +428,21 @@ abstract class RawHttpCliTester {
                             // FIXME #49 - replace Nashorn with GraalVM.js
                             !it.startsWith("Warning: Nashorn")
                 }
-            assertThat(errOut, equalTo(expectedOutput.lines()))
+            errOut shouldBe (expectedOutput.lines())
         }
 
-        fun sendHttpRequest(request: String): RawHttpResponse<*> {
+        fun sendHttpRequest(request: String, ignoreTls: Boolean = false): RawHttpResponse<*> {
+            val createClient = {
+                if (ignoreTls) TcpRawHttpClient(TlsCertificateIgnorer.UnsafeHttpClientOptions())
+                else TcpRawHttpClient()
+            }
+
             var response: EagerHttpResponse<*>? = null
             var failedConnectionAttempts = 0
             lateinit var error: Exception
             while (failedConnectionAttempts < 5) {
                 try {
-                    response = TcpRawHttpClient().use { client ->
+                    response = createClient().use { client ->
                         client.send(RawHttp().parseRequest(request)).eagerly(false)
                     }
                     break
@@ -453,12 +467,14 @@ abstract class RawHttpCliTester {
         fun ProcessHandle.verifyProcessTerminatedWithExitCode(expectedExitCode: Int) {
             val statusCode = waitForEndAndGetStatus()
             if (statusCode != expectedExitCode) {
-                throw AssertionError("Expected process to exit with code $expectedExitCode " +
-                        "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err")
+                throw AssertionError(
+                    "Expected process to exit with code $expectedExitCode " +
+                            "but was $statusCode\n\nProcess sysout:\n$out\n\nProcess syserr:\n$err"
+                )
             }
         }
 
-        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode(){
+        fun ProcessHandle.verifyProcessTerminatedWithSigKillExitCode() {
             val sigKillCode = if (IS_WINDOWS) 1 else 143
             verifyProcessTerminatedWithExitCode(sigKillCode)
         }
