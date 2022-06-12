@@ -66,22 +66,24 @@ print only parts of the response, and statistics about the request.</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp send <span style="color:#719e07">[</span>options<span style="color:#719e07">]</span>
 </pre>
 <p>Options:</p>
-<pre style="color:#93a1a1;background-color:#002b36">* -f --file &lt;file&gt;
+<pre style="color:#93a1a1;background-color:#002b36">  * -f --file &lt;file&gt;
       <span style="color:#b58900">read</span> request from a file
-* -t --text &lt;request-text&gt;
+  * -t --text &lt;request-text&gt;
       <span style="color:#b58900">read</span> request as text
-* -p --print-response-mode &lt;option&gt;
+  * -i --ignore-tls-cert
+      ignore TLS certificate when connecting to servers.
+  * -p --print-response-mode &lt;option&gt;
       option is one of: response|all|body|status|stats
         - response: <span style="color:#719e07">(</span>default<span style="color:#719e07">)</span> print the full response
         - all: print the full response and statistics about the request
         - body: print the response body
         - status: print the response status-line
         - stats: print statistics about the request
-* -l --log-request
+  * -l --log-request
       log the request
-* -b --body-text &lt;text&gt;
+  * -b --body-text &lt;text&gt;
       replace message body with the text
-* -g --body-file &lt;file&gt;
+  * -g --body-file &lt;file&gt;
       replace message body with the contents of the file
 </pre>
 <p>Statistics include the following information:</p>
@@ -152,18 +154,20 @@ Throughput <span style="color:#719e07">(</span>bytes/sec<span style="color:#719e
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp run &lt;http-file&gt; <span style="color:#719e07">[</span>options<span style="color:#719e07">]</span>
 </pre>
 <p>Options:</p>
-<pre style="color:#93a1a1;background-color:#002b36">* -e --environment &lt;name&gt;
+<pre style="color:#93a1a1;background-color:#002b36">  * -e --environment &lt;name&gt;
       the name of the environment to use
-* -c --cookiejar &lt;file&gt;
+  * -c --cookiejar &lt;file&gt;
       the file to use as a cookie jar
-* -p --print-response-mode
+  * -i --ignore-tls-cert
+      ignore TLS certificate when connecting to servers.
+  * -p --print-response-mode
       one of: response|all|body|status|stats
         - response: <span style="color:#719e07">(</span>default<span style="color:#719e07">)</span> print the full responses
         - all: print the full response and statistics about each request
         - body: print the response bodies
         - status: print the response status-lines
         - stats: print statistics about each request
-* -l --log-request
+  * -l --log-request
       log the request
 </pre>
 <p>The <code>stats</code> argument of the <code>print-response-mode</code> option works as for the <code>send</code> command.</p>
@@ -274,12 +278,18 @@ to use the request <code>Accept</code> header to disambiguate.</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp serve &lt;dir&gt; [options]
 </pre>
 <p>Options:</p>
-<pre style="color:#93a1a1;background-color:#002b36">* -l --log-requests
+<pre style="color:#93a1a1;background-color:#002b36">  * -l --log-requests
       log requests received by the server
-* -m --media-types &lt;file&gt;
+  * -m --media-types &lt;file&gt;
       use custom Media-Type mappings
-* -p --port &lt;port-number&gt;
+  * -p --port &lt;port-number&gt;
       the port to listen on
+  * -k --keystore
+      the keystore to use <span style="color:#719e07">for</span> TLS connections.
+  * -w --keystore-password
+      the keystore password. Ignored <span style="color:#719e07">if</span> keystore not given.
+  * -r --root-path &lt;path&gt;
+      the path to use as the root path <span style="color:#719e07">(</span>not incl. in file path, only URL<span style="color:#719e07">)</span>
 </pre>
 <h4>Serve files from a local directory</h4>
 
@@ -289,8 +299,8 @@ to use the request <code>Accept</code> header to disambiguate.</p>
 <p>Enable a request logger (prints to stdout):</p>
 <pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ -l
 </pre>
-<p>Use a different port, say 8082:</p>
-<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ -p <span style="color:#2aa198">8082</span>
+<p>Use a different port, say 8082, and accept only HTTPS by providing a keystore containing a TLS certificate:</p>
+<pre style="color:#93a1a1;background-color:#002b36">rawhttp serve public/ -k mykeystore.jks -w password -p <span style="color:#2aa198">8082</span>
 </pre>
 <h4>Provide custom media-type mapping</h4>
 

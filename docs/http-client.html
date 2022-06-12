@@ -85,6 +85,22 @@ and always forces HTTP responses to be consumed fully, including its body, by ca
 </span><span style="color:#586e75"></span>    <span style="color:#719e07">}</span>
 <span style="color:#719e07">}</span>
 </pre>
+<p>To configure a HTTP Client to support TLS connections using a specific keystore/truststore,
+you can use the <code>rawhttp.core.server.TlsConfiguration</code> class as follows:</p>
+<pre style="color:#93a1a1;background-color:#002b36">var sslContext <span style="color:#719e07">=</span> TlsConfiguration<span style="color:#719e07">.</span>createSSLContext<span style="color:#719e07">(</span>
+    keystoreURL<span style="color:#719e07">,</span> KEYSTORE_PASS<span style="color:#719e07">,</span>
+    truststoreURL<span style="color:#719e07">,</span> TRUSTSTORE_PASS<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+
+var safeHttpClient <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span>TlsConfiguration<span style="color:#719e07">.</span>clientOptions<span style="color:#719e07">(</span>sslContext<span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</pre>
+<p>Conversely, you can also create a HTTP client that is unsafe to use, but handy for quickly testing something,
+by ignoring TLS certificates:</p>
+<pre style="color:#93a1a1;background-color:#002b36">var unsafeClient <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">new</span> TlsCertificateIgnorer<span style="color:#719e07">.</span>UnsafeHttpClientOptions<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</pre>
+<blockquote>
+<p>Do not blame me if this is used in production and you get hacked!</p>
+</blockquote>
+
 <hr>
 </div>
 <footer class="footer">

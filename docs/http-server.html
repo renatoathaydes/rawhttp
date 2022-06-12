@@ -83,6 +83,16 @@ server<span style="color:#719e07">.</span>start<span style="color:#719e07">(</sp
 and automatically inserts a <code>Server</code> and <code>Date</code> headers to all responses by implementing
 the <code>autoHeadersSupplier()</code> method. If you provide your own options, this behaviour is overridden.</p>
 
+<h3>Using a TLS certificate</h3>
+
+<p>By implementing <code>TcpRawHttpServerOptions</code>, you can provide <code>SSLSocket</code>s using whatever Socket factory you have
+hanging around&hellip; but to make it easier, RawHTTP provides the helper class <code>rawhttp.core.server.TlsConfiguration</code>.</p>
+
+<p>For example, to configure your server to use TLS with a certain keystore:</p>
+<pre style="color:#93a1a1;background-color:#002b36">var sslContext <span style="color:#719e07">=</span> TlsConfiguration<span style="color:#719e07">.</span>createSSLContext<span style="color:#719e07">(</span>KEYSTORE<span style="color:#719e07">,</span> KEYSTORE_PASS<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+
+var server <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> TcpRawHttpServer<span style="color:#719e07">(</span>TlsConfiguration<span style="color:#719e07">.</span>serverOptions<span style="color:#719e07">(</span>sslContext<span style="color:#719e07">,</span> PORT<span style="color:#719e07">)</span><span style="color:#719e07">)</span>
+</pre>
 <hr>
 </div>
 <footer class="footer">
