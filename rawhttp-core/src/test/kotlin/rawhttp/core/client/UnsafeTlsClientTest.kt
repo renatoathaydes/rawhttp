@@ -7,7 +7,7 @@ import rawhttp.core.RawHttp
 import rawhttp.core.internal.TlsCertificateIgnorer
 import javax.net.ssl.SSLHandshakeException
 
-class UnsafeTlsClient {
+class UnsafeTlsClientTest {
     @Test
     fun canAcceptUntrustedRootTlsCertificateIfOptIn() {
         val req = RawHttp().parseRequest("GET https://untrusted-root.badssl.com/").eagerly()

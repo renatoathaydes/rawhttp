@@ -493,9 +493,21 @@ class RawHttpCliTest : RawHttpCliTester() {
 
     @Test
     fun canRunHttpFileWithTests() {
-        val handle = runCli("run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
-                "-p", "status")
+        val handle = runCli(
+            "run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
+            "-p", "status"
+        )
         assertHttpTestResults(handle)
+    }
+
+    @Test
+    fun canRunHttpFileIgnoringTlsCertificate() {
+        val handle = runCli(
+            "run", asClassPathFile("reqin-edit-tests/tests/tests.http"),
+            "--ignore-tls-cert"
+        )
+        handle.verifyProcessTerminatedWithExitCode(0)
+        assertNoSysErrOutput(handle)
     }
 
 }

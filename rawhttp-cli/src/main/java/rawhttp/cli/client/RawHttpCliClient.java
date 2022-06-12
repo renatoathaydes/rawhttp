@@ -9,8 +9,10 @@ import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.StatusLine;
 import rawhttp.core.client.TcpRawHttpClient;
+import rawhttp.core.internal.TlsCertificateIgnorer;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -92,12 +94,12 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
 
     private static final class ClientOptions extends DefaultOptions {
         private final ResponsePrinter responsePrinter;
-        private final TlsSocketFactory tlsSocketFactory;
+        private final boolean ignoreTlsCert;
         private TimedSocket currentSocket;
 
         public ClientOptions(ResponsePrinter responsePrinter, boolean ignoreTlsCert) {
             this.responsePrinter = responsePrinter;
-            this.tlsSocketFactory = new TlsSocketFactory(ignoreTlsCert);
+            this.ignoreTlsCert = ignoreTlsCert;
         }
 
         void updateSendTime() {
@@ -108,7 +110,7 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
         protected Socket createSocket(boolean useHttps, String host, int port) throws IOException {
             // overridden to ensure the connection to host:port is done later so we can time it
             Socket socket = useHttps
-                    ? tlsSocketFactory.create()
+                    ? createSSLSocket()
                     : new Socket();
             return new TimedSocket(socket, host, port);
         }
@@ -123,6 +125,10 @@ public final class RawHttpCliClient extends TcpRawHttpClient {
                 throw new RuntimeException(e);
             }
             return currentSocket;
+        }
+
+        private Socket createSSLSocket() throws IOException {
+            return ignoreTlsCert ? TlsCertificateIgnorer.createUnsafeSocket() : SSLSocketFactory.getDefault().createSocket();
         }
 
         @Override

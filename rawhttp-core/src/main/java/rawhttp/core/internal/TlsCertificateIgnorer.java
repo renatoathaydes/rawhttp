@@ -24,7 +24,7 @@ public final class TlsCertificateIgnorer {
         TrustManager[] trustManagers = new TrustManager[]{
                 new X509TrustManager() {
                     public X509Certificate[] getAcceptedIssuers() {
-                        return null;
+                        return new X509Certificate[0];
                     }
 
                     public void checkServerTrusted(X509Certificate[] chain, String authType) {
@@ -76,6 +76,28 @@ public final class TlsCertificateIgnorer {
      */
     public static SSLSocket createUnsafeSocket(String host, int port) throws IOException {
         return (SSLSocket) get().createSocket(host, port);
+    }
+
+    /**
+     * Create an unsafe {@link SSLSocket}.
+     * <p>
+     * The TLS certificate will be entirely ignored, which means that any protection that might
+     * have been provided by using TLS (socket encryption and host verification) is completely removed.
+     * <p>
+     * To use this with {@link TcpRawHttpClient}, pass an instance of {@link UnsafeHttpClientOptions}
+     * to its constructor:
+     * <p>
+     * <pre>
+     * var client = new TcpRawHttpClient(new TlsCertificateIgnorer.UnsafeHttpClientOptions())
+     * </pre>
+     * <p>
+     * Please, only use this for testing.
+     *
+     * @return an unsafe SSLSocket
+     * @throws IOException on IO errors
+     */
+    public static SSLSocket createUnsafeSocket() throws IOException {
+        return (SSLSocket) get().createSocket();
     }
 
     /**

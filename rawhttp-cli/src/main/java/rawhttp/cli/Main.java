@@ -119,6 +119,8 @@ public class Main {
                         "      read request from a file\n" +
                         "  * -t --text <request-text>\n" +
                         "      read request as text\n" +
+                        "  * -i --ignore-tls-cert\n" +
+                        "      ignore TLS certificate when connecting to servers.\n" +
                         "  * -p --print-response-mode <option>\n" +
                         "      option is one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full response\n" +
@@ -158,6 +160,8 @@ public class Main {
                         "      the name of the environment to use\n" +
                         "  * -c --cookiejar <file>\n" +
                         "      the file to use as a cookie jar\n" +
+                        "  * -i --ignore-tls-cert\n" +
+                        "      ignore TLS certificate when connecting to servers.\n" +
                         "  * -p --print-response-mode\n" +
                         "      one of: response|all|body|status|stats\n" +
                         "        - response: (default) print the full responses\n" +

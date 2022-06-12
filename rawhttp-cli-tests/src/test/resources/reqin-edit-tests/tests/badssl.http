@@ -1,0 +1,8 @@
+GET https://self-signed.badssl.com/
+User-Agent: RawHTTP
+
+> {%
+client.test('response is 200', function() {
+  client.assert(response.status === 200, "status code not 200");
+});
+%}
