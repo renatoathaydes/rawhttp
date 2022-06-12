@@ -195,6 +195,10 @@ public class Main {
                         "      use custom Media-Type mappings\n" +
                         "  * -p --port <port-number>\n" +
                         "      the port to listen on\n" +
+                        "  * -k --keystore\n" +
+                        "      the keystore to use for TLS connections." +
+                        "  * -w --keystore-password\n" +
+                        "      the keystore password. Ignored if keystore not given.\n" +
                         "  * -r --root-path <path>\n" +
                         "      the path to use as the root path (not incl. in file path, only URL)\n");
                 break;
@@ -286,7 +290,10 @@ public class Main {
         RequestLogger requestLogger = options.logRequests
                 ? new AsyncSysoutRequestLogger()
                 : new NoopRequestLogger();
-        RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port, requestLogger));
+
+        RawHttpServer server = new TcpRawHttpServer(new CliServerOptions(options.port,
+                options.keystore, options.keystorePass, requestLogger));
+
         Optional<File> mediaTypesFile = options.getMediaTypesFile();
         if (mediaTypesFile.isPresent()) {
             Properties mediaTypeProperties = new Properties();

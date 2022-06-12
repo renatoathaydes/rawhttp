@@ -2,6 +2,8 @@ package rawhttp.cli;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -17,15 +19,20 @@ final class ServerOptions {
     final int port;
     final boolean logRequests;
     final String rootPath;
+    final URL keystore;
+    final String keystorePass;
     private final File mediaTypesFile;
 
     ServerOptions(File dir, int port, boolean logRequests,
-                  File mediaTypesFile, String rootPath) {
+                  File mediaTypesFile, String rootPath,
+                  URL keystore, String keystorePass) {
         this.dir = dir;
         this.port = port;
         this.logRequests = logRequests;
         this.mediaTypesFile = mediaTypesFile;
         this.rootPath = rootPath;
+        this.keystore = keystore;
+        this.keystorePass = keystorePass;
     }
 
     public Optional<File> getMediaTypesFile() {
@@ -430,7 +437,7 @@ final class OptionsParser {
         boolean logRequests = false;
         File mediaTypesFile = null;
         Integer port = null;
-        String rootPath = "";
+        String rootPath = "", keystore = null, keystorePass = null;
 
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
@@ -475,6 +482,30 @@ final class OptionsParser {
                         throw new OptionsException("Missing argument for " + arg + " flag");
                     }
                     break;
+                case "-k":
+                case "--keystore":
+                    if (port != null) {
+                        throw new OptionsException("The --keystore option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        keystore = args[i + 1];
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
+                case "-w":
+                case "--keystore-password":
+                    if (port != null) {
+                        throw new OptionsException("The --keystore-password option can only be used once");
+                    }
+                    if (i + 1 < args.length) {
+                        keystorePass = args[i + 1];
+                        i++;
+                    } else {
+                        throw new OptionsException("Missing argument for " + arg + " flag");
+                    }
+                    break;
                 case "-r":
                 case "--root-path":
                     if (i + 1 < args.length) {
@@ -493,13 +524,26 @@ final class OptionsParser {
             throw new OptionsException("No directory specified to serve from.");
         }
 
+        URL keystoreURL = null;
+        if (keystore != null) {
+            try {
+                keystoreURL = keystore.contains("://")
+                        ? new URL(keystore)
+                        : new File(keystore).toURI().toURL();
+            } catch (MalformedURLException e) {
+                throw new OptionsException("Invalid URL: " + keystore);
+            }
+        }
+
         return Options.withServerOptions(
                 new ServerOptions(dir, port == null
                         ? ServerOptions.DEFAULT_SERVER_PORT
                         : port,
                         logRequests,
                         mediaTypesFile,
-                        rootPath));
+                        rootPath,
+                        keystoreURL,
+                        keystorePass));
     }
 
 }

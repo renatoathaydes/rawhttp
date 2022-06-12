@@ -14,7 +14,10 @@ compileKotlin {
 }
 
 test {
+    useJUnitPlatform()
     systemProperty 'rawhttp.cli.jar', project(':rawhttp-cli').ext.runnableJar
+    systemProperty 'rawhttp.server.keystore',
+            file('../rawhttp-core/src/test/resources/rawhttp/core/keystore.jks').absolutePath
 //    systemProperty 'rawhttp-cli-tester-debug', 'true'
     dependsOn project(':rawhttp-cli').tasks.withType(Jar)
     testLogging {
@@ -25,12 +28,11 @@ test {
 
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation 'junit:junit:4.12'
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect"
     testImplementation project(':rawhttp-core')
     testImplementation project(':rawhttp-cookies')
     testImplementation project(':rawhttp-cli')
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect"
-    testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
 }
