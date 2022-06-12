@@ -484,7 +484,7 @@ final class OptionsParser {
                     break;
                 case "-k":
                 case "--keystore":
-                    if (port != null) {
+                    if (keystore != null) {
                         throw new OptionsException("The --keystore option can only be used once");
                     }
                     if (i + 1 < args.length) {
@@ -496,7 +496,7 @@ final class OptionsParser {
                     break;
                 case "-w":
                 case "--keystore-password":
-                    if (port != null) {
+                    if (keystorePass != null) {
                         throw new OptionsException("The --keystore-password option can only be used once");
                     }
                     if (i + 1 < args.length) {

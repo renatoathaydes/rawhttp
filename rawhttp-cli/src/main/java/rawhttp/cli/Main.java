@@ -196,7 +196,7 @@ public class Main {
                         "  * -p --port <port-number>\n" +
                         "      the port to listen on\n" +
                         "  * -k --keystore\n" +
-                        "      the keystore to use for TLS connections." +
+                        "      the keystore to use for TLS connections.\n" +
                         "  * -w --keystore-password\n" +
                         "      the keystore password. Ignored if keystore not given.\n" +
                         "  * -r --root-path <path>\n" +
