@@ -46,7 +46,7 @@ class TcpRawHttpServerRestartingTests {
             override fun createSocket(useHttps: Boolean, host: String?, port: Int): Socket {
                 return super.createSocket(useHttps, host, port).also {
                     // timeout clients after just 1 second of inactivity
-                    it.soTimeout = 1000
+                    it.soTimeout = 3000
                     clientSockets.add(it)
                 }
             }

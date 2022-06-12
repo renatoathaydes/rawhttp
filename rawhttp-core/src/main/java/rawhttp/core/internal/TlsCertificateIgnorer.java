@@ -63,7 +63,6 @@ public final class TlsCertificateIgnorer {
      * <p>
      * To use this with {@link TcpRawHttpClient}, pass an instance of {@link UnsafeHttpClientOptions}
      * to its constructor:
-     * <p>
      * <pre>
      * var client = new TcpRawHttpClient(new TlsCertificateIgnorer.UnsafeHttpClientOptions())
      * </pre>
@@ -87,7 +86,6 @@ public final class TlsCertificateIgnorer {
      * <p>
      * To use this with {@link TcpRawHttpClient}, pass an instance of {@link UnsafeHttpClientOptions}
      * to its constructor:
-     * <p>
      * <pre>
      * var client = new TcpRawHttpClient(new TlsCertificateIgnorer.UnsafeHttpClientOptions())
      * </pre>

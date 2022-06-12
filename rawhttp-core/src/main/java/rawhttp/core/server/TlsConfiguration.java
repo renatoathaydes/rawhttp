@@ -48,6 +48,7 @@ public class TlsConfiguration {
      * method to use the given {@link SSLContext} to create a {@link javax.net.ssl.SSLServerSocket}.
      *
      * @param sslContext SSL Context to use for configuring {@link TcpRawHttpServer}.
+     * @param port       to accept connections from
      * @return server options using the given SSL Context
      */
     public static TcpRawHttpServer.TcpRawHttpServerOptions serverOptions(SSLContext sslContext,
