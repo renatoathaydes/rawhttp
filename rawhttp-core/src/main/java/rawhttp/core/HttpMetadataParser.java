@@ -447,6 +447,17 @@ public final class HttpMetadataParser {
 
                 // unexpected, but let's accept new-line without returns
                 state.lineNumber++;
+
+                // support for multi-line headers
+                int next = inputStream.read();
+                if (next < 0) break;
+                boolean isMultilineHeader = (next == ' ' || next == '\t');
+                // if multi-line header, continue as if nothing happened
+                if (!isMultilineHeader) {
+                    // otherwise, return the byte and finish this header
+                    inputStream.unread(next);
+                    break;
+                }
                 break;
             } else {
                 if (length > lengthLimit) {
