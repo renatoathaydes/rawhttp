@@ -1,10 +1,12 @@
 package rawhttp.core
 
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.optional.bePresent
 import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.net.URI
@@ -370,6 +372,35 @@ class SimpleHttpResponseTests {
         }
     }
 
+    /**
+     * See https://www.rfc-editor.org/rfc/rfc7230#section-3.2.4
+     */
+    @Test
+    fun `Can parse deprecated multi-line headers`() {
+        SimpleHttpRequestTests::class.java.getResourceAsStream("response-headers.http")!!.use {
+            RawHttp().parseResponse(it).run {
+                startLine.statusCode shouldBe 200
+                headers.headerNames shouldContainExactlyInAnyOrder listOf(
+                    "Cache-Control",
+                    "Content-Type",
+                    "Set-Cookie",
+                    "X-Content-Type-Options",
+                    "X-Frame-Options",
+                    "X-XSS-Protection",
+                    "Strict-Transport-Security",
+                    "Content-Security-Policy",
+                    "Date",
+                    "Content-Length",
+                )
+                headers["content-length"] shouldBe listOf("95247")
+                headers.getFirst("Content-Security-Policy") shouldBePresent { csp ->
+                    // we remove the first whitespace as it marks the new beginning of a line, but keep other whitespace
+                    csp shouldContain "default-src 'self' www.google-analytics.com www.youtube.com;" +
+                            "         child-src 'self' www.youtube.com www.youtube-nocookie.com player.vimeo.com www.google.com;"
+                }
+            }
+        }
+    }
 }
 
 class CopyHttpRequestTests {
