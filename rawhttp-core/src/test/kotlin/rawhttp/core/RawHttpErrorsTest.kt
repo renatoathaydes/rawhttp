@@ -54,7 +54,7 @@ class RawHttpErrorsTest {
         val examples = table(
                 headers("Request", "lineNumber", "message"),
                 row("GET / HTTP/1.1\nAccept: all\r\n", 1, "Illegal new-line character without preceding return"),
-                row("GET / HTTP/1.1\r\nAccept: all\n", 2, "Illegal new-line character without preceding return")
+                row("GET / HTTP/1.1\r\nAccept: all\r\n\n", 3, "Illegal new-line character")
         )
         forAll(examples) { request, expectedLineNumber, expectedMessage ->
             shouldThrow<InvalidHttpRequest> {
