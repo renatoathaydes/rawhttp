@@ -377,7 +377,7 @@ class SimpleHttpResponseTests {
      */
     @Test
     fun `Can parse deprecated multi-line headers`() {
-        SimpleHttpRequestTests::class.java.getResourceAsStream("response-headers.txt")!!.use {
+        SimpleHttpRequestTests::class.java.getResourceAsStream("response-headers")!!.use {
             RawHttp().parseResponse(it).run {
                 startLine.statusCode shouldBe 200
                 headers.headerNames shouldContainExactlyInAnyOrder listOf(
