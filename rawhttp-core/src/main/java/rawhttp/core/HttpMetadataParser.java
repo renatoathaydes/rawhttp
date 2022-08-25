@@ -430,8 +430,7 @@ public final class HttpMetadataParser {
                     if (next < 0) break;
                     boolean isMultilineHeader = (next == ' ' || next == '\t');
                     // if multi-line header, continue as if nothing happened
-                    if (isMultilineHeader) {
-                    } else {
+                    if (!isMultilineHeader) {
                         // otherwise, return the byte and finish this header
                         inputStream.unread(next);
                         break;
