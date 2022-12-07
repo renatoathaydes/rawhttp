@@ -12,14 +12,14 @@
 <dependency>
     <groupId>com.athaydes.rawhttp</groupId>
     <artifactId>rawhttp-core</artifactId>
-    <version>2.5.0</version>
+    <version>2.5.2</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-dependency 'com.athaydes.rawhttp:rawhttp-core:2.5.0'
+dependency 'com.athaydes.rawhttp:rawhttp-core:2.5.2'
 ```
 
 ### RawHTTP CLI
