@@ -21,6 +21,7 @@ import java.net.SocketException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -311,7 +312,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
      */
     public static class DefaultOptions implements TcpRawHttpClientOptions {
 
-        private final Map<String, Socket> socketByHost = new HashMap<>(4);
+        private final Map<HostKey, Socket> socketByHost = new HashMap<>(4);
         private final ExecutorService executorService;
 
         public DefaultOptions() {
@@ -328,11 +329,11 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
         public Socket getSocket(URI uri) {
             String host = Optional.ofNullable(uri.getHost()).orElseThrow(() ->
                     new RuntimeException("Host is not available in the URI"));
+            boolean useHttps = "https".equalsIgnoreCase(uri.getScheme());
 
-            @Nullable Socket socket = socketByHost.get(host);
+            @Nullable Socket socket = socketByHost.get(new HostKey(host, useHttps));
 
             if (socket == null || socket.isClosed() || !socket.isConnected()) {
-                boolean useHttps = "https".equalsIgnoreCase(uri.getScheme());
                 int port = uri.getPort();
                 if (port < 1) {
                     port = useHttps ? 443 : 80;
@@ -343,7 +344,7 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                socketByHost.put(host, socket);
+                socketByHost.put(new HostKey(host, useHttps), socket);
             }
 
             return socket;
@@ -360,8 +361,10 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
                                                 URI uri,
                                                 RawHttpResponse<Void> httpResponse) throws IOException {
             if (RawHttpResponse.shouldCloseConnectionAfter(httpResponse)) {
+                boolean useHttps = "https".equalsIgnoreCase(uri.getScheme());
+
                 // resolve the full response before closing the socket
-                try (Socket ignore = socketByHost.remove(uri.getHost())) {
+                try (Socket ignore = socketByHost.remove(new HostKey(uri.getHost(), useHttps))) {
                     return httpResponse.eagerly(false);
                 }
             }
@@ -414,6 +417,34 @@ public class TcpRawHttpClient implements RawHttpClient<Void>, Closeable {
             } else {
                 throw new IllegalStateException("Cannot receive HTTP Request more than once");
             }
+        }
+    }
+
+    private static final class HostKey {
+        final String host;
+        final boolean https;
+
+        HostKey(String host, boolean https) {
+            this.host = host;
+            this.https = https;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            HostKey hostKey = (HostKey) o;
+
+            if (https != hostKey.https) return false;
+            return Objects.equals(host, hostKey.host);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = host != null ? host.hashCode() : 0;
+            result = 31 * result + (https ? 1 : 0);
+            return result;
         }
     }
 

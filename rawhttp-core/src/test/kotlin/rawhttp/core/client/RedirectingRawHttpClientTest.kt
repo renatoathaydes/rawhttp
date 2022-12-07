@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpRequest
 import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 
 // a real HTTP response send by GitHub
 const val LARGE_REDIRECT = """
@@ -52,7 +53,8 @@ class RedirectingRawHttpClientTest {
         val redirectingClient = RedirectingRawHttpClient(mockClient)
 
         val actualResponse = redirectingClient.send(
-                http.parseRequest("GET /\nHost: myhost"))
+            http.parseRequest("GET /\nHost: myhost")
+        )
 
         actualResponse shouldBe foo
     }
@@ -78,7 +80,8 @@ class RedirectingRawHttpClientTest {
         val redirectingClient = RedirectingRawHttpClient(mockClient)
 
         val actualResponse = redirectingClient.send(
-                http.parseRequest("GET /\nHost: myhost"))
+            http.parseRequest("GET /\nHost: myhost")
+        )
 
         actualResponse shouldBe resource
     }
@@ -139,6 +142,7 @@ class RedirectingRawHttpClientTest {
                     redirectRequest = req
                     foo
                 }
+
                 else -> fail("unexpected request: $req")
             }
         }
@@ -146,13 +150,14 @@ class RedirectingRawHttpClientTest {
         val redirectingClient = RedirectingRawHttpClient(mockClient)
 
         val actualResponse = redirectingClient.send(
-                http.parseRequest("GET /\nHost: myhost\nAccept: application/json"))
+            http.parseRequest("GET /\nHost: myhost\nAccept: application/json")
+        )
 
         actualResponse shouldBe foo
 
         redirectRequest!!.headers.asMap() shouldBe mapOf(
-                "HOST" to listOf("github-production-release-asset-2e65be.s3.amazonaws.com"),
-                "ACCEPT" to listOf("application/json")
+            "HOST" to listOf("github-production-release-asset-2e65be.s3.amazonaws.com"),
+            "ACCEPT" to listOf("application/json")
         )
         redirectRequest!!.uri.path shouldBe "/40832723/b9093080-87e1-11ea-88bd-caad5f5731ae"
     }
@@ -207,40 +212,40 @@ class RedirectingRawHttpClientTest {
 
         val actual = requests.map { it.uri.path to it.method }
         val expected = listOf(
-                "/301" to "GET", "/foo" to "GET",
-                "/301" to "POST", "/foo" to "POST",
-                "/301" to "PUT", "/foo" to "PUT",
-                "/301" to "DELETE", "/foo" to "DELETE",
-                "/301" to "HEAD", "/foo" to "HEAD",
-                "/301" to "OPTIONS", "/foo" to "OPTIONS",
+            "/301" to "GET", "/foo" to "GET",
+            "/301" to "POST", "/foo" to "POST",
+            "/301" to "PUT", "/foo" to "PUT",
+            "/301" to "DELETE", "/foo" to "DELETE",
+            "/301" to "HEAD", "/foo" to "HEAD",
+            "/301" to "OPTIONS", "/foo" to "OPTIONS",
 
-                "/302" to "GET", "/foo" to "GET",
-                "/302" to "POST", "/foo" to "POST",
-                "/302" to "PUT", "/foo" to "PUT",
-                "/302" to "DELETE", "/foo" to "DELETE",
-                "/302" to "HEAD", "/foo" to "HEAD",
-                "/302" to "OPTIONS", "/foo" to "OPTIONS",
+            "/302" to "GET", "/foo" to "GET",
+            "/302" to "POST", "/foo" to "POST",
+            "/302" to "PUT", "/foo" to "PUT",
+            "/302" to "DELETE", "/foo" to "DELETE",
+            "/302" to "HEAD", "/foo" to "HEAD",
+            "/302" to "OPTIONS", "/foo" to "OPTIONS",
 
-                "/303" to "GET", "/foo" to "GET",
-                "/303" to "POST", "/foo" to "GET",
-                "/303" to "PUT", "/foo" to "GET",
-                "/303" to "DELETE", "/foo" to "GET",
-                "/303" to "HEAD", "/foo" to "HEAD",
-                "/303" to "OPTIONS", "/foo" to "GET",
+            "/303" to "GET", "/foo" to "GET",
+            "/303" to "POST", "/foo" to "GET",
+            "/303" to "PUT", "/foo" to "GET",
+            "/303" to "DELETE", "/foo" to "GET",
+            "/303" to "HEAD", "/foo" to "HEAD",
+            "/303" to "OPTIONS", "/foo" to "GET",
 
-                "/307" to "GET", "/foo" to "GET",
-                "/307" to "POST", "/foo" to "POST",
-                "/307" to "PUT", "/foo" to "PUT",
-                "/307" to "DELETE", "/foo" to "DELETE",
-                "/307" to "HEAD", "/foo" to "HEAD",
-                "/307" to "OPTIONS", "/foo" to "OPTIONS",
+            "/307" to "GET", "/foo" to "GET",
+            "/307" to "POST", "/foo" to "POST",
+            "/307" to "PUT", "/foo" to "PUT",
+            "/307" to "DELETE", "/foo" to "DELETE",
+            "/307" to "HEAD", "/foo" to "HEAD",
+            "/307" to "OPTIONS", "/foo" to "OPTIONS",
 
-                "/308" to "GET", "/foo" to "GET",
-                "/308" to "POST", "/foo" to "POST",
-                "/308" to "PUT", "/foo" to "PUT",
-                "/308" to "DELETE", "/foo" to "DELETE",
-                "/308" to "HEAD", "/foo" to "HEAD",
-                "/308" to "OPTIONS", "/foo" to "OPTIONS"
+            "/308" to "GET", "/foo" to "GET",
+            "/308" to "POST", "/foo" to "POST",
+            "/308" to "PUT", "/foo" to "PUT",
+            "/308" to "DELETE", "/foo" to "DELETE",
+            "/308" to "HEAD", "/foo" to "HEAD",
+            "/308" to "OPTIONS", "/foo" to "OPTIONS"
         )
 
         expected.forEachIndexed { i, item ->
@@ -248,6 +253,38 @@ class RedirectingRawHttpClientTest {
             actualItem shouldBe item
         }
 
+    }
+
+    @Test
+    fun redirectFromHttpToHttps() {
+        val redirectWithSlash = http.parseResponse("302 Found\nLocation: /foo/").eagerly()
+        val redirectToHttps = http.parseResponse("302 Found\nLocation: https://myhost/foo/").eagerly()
+        val done = http.parseResponse("200 OK").eagerly()
+        val requests = ConcurrentHashMap.newKeySet<Int>()
+
+        val mockClient = RawHttpClient { req ->
+            if (req.uri.scheme == "http") {
+                when (req.uri.path) {
+                    "/foo" -> let { requests.add(1); redirectWithSlash }
+                    "/foo/" -> let { requests.add(2); redirectToHttps }
+                    else -> fail("unexpected request: $req")
+                }
+            } else {
+                requests.add(3)
+                done
+            }
+        }
+
+        val redirectingClient = RedirectingRawHttpClient(mockClient)
+
+        val actualResponse = redirectingClient.send(
+            http.parseRequest("GET /foo\nHost: myhost")
+        )
+
+        actualResponse shouldBe done
+
+        // all expected requests were actually received
+        requests.containsAll(listOf(1, 2, 3))
     }
 
 }
