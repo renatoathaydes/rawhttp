@@ -88,20 +88,20 @@ API to implement your own HTTP clients and servers.</p>
 <p>Well, just use <a href="https://github.com/google/gson">Gson</a> or
 your favourite XML parser to convert the POJO into bytes, put those bytes into a HTTP response,
 then write that to a <code>Socket</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36">RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;200 OK&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-response<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> BytesBody<span style="color:#719e07">(</span>bytes<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;application/json&#34;</span><span style="color:#719e07">)</span>
-<span style="color:#719e07">)</span><span style="color:#719e07">.</span>writeTo<span style="color:#719e07">(</span>socket<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseResponse<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;200 OK&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>response<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> BytesBody<span style="color:#719e07">(</span>bytes<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;application/json&#34;</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>writeTo<span style="color:#719e07">(</span>socket<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <p>Need to send a <code>GET</code> request to fetch some JSON from your API?</p>
-<pre style="color:#93a1a1;background-color:#002b36">RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;GET https://example.com/my-resource/123\n&#34;</span> <span style="color:#719e07">+</span>
-    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span>
-    <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>send<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;GET https://example.com/my-resource/123\n&#34;</span> <span style="color:#719e07">+</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;Accept: application/json&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpResponse<span style="color:#719e07">&lt;</span><span style="color:#719e07">?</span><span style="color:#719e07">&gt;</span> response <span style="color:#719e07">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> TcpRawHttpClient<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>send<span style="color:#719e07">(</span>request<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <p>You can even copy-paste a sample HTTP request from the API docs and send it out as-is.</p>
 
 <p>The RawHTTP API was designed to make it intuitive to use and allow all behaviour to be easily

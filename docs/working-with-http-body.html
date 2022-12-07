@@ -20,61 +20,61 @@
 </nav><p>RawHTTP makes it easy to replace the body of a HTTP message, changing the relevant headers as appropriate.</p>
 
 <h3>Set body from String</h3>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
-
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> StringBody<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-
-System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span>requestWithBody<span style="color:#719e07">.</span>eagerly<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> StringBody<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span>requestWithBody<span style="color:#719e07">.</span>eagerly<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <p>Prints:</p>
-<pre style="color:#93a1a1;background-color:#002b36">POST /hello HTTP/1.1
-Host: example.com
-Content-Type: text/plain
-Content-Length: 13
-
-Hello RawHTTP
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>POST /hello HTTP/1.1
+</span></span><span style="display:flex;"><span>Host: example.com
+</span></span><span style="display:flex;"><span>Content-Type: text/plain
+</span></span><span style="display:flex;"><span>Content-Length: 13
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Hello RawHTTP
+</span></span></code></pre>
 <h3>Set body from File</h3>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
-
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> FileBody<span style="color:#719e07">(</span><span style="color:#719e07">new</span> File<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;hello.request&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> FileBody<span style="color:#719e07">(</span><span style="color:#719e07">new</span> File<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;hello.request&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <h3>Set body from byte array</h3>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
-
-<span style="color:#dc322f">byte</span><span style="color:#719e07">[</span><span style="color:#719e07">]</span> bytes <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span><span style="color:#719e07">.</span>getBytes<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> BytesBody<span style="color:#719e07">(</span>bytes<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#dc322f">byte</span><span style="color:#719e07">[</span><span style="color:#719e07">]</span> bytes <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;Hello RawHTTP&#34;</span><span style="color:#719e07">.</span>getBytes<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> BytesBody<span style="color:#719e07">(</span>bytes<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <h3>Set body from InputStream (chunked)</h3>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
-<span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
-
-InputStream stream <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ByteArrayInputStream<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;Hello RawHTTTP&#34;</span><span style="color:#719e07">.</span>getBytes<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-<span style="color:#dc322f">int</span> chunkSize <span style="color:#719e07">=</span> 4<span style="color:#719e07">;</span>
-
-RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
-    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
-    <span style="color:#719e07">new</span> ChunkedBody<span style="color:#719e07">(</span>stream<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">,</span> chunkSize<span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.body.*<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>InputStream stream <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ByteArrayInputStream<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;Hello RawHTTTP&#34;</span><span style="color:#719e07">.</span>getBytes<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#dc322f">int</span> chunkSize <span style="color:#719e07">=</span> 4<span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>RawHttp http <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> RawHttp<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest request <span style="color:#719e07">=</span> http<span style="color:#719e07">.</span>parseRequest<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#2aa198">&#34;POST http://example.com/hello&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>RawHttpRequest requestWithBody <span style="color:#719e07">=</span> request<span style="color:#719e07">.</span>withBody<span style="color:#719e07">(</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">new</span> ChunkedBody<span style="color:#719e07">(</span>stream<span style="color:#719e07">,</span> <span style="color:#2aa198">&#34;text/plain&#34;</span><span style="color:#719e07">,</span> chunkSize<span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span></code></pre>
 <p>The <code>InputStream</code> is read lazily as the body of the HTTP message is consumed by a reader.</p>
 
 <p>The header <code>Transfer-Encoding: chunked</code> is set, and the body is encoded accordingly.</p>

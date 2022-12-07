@@ -27,43 +27,43 @@
 while the <code>accept</code> methods should be used within a HTTP server to handle requests from a client.</p>
 
 <p>Example Kotlin code on the server:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*
-<span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
-<span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
-
-<span style="color:#719e07">val</span> http = RawHttp()
-<span style="color:#719e07">val</span> duplex = RawHttpDuplex()
-<span style="color:#719e07">val</span> server = TcpRawHttpServer(<span style="color:#2aa198">8082</span>)
-
-server.start { request -&gt;
-    <span style="color:#586e75">// TODO check the request is a POST to the /connect path!
-</span><span style="color:#586e75"></span>    <span style="color:#586e75">// call duplex.accept() to return a response that can initiate duplex communication
-</span><span style="color:#586e75"></span>    Optional.of(duplex.accept(request, { sender -&gt;
-        <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> {
-            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onTextMessage</span>(message: String) {
-                <span style="color:#586e75">// handle text message 
-</span><span style="color:#586e75"></span>                sender.sendTextMessage(<span style="color:#2aa198">&#34;Hi there! You sent this: $message&#34;</span>)
-            }      
-            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onBinaryMessage</span>(message: ByteArray, headers: RawHttpHeaders) { <span style="color:#586e75">/* handle binary message */</span> }
-            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onClose</span>() { <span style="color:#586e75">/* handle closed connection */</span> }
-        }
-    }))
-}
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">val</span> http = RawHttp()
+</span></span><span style="display:flex;"><span><span style="color:#719e07">val</span> duplex = RawHttpDuplex()
+</span></span><span style="display:flex;"><span><span style="color:#719e07">val</span> server = TcpRawHttpServer(<span style="color:#2aa198">8082</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>server.start { request <span style="color:#719e07">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#586e75">// TODO check the request is a POST to the /connect path!
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span>    <span style="color:#586e75">// call duplex.accept() to return a response that can initiate duplex communication
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span>    Optional.of(duplex.accept(request, { sender <span style="color:#719e07">-&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onTextMessage</span>(message: String) {
+</span></span><span style="display:flex;"><span>                <span style="color:#586e75">// handle text message 
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span>                sender.sendTextMessage(<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">Hi there! You sent this: </span><span style="color:#2aa198">$message</span><span style="color:#2aa198">&#34;</span>)
+</span></span><span style="display:flex;"><span>            }      
+</span></span><span style="display:flex;"><span>            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onBinaryMessage</span>(message: ByteArray, headers: RawHttpHeaders) { <span style="color:#586e75">/* handle binary message */</span> }
+</span></span><span style="display:flex;"><span>            <span style="color:#719e07">override</span> <span style="color:#719e07">fun</span> <span style="color:#268bd2">onClose</span>() { <span style="color:#586e75">/* handle closed connection */</span> }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre>
 <hr/>
 
 <p>Example Kotlin code on the client:</p>
-<pre style="color:#93a1a1;background-color:#002b36"><span style="color:#719e07">import</span> rawhttp.core.*
-<span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
-<span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
-
-<span style="color:#719e07">val</span> http = RawHttp()
-<span style="color:#719e07">val</span> duplex = RawHttpDuplex()
-
-duplex.connect(http.parseRequest(<span style="color:#2aa198">&#34;POST http://localhost:8082/connect&#34;</span>), { sender -&gt;
-    <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> { <span style="color:#586e75">/* same API as on the server */</span> }
-}
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.*
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> com.athaydes.rawhttp.duplex.*
+</span></span><span style="display:flex;"><span><span style="color:#719e07">import</span> rawhttp.core.server.TcpRawHttpServer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">val</span> http = RawHttp()
+</span></span><span style="display:flex;"><span><span style="color:#719e07">val</span> duplex = RawHttpDuplex()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>duplex.connect(http.parseRequest(<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">POST http://localhost:8082/connect</span><span style="color:#2aa198">&#34;</span>), { sender <span style="color:#719e07">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">object</span> : <span style="color:#268bd2">MessageHandler</span> { <span style="color:#586e75">/* same API as on the server */</span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre>
 <h2>How duplex works</h2>
 
 <p>The way duplex communication is achieved uses only HTTP/1.1 standard mechanisms and can be described as follows:</p>

@@ -50,33 +50,33 @@ the full syntax and examples of writing HTTP files.</p>
 
 <p>To execute a HTTP file, parse the file with the <code>com.athaydes.rawhttp.reqinedit.ReqInEditParser</code> class,
 then execute it with <code>com.athaydes.rawhttp.reqinedit.ReqInEditUnit</code>:</p>
-<pre style="color:#93a1a1;background-color:#002b36">var parser <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditParser<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-
-<span style="color:#719e07">try</span> <span style="color:#719e07">{</span>
-    var entries <span style="color:#719e07">=</span> parser<span style="color:#719e07">.</span>parse<span style="color:#719e07">(</span><span style="color:#719e07">new</span> File<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;my.http&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    var allSuccess <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditUnit<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>run<span style="color:#719e07">(</span>entries<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">if</span> <span style="color:#719e07">(</span>allSuccess<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
-        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;All tests passed&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">}</span> <span style="color:#719e07">else</span> <span style="color:#719e07">{</span>
-        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;There were test failures&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
-    <span style="color:#719e07">}</span>
-<span style="color:#719e07">}</span> <span style="color:#719e07">catch</span> <span style="color:#719e07">(</span>IOException e<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
-    <span style="color:#586e75">// handle error
-</span><span style="color:#586e75"></span><span style="color:#719e07">}</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>var parser <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditParser<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">try</span> <span style="color:#719e07">{</span>
+</span></span><span style="display:flex;"><span>    var entries <span style="color:#719e07">=</span> parser<span style="color:#719e07">.</span>parse<span style="color:#719e07">(</span><span style="color:#719e07">new</span> File<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;my.http&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>    var allSuccess <span style="color:#719e07">=</span> <span style="color:#719e07">new</span> ReqInEditUnit<span style="color:#719e07">(</span><span style="color:#719e07">)</span><span style="color:#719e07">.</span>run<span style="color:#719e07">(</span>entries<span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">if</span> <span style="color:#719e07">(</span>allSuccess<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;All tests passed&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">}</span> <span style="color:#719e07">else</span> <span style="color:#719e07">{</span>
+</span></span><span style="display:flex;"><span>        System<span style="color:#719e07">.</span>out<span style="color:#719e07">.</span>println<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;There were test failures&#34;</span><span style="color:#719e07">)</span><span style="color:#719e07">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#719e07">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">}</span> <span style="color:#719e07">catch</span> <span style="color:#719e07">(</span>IOException e<span style="color:#719e07">)</span> <span style="color:#719e07">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#586e75">// handle error
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span><span style="color:#719e07">}</span>
+</span></span></code></pre>
 <h2>Customizing ReqInEditUnit</h2>
 
 <p>The <code>ReqInEditUnit</code> class, used to run the parsed entries from a HTTP file as shown above, can be highly customized
 to modify all behaviour, including the environment, HTTP parser, HTTP client, file reader, response storage and test reporter.</p>
 
 <p>Here&rsquo;s the full list of parameters in the main constructor:</p>
-<pre style="color:#93a1a1;background-color:#002b36">ReqInEditUnit<span style="color:#719e07">(</span>HttpEnvironment<span style="color:#719e07">,</span>
-              RawHttp<span style="color:#719e07">,</span>
-              RawHttpClient<span style="color:#719e07">,</span>
-              FileReader<span style="color:#719e07">,</span>
-              ResponseStorage<span style="color:#719e07">,</span> 
-              HttpTestsReporter<span style="color:#719e07">)</span>
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>ReqInEditUnit<span style="color:#719e07">(</span>HttpEnvironment<span style="color:#719e07">,</span>
+</span></span><span style="display:flex;"><span>              RawHttp<span style="color:#719e07">,</span>
+</span></span><span style="display:flex;"><span>              RawHttpClient<span style="color:#719e07">,</span>
+</span></span><span style="display:flex;"><span>              FileReader<span style="color:#719e07">,</span>
+</span></span><span style="display:flex;"><span>              ResponseStorage<span style="color:#719e07">,</span> 
+</span></span><span style="display:flex;"><span>              HttpTestsReporter<span style="color:#719e07">)</span>
+</span></span></code></pre>
 <p>The default <code>HttpEnvironment</code>, <code>com.athaydes.rawhttp.reqinedit.js.JsEnvironment</code>, uses <a href="https://winterbe.com/posts/2014/04/05/java8-nashorn-tutorial/">Nashorn</a>
 to interpret response handlers, and it parses variables using the
 JavaScript&rsquo;s <a href="https://mustache.github.io/">Mustache library</a> (obtained in Java via <a href="https://www.webjars.org/">webjars</a>).</p>
@@ -88,17 +88,17 @@ an environment name, so that one can use <a href="https://www.jetbrains.com/help
 in the working directory.</p>
 
 <p>The following example, when run, will save the HTTP response in the file called <code>response.json</code> in the working directory:</p>
-<pre style="color:#93a1a1;background-color:#002b36">### GET request <span style="color:#268bd2">with</span> parameter
-GET https<span style="color:#719e07">:</span><span style="color:#586e75">//httpbin.org/get?show_env=1
-</span><span style="color:#586e75"></span>Accept<span style="color:#719e07">:</span> application<span style="color:#719e07">/</span>json
-
-<span style="color:#719e07">&gt;</span> {<span style="color:#719e07">%</span>
-client.test(<span style="color:#2aa198">&#34;Request executed successfully&#34;</span>, <span style="color:#268bd2">function</span>() {
-  client.assert(response.status <span style="color:#719e07">===</span> <span style="color:#2aa198">200</span>, <span style="color:#2aa198">&#34;Response status is not 200&#34;</span>);
-});
-<span style="color:#719e07">%</span>}
-<span style="color:#719e07">&lt;</span><span style="color:#719e07">&gt;</span> response.json
-</pre>
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>### GET request <span style="color:#268bd2">with</span> parameter
+</span></span><span style="display:flex;"><span>GET https<span style="color:#719e07">:</span><span style="color:#586e75">//httpbin.org/get?show_env=1
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span>Accept<span style="color:#719e07">:</span> application<span style="color:#719e07">/</span>json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">&gt;</span> {<span style="color:#719e07">%</span>
+</span></span><span style="display:flex;"><span>client.test(<span style="color:#2aa198">&#34;Request executed successfully&#34;</span>, <span style="color:#268bd2">function</span>() {
+</span></span><span style="display:flex;"><span>  client.assert(response.status <span style="color:#719e07">===</span> <span style="color:#2aa198">200</span>, <span style="color:#2aa198">&#34;Response status is not 200&#34;</span>);
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span><span style="color:#719e07">%</span>}
+</span></span><span style="display:flex;"><span><span style="color:#719e07">&lt;</span><span style="color:#719e07">&gt;</span> response.json
+</span></span></code></pre>
 <h2>Supported Java versions</h2>
 
 <p>RawHTTP modules are still compiled on <strong>Java 8</strong> in order to support older code bases, but it&rsquo;s tested also on
