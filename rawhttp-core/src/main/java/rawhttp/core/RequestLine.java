@@ -15,6 +15,7 @@ public class RequestLine implements StartLine {
     private final String method;
     private final URI uri;
     private final HttpVersion httpVersion;
+    private final RawHttpOptions options;
 
     /**
      * Create a new {@link RequestLine}.
@@ -27,9 +28,14 @@ public class RequestLine implements StartLine {
      * @param httpVersion HTTP version of the message
      */
     public RequestLine(String method, URI uri, HttpVersion httpVersion) {
+        this(method, uri, httpVersion, RawHttpOptions.defaultInstance());
+    }
+
+    public RequestLine(String method, URI uri, HttpVersion httpVersion, RawHttpOptions options) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
+        this.options = options;
     }
 
     /**
@@ -92,12 +98,21 @@ public class RequestLine implements StartLine {
         if ("CONNECT".equalsIgnoreCase(method)) {
             String host = uri.getHost();
             int port = uri.getPort();
-            assert host != null : "Host is missing from RequestLine uri";
 
-            outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
-            if (port != -1) {
-                outputStream.write(':');
-                outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
+            if (!options.allowIllegalStartLineCharacters()) {
+                if (host == null) {
+                    throw new IllegalArgumentException("URI host can not be null when CONNECT method is used");
+                } else if (port == -1) {
+                    throw new IllegalArgumentException("URI port must be defined when CONNECT method is used");
+                }
+            }
+
+            if (host != null) {
+                outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
+                if (port != -1) {
+                    outputStream.write(':');
+                    outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
+                }
             }
         } else {
             String path = uri.getRawPath();
