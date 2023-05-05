@@ -88,16 +88,29 @@ public class RequestLine implements StartLine {
         outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
         outputStream.write(' ');
 
-        String path = uri.getRawPath();
-        if (path == null || path.isEmpty()) {
-            outputStream.write('/');
+        //RFC-7230 section 5.3.3
+        if ("CONNECT".equalsIgnoreCase(method)) {
+            String host = uri.getHost();
+            int port = uri.getPort();
+            assert host != null : "Host is missing from RequestLine uri";
+
+            outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
+            if (port != -1) {
+                outputStream.write(':');
+                outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
+            }
         } else {
-            outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
-        }
-        String query = uri.getRawQuery();
-        if (query != null && !query.isEmpty()) {
-            outputStream.write('?');
-            outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+            String path = uri.getRawPath();
+            if (path == null || path.isEmpty()) {
+                outputStream.write('/');
+            } else {
+                outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
+            }
+            String query = uri.getRawQuery();
+            if (query != null && !query.isEmpty()) {
+                outputStream.write('?');
+                outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+            }
         }
 
         outputStream.write(' ');

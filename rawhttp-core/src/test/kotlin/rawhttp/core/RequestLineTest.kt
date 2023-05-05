@@ -9,6 +9,7 @@ import io.kotest.data.table
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import rawhttp.core.errors.InvalidHttpRequest
+import java.net.URI
 
 class RequestLineTest {
 
@@ -189,6 +190,23 @@ class RequestLineTest {
                 (uri.path ?: "") shouldBe expectedPath
                 (uri.query ?: "") shouldBe expectedQuery
                 (uri.rawQuery ?: "") shouldBe expectedRawQuery
+            }
+        }
+    }
+
+    @Test
+    fun testConnectSetsAuthorityFormTarget() {
+        val table = table(headers("method", "uri", "version", "expected request line"),
+                row("CONNECT", URI("http://example.com"), HttpVersion.HTTP_1_1, "CONNECT example.com HTTP/1.1"),
+                row("CONNECT", URI("http://example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
+                row("CONNECT", URI("http://user:pass@example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
+                row("CONNECT", URI("http://example.com/somePath"), HttpVersion.HTTP_1_1, "CONNECT example.com HTTP/1.1"),
+                row("CONNECT", URI("http://example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
+                row("CONNECT", URI("http://www.example.com:80"), HttpVersion.HTTP_1_1, "CONNECT www.example.com:80 HTTP/1.1"),
+        )
+        forAll(table) { method, uri, version, expectedRequest ->
+            RequestLine(method, uri, version).run {
+                toString() shouldBe expectedRequest
             }
         }
     }
