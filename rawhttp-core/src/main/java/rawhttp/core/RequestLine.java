@@ -18,7 +18,7 @@ public class RequestLine implements StartLine {
     private final RawHttpOptions options;
 
     /**
-     * Create a new {@link RequestLine}.
+     * Create a new {@link RequestLine} using the default options.
      * <p>
      * This constructor does not validate the method name. If validation is required,
      * use the {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
@@ -31,6 +31,17 @@ public class RequestLine implements StartLine {
         this(method, uri, httpVersion, RawHttpOptions.defaultInstance());
     }
 
+    /**
+     * Create a new {@link RequestLine}.
+     * <p>
+     * This constructor does not validate the method name. If validation is required,
+     * use the {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
+     *
+     * @param method      name of the HTTP method
+     * @param uri         URI of the request target
+     * @param httpVersion HTTP version of the message
+     * @param options     RawHttp configuration options
+     */
     public RequestLine(String method, URI uri, HttpVersion httpVersion, RawHttpOptions options) {
         this.method = method;
         this.uri = uri;
