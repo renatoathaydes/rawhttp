@@ -119,7 +119,7 @@ public class RawHttpOptions {
     }
 
     /**
-     * @return whether or not to bypass illegal CONNECT request authority validation
+     * @return bypasses the CONNECT requirement that a host and port are used in the request line
      */
     public boolean allowIllegalConnectAuthority() {
         return allowIllegalConnectAuthority;
@@ -311,7 +311,7 @@ public class RawHttpOptions {
         }
 
         /**
-         * Allows bypassing validation logic for CONNECT request authority requirements
+         * Allows bypassing requirements for CONNECT requests which require host and port to be sent
          * <p>
          * RFC-7230 section 5.3.3 defines CONNECT requests must:
          * <quote>
@@ -319,7 +319,7 @@ public class RawHttpOptions {
          * request-target ([Section 5.3 of <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-5.3">RFC7230</a>])
          * </quote>
          *
-         * Setting this will allow bypassing the validations and allow nullable host and or port
+         * Setting this will bypass this requirement and fall back to non-CONNECT request line requirements
          *
          * @return this
          */

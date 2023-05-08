@@ -113,7 +113,7 @@ public class RequestLine implements StartLine {
             if (host == null) {
                 throw new IllegalArgumentException("URI host can not be null when CONNECT method is used");
             } else if (port < 1) {
-                throw new IllegalArgumentException("URI port must be defined when CONNECT method is used");
+                throw new IllegalArgumentException("URI port must be defined and valid when CONNECT method is used");
             }
             outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
             outputStream.write(':');
