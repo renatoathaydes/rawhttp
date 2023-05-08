@@ -277,13 +277,6 @@ public class RawHttp {
      * @return true if the headers indicate the request should have a body, false otherwise
      */
     public static boolean requestHasBody(RawHttpHeaders headers, RequestLine requestLine) {
-        // As per RFC-7231 section 4.3.6:
-        // A payload within a CONNECT request message has no defined semantics;
-        // sending a payload body on a CONNECT request might cause some existing
-        // implementations to reject the request.
-        if ("CONNECT".equalsIgnoreCase(requestLine.getMethod())) {
-            return false;
-        }
         // The presence of a message body in a request is signaled by a
         // Content-Length or Transfer-Encoding header field.  Request message
         // framing is independent of method semantics, even if the method does

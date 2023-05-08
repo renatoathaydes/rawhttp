@@ -106,25 +106,18 @@ public class RequestLine implements StartLine {
         outputStream.write(' ');
 
         //RFC-7230 section 5.3.3
-        if ("CONNECT".equalsIgnoreCase(method)) {
+        if (!options.allowIllegalConnectAuthority() && "CONNECT".equalsIgnoreCase(method)) {
             String host = uri.getHost();
             int port = uri.getPort();
 
-            if (!options.allowIllegalStartLineCharacters()) {
-                if (host == null) {
-                    throw new IllegalArgumentException("URI host can not be null when CONNECT method is used");
-                } else if (port == -1) {
-                    throw new IllegalArgumentException("URI port must be defined when CONNECT method is used");
-                }
+            if (host == null) {
+                throw new IllegalArgumentException("URI host can not be null when CONNECT method is used");
+            } else if (port < 1) {
+                throw new IllegalArgumentException("URI port must be defined when CONNECT method is used");
             }
-
-            if (host != null) {
-                outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
-                if (port != -1) {
-                    outputStream.write(':');
-                    outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
-                }
-            }
+            outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(':');
+            outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
         } else {
             String path = uri.getRawPath();
             if (path == null || path.isEmpty()) {
