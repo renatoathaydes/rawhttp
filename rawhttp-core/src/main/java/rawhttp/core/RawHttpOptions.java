@@ -314,11 +314,9 @@ public class RawHttpOptions {
          * Allows bypassing requirements for CONNECT requests which require host and port to be sent
          * <p>
          * RFC-7230 section 5.3.3 defines CONNECT requests must:
-         * <quote>
-         * A client sending a CONNECT request MUST send the authority form of
-         * request-target ([Section 5.3 of <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-5.3">RFC7230</a>])
-         * </quote>
-         *
+         * "A client sending a CONNECT request MUST send the authority form of
+         * request-target (<a href="https://datatracker.ietf.org/doc/html/rfc7230#section-5.3">Section 5.3 of RFC7230</a>)"
+         * <p>
          * Setting this will bypass this requirement and fall back to non-CONNECT request line requirements
          *
          * @return this

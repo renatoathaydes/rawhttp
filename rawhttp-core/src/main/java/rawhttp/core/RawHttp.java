@@ -141,7 +141,7 @@ public class RawHttp {
 
         RawHttpHeaders headers = modifiableHeaders.build();
 
-        @Nullable BodyReader bodyReader = requestHasBody(headers, requestLine)
+        @Nullable BodyReader bodyReader = requestHasBody(headers)
                 ? createBodyReader(inputStream, requestLine, headers)
                 : null;
 
@@ -276,7 +276,7 @@ public class RawHttp {
      * @param headers HTTP request's headers
      * @return true if the headers indicate the request should have a body, false otherwise
      */
-    public static boolean requestHasBody(RawHttpHeaders headers, RequestLine requestLine) {
+    public static boolean requestHasBody(RawHttpHeaders headers) {
         // The presence of a message body in a request is signaled by a
         // Content-Length or Transfer-Encoding header field.  Request message
         // framing is independent of method semantics, even if the method does
