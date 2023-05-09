@@ -197,10 +197,10 @@ class RequestLineTest {
     @Test
     fun testConnectSetsAuthorityFormTarget() {
         val table = table(headers("method", "uri", "version", "expected request line"),
-                row("CONNECT", URI("http://example.com"), HttpVersion.HTTP_1_1, "CONNECT example.com HTTP/1.1"),
+                row("CONNECT", URI("http://example.com:8080"), HttpVersion.HTTP_1_1, "CONNECT example.com:8080 HTTP/1.1"),
                 row("CONNECT", URI("http://example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
                 row("CONNECT", URI("http://user:pass@example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
-                row("CONNECT", URI("http://example.com/somePath"), HttpVersion.HTTP_1_1, "CONNECT example.com HTTP/1.1"),
+                row("CONNECT", URI("http://example.com:8080/somePath"), HttpVersion.HTTP_1_1, "CONNECT example.com:8080 HTTP/1.1"),
                 row("CONNECT", URI("http://example.com:80"), HttpVersion.HTTP_1_1, "CONNECT example.com:80 HTTP/1.1"),
                 row("CONNECT", URI("http://www.example.com:80"), HttpVersion.HTTP_1_1, "CONNECT www.example.com:80 HTTP/1.1"),
         )
