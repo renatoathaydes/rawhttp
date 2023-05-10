@@ -316,7 +316,7 @@ public class RawHttp {
             }
             if (requestLine.getMethod().equalsIgnoreCase("CONNECT") &&
                     startsWith(2, statusLine.getStatusCode())) {
-                return false; // CONNECT successful means start tunelling
+                return false; // CONNECT successful means start tunnelling
             }
         }
 

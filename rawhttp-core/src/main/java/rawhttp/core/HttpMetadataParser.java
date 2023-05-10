@@ -178,7 +178,7 @@ public final class HttpMetadataParser {
 
         URI uri = parseUri(uriPart);
 
-        return new RequestLine(method, uri, httpVersion);
+        return new RequestLine(method, uri, httpVersion, options);
     }
 
     /**

@@ -25,6 +25,7 @@ public class RawHttpOptions {
     private final boolean ignoreLeadingEmptyLine;
     private final boolean allowIllegalStartLineCharacters;
     private final boolean allowComments;
+    private final boolean allowIllegalConnectAuthority;
     private final HttpHeadersOptions httpHeadersOptions;
     private final HttpBodyEncodingRegistry encodingRegistry;
 
@@ -34,6 +35,7 @@ public class RawHttpOptions {
                            boolean ignoreLeadingEmptyLine,
                            boolean allowIllegalStartLineCharacters,
                            boolean allowComments,
+                           boolean allowIllegalConnectAuthority,
                            HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
@@ -42,6 +44,7 @@ public class RawHttpOptions {
         this.ignoreLeadingEmptyLine = ignoreLeadingEmptyLine;
         this.allowIllegalStartLineCharacters = allowIllegalStartLineCharacters;
         this.allowComments = allowComments;
+        this.allowIllegalConnectAuthority = allowIllegalConnectAuthority;
         this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
@@ -113,6 +116,13 @@ public class RawHttpOptions {
      */
     public boolean allowComments() {
         return allowComments;
+    }
+
+    /**
+     * @return bypasses the CONNECT requirement that a host and port are used in the request line
+     */
+    public boolean allowIllegalConnectAuthority() {
+        return allowIllegalConnectAuthority;
     }
 
     /**
@@ -197,6 +207,7 @@ public class RawHttpOptions {
         private boolean insertHttpVersionIfMissing = true;
         private boolean allowIllegalStartLineCharacters = false;
         private boolean allowComments = false;
+        private boolean allowIllegalConnectAuthority = false;
         private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
@@ -300,6 +311,22 @@ public class RawHttpOptions {
         }
 
         /**
+         * Allows bypassing requirements for CONNECT requests which require host and port to be sent
+         * <p>
+         * RFC-7230 section 5.3.3 defines CONNECT requests must:
+         * "A client sending a CONNECT request MUST send the authority form of
+         * request-target (<a href="https://datatracker.ietf.org/doc/html/rfc7230#section-5.3">Section 5.3 of RFC7230</a>)"
+         * <p>
+         * Setting this will bypass this requirement and fall back to non-CONNECT request line requirements
+         *
+         * @return this
+         */
+        public Builder allowIllegalConnectAuthority() {
+            this.allowIllegalConnectAuthority = true;
+            return this;
+        }
+
+        /**
          * Get a builder of {@link HttpHeadersOptions} to use with this object.
          *
          * @return this
@@ -333,7 +360,7 @@ public class RawHttpOptions {
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
                     allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters, allowComments,
-                    httpHeadersOptionsBuilder.getOptions(), registry);
+                    allowIllegalConnectAuthority, httpHeadersOptionsBuilder.getOptions(), registry);
         }
 
         public class HttpHeadersOptionsBuilder {

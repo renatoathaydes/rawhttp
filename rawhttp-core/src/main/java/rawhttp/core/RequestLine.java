@@ -15,6 +15,21 @@ public class RequestLine implements StartLine {
     private final String method;
     private final URI uri;
     private final HttpVersion httpVersion;
+    private final RawHttpOptions options;
+
+    /**
+     * Create a new {@link RequestLine} using the default options.
+     * <p>
+     * This constructor does not validate the method name. If validation is required,
+     * use the {@link HttpMetadataParser#parseRequestLine(java.io.InputStream)} method.
+     *
+     * @param method      name of the HTTP method
+     * @param uri         URI of the request target
+     * @param httpVersion HTTP version of the message
+     */
+    public RequestLine(String method, URI uri, HttpVersion httpVersion) {
+        this(method, uri, httpVersion, RawHttpOptions.defaultInstance());
+    }
 
     /**
      * Create a new {@link RequestLine}.
@@ -25,11 +40,13 @@ public class RequestLine implements StartLine {
      * @param method      name of the HTTP method
      * @param uri         URI of the request target
      * @param httpVersion HTTP version of the message
+     * @param options     RawHttp configuration options
      */
-    public RequestLine(String method, URI uri, HttpVersion httpVersion) {
+    public RequestLine(String method, URI uri, HttpVersion httpVersion, RawHttpOptions options) {
         this.method = method;
         this.uri = uri;
         this.httpVersion = httpVersion;
+        this.options = options;
     }
 
     /**
@@ -88,16 +105,31 @@ public class RequestLine implements StartLine {
         outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
         outputStream.write(' ');
 
-        String path = uri.getRawPath();
-        if (path == null || path.isEmpty()) {
-            outputStream.write('/');
+        //RFC-7230 section 5.3.3
+        if (!options.allowIllegalConnectAuthority() && "CONNECT".equalsIgnoreCase(method)) {
+            String host = uri.getHost();
+            int port = uri.getPort();
+
+            if (host == null) {
+                throw new IllegalArgumentException("URI host can not be null when CONNECT method is used");
+            } else if (port < 1) {
+                throw new IllegalArgumentException("URI port must be defined and valid when CONNECT method is used");
+            }
+            outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(':');
+            outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
         } else {
-            outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
-        }
-        String query = uri.getRawQuery();
-        if (query != null && !query.isEmpty()) {
-            outputStream.write('?');
-            outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+            String path = uri.getRawPath();
+            if (path == null || path.isEmpty()) {
+                outputStream.write('/');
+            } else {
+                outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
+            }
+            String query = uri.getRawQuery();
+            if (query != null && !query.isEmpty()) {
+                outputStream.write('?');
+                outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+            }
         }
 
         outputStream.write(' ');
