@@ -290,10 +290,16 @@ public class TcpRawHttpServer implements RawHttpServer {
                         if (response == null) {
                             response = route(request);
                         }
-                        serverWillCloseConnection |= RawHttpResponse.shouldCloseConnectionAfter(response);
+                        serverWillCloseConnection |= RawHttpResponse.shouldCloseConnectionAfter(
+                                request.getStartLine(), response);
                         response.writeTo(client.getOutputStream());
                     } finally {
                         closeBodyOf(response);
+                    }
+                    if (request.getMethod().equalsIgnoreCase("CONNECT") &&
+                            response.getStartLine().isSuccess()) {
+                        router.tunnel(client);
+                        break; // now it's between the client and the router
                     }
                 } catch (SocketTimeoutException e) {
                     serverWillCloseConnection = true;

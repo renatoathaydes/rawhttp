@@ -5,6 +5,8 @@ import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
 import rawhttp.core.RequestLine;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Optional;
 
 /**
@@ -47,6 +49,25 @@ public interface Router {
      */
     default Optional<RawHttpResponse<Void>> continueResponse(RequestLine requestLine, RawHttpHeaders headers) {
         return Optional.empty();
+    }
+
+    /**
+     * Tunnel the client to the provided URI.
+     * <p>
+     * This method is called when a client requests to CONNECT to another location.
+     * By default, the client is closed and an {@link UnsupportedOperationException} is thrown.
+     * <p>
+     * This method is called from a request Thread, so it's advisable that implementations that
+     * support tunneling fork the handling to a different Thread immediately.
+     * <p>
+     * See <a href="https://www.rfc-editor.org/rfc/rfc9110#CONNECT">RFC-9110 Section 9.3.6</a>.
+     *
+     * @param client requesting tunneling.
+     * @throws IOException if an IO problem occurs
+     */
+    default void tunnel(Socket client) throws IOException {
+        client.close();
+        throw new UnsupportedOperationException("CONNECT request is not supported");
     }
 
 }
