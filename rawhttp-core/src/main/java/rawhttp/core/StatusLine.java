@@ -44,6 +44,16 @@ public class StatusLine implements StartLine {
     }
 
     /**
+     * Returns true if this {@link StatusLine} indicates sucess.
+     *
+     * @return true if the status code indicates success, false otherwise
+     * @see StatusLine#isSuccessCode(int)
+     */
+    public boolean isSuccess() {
+        return isSuccessCode(statusCode);
+    }
+
+    /**
      * @return the reason phrase in this status-code line.
      */
     public String getReason() {
@@ -119,6 +129,18 @@ public class StatusLine implements StartLine {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Returns true if the given status code indicates success.
+     * <p>
+     * See <a href="https://www.rfc-editor.org/rfc/rfc9110#name-successful-2xx">RFC-9110 Section 15.3</a>.
+     *
+     * @param statusCode HTTP status code
+     * @return true if this is a success status code, false otherwise
+     */
+    public static boolean isSuccessCode(int statusCode) {
+        return statusCode >= 200 && statusCode < 300;
     }
 
 }
