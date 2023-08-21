@@ -159,19 +159,44 @@ public class RawHttpResponse<Response> extends HttpMessage {
      *
      * @param httpResponse received from some connection
      * @return whether the connection should be closed
+     * @see RawHttpResponse#shouldCloseConnectionAfter(RequestLine, RawHttpResponse)
      */
     public static boolean shouldCloseConnectionAfter(RawHttpResponse<?> httpResponse) {
+        return shouldCloseConnectionAfter(null, httpResponse);
+    }
+
+    /**
+     * Check whether the HTTP connection used to receive the given response needs to be closed.
+     * <p>
+     * Normally, connections should be kept alive so that a client can make several HTTP requests
+     * using the same connection, but in certain cases, that cannot be done. For example, the server
+     * may send a {@code Connection: closed} header to indicate that it does not expect the connection
+     * to be re-used by the client. In HTTP/1.0, this was always the case.
+     *
+     * @param requestLine  the request start-line, can be null
+     * @param httpResponse received from some connection
+     * @return whether the connection should be closed
+     */
+    public static boolean shouldCloseConnectionAfter(@Nullable RequestLine requestLine,
+                                                     RawHttpResponse<?> httpResponse) {
+        // HTTP 1.0 always requires closing the connection
         return httpResponse.getStartLine().getHttpVersion().isOlderThan(HttpVersion.HTTP_1_1)
-                || !responseHasFramingInformation(httpResponse.getHeaders())
+                // response has a body but no information about framing it
+                || isMissingFramingInformation(requestLine, httpResponse)
+                // response explicitly requires closing the connection
                 || httpResponse.getHeaders()
                 .getFirst("Connection")
                 .orElse("")
                 .equalsIgnoreCase("close");
     }
 
-    private static boolean responseHasFramingInformation(RawHttpHeaders headers) {
-        return !headers.getFirst("Content-Length").orElse("").isEmpty() ||
-                !headers.getFirst("Transfer-Encoding").orElse("").isEmpty();
+    private static boolean isMissingFramingInformation(@Nullable RequestLine requestLine,
+                                                       RawHttpResponse<?> httpResponse) {
+        boolean hasBody = RawHttp.responseHasBody(httpResponse.getStartLine(), requestLine);
+        if (!hasBody) return false;
+        RawHttpHeaders headers = httpResponse.getHeaders();
+        return headers.getFirst("Content-Length").orElse("").isEmpty() &&
+                headers.getFirst("Transfer-Encoding").orElse("").isEmpty();
     }
 
 }
