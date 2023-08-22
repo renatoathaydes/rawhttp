@@ -36,15 +36,18 @@ object TunnelingRouter : Router {
     }
 
     // the server lets us know if we need to start a tunnel for the client
-    override fun tunnel(client: Socket) {
-        // in this example, we only read 32 bytes
-        val input = ByteArray(32)
-        client.getInputStream().read(input)
-        // revert the bytes and send it back
-        input.reverse()
-        client.getOutputStream().use {
-            it.write(input)
-        }
+    override fun tunnel(request: RawHttpRequest, client: Socket) {
+        // always free the request thread by handling the tunnel on another Thread
+        Thread {
+            // in this example, we only read 32 bytes
+            val input = ByteArray(32)
+            client.getInputStream().read(input)
+            // revert the bytes and send it back
+            input.reverse()
+            client.getOutputStream().use {
+                it.write(input)
+            }
+        }.start()
     }
 }
 
@@ -92,7 +95,9 @@ class HttpConnectSample {
         clientSocket!!.getOutputStream().write((1..32).map { it.toByte() }.toByteArray())
 
         // the server should reverse the message as that's what the Router implementation does
-        val tunnelResponse = clientSocket!!.getInputStream().readAllBytes()
+        val tunnelResponse = ByteArray(32).apply {
+            clientSocket!!.getInputStream().read(this)
+        }
 
         tunnelResponse.toList() shouldContainExactly (32 downTo 1).map { it.toByte() }
     }

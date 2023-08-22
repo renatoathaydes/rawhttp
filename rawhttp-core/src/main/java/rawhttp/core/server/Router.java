@@ -52,9 +52,8 @@ public interface Router {
     }
 
     /**
-     * Tunnel the client to the provided URI.
+     * Tunnel the client as asked by a CONNECT HTTP request.
      * <p>
-     * This method is called when a client requests to CONNECT to another location.
      * By default, the client is closed and an {@link UnsupportedOperationException} is thrown.
      * <p>
      * This method is called from a request Thread, so it's advisable that implementations that
@@ -62,10 +61,11 @@ public interface Router {
      * <p>
      * See <a href="https://www.rfc-editor.org/rfc/rfc9110#CONNECT">RFC-9110 Section 9.3.6</a>.
      *
-     * @param client requesting tunneling.
+     * @param request the CONNECT request
+     * @param client  requesting tunneling.
      * @throws IOException if an IO problem occurs
      */
-    default void tunnel(Socket client) throws IOException {
+    default void tunnel(RawHttpRequest request, Socket client) throws IOException {
         client.close();
         throw new UnsupportedOperationException("CONNECT request is not supported");
     }

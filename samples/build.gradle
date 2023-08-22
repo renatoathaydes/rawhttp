@@ -7,6 +7,10 @@ test {
     enabled project.hasProperty('run-samples')
 }
 
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
 dependencies {
     implementation project(':rawhttp-core')
     implementation project(':rawhttp-httpcomponents')

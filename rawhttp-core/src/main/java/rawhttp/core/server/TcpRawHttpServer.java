@@ -298,7 +298,7 @@ public class TcpRawHttpServer implements RawHttpServer {
                     }
                     if (request.getMethod().equalsIgnoreCase("CONNECT") &&
                             response.getStartLine().isSuccess()) {
-                        router.tunnel(client);
+                        router.tunnel(request, client);
                         break; // now it's between the client and the router
                     }
                 } catch (SocketTimeoutException e) {
