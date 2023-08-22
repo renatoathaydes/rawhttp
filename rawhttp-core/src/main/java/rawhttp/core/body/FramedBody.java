@@ -88,6 +88,7 @@ public abstract class FramedBody {
     public static final class ContentLength extends FramedBody {
 
         private final long bodyLength;
+        private final boolean allowContentLengthMismatch;
 
         /**
          * Create a new instance of the {@link ContentLength} framed body.
@@ -101,21 +102,49 @@ public abstract class FramedBody {
         /**
          * Create a new instance of the {@link ContentLength} framed body.
          *
+         * @param bodyLength                 the length of the HTTP message body
+         * @param allowContentLengthMismatch allow the content-length header to not match exactly a HTTP
+         *                                   message's body length.
+         */
+        public ContentLength(long bodyLength, boolean allowContentLengthMismatch) {
+            this(new BodyDecoder(), bodyLength, allowContentLengthMismatch);
+        }
+
+        /**
+         * Create a new instance of the {@link ContentLength} framed body.
+         *
          * @param bodyDecoder the body encoding
          * @param bodyLength  the length of the HTTP message body
          */
         public ContentLength(BodyDecoder bodyDecoder, long bodyLength) {
+            this(bodyDecoder, bodyLength, false);
+        }
+
+        /**
+         * Create a new instance of the {@link ContentLength} framed body.
+         *
+         * @param bodyDecoder                the body encoding
+         * @param bodyLength                 the length of the HTTP message body
+         * @param allowContentLengthMismatch allow the content-length header to not match exactly a HTTP
+         *                                   message's body length.
+         */
+        public ContentLength(BodyDecoder bodyDecoder, long bodyLength, boolean allowContentLengthMismatch) {
             super(bodyDecoder);
             this.bodyLength = bodyLength;
+            this.allowContentLengthMismatch = allowContentLengthMismatch;
         }
 
         public long getBodyLength() {
             return bodyLength;
         }
 
+        public boolean isAllowContentLengthMismatch() {
+            return allowContentLengthMismatch;
+        }
+
         @Override
         protected BodyConsumer getBodyConsumer() {
-            return new BodyConsumer.ContentLengthBodyConsumer(bodyLength);
+            return new BodyConsumer.ContentLengthBodyConsumer(bodyLength, allowContentLengthMismatch);
         }
 
         @Override
@@ -136,6 +165,7 @@ public abstract class FramedBody {
             return "ContentLength{" +
                     "value=" + bodyLength +
                     ", encodings=" + getEncodings() +
+                    ", allowContentLengthMismatch=" + allowContentLengthMismatch +
                     '}';
         }
     }

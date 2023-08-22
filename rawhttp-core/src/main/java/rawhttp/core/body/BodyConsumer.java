@@ -126,9 +126,15 @@ public abstract class BodyConsumer {
     public static final class ContentLengthBodyConsumer extends BodyConsumer {
 
         private final long bodyLength;
+        private final boolean allowContentLengthMismatch;
 
         ContentLengthBodyConsumer(long bodyLength) {
+            this(bodyLength, false);
+        }
+
+        ContentLengthBodyConsumer(long bodyLength, boolean allowContentLengthMismatch) {
             this.bodyLength = bodyLength;
+            this.allowContentLengthMismatch = allowContentLengthMismatch;
         }
 
         @Override
@@ -143,7 +149,7 @@ public abstract class BodyConsumer {
             consumeInto(inputStream, outputStream, bufferSize);
         }
 
-        private static void readAndWriteBytesUpToLength(InputStream inputStream,
+        private void readAndWriteBytesUpToLength(InputStream inputStream,
                                                         long bodyLength,
                                                         OutputStream outputStream,
                                                         int bufferSize) throws IOException {
@@ -156,7 +162,11 @@ public abstract class BodyConsumer {
                 int bytesToRead = (int) Math.min(bytes.length, bodyLength - offset);
                 int actuallyRead = inputStream.read(bytes, 0, bytesToRead);
                 if (actuallyRead < 0) {
-                    throw new IOException("InputStream provided " + offset + ", but " + bodyLength + " were expected");
+                    if (!allowContentLengthMismatch) {
+                        throw new IOException("InputStream provided " + offset + " byte(s), but " + bodyLength + " were expected");
+                    }
+                    // pretend that the body has been fully read
+                    break;
                 } else {
                     outputStream.write(bytes, 0, actuallyRead);
                 }

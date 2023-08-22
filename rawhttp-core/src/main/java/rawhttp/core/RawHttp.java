@@ -267,7 +267,7 @@ public class RawHttp {
         } catch (NumberFormatException e) {
             throw new InvalidMessageFrame("Content-Length header value is not a valid number");
         }
-        return new FramedBody.ContentLength(bodyDecoder, bodyLength);
+        return new FramedBody.ContentLength(bodyDecoder, bodyLength, options.allowContentLengthMismatch());
     }
 
     /**

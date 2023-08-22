@@ -1,5 +1,6 @@
 package rawhttp.core
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.optional.bePresent
@@ -9,6 +10,7 @@ import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
@@ -201,6 +203,34 @@ class SimpleHttpRequestTests {
             toString() shouldBe "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
             headers.asMap() shouldBe mapOf("HOST" to listOf("localhost"))
             body shouldNot bePresent()
+        }
+    }
+
+    @Test
+    fun `May allow request to have shorter body than expected`() {
+        val defaultHttp = RawHttp()
+        val lenientHttp = RawHttp(
+            RawHttpOptions.newBuilder()
+                .allowContentLengthMismatch()
+                .build()
+        )
+
+        val requestWithTooShortBody = "POST /foo HTTP/1.1\n" +
+                "Host: example.org\n" +
+                "Content-Length: 10\n\n" +
+                "short"
+
+        val defaultRequest = defaultHttp.parseRequest(requestWithTooShortBody)
+        val lenientRequest = lenientHttp.parseRequest(requestWithTooShortBody)
+
+        // by default, an Exception is thrown
+        defaultRequest.body shouldBePresent {
+            shouldThrow<IOException> { decodeBodyToString(UTF_8) }
+        }
+
+        // but the lenient RawHTTP allows mismatches
+        lenientRequest.body.shouldBePresent {
+            decodeBodyToString(UTF_8) shouldBe "short"
         }
     }
 

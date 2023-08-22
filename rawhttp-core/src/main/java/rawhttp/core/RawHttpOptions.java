@@ -25,6 +25,7 @@ public class RawHttpOptions {
     private final boolean ignoreLeadingEmptyLine;
     private final boolean allowIllegalStartLineCharacters;
     private final boolean allowComments;
+    private final boolean allowContentLengthMismatch;
     private final boolean allowIllegalConnectAuthority;
     private final HttpHeadersOptions httpHeadersOptions;
     private final HttpBodyEncodingRegistry encodingRegistry;
@@ -36,6 +37,7 @@ public class RawHttpOptions {
                            boolean allowIllegalStartLineCharacters,
                            boolean allowComments,
                            boolean allowIllegalConnectAuthority,
+                           boolean allowContentLengthMismatch,
                            HttpHeadersOptions httpHeadersOptions,
                            HttpBodyEncodingRegistry encodingRegistry) {
         this.insertHostHeaderIfMissing = insertHostHeaderIfMissing;
@@ -45,6 +47,7 @@ public class RawHttpOptions {
         this.allowIllegalStartLineCharacters = allowIllegalStartLineCharacters;
         this.allowComments = allowComments;
         this.allowIllegalConnectAuthority = allowIllegalConnectAuthority;
+        this.allowContentLengthMismatch = allowContentLengthMismatch;
         this.httpHeadersOptions = httpHeadersOptions;
         this.encodingRegistry = encodingRegistry;
     }
@@ -101,6 +104,15 @@ public class RawHttpOptions {
      */
     public boolean ignoreLeadingEmptyLine() {
         return ignoreLeadingEmptyLine;
+    }
+
+    /**
+     * @return whether to allow the content-length header to not match exactly a HTTP
+     * message's body length.
+     * @see Builder#allowContentLengthMismatch()
+     */
+    public boolean allowContentLengthMismatch() {
+        return allowContentLengthMismatch;
     }
 
     /**
@@ -188,7 +200,7 @@ public class RawHttpOptions {
 
         /**
          * @return the encoding that should be used to interpret HTTP headers's values.
-         *
+         * <p>
          * If not set, defaults to ISO-8859-1 according to note at https://tools.ietf.org/html/rfc7230#section-3.2.4.
          */
         public Charset getHeaderValuesCharset() {
@@ -208,6 +220,7 @@ public class RawHttpOptions {
         private boolean allowIllegalStartLineCharacters = false;
         private boolean allowComments = false;
         private boolean allowIllegalConnectAuthority = false;
+        private boolean allowContentLengthMismatch = false;
         private HttpHeadersOptionsBuilder httpHeadersOptionsBuilder = new HttpHeadersOptionsBuilder();
         private HttpBodyEncodingRegistry encodingRegistry;
 
@@ -327,6 +340,22 @@ public class RawHttpOptions {
         }
 
         /**
+         * Allow a HTTP message's content-length header to not match exactly the
+         * message body (both requests and responses).
+         * <p>
+         * This may happen, for example, when a server miscalculates the response length
+         * and sends less data than expected. In such case, by setting this option,
+         * instead of an Exception, RawHTTP will return the bytes that have been read
+         * as if it were a full message body.
+         *
+         * @return this
+         */
+        public Builder allowContentLengthMismatch() {
+            this.allowContentLengthMismatch = true;
+            return this;
+        }
+
+        /**
          * Get a builder of {@link HttpHeadersOptions} to use with this object.
          *
          * @return this
@@ -360,7 +389,7 @@ public class RawHttpOptions {
 
             return new RawHttpOptions(insertHostHeaderIfMissing, insertHttpVersionIfMissing,
                     allowNewLineWithoutReturn, ignoreLeadingEmptyLine, allowIllegalStartLineCharacters, allowComments,
-                    allowIllegalConnectAuthority, httpHeadersOptionsBuilder.getOptions(), registry);
+                    allowIllegalConnectAuthority, allowContentLengthMismatch, httpHeadersOptionsBuilder.getOptions(), registry);
         }
 
         public class HttpHeadersOptionsBuilder {
