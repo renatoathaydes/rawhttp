@@ -50,9 +50,6 @@ public class ReqInEditParser {
         Iterator<String> iter = lines.iterator();
         while (iter.hasNext()) {
             String line = iter.next();
-            if (!line.startsWith(" ") && requestBuilder.length() > 0) {
-                requestBuilder.append('\n');
-            }
             if (isComment(line)) {
                 if (isSeparator(line)) {
                     if (requestBuilder.length() > 0) {
@@ -66,6 +63,7 @@ public class ReqInEditParser {
             if (parsingStartLine) {
                 if (!line.isEmpty()) {
                     requestBuilder.append(startLine(line));
+                    requestBuilder.append('\n');
                     parsingStartLine = false;
                 }
             } else if (line.isEmpty()) {
@@ -75,6 +73,7 @@ public class ReqInEditParser {
                 }
             } else {
                 requestBuilder.append(line);
+                requestBuilder.append('\n');
             }
         }
 

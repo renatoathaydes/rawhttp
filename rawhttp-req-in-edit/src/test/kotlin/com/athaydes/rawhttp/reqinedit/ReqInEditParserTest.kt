@@ -21,6 +21,7 @@ class ReqInEditParserTest {
         entries[0].run {
             request shouldBe """
                 GET http://example.org
+                
             """.trimIndent()
             requestBody shouldHaveSize 0
             script.isPresent shouldBe false
@@ -33,26 +34,26 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
-                "### here start my requests",
-                "GET /something HTTP/1.1",
-                "Host: example.org",
-                "Accept: text/html",
-                "",
-                "###   ",
-                "POST /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Content-Type: application/json",
-                "",
-                "{\"example\": \"value\", \"count\": 1}",
-                "",
-                "###",
-                "",
-                "GET /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Accept: application/json",
-                "",
-                "### done",
-                ""
+            "### here start my requests",
+            "GET /something HTTP/1.1",
+            "Host: example.org",
+            "Accept: text/html",
+            "",
+            "###   ",
+            "POST /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Content-Type: application/json",
+            "",
+            "{\"example\": \"value\", \"count\": 1}",
+            "",
+            "###",
+            "",
+            "GET /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Accept: application/json",
+            "",
+            "### done",
+            ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -100,16 +101,17 @@ class ReqInEditParserTest {
     fun canParseRequestsWithResponseRef() {
         val parser = ReqInEditParser()
 
-        val fileLines = listOf("http://example.org",
-                "",
-                "<> first-response",
-                "",
-                "###",
-                "# another request",
-                "http://another.com",
-                "",
-                "<> second-response",
-                ""
+        val fileLines = listOf(
+            "http://example.org",
+            "",
+            "<> first-response",
+            "",
+            "###",
+            "# another request",
+            "http://another.com",
+            "",
+            "<> second-response",
+            ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -154,14 +156,14 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
-                "POST /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Content-Type: application/json",
-                "",
-                "< ./simple/body.json",
-                "",
-                "###",
-                ""
+            "POST /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Content-Type: application/json",
+            "",
+            "< ./simple/body.json",
+            "",
+            "###",
+            ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -186,16 +188,16 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
-                "POST /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Content-Type: application/json",
-                "",
-                "",
-                "{",
-                "< ./entries.json",
-                "  \"extra\": \"entry\"",
-                "}",
-                "   "
+            "POST /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Content-Type: application/json",
+            "",
+            "",
+            "{",
+            "< ./entries.json",
+            "  \"extra\": \"entry\"",
+            "}",
+            "   "
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -209,10 +211,12 @@ class ReqInEditParserTest {
                 Content-Type: application/json
                 
             """.trimIndent()
-            requestBody shouldBe listOf(StringOrFile.ofString("{"),
-                    StringOrFile.ofFile("./entries.json"),
-                    StringOrFile.ofString("  \"extra\": \"entry\""),
-                    StringOrFile.ofString("}"))
+            requestBody shouldBe listOf(
+                StringOrFile.ofString("{"),
+                StringOrFile.ofFile("./entries.json"),
+                StringOrFile.ofString("  \"extra\": \"entry\""),
+                StringOrFile.ofString("}")
+            )
             script.isPresent shouldBe false
             responseRef.isPresent shouldBe false
         }
@@ -223,16 +227,16 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
-                "GET /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Accept: application/json",
-                "",
-                "> {% ",
-                "    client.test(\"Request executed successfully\", function() {",
-                "        client.assert(response.status === 200, \"Response status is not 200\");",
-                "    });",
-                " %} ",
-                ""
+            "GET /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Accept: application/json",
+            "",
+            "> {% ",
+            "    client.test(\"Request executed successfully\", function() {",
+            "        client.assert(response.status === 200, \"Response status is not 200\");",
+            "    });",
+            " %} ",
+            ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -247,9 +251,11 @@ class ReqInEditParserTest {
 
             """.trimIndent()
             script.isPresent shouldBe true
-            script.get() shouldBe StringOrFile.ofString("\n    client.test(\"Request executed successfully\", function() {\n" +
-                    "        client.assert(response.status === 200, \"Response status is not 200\");\n" +
-                    "    });\n ")
+            script.get() shouldBe StringOrFile.ofString(
+                "\n    client.test(\"Request executed successfully\", function() {\n" +
+                        "        client.assert(response.status === 200, \"Response status is not 200\");\n" +
+                        "    });\n "
+            )
             responseRef.isPresent shouldBe false
         }
     }
@@ -259,12 +265,12 @@ class ReqInEditParserTest {
         val parser = ReqInEditParser()
 
         val fileLines = listOf(
-                "GET /resource/some-id HTTP/1.1",
-                "Host: example.org",
-                "Accept: application/json",
-                "",
-                "> my_response_handler.js",
-                ""
+            "GET /resource/some-id HTTP/1.1",
+            "Host: example.org",
+            "Accept: application/json",
+            "",
+            "> my_response_handler.js",
+            ""
         )
 
         val entries = parser.parse(fileLines.stream())
@@ -281,6 +287,34 @@ class ReqInEditParserTest {
             script.isPresent shouldBe true
             script.get() shouldBe StringOrFile.ofFile("my_response_handler.js")
             responseRef.isPresent shouldBe false
+        }
+    }
+
+    @Test
+    fun canParseRequestWithCommentsImmediatelyAfterStartLine() {
+        val parser = ReqInEditParser()
+
+        val fileLines = listOf(
+            "POST http://example.org/dev/oauth/token",
+            "# Client Credentials flow POSTs a HTML form and receives JSON back",
+            "Content-Type: application/x-www-form-urlencoded",
+            "",
+            "client_id=client&client_secret=Secret&grant_type=client_credentials"
+        )
+
+        val entries = parser.parse(fileLines.stream())
+
+        entries.size shouldBe 1
+
+        entries[0].run {
+            request shouldBe """
+                POST http://example.org/dev/oauth/token
+                Content-Type: application/x-www-form-urlencoded
+                
+            """.trimIndent()
+            requestBody.size shouldBe 1
+            requestBody[0].match({ s -> s }, { f -> "<FILE>" }) shouldBe
+                    "client_id=client&client_secret=Secret&grant_type=client_credentials"
         }
     }
 
