@@ -1,6 +1,7 @@
 package com.athaydes.rawhttp.duplex
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -14,13 +15,16 @@ import java.net.SocketTimeoutException
 import java.time.Duration
 import java.util.Optional
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 class RawHttpDuplexSocketTimeoutTest {
-    val duplex = RawHttpDuplex()
+    val duplex = RawHttpDuplex(
+        RawHttpDuplexOptions.newBuilder()
+            .withPingPeriod(Duration.ofMillis(50L))
+            .build()
+    )
     val server: RawHttpServer
     val serverMessages = ConcurrentLinkedQueue<Any>()
 
@@ -36,7 +40,7 @@ class RawHttpDuplexSocketTimeoutTest {
     @Test
     @Timeout(4, unit = TimeUnit.SECONDS)
     fun shouldTimeoutWithoutPing() {
-        val client = TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 50 })
+        val client = TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 10 })
         val shortTimeoutDuplex = RawHttpDuplex(client)
         shouldThrow<SocketTimeoutException> {
             val errorQueue = LinkedBlockingDeque<Throwable>(1)
@@ -59,20 +63,20 @@ class RawHttpDuplexSocketTimeoutTest {
     @Test
     @Timeout(4, unit = TimeUnit.SECONDS)
     fun shouldNotTimeoutWithPing() {
-        val scheduler = Executors.newSingleThreadScheduledExecutor()
         val client = TcpRawHttpClient(DuplexClientOptions().apply { socketTimeout = 250 })
-        val shortTimeoutDuplex = RawHttpDuplex(client)
+        // duplex will ping every 50ms
+        val shortTimeoutDuplex = RawHttpDuplex(client, Duration.ofMillis(50L))
         val errorQueue = LinkedBlockingDeque<Throwable>(1)
+        // will release the latch after at least 600ms,
+        // then send a "hello" message to confirm the socket is ok
+        val latch = CountDownLatch(1)
 
         shortTimeoutDuplex.connect(RawHttp().parseRequest("POST http://localhost:$port/duplex")) { sender ->
-            val counter = AtomicInteger(3)
-            scheduler.scheduleAtFixedRate({
-                sender.ping()
-                if (counter.decrementAndGet() == 0) {
-                    sender.close()
-                    scheduler.shutdown()
-                }
-            }, 50L, 50L, TimeUnit.MILLISECONDS)
+            Thread {
+                Thread.sleep(600L)
+                sender.sendTextMessage("hello")
+                latch.countDown()
+            }.start()
             object : MessageHandler {
                 override fun onError(error: Throwable) {
                     errorQueue.push(error)
@@ -80,10 +84,12 @@ class RawHttpDuplexSocketTimeoutTest {
             }
         }
 
-        val throwable = errorQueue.poll(750, TimeUnit.MILLISECONDS)
+        assert(latch.await(2, TimeUnit.SECONDS))
+
+        val throwable = errorQueue.poll(100, TimeUnit.MILLISECONDS)
         if (throwable != null) throw throwable
 
-        serverMessages shouldHaveSize 0
+        serverMessages shouldContainExactly listOf("hello")
 
         client.close()
     }

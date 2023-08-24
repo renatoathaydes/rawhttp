@@ -172,7 +172,7 @@ public final class ChunkedBodyParser {
     }
 
     int readChunkSize(InputStream inputStream,
-                              Bool hasExtensions) throws IOException {
+                      Bool hasExtensions) throws IOException {
         StringBuilder builder = new StringBuilder("0");
         int b;
         int significantDigits = 0, digits = 0;
