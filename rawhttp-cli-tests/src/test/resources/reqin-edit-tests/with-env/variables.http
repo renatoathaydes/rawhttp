@@ -1,0 +1,5 @@
+POST {{host}}{{mirror-path}}
+# Client Credentials flow POSTs a HTML form and receives JSON back
+Content-Type: application/x-www-form-urlencoded
+
+foo=bar&zort=false

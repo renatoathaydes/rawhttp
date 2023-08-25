@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import rawhttp.core.EagerHttpResponse
 import rawhttp.core.RawHttp
 import rawhttp.core.RawHttpResponse
+import rawhttp.core.body.BytesBody
 import rawhttp.core.body.StringBody
 import rawhttp.core.client.TcpRawHttpClient
 import rawhttp.core.errors.InvalidHttpRequest
@@ -203,10 +204,12 @@ abstract class RawHttpCliTester {
                                         "/saysomething" ->
                                             http.parseResponse(SUCCESS_HTTP_RESPONSE)
                                                 .writeTo(client.getOutputStream())
+
                                         "/foo" ->
                                             when (request.method) {
                                                 "GET" -> http.parseResponse(SUCCESS_GET_FOO_HTTP_RESPONSE)
                                                     .writeTo(client.getOutputStream())
+
                                                 "POST" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
                                                     .withBody(request.body.map {
                                                         StringBody(
@@ -214,20 +217,28 @@ abstract class RawHttpCliTester {
                                                                 Charsets.UTF_8
                                                             )
                                                         )
-                                                    }
-                                                        .orElse(null))
+                                                    }.orElse(null))
                                                     .writeTo(client.getOutputStream())
+
                                                 else -> http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
                                                     .writeTo(client.getOutputStream())
                                             }
+
                                         "/reply" -> http.parseResponse(SUCCESS_POST_FOO_HTTP_RESPONSE)
                                             .withBody(StringBody(request.body.map {
                                                 "Received:" + it.decodeBodyToString(
                                                     Charsets.UTF_8
                                                 )
-                                            }
-                                                .orElse("Did not receive anything")))
+                                            }.orElse("Did not receive anything")))
                                             .writeTo(client.getOutputStream())
+
+                                        "/mirror-headers-and-body" -> http.parseResponse("200 OK")
+                                            .withHeaders(request.headers.except("Content-Length"))
+                                            .withBody(request.body.map {
+                                                BytesBody(it.decodeBody())
+                                            }.orElse(StringBody("")))
+                                            .writeTo(client.getOutputStream())
+
                                         else ->
                                             http.parseResponse(NOT_FOUND_HTTP_RESPONSE)
                                                 .writeTo(client.getOutputStream())
@@ -354,6 +365,19 @@ abstract class RawHttpCliTester {
 
             handle.verifyProcessTerminatedWithExitCode(0)
             handle.out shouldBe (SUCCESS_GET_FOO_HTTP_RESPONSE + EOL + postResponse)
+            assertNoSysErrOutput(handle)
+        }
+
+        fun assertPostMirrorHeadersAndBody(handle: ProcessHandle) {
+            val expectedBody = "foo=bar&zort=false"
+            val postResponse = "HTTP/1.1 200 OK" +
+                    "\r\nContent-Type: application/x-www-form-urlencoded" +
+                    "\r\nHost: localhost" +
+                    "\r\nContent-Length: ${expectedBody.length}" +
+                    "\r\n\r\n$expectedBody$EOL"
+
+            handle.verifyProcessTerminatedWithExitCode(0)
+            handle.out shouldBe postResponse
             assertNoSysErrOutput(handle)
         }
 

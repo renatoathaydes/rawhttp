@@ -542,6 +542,12 @@ class RawHttpCliTest : RawHttpCliTester() {
     }
 
     @Test
+    fun canRunHttpFileWithEnvironmentAndComments() {
+        val handle = runCli("run", asClassPathFile("reqin-edit-tests/with-env/variables.http"), "-e", "prod")
+        assertPostMirrorHeadersAndBody(handle)
+    }
+
+    @Test
     fun canRunHttpFileWithEnvironmentAndPrintStats() {
         val handleProd = runCli(
             "run", asClassPathFile("reqin-edit-tests/with-env/file.http"),
