@@ -87,6 +87,13 @@ public class RawHttpHeaders implements Writable {
     }
 
     /**
+     * @return the number of headers
+     */
+    public int size() {
+        return headersByCapitalizedName.size();
+    }
+
+    /**
      * @param headerName case-insensitive header name
      * @return values for the header, or the empty list if this header is not present.
      * <p>
@@ -271,6 +278,29 @@ public class RawHttpHeaders implements Writable {
             }
         });
         return builder.build();
+    }
+
+    /**
+     * Create a new set of headers, keeping all headers except the headers with the given names.
+     * <p>
+     * No error occurs if one or more of the headers are not present.
+     *
+     * @param headerNames to exclude
+     * @return new set of headers containing this instance's values, except for the given headerNames
+     */
+    public RawHttpHeaders except(String... headerNames) {
+        Map<String, Header> headersByCapitalizedNameCopy = new LinkedHashMap<>(headersByCapitalizedName);
+        List<String> headerNamesCopy = new ArrayList<>(this.headerNames);
+        for (String headerName : headerNames) {
+            String uppercaseName = toUppercaseAscii(headerName);
+            headersByCapitalizedNameCopy.remove(uppercaseName);
+            headerNamesCopy.removeIf(headerName::equalsIgnoreCase);
+        }
+        return new RawHttpHeaders(
+                unmodifiableMap(headersByCapitalizedNameCopy),
+                unmodifiableList(headerNamesCopy),
+                false,
+                headerValuesCharset);
     }
 
     /**
