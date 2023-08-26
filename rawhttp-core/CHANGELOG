@@ -1,0 +1,37 @@
+# RawHTTP Core Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [2.6.0] - 2023-08-26
+
+### Added
+
+- `except` method to `RawHttpHeaders` to copy headers except for named ones.
+- `size` method to `RawHttpHeaders`.
+- `isSuccess` and static `isSuccessCode` to `StatusLine`.
+- `tunnel` method to `Router` interface to support tunneling on `CONNECT` requests.
+- `allowContentLengthMismatch` to `RawHttpOptions` and `RawHttpOptions.Builder`,
+   so if a content-length body ends early, it is returned anyway instead of throwing an Exception.
+- `allowIllegalConnectAuthority` to `RawHttpOptions` and `RawHttpOptions.Builder`.
+
+### Changed
+
+- `RawHttp#responseHasBody` used to mistakenly return `false` for `CONNECT` requests.
+   This check has been removed because `CONNECT` requests still require a response
+   which is allowed to have a body (though it shouldn't).
+- `RequestLine` now forbids `CONNECT` requests missing a host or port. Previously, this was just
+   an `assert`. To disable this check, use `allowIllegalConnectAuthority`.
+- `RawHttpResponse#shouldCloseConnectionAfter` no longer returns `true` for responses that are not
+   allowed to have a body when framing information is missing (as it is supposed to be the case).
+
+## [2.5.2] - 2022-12-23
+
+### Changed
+
+- Please consult the [commit log](https://github.com/renatoathaydes/rawhttp/commits/master)
+  for prior versions of RawHTTP.
