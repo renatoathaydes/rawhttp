@@ -9,6 +9,9 @@ version rawHttpDuplexVersion
 description 'rawhttp-duplex provides a mechanism for full duplex communications based on the ' +
         'HTTP/1.1 chunked transfer-encoding.'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
