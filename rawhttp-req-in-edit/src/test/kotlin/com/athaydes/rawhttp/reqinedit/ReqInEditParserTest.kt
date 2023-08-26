@@ -313,7 +313,7 @@ class ReqInEditParserTest {
                 
             """.trimIndent()
             requestBody.size shouldBe 1
-            requestBody[0].match({ s -> s }, { f -> "<FILE>" }) shouldBe
+            requestBody[0].match({ s -> s }, { _ -> "<FILE>" }) shouldBe
                     "client_id=client&client_secret=Secret&grant_type=client_credentials"
         }
     }
