@@ -6,6 +6,8 @@
 
 # RawHTTP ReqInEdit
 
+[![Javadocs](https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-req-in-edit/javadoc.svg)](https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-req-in-edit)
+
 The `rawhttp-req-in-edit` module implements a runner for HTTP files written in the [Request In Editor Specification](https://github.com/JetBrains/http-request-in-editor-spec)
 format created by JetBrains to make it easier to execute HTTP requests and test their responses.
 

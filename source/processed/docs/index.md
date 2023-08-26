@@ -8,6 +8,8 @@
 
 ### Core Library:
 
+[![RawHTTP Core Javadocs](https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-core/javadoc.svg)](https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-core)
+
 {{ for section /processed/docs }}
 {{ if section.moduleName != moduleName }}
 * [{{eval section.moduleName}}]({{ eval section.path }})

@@ -6,6 +6,8 @@
 
 # RawHTTP CLI
 
+[![Javadocs](https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-cli/javadoc.svg)](https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-cli)
+
 The `rawhttp-cli` module is a CLI (command-line interface) that can send HTTP requests and serve
 local files via a RawHTTP server.
 

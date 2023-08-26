@@ -6,6 +6,8 @@
 
 # RawHTTP Cookies
 
+[![Javadocs](https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-cookies/javadoc.svg)](https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-cookies)
+
 The `rawhttp-cookies` module provides functionality for HTTP clients and servers to handle cookies.
 
 It also provides a `rawhttp.cookies.persist.FileCookieJar` class which implements `java.net.CookieStore`

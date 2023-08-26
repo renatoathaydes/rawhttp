@@ -6,6 +6,8 @@
 
 # RawHTTP Duplex
 
+[![Javadocs](https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-duplex/javadoc.svg)](https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-duplex)
+
 The rawhttp-duplex module can be used to create a duplex communication channel as either a client or a server.
 
 The entry point of the library is the `com.athaydes.rawhttp.duplex.RawHttpDuplex` class.
