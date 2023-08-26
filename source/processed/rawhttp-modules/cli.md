@@ -14,7 +14,7 @@ local files via a RawHTTP server.
 To run on Java 8 through 14:
 
 ```curl
-curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.5.2/rawhttp-cli-1.5.2-all.jar -o rawhttp-all.jar
+curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/{{ eval cliVersion }}/rawhttp-cli-{{ eval cliVersion }}-all.jar -o rawhttp-all.jar
 ```
 
 To run on Java 17+:
@@ -22,7 +22,7 @@ To run on Java 17+:
 > A different jar is needed because Nashorn is not included in the JDK anymore, so it must be included in the jar:
 
 ```
-curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.5.2/rawhttp-cli-1.5.2-jdk17.jar -o rawhttp-jdk17.jar
+curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/{{ eval cliVersion }}/rawhttp-cli-{{ eval cliVersion }}-jdk17.jar -o rawhttp-jdk17.jar
 ```
 
 ## Usage
