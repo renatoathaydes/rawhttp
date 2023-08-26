@@ -26,11 +26,16 @@ final generatedJavaSources = "$buildDir/java-generated-sources"
 
 sourceSets.main.java.srcDir generatedJavaSources
 
+configurations {
+    java17
+}
+
 dependencies {
     implementation project(':rawhttp-core')
     implementation project(':rawhttp-cookies')
     implementation project(':rawhttp-req-in-edit')
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    java17 externalNashornLibrary
     testImplementation 'junit:junit:4.12'
 }
 
@@ -69,8 +74,8 @@ task fatJarWithNashorn(type: Jar, group: 'build') {
                 'Multi-Release': true
     }
     with fatJar
+    from { configurations.java17.collect { it.isDirectory() ? it : zipTree(it) } }
     classifier 'jdk17'
-    from { project(':rawhttp-req-in-edit').configurations.java17RuntimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     archiveFileName = runnableJarJdk17.name
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
 }

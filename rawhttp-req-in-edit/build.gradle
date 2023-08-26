@@ -17,8 +17,6 @@ multiRelease {
     targetVersions 8, 17
 }
 
-final externalNashornLibrary = 'org.openjdk.nashorn:nashorn-core:15.3'
-
 dependencies {
     api project(':rawhttp-core')
     api project(':rawhttp-cookies')
