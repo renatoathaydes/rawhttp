@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="/rawhttp/css/styles.css">
 </head>
 <body>
-<div class="main-body"><nav class="main-nav">
+<div class="main-body">
+<nav class="main-nav">
     <a href="/rawhttp/index.html">Home</a>
     <a href="/rawhttp/docs/index.html">Docs</a>
     <a href="/rawhttp/rawhttp-modules/cli.html">CLI</a>
@@ -19,20 +20,22 @@
     <a href="/rawhttp/rawhttp-modules/req-in-edit.html">ReqInEdit</a>
 </nav><h1>RawHTTP CLI</h1>
 
+<p><a href="https://javadoc.io/doc/com.athaydes.rawhttp/rawhttp-cli"><img src="https://javadoc.io/badge2/com.athaydes.rawhttp/rawhttp-cli/javadoc.svg" alt="Javadocs" /></a></p>
+
 <p>The <code>rawhttp-cli</code> module is a CLI (command-line interface) that can send HTTP requests and serve
 local files via a RawHTTP server.</p>
 
 <h2>Download</h2>
 
 <p>To run on Java 8 through 14:</p>
-<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.5.2/rawhttp-cli-1.5.2-all.jar -o rawhttp-all.jar
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.6.0/rawhttp-cli-1.6.0-all.jar -o rawhttp-all.jar
 </span></span></code></pre>
 <p>To run on Java 17+:</p>
 
 <blockquote>
 <p>A different jar is needed because Nashorn is not included in the JDK anymore, so it must be included in the jar:</p>
 </blockquote>
-<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.5.2/rawhttp-cli-1.5.2-jdk17.jar -o rawhttp-jdk17.jar
+<pre tabindex="0" style="color:#93a1a1;background-color:#002b36;"><code><span style="display:flex;"><span>curl -sSfL https://repo1.maven.org/maven2/com/athaydes/rawhttp/rawhttp-cli/1.6.0/rawhttp-cli-1.6.0-jdk17.jar -o rawhttp-jdk17.jar
 </span></span></code></pre>
 <h2>Usage</h2>
 
