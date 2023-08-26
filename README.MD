@@ -10,8 +10,6 @@
 
 [![Actions Status](https://github.com/renatoathaydes/rawhttp/workflows/Build%20And%20Test%20on%20All%20OSs/badge.svg)](https://github.com/renatoathaydes/rawhttp/actions)
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.athaydes.rawhttp/rawhttp-core.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.athaydes.rawhttp%20%20a:rawhttp-core)
-
 A Java library to make it easy to deal with raw HTTP 1.1, as defined by [RFC-7230](https://tools.ietf.org/html/rfc7230),
 and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
 
@@ -23,7 +21,7 @@ and most of HTTP 1.0 ([RFC-1945](https://tools.ietf.org/html/rfc1945)).
 > which lets you write [HTTP files](https://www.jetbrains.com/help/idea/exploring-http-syntax.html) to send requests 
 > and assert responses using JS scripts. 
 
-For more documentation, [visit the website](https://renatoathaydes.github.io/rawhttp).
+🌎 For more documentation, [visit the website](https://renatoathaydes.github.io/rawhttp).
 
 ## Introduction
 
