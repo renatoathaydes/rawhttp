@@ -1,0 +1,29 @@
+group: com.athaydes.rawhttp
+module: rawhttp-core
+name: RawHTTP Core
+version: 2.6.0
+manifest: MANIFEST.MF
+
+description: |
+  RawHTTP core module. Includes facilities to parse HTTP messages and
+  both a basic client and server implementations.
+
+url: 'https://renatoathaydes.github.io/rawhttp'
+
+developers:
+  - name: Renato Athaydes
+    email: renato@athaydes.com
+    organization: Renato Athaydes
+    organization-url: https://renato.athaydes.com/
+
+scm:
+  connection: git@github.com:renatoathaydes/rawhttp.git
+  developer-connection: git@github.com:renatoathaydes/rawhttp.git
+  url: https://github.com/renatoathaydes/rawhttp
+
+licenses:
+  - Apache-2.0
+
+dependencies:
+  com.google.code.findbugs:jsr305:3.0.2:
+    scope: compile-only

@@ -1,0 +1,4 @@
+Implementation-Version: 2.6.0
+Implementation-Title: RawHTTP Core
+Implementation-Vendor: Renato Athaydes
+Automatic-Module-Name: rawhttp.core
