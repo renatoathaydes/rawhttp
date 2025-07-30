@@ -367,6 +367,7 @@ public class RawHttp {
      * @return a new URI with the host replaced
      * @deprecated use {@link UriUtil#withHost(URI, String)} instead
      */
+    @Deprecated
     public static URI replaceHost(URI uri, String newHost) {
         return UriUtil.withHost(uri, newHost);
     }

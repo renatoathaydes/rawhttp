@@ -104,6 +104,7 @@ public final class FieldValues {
      * single byte.
      * Use {@link FieldValues#isAllowedInObsText(int)} instead.
      */
+    @Deprecated
     public static boolean isAllowedInObsText(char c) {
         return c >= 0x80 && c <= 0xff;
     }
@@ -123,6 +124,7 @@ public final class FieldValues {
      * encodings. However, this method rejects non-ASCII characters, which is not strictly correct.
      * Use {@link FieldValues#isAllowedInHeaderValue(int)} for a more correct version of this method.
      */
+    @Deprecated
     public static boolean isAllowedInHeaderValue(char c) {
         return c == ' ' || c == '\t' || isAllowedInVCHARs(c) || isAllowedInObsText(c);
     }
