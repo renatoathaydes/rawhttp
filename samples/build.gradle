@@ -17,8 +17,10 @@ compileTestKotlin {
 dependencies {
     implementation project(':rawhttp-core')
     implementation project(':rawhttp-httpcomponents')
+    implementation project(':rawhttp-cookies')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation 'com.sparkjava:spark-core:2.9.1'
+    implementation 'org.json:json:20250517'
 
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"
