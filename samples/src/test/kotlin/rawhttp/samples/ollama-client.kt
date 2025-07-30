@@ -32,7 +32,7 @@ object OllamaClient {
             val request = Request(
                 model = "llama3_1_8b",
                 systemPrompt = "You are a helpful assistant. Answer any questions in a friendly, but brief manner.",
-                prompt = "Tell me about football teams in Brazil."
+                prompt = "Tell me about the biggest cities in Brazil."
             )
             val response = client.send(
                 http.parseRequest("POST http://localhost:$port/api/generate")
@@ -140,6 +140,6 @@ object OllamaClient {
     private fun Double?.durationText(): String? {
         if (this == null) return null
         val duration = Duration.ofNanos(toLong())
-        return "${duration.seconds}s${duration.toMillisPart()}ms"
+        return "${duration.seconds}s${duration.nano / 1_000_000}ms"
     }
 }
