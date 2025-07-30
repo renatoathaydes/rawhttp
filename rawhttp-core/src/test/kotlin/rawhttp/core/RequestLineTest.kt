@@ -63,6 +63,20 @@ class RequestLineTest {
                 "POST /api/users/test@example.com HTTP/1.1", HttpVersion.HTTP_1_1,
                 "POST", "/api/users/test@example.com", "POST /api/users/test@example.com HTTP/1.1"
             ),
+            row(
+                "GET /ＮＮ/ＮＮ/ＮＮ/etc/passwd",
+                HttpVersion.HTTP_1_1,
+                "GET",
+                "/ＮＮ/ＮＮ/ＮＮ/etc/passwd",
+                "GET /ＮＮ/ＮＮ/ＮＮ/etc/passwd HTTP/1.1"
+            ),
+            row(
+                "GET /static\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\etc\\passwd",
+                HttpVersion.HTTP_1_1,
+                "GET",
+                "/static%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5Cetc%5Cpasswd",
+                "GET /static%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5C..%5Cetc%5Cpasswd HTTP/1.1"
+            ),
         )
         forAll(table) { requestLine, expectedVersion, expectedMethod, expectedPath, expectedString ->
             try {

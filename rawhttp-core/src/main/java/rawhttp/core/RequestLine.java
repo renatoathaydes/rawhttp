@@ -98,11 +98,11 @@ public class RequestLine implements StartLine {
         } catch (IOException e) {
             // cannot happen, in-memory OutputStream used
         }
-        return new String(out.toByteArray(), StandardCharsets.US_ASCII);
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     private void writeTo(OutputStream outputStream, boolean newLine) throws IOException {
-        outputStream.write(method.getBytes(StandardCharsets.US_ASCII));
+        outputStream.write(method.getBytes(StandardCharsets.UTF_8));
         outputStream.write(' ');
 
         //RFC-7230 section 5.3.3
@@ -115,20 +115,20 @@ public class RequestLine implements StartLine {
             } else if (port < 1) {
                 throw new IllegalArgumentException("URI port must be defined and valid when CONNECT method is used");
             }
-            outputStream.write(host.getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(host.getBytes(StandardCharsets.UTF_8));
             outputStream.write(':');
-            outputStream.write(Integer.toString(port).getBytes(StandardCharsets.US_ASCII));
+            outputStream.write(Integer.toString(port).getBytes(StandardCharsets.UTF_8));
         } else {
             String path = uri.getRawPath();
             if (path == null || path.isEmpty()) {
                 outputStream.write('/');
             } else {
-                outputStream.write(path.getBytes(StandardCharsets.US_ASCII));
+                outputStream.write(path.getBytes(StandardCharsets.UTF_8));
             }
             String query = uri.getRawQuery();
             if (query != null && !query.isEmpty()) {
                 outputStream.write('?');
-                outputStream.write(query.getBytes(StandardCharsets.US_ASCII));
+                outputStream.write(query.getBytes(StandardCharsets.UTF_8));
             }
         }
 
