@@ -82,7 +82,8 @@ public final class HttpMetadataParser {
      */
     public RequestLine parseRequestLine(InputStream inputStream) throws IOException {
         return buildRequestLine(parseStartLine(inputStream,
-                InvalidHttpRequest::new, options.ignoreLeadingEmptyLine()));
+                InvalidHttpRequest::new,
+                options.allowIllegalStartLineCharacters() || options.ignoreLeadingEmptyLine()));
     }
 
     /**
@@ -191,7 +192,8 @@ public final class HttpMetadataParser {
      */
     public StatusLine parseStatusLine(InputStream inputStream) throws IOException {
         return buildStatusLine(parseStartLine(inputStream,
-                InvalidHttpResponse::new, options.ignoreLeadingEmptyLine()));
+                InvalidHttpResponse::new,
+                options.allowIllegalStartLineCharacters() || options.ignoreLeadingEmptyLine()));
     }
 
     /**

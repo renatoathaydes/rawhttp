@@ -100,7 +100,8 @@ public class RawHttpOptions {
     }
 
     /**
-     * @return whether or not to ignore a leading empty line.
+     * @return whether or not to ignore a leading empty line. This is set to
+     * {@code true} if {@link RawHttpOptions#allowIllegalStartLineCharacters()} is called.
      */
     public boolean ignoreLeadingEmptyLine() {
         return ignoreLeadingEmptyLine;
