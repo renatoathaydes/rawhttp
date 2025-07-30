@@ -67,9 +67,9 @@ public abstract class FramedBody {
      * @return the value returned by the selected mapping function
      * @throws IOException if the selected function throws
      */
-    public final <T> T use(IOFunction<ContentLength, T> useContentLength,
-                           IOFunction<Chunked, T> useChunked,
-                           IOFunction<CloseTerminated, T> useCloseTerminated) throws IOException {
+    public final <T> T use(IOFunction<? super ContentLength, T> useContentLength,
+                           IOFunction<? super Chunked, T> useChunked,
+                           IOFunction<? super CloseTerminated, T> useCloseTerminated) throws IOException {
         if (this instanceof ContentLength) {
             return useContentLength.apply((ContentLength) this);
         }
@@ -197,8 +197,15 @@ public abstract class FramedBody {
             return new ChunkedBodyContents(chunks, headersRef.get());
         }
 
+        /**
+         * @return the {@link ChunkedBodyParser} which may be used to parse a chunked HTTP response.
+         */
+        public ChunkedBodyParser getBodyParser() {
+            return bodyParser;
+        }
+
         @Override
-        public BodyConsumer getBodyConsumer() {
+        public BodyConsumer.ChunkedBodyConsumer getBodyConsumer() {
             return new BodyConsumer.ChunkedBodyConsumer(bodyParser);
         }
 
